@@ -80,14 +80,35 @@ echo "  ✓ Model profiles"
 cp "$PROJECT_ROOT/config/smart-contract-supplement.md" "$CONFIG_DIR/cae-smart-contract-supplement.md"
 echo "  ✓ Smart contract supplement"
 
+# Install hooks (Multica status + Scribe learning loop)
+echo ""
+echo "Installing hooks..."
+bash "$PROJECT_ROOT/scripts/install-hooks.sh"
+
+# Copy cae-init script
+cp "$PROJECT_ROOT/scripts/cae-init.sh" "$HOME/.local/bin/cae-init" 2>/dev/null || {
+  mkdir -p "$HOME/.local/bin"
+  cp "$PROJECT_ROOT/scripts/cae-init.sh" "$HOME/.local/bin/cae-init"
+}
+chmod +x "$HOME/.local/bin/cae-init"
+echo "  ✓ cae-init command"
+
+# Copy Multica bridge
+cp "$PROJECT_ROOT/scripts/multica-bridge.sh" "$HOME/.local/bin/multica-bridge" 2>/dev/null || true
+chmod +x "$HOME/.local/bin/multica-bridge" 2>/dev/null || true
+echo "  ✓ multica-bridge command"
+
 echo ""
 echo "Done! Ctrl+Alt+Elite is installed."
 echo ""
 echo "Quick start:"
 echo "  1. cd into your project directory"
 echo "  2. Run: claude"
-echo "  3. Use /gsd-new-project to start a new build"
+echo "  3. Use /gsd-new-project to initialize the project"
+echo "  4. Run: cae-init   (or /cae-init inside Claude Code)"
+echo "  5. Use /gsd-plan-phase to start planning"
 echo ""
-echo "The agent personas will automatically be used by GSD during execution."
-echo "Model profiles can be switched with: /gsd-set-profile quality|balanced|budget"
+echo "Agent personas activate automatically during GSD execution."
+echo "Model profiles: /gsd-set-profile quality|balanced|budget"
+echo "Multica dashboard: multica-bridge setup (then visit http://localhost:3002)"
 echo ""
