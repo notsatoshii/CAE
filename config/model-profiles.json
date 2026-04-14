@@ -1,0 +1,76 @@
+{
+  "$schema": "https://get-shit-done.dev/schemas/model-profiles.json",
+  "description": "Ctrl+Alt+Elite model profiles — maps agent types to models per quality tier",
+  "profiles": {
+    "quality": {
+      "description": "Maximum reasoning. Claude Opus everywhere except research (Gemini for context size).",
+      "agents": {
+        "orchestrator": "claude-opus-4-6",
+        "gsd-planner": "claude-opus-4-6",
+        "gsd-plan-checker": "claude-opus-4-6",
+        "gsd-executor": "claude-sonnet-4-6",
+        "gsd-phase-researcher": "gemini-2.5-pro",
+        "gsd-project-researcher": "gemini-2.5-pro",
+        "gsd-verifier": "claude-opus-4-6",
+        "gsd-debugger": "gemini-2.5-pro",
+        "gsd-codebase-mapper": "gemini-2.5-pro",
+        "gsd-doc-writer": "gemini-2.5-flash",
+        "gsd-integration-checker": "claude-opus-4-6",
+        "gsd-ui-researcher": "claude-opus-4-6",
+        "gsd-ui-checker": "claude-opus-4-6",
+        "cae-security-auditor": "claude-opus-4-6"
+      }
+    },
+    "balanced": {
+      "description": "Default. Opus for decisions, Sonnet/Gemini for implementation, Flash for docs.",
+      "agents": {
+        "orchestrator": "claude-opus-4-6",
+        "gsd-planner": "claude-opus-4-6",
+        "gsd-plan-checker": "claude-opus-4-6",
+        "gsd-executor": "gemini-2.5-pro",
+        "gsd-phase-researcher": "gemini-2.5-pro",
+        "gsd-project-researcher": "gemini-2.5-pro",
+        "gsd-verifier": "claude-opus-4-6",
+        "gsd-debugger": "gemini-2.5-pro",
+        "gsd-codebase-mapper": "gemini-2.5-pro",
+        "gsd-doc-writer": "gemini-2.5-flash",
+        "gsd-integration-checker": "claude-sonnet-4-6",
+        "gsd-ui-researcher": "claude-sonnet-4-6",
+        "gsd-ui-checker": "claude-sonnet-4-6",
+        "cae-security-auditor": "claude-opus-4-6"
+      }
+    },
+    "budget": {
+      "description": "Minimum cost. Sonnet for planning, Flash for everything else.",
+      "agents": {
+        "orchestrator": "claude-sonnet-4-6",
+        "gsd-planner": "claude-sonnet-4-6",
+        "gsd-plan-checker": "claude-sonnet-4-6",
+        "gsd-executor": "gemini-2.5-flash",
+        "gsd-phase-researcher": "gemini-2.5-flash",
+        "gsd-project-researcher": "gemini-2.5-flash",
+        "gsd-verifier": "claude-sonnet-4-6",
+        "gsd-debugger": "claude-sonnet-4-6",
+        "gsd-codebase-mapper": "gemini-2.5-flash",
+        "gsd-doc-writer": "gemini-2.5-flash",
+        "gsd-integration-checker": "gemini-2.5-flash",
+        "gsd-ui-researcher": "gemini-2.5-flash",
+        "gsd-ui-checker": "gemini-2.5-flash",
+        "cae-security-auditor": "claude-sonnet-4-6"
+      }
+    }
+  },
+  "overrides": {
+    "smart_contract": {
+      "description": "Applied on top of any profile when smart contracts are detected",
+      "gsd-executor": "claude-opus-4-6",
+      "gsd-verifier": "claude-opus-4-6",
+      "cae-security-auditor": "claude-opus-4-6"
+    }
+  },
+  "review_model_diversity": {
+    "description": "Sentinel must use a different model than the builder for adversarial review",
+    "rule": "if executor used claude-*, verifier must NOT use the same claude-* model. If executor used gemini-*, verifier uses claude-opus-4-6.",
+    "enforced": true
+  }
+}
