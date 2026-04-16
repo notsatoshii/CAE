@@ -202,19 +202,41 @@ Produce the JSON verdict now. Nothing else.
             return None
 
         raw = output_path.read_text()
-        # gsd-verifier produces "## VERIFICATION PASSED" or "## ISSUES FOUND"
-        approve = "## VERIFICATION PASSED" in raw and "## ISSUES FOUND" not in raw
 
-        # Simple extraction of issues from markdown — not perfect but functional
+        # gsd-verifier output varies: sometimes JSON verdict, sometimes markdown.
+        # Try JSON first (robust across wrap output shapes).
+        approve = None
         issues = []
-        if not approve:
-            for m in re.finditer(r"\*\*(CRITICAL|MAJOR|MINOR)[^*]*\*\*[:\s]+([^\n]+)", raw):
-                issues.append({
-                    "severity": m.group(1),
-                    "location": "(see full report)",
-                    "description": m.group(2).strip()[:300],
-                    "recommendation": "(see full report)",
-                })
+        j = self._extract_json(raw)
+        if j is not None:
+            # Accept either {"verdict": "pass"|"fail"} or {"approve": bool}
+            verdict_str = str(j.get("verdict", "")).lower()
+            if verdict_str in ("pass", "approved", "ok"):
+                approve = True
+            elif verdict_str in ("fail", "reject", "rejected"):
+                approve = False
+            elif isinstance(j.get("approve"), bool):
+                approve = j["approve"]
+            for issue in j.get("issues", []) or []:
+                if isinstance(issue, dict):
+                    issues.append({
+                        "severity": issue.get("severity", "MAJOR"),
+                        "location": issue.get("location", "(unspecified)"),
+                        "description": str(issue.get("description", ""))[:300],
+                        "recommendation": issue.get("recommendation", ""),
+                    })
+
+        # Fallback to markdown parsing if JSON didn't resolve a verdict.
+        if approve is None:
+            approve = "## VERIFICATION PASSED" in raw and "## ISSUES FOUND" not in raw
+            if not approve:
+                for m in re.finditer(r"\*\*(CRITICAL|MAJOR|MINOR)[^*]*\*\*[:\s]+([^\n]+)", raw):
+                    issues.append({
+                        "severity": m.group(1),
+                        "location": "(see full report)",
+                        "description": m.group(2).strip()[:300],
+                        "recommendation": "(see full report)",
+                    })
 
         verdict = {
             "approve": approve,
@@ -246,15 +268,17 @@ Produce the JSON verdict now. Nothing else.
     ) -> dict:
         ctx = ReviewContext(task_id, plan_path, diff, builder_model, test_output)
 
-        # Check if fallback is already forced by circuit breaker
-        use_fallback = bool(self.cb and self.cb.should_fall_back_sentinel())
+        # Skip Gemini entirely if CLI not installed — go straight to Claude fallback.
+        gemini_on_path = subprocess.run(["which", "gemini"], capture_output=True).returncode == 0
+        cb_forces_fallback = bool(self.cb and self.cb.should_fall_back_sentinel())
+        use_fallback = cb_forces_fallback or not gemini_on_path
 
         if not use_fallback:
             verdict = self._review_gemini(ctx)
             if verdict is not None:
                 return verdict
-            # Gemini failed — check if CB now says fall back
-            use_fallback = bool(self.cb and self.cb.should_fall_back_sentinel())
+            use_fallback = True
+            self._log("gemini_failed_fallback_engaged", task_id=task_id)
 
         if use_fallback:
             verdict = self._review_claude_fallback(ctx)

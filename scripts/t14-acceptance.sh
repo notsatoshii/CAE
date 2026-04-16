@@ -116,7 +116,7 @@ check ".cae/metrics/ created" "[ -d .cae/metrics ]"
 check "circuit-breakers.jsonl populated" "[ -s .cae/metrics/circuit-breakers.jsonl ]"
 check "compaction.jsonl populated" "[ -s .cae/metrics/compaction.jsonl ]"
 check "compactor fired at least layer a" "grep -q 'a_tool_budgets' .cae/metrics/compaction.jsonl"
-check "sentinel-stub logged (T8 not live)" "[ -s .cae/metrics/sentinel-stub.jsonl ]"
+check "sentinel logged verdict" "[ -s .cae/metrics/sentinel.jsonl ] && grep -q 'verdict_ok' .cae/metrics/sentinel.jsonl"
 
 echo ""
 echo "A5. Git branch guard"

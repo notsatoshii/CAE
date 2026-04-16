@@ -246,33 +246,9 @@ def _get_git_diff(project_root: Path, branch: str) -> str:
 
 def sentinel_review(task_id: str, plan_path: Path, branch: str, project_root: Path, builder_model: str, cb: CircuitBreakers) -> dict:
     """
-    Real Sentinel review via bin/sentinel.py. Falls back to stub (auto-approve
-    with clear warning) only if gemini CLI is not installed.
+    Real Sentinel review via bin/sentinel.py. Sentinel itself picks Gemini (if
+    installed) or Claude gsd-verifier fallback. No auto-approve stub.
     """
-    # Check if gemini is available
-    gemini_available = subprocess.run(["which", "gemini"], capture_output=True).returncode == 0
-
-    if not gemini_available:
-        # T1 not yet done — stub
-        metrics_dir = project_root / ".cae" / "metrics"
-        metrics_dir.mkdir(parents=True, exist_ok=True)
-        with open(metrics_dir / "sentinel-stub.jsonl", "a") as f:
-            f.write(json.dumps({
-                "ts": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-                "event": "sentinel_stub_invoked",
-                "task_id": task_id,
-                "builder_model": builder_model,
-                "note": "gemini CLI not installed; stub approval. Install T1 to enable real Sentinel.",
-            }) + "\n")
-        return {
-            "approve": True,
-            "reviewer_model": "stub",
-            "builder_model": builder_model,
-            "issues": [],
-            "_stub": True,
-        }
-
-    # Real Sentinel
     from sentinel import Sentinel
     diff = _get_git_diff(project_root, branch)
     s = Sentinel(project_root, cb)
@@ -529,10 +505,20 @@ def cmd_execute_phase(phase_num: str, dry_run: bool = False):
     print("━━ Phase summary ━━")
     ok = sum(1 for r in all_results if r["success"])
     fail = len(all_results) - ok
-    stubs = sum(1 for r in all_results if r.get("sentinel_stub"))
     print(f"  Tasks: {ok} succeeded, {fail} failed")
-    if stubs:
-        print(f"  ⚠ Sentinel stub auto-approved {stubs} tasks (T8 not yet wired)")
+
+    # Post-phase Scribe (runs if any task succeeded — Gemini Flash if installed, else Claude Haiku)
+    if ok > 0:
+        try:
+            from scribe import Scribe
+            print(f"  Running Scribe on phase {phase_num}...")
+            applied = Scribe(project_root).run_for_phase(phase_num)
+            if "error" in applied:
+                print(f"  ⚠ Scribe: {applied['error']}")
+            else:
+                print(f"  Scribe: +{applied.get('agents_md_added', 0)} AGENTS.md entries, {applied.get('knowledge_topics_updated', 0)} KNOWLEDGE topics")
+        except Exception as e:
+            print(f"  ⚠ Scribe failed: {e}")
 
     # Write phase summary file
     summary_path = phase_dir / "CAE-SUMMARY.md"
