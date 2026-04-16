@@ -1,0 +1,29 @@
+# CAE Circuit Breakers — hard limits per Phase 1 Decision 6.
+# Schema: cae_config_version 1 (see CONFIG_SCHEMA.md).
+# Every limit logs to .cae/metrics/circuit-breakers.jsonl when enforced.
+
+per_forge:
+  max_turns: 30                  # Agent tool-call turns per Forge invocation
+  max_input_tokens: 500000       # Cap input context per task
+  max_output_tokens: 100000      # Cap generated tokens per task
+
+per_task:
+  max_retries: 3                 # Forge re-spawns on same task before escalation
+
+parallelism:
+  max_concurrent_forge: 4        # Simultaneous Forge tmux sessions
+
+escalation:
+  forge_failures_spawn_phantom: 3   # Failed Forge attempts before Phantom wakes up
+  phantom_failures_halt: 2          # Phantom failures before global halt + Telegram ping
+  on_halt:
+    telegram_notify: true
+
+sentinel:
+  max_json_parse_failures: 2     # Before falling back to gsd-verifier wrap
+
+gemini_cli:
+  per_call_timeout_seconds: 600
+
+claude_code:
+  per_call_timeout_seconds: 1800
