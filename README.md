@@ -23,7 +23,7 @@ Human dev shops solve this with teams: someone builds, someone else reviews, som
 
 **Ctrl+Alt+Elite is an AI dev shop.** A team of specialized AI agents orchestrated through file-mediated handoffs — no long-lived sessions, no context rot, no rubber-stamping.
 
-You hand CAE a buildplan. **Forge** implements. **Sentinel** (a *different* model) reviews adversarially. **Scribe** extracts learnings into a shared `AGENTS.md` that the next task reads. **Phantom** debugs when Forge fails three times. **Aegis** audits security when it sees Solidity. Every agent runs in a fresh context, spawned per task, killed when done.
+You hand CAE a buildplan. **Forge** implements. **Sentinel** (a *different* model) reviews adversarially. **Scribe** extracts learnings into a shared `AGENTS.md` that the next task reads. **Phantom** debugs when Forge fails three times. **Aegis** audits security when it sees Solidity. **Herald** writes the user-facing docs (README, ARCHITECTURE) so humans can actually navigate what got shipped. Every agent runs in a fresh context, spawned per task, killed when done.
 
 Built on top of [GSD (Get-Shit-Done)](https://github.com/gsd-build/get-shit-done) and [Claude Code](https://docs.anthropic.com/en/docs/claude-code), with [Gemini CLI](https://github.com/google-gemini/gemini-cli) for cross-provider adversarial review.
 
@@ -88,6 +88,39 @@ Requires: Claude Code CLI (authenticated), Python 3.9+, Bash, tmux, git. Gemini 
 
 Every arrow is a file on disk. Every agent is `claude --print` or `gemini -p` in a tmux pane. No sessions. No daemons. Fully introspectable — `tail -f .cae/metrics/*.jsonl` shows every decision in real time.
 
+## The harness
+
+CAE isn't a model. It's a harness — the scaffolding around models that makes them work as a team.
+
+- **Process harness:** `tmux` — every agent invocation spawns a detached pane, captures stdout/stderr/meta to files, times out cleanly. Patterns borrowed from [OMC/OMX](./OMC_OMX_REFERENCE.md).
+- **Agent harness:** Claude Code CLI (`claude --print --agent gsd-<name>`) + Gemini CLI (`gemini -p`). CAE doesn't reinvent these — it wraps them.
+- **Workflow harness:** GSD methodology. Phase decomposition, wave execution, plan validation, goal-backward verification, worktree isolation. CAE inherits 3,150 lines of workflow prompt engineering without porting it.
+- **File harness:** `.planning/` directory (`PLAN.md`, `PROJECT.md`, `STATE.md`, phase dirs), `AGENTS.md`, `KNOWLEDGE/`, `.cae/metrics/`. Every agent reads from and writes to this filesystem. No in-memory state to lose.
+- **Safety harness:** circuit breakers, branch isolation (`forge/<task-id>` with pre-push hook), Telegram dangerous-action gate, Phantom escalation on repeated failures.
+
+## Saving context (why CAE doesn't run out of tokens)
+
+Long-horizon coding burns context. Single-agent tools spiral once the conversation exceeds ~50k effective tokens — auto-compaction starts dropping relevant detail silently. CAE attacks this on five fronts:
+
+**1. Fresh context per task** — every Forge spawn reads its task.md, AGENTS.md, and the specific files it needs. Nothing else. When the task commits, Forge dies. Next task starts from zero. No conversation accumulation. Pattern from [Ralph](https://github.com/snarktank/ralph).
+
+**2. 3-layer context injection** — per-task prompts inject only three things: (a) compact project index, (b) phase-scoped research brief from Scout, (c) specific files the task touches. No "just in case" file dumps. Pattern from [Claude-Mem](https://github.com/thedotmack/claude-mem).
+
+**3. Compaction cascade (5 layers)** — `bin/compactor.py` runs preprocessing before every spawn:
+  - `(a)` **Tool output budgets** — `Read` capped at 2000 lines, `Grep` at 1000, `Bash` at 3000, truncated with "… N lines omitted" markers
+  - `(b)` **File summaries** — files >500 lines get summarized once via Claude Haiku, cached in `.cae/summaries/`, task.md sees `@path/to/file (summary)` instead of raw content
+  - `(c)` **Turn pruning** — beyond 15 exchanges in a retry loop, orchestrator collapses old attempts into summarized `<retry_context>` blocks
+  - `(d)` **Caveman activation** — at 60% context fill, Forge's output is auto-compressed via the [Caveman](https://github.com/JuliusBrussee/caveman) plugin (~65–75% reduction while preserving technical substance)
+  - `(e)` **Hard summarize** — at 85% fill, old retry blocks collapse into a single Haiku-generated summary and task continues
+
+**4. Caveman token compression** — Caveman plugin runs on Forge output, converting prose into terse caveman-style bullets. Preserves code blocks, file paths, error messages verbatim; strips articles, hedging, pleasantries. 65–75% reduction on natural prose with zero semantic loss on technical content. Install auto-managed by `scripts/install.sh`.
+
+**5. AGENTS.md 300-line hard cap** — Scribe maintains one lean shared-knowledge file capped at 300 lines. Overflow rotates to `KNOWLEDGE/<topic>.md`. Tasks tagged `tags: [solidity, auth]` pull in only the matching topic files, not the whole knowledge base. No infinitely-growing context rot.
+
+**Bonus: [Karpathy Guidelines](https://github.com/forrestchang/andrej-karpathy-skills) plugin** — installed during setup, prevents over-engineering (no premature abstractions, surgical changes, explicit assumptions). Smaller diffs = smaller reviews = less Sentinel token spend.
+
+All firings logged to `.cae/metrics/compaction.jsonl` so you can see exactly which layer(s) kicked in on any given run.
+
 ## Agent roster
 
 ### Core team (every project)
@@ -99,6 +132,7 @@ Every arrow is a file on disk. Every agent is `claude --print` or `gemini -p` in
 | Sentinel | Reviewer — enforced ≠ builder model       | Gemini 2.5 Pro      | direct-prompt        |
 | Scout    | Researcher — codebase + domain briefs     | Gemini 2.5 Pro      | direct-prompt        |
 | Scribe   | Knowledge keeper — AGENTS.md learnings    | Gemini Flash        | direct-prompt        |
+| Herald   | User-facing docs writer                   | Claude Sonnet       | wrap `gsd-doc-writer`|
 
 ### Specialists (auto-activated or on-demand)
 | Agent    | When                                       | Default model       |
@@ -107,7 +141,8 @@ Every arrow is a file on disk. Every agent is `claude --print` or `gemini -p` in
 | Phantom  | 3 Forge failures on same task              | Claude Sonnet       |
 | Prism    | UI-heavy phases                            | Claude Sonnet       |
 | Flux     | DevOps / infrastructure tasks              | Claude Sonnet       |
-| Herald   | Project-level docs (README, ARCHITECTURE)  | Claude Sonnet       |
+
+**Scribe vs Herald** — both write docs, but they're distinct roles. **Scribe** maintains the *internal* `AGENTS.md` + `KNOWLEDGE/` (for future agents to read). **Herald** writes the *external* project docs — README, ARCHITECTURE.md, DEPLOYMENT.md, CHANGELOG (for humans navigating the project). Scribe runs automatically after every phase. Herald runs on-demand via `cae herald <doc-type>`.
 
 Sentinel falls back to `gsd-verifier` wrap on Claude Opus if Gemini isn't available — adversarial diversity preserved (Opus reviews Sonnet builder).
 
@@ -206,10 +241,28 @@ CAE/
 
 ## Built on, inspired by
 
-- **[GSD (Get-Shit-Done)](https://github.com/gsd-build/get-shit-done)** — phase-based workflow, wave execution, worktree isolation, state persistence. 3,150 lines of prompt engineering CAE inherits cleanly.
-- **[Claude Code](https://docs.anthropic.com/en/docs/claude-code)** — primary AI coding runtime.
-- **[Gemini CLI](https://github.com/google-gemini/gemini-cli)** — Gemini Code Assist for adversarial review + cheap knowledge extraction.
-- Pattern references: **[Ralph](https://github.com/snarktank/ralph)** (fresh context per task, AGENTS.md learning loop), **[Claude-Mem](https://github.com/thedotmack/claude-mem)** (3-layer context injection).
+### Runtime stack (the harness)
+- **[Claude Code](https://docs.anthropic.com/en/docs/claude-code)** — primary AI coding runtime. Every Claude-side agent is `claude --print --agent <name>` under the hood.
+- **[Gemini CLI](https://github.com/google-gemini/gemini-cli)** — Gemini Code Assist / Gemini 2.5 Pro + Flash. Drives the adversarial review path and cheap knowledge extraction.
+- **[GSD (Get-Shit-Done)](https://github.com/gsd-build/get-shit-done)** — phase-based workflow, wave execution, worktree isolation, state persistence, goal-backward verification. 3,150 lines of prompt engineering CAE inherits cleanly via the `gsd-*` agent wraps.
+- **[tmux](https://github.com/tmux/tmux) + [Bash](https://www.gnu.org/software/bash/)** — process harness. Every agent invocation lives in its own detached tmux session; stdout/stderr/metadata land in files.
+
+### Token + context management
+- **[Caveman](https://github.com/JuliusBrussee/caveman)** plugin — auto-compresses Forge output ~65–75% while preserving code blocks, file paths, and error messages verbatim. Installed by `scripts/install.sh`.
+- **[Karpathy Guidelines](https://github.com/forrestchang/andrej-karpathy-skills)** plugin — quality guardrails injected into every agent: no premature abstractions, surgical changes, explicit assumptions, no gold-plating. Smaller diffs → smaller reviews → less token spend.
+- **Claude Haiku** — used inside CAE's compaction cascade for cheap file summaries + hard-summarize fallback at 85% context fill.
+
+### Patterns borrowed
+- **[Ralph](https://github.com/snarktank/ralph)** — fresh context per task (no session accumulation), AGENTS.md as the team's shared learning loop.
+- **[Claude-Mem](https://github.com/thedotmack/claude-mem)** — 3-layer context injection: project index → research brief → specific files only. No "just in case" file dumps.
+- **[OMC / OMX](./OMC_OMX_REFERENCE.md)** — tmux coordination patterns, pane-per-invocation, file-mediated status signaling. Informed the adapter design.
+- **BIOS-style boot checklists** — the `cae banner` roster output (visible in terminal, not in README) nods to old-school system diagnostics.
+
+### Peripheral
+- **[Multica](https://github.com/multica-ai/multica)** — optional dashboard for tracking agent status + task state across projects. Bridge script at `scripts/multica-bridge.sh`.
+
+### Honest credits
+CAE is overwhelmingly thin glue. The three heavyweights doing the real work are **GSD** (the methodology), **Claude Code** (the agent runtime), and **Gemini CLI** (the reviewer runtime). Most of what CAE adds is enforcement (reviewer ≠ builder), safety (circuit breakers, branch isolation, dangerous-action gate), and composition (wave orchestration, compaction cascade, Scribe/Herald split). If you remove any of the three upstream projects, CAE doesn't exist.
 
 ## Contributing
 
