@@ -32,9 +32,10 @@ case "$CMD" in
     BASE="${3:-HEAD}"
     BRANCH="forge/${TASK_ID}"
 
-    # Guard: refuse if dirty (prevents losing uncommitted work)
-    if [ -n "$(git status --porcelain)" ]; then
-      echo "error: working tree has uncommitted changes; commit or stash first" >&2
+    # Guard: refuse only on MODIFIED tracked files (not untracked).
+    # git checkout handles untracked files fine unless they'd be overwritten.
+    if ! git diff --quiet HEAD 2>/dev/null; then
+      echo "error: tracked files have uncommitted modifications; commit or stash first" >&2
       exit 1
     fi
 

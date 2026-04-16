@@ -1,0 +1,44 @@
+# CAE Dangerous Actions — patterns that require Telegram approval before execution.
+# Schema: cae_config_version 1 (see CONFIG_SCHEMA.md).
+# Patterns matched case-insensitive against planned shell commands.
+
+patterns:
+  - name: broadcast_transaction
+    regex: 'forge\s+script.*--broadcast\b'
+    description: On-chain transaction broadcast
+    telegram_timeout_minutes: 30
+
+  - name: git_push_main
+    regex: 'git\s+push.*\b(main|master)\b'
+    description: Push to main/master branch
+    telegram_timeout_minutes: 15
+
+  - name: git_force_push
+    regex: 'git\s+push.*(--force|-f\b|\+)'
+    description: Force push (destructive)
+    telegram_timeout_minutes: 15
+
+  - name: modify_github_settings
+    regex: 'gh\s+(repo|api)\s+(edit|delete)'
+    description: Modify GitHub repo settings or delete repo
+    telegram_timeout_minutes: 15
+
+  - name: delete_files_recursive
+    regex: 'rm\s+-rf?\b|rm\s+-r\b|\brmdir\s+-p'
+    description: Recursive file deletion
+    telegram_timeout_minutes: 10
+
+  - name: deploy_command
+    regex: '\bdeploy\s|\brelease\s+create\b|\bpublish\s+--'
+    description: Generic deploy / release / publish commands
+    telegram_timeout_minutes: 15
+
+  - name: drop_database
+    regex: 'DROP\s+(DATABASE|TABLE|SCHEMA)\b|pg_dump.*\|.*psql'
+    description: Destructive database operation
+    telegram_timeout_minutes: 20
+
+  - name: chmod_777
+    regex: 'chmod\s+(-R\s+)?0?777\b'
+    description: Overly permissive file permissions
+    telegram_timeout_minutes: 5

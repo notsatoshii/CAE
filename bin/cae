@@ -1,32 +1,60 @@
 #!/usr/bin/env python3
 """
-CAE — Ctrl+Alt+Elite orchestrator (Phase 1, T4 skeleton: dry-run only)
+CAE — Ctrl+Alt+Elite orchestrator (Phase 1 T7: real execution)
 
 Usage:
-  cae execute-phase <N>      Dry-run the execution plan for phase N
-  cae help                   Show this help
-  cae version                Print version
+  cae execute-phase <N> [--dry-run]   Execute phase N (default: real execution)
+  cae version
+  cae help
 
 Reads:
+  config/agent-models.yaml       (CAE repo: roles & model routing)
+  config/circuit-breakers.yaml   (CAE repo: limits)
   .planning/config.json          (project CAE config)
   .planning/phases/<N>-*/PLAN.md (plans to execute)
-  config/agent-models.yaml       (from CAE repo root — roles & model routing)
 
-Does NOT (Phase 1 T4 scope): spawn subprocesses, modify git, call APIs.
-Only prints what it WOULD do.
+Execution model:
+  - Waves ordered by PLAN.md frontmatter `wave: N`
+  - Within a wave: parallel up to circuit_breakers.max_concurrent_forge
+  - Per task:
+      1. acquire forge semaphore slot
+      2. create forge/<task-id> branch
+      3. spawn Claude adapter with Forge persona
+      4. on success → Sentinel review (stub for now; real in T8)
+      5. on Sentinel approve → merge branch with CAE_MERGE_TOKEN
+      6. on Sentinel reject → retry (counts toward max_retries)
+      7. after 3 Forge fails → Phantom escalation
+      8. after 2 Phantom fails → halt + Telegram
+  - Metrics logged to .cae/metrics/
+
+Dry-run keeps the old behavior: prints the plan without touching git or CLIs.
 """
+from __future__ import annotations
+
+import concurrent.futures
 import json
 import os
 import re
+import subprocess
 import sys
+import time
+import uuid
 from pathlib import Path
+from typing import List, Optional
 
-VERSION = "0.1.0-T4"
+VERSION = "0.2.0-T7"
 
-# Locate CAE repo root (where agent-models.yaml lives)
+# ─── Paths ──────────────────────────────────────────────────────────────
 _THIS = Path(__file__).resolve()
 CAE_ROOT = _THIS.parent.parent
 AGENT_MODELS_PATH = CAE_ROOT / "config" / "agent-models.yaml"
+CLAUDE_ADAPTER = CAE_ROOT / "adapters" / "claude-code.sh"
+FORGE_BRANCH_SCRIPT = CAE_ROOT / "scripts" / "forge-branch.sh"
+
+# Make sibling modules importable
+sys.path.insert(0, str(_THIS.parent))
+from circuit_breakers import CircuitBreakers, LimitExceeded  # noqa: E402
+from phantom import Phantom  # noqa: E402
 
 
 def die(msg, code=1):
@@ -38,11 +66,12 @@ def load_yaml(path):
     try:
         import yaml
     except ImportError:
-        die("PyYAML required. apt install python3-yaml or pip install pyyaml")
+        die("PyYAML required")
     with open(path) as f:
         return yaml.safe_load(f)
 
 
+# ─── Loading project state ──────────────────────────────────────────────
 def load_planning_config(project_root):
     cfg_file = project_root / ".planning" / "config.json"
     if not cfg_file.exists():
@@ -57,7 +86,6 @@ def find_phase_dir(project_root, phase_num):
     padded = f"{int(phase_num):02d}"
     candidates = sorted(phases_root.glob(f"{padded}-*"))
     if not candidates:
-        # Fallback to unpadded glob (some GSD projects use "1-foo")
         candidates = sorted(phases_root.glob(f"{phase_num}-*"))
     if not candidates:
         die(f"no phase directory found for phase {phase_num} in {phases_root}")
@@ -65,7 +93,6 @@ def find_phase_dir(project_root, phase_num):
 
 
 def parse_plan_frontmatter(plan_path):
-    """Extract YAML frontmatter from a PLAN.md file. Returns dict or {}."""
     content = plan_path.read_text()
     m = re.match(r"^---\n(.*?)\n---\n", content, re.DOTALL)
     if not m:
@@ -80,65 +107,21 @@ def parse_plan_frontmatter(plan_path):
 
 
 def parse_tasks(body):
-    """Extract <task> blocks. Returns list of dicts with 'name' and raw text."""
     tasks = []
     for m in re.finditer(r"<task[^>]*>(.*?)</task>", body, re.DOTALL):
         block = m.group(1)
         name_m = re.search(r"<name>(.*?)</name>", block, re.DOTALL)
+        files_m = re.search(r"<files>(.*?)</files>", block, re.DOTALL)
+        action_m = re.search(r"<action>(.*?)</action>", block, re.DOTALL)
+        verify_m = re.search(r"<verify>(.*?)</verify>", block, re.DOTALL)
         tasks.append({
             "name": (name_m.group(1).strip() if name_m else "<unnamed task>"),
+            "files": (files_m.group(1).strip() if files_m else ""),
+            "action": (action_m.group(1).strip() if action_m else ""),
+            "verify": (verify_m.group(1).strip() if verify_m else ""),
             "raw": block.strip(),
         })
     return tasks
-
-
-def role_for_task(agent_models, plan_fm):
-    """
-    Decide which CAE role runs a Forge task for this plan.
-    Phase 1 T4: simple — executor maps to Forge.
-    Future: task frontmatter can override (e.g., specialist: aegis).
-    """
-    return "forge"
-
-
-def resolve_role(agent_models, role_name, sc_mode):
-    """
-    Given a role name and smart-contract mode, return the effective
-    {model, provider, invocation_mode, effort} for this invocation.
-    """
-    role = agent_models.get(role_name)
-    if role is None:
-        die(f"role '{role_name}' not defined in agent-models.yaml")
-
-    # Mode-aware roles (Scout currently)
-    if "modes" in role:
-        mode = role.get("default_mode")
-        role = role["modes"].get(mode, {})
-
-    model = role.get("model")
-    if sc_mode and "smart_contract_override" in role:
-        model = role["smart_contract_override"]
-
-    # Alias resolution
-    aliases = {"opus": "claude-opus-4-6", "sonnet": "claude-sonnet-4-6", "haiku": "claude-haiku-4-5"}
-    model = aliases.get(model, model)
-
-    return {
-        "model": model,
-        "provider": role.get("provider", "unknown"),
-        "invocation_mode": role.get("invocation_mode", {}),
-        "effort": role.get("effort"),
-    }
-
-
-def format_invocation(resolved):
-    inv = resolved["invocation_mode"]
-    itype = inv.get("type")
-    if itype == "wrap-gsd-agent":
-        return f"wrap → --agent {inv.get('name')}"
-    if itype == "direct-prompt":
-        return f"direct → {inv.get('system_prompt_file')}"
-    return "(unknown)"
 
 
 def detect_smart_contract_mode(project_root):
@@ -146,9 +129,7 @@ def detect_smart_contract_mode(project_root):
                "hardhat.config.ts", "hardhat.config.cjs", "truffle-config.js",
                "remappings.txt"]
     for m in markers:
-        # Search up to 3 levels deep
         for candidate in project_root.rglob(m):
-            # Skip node_modules / .git hits
             rel = candidate.relative_to(project_root)
             if any(p in str(rel) for p in ("node_modules", ".git", ".planning")):
                 continue
@@ -156,73 +137,436 @@ def detect_smart_contract_mode(project_root):
     return False
 
 
-def cmd_execute_phase(phase_num):
+def resolve_role(agent_models, role_name, sc_mode):
+    role = agent_models.get(role_name)
+    if role is None:
+        die(f"role '{role_name}' not defined in agent-models.yaml")
+    if "modes" in role:
+        mode = role.get("default_mode")
+        role = role["modes"].get(mode, {})
+    model = role.get("model")
+    if sc_mode and "smart_contract_override" in role:
+        model = role["smart_contract_override"]
+    aliases = {"opus": "claude-opus-4-6", "sonnet": "claude-sonnet-4-6", "haiku": "claude-haiku-4-5"}
+    model = aliases.get(model, model)
+    return {
+        "model": model,
+        "provider": role.get("provider", "unknown"),
+        "invocation_mode": role.get("invocation_mode", {}),
+        "effort": role.get("effort"),
+        "fallback": role.get("fallback"),
+    }
+
+
+# ─── Execution primitives ───────────────────────────────────────────────
+def build_forge_prompt(task: dict, plan_fm: dict, project_root: Path, phase_dir: Path) -> str:
+    """Construct the user prompt Forge receives."""
+    agents_md = ""
+    am_path = project_root / "AGENTS.md"
+    if am_path.exists():
+        agents_md = f"- AGENTS.md (team conventions — read and apply)\n"
+
+    return f"""<objective>
+Phase {plan_fm.get('phase', '?')} Task: {task['name']}
+</objective>
+
+<task_spec>
+{task['raw']}
+</task_spec>
+
+<files_to_read>
+- {phase_dir.relative_to(project_root)}/{phase_dir.name}-PLAN.md (your plan)
+{agents_md}- .planning/PROJECT.md (project context)
+- .planning/STATE.md (current state)
+</files_to_read>
+
+<instructions>
+Implement the task per the plan. Match AGENTS.md conventions.
+Make ALL changes, then commit with a concise message.
+When done, return a brief SUMMARY in this format:
+
+## SUMMARY
+- Changed: {{list of files}}
+- Tests: {{passed/failed}}
+- Notes: {{anything Sentinel or Scribe should know}}
+</instructions>
+"""
+
+
+def spawn_forge(task_id: str, prompt_path: Path, model: str, system_prompt_file: Optional[str] = None, agent_wrap: Optional[str] = None, timeout: int = 1800) -> dict:
+    """
+    Invoke the Claude adapter. Returns dict with exit_code, output_path, error_path, meta.
+    """
+    cmd = [
+        str(CLAUDE_ADAPTER),
+        str(prompt_path),
+        model,
+        task_id,
+        "--timeout", str(timeout),
+    ]
+    if agent_wrap:
+        cmd.extend(["--agent", agent_wrap])
+    elif system_prompt_file:
+        cmd.extend(["--system-prompt-file", system_prompt_file])
+    else:
+        raise ValueError("Must specify either agent_wrap or system_prompt_file")
+
+    result = subprocess.run(cmd, capture_output=False)
+    output_path = Path(str(prompt_path) + ".output")
+    error_path = Path(str(prompt_path) + ".error")
+    meta_path = Path(str(prompt_path) + ".meta")
+
+    meta = {}
+    if meta_path.exists():
+        try:
+            meta = json.loads(meta_path.read_text())
+        except Exception:
+            pass
+
+    return {
+        "exit_code": result.returncode,
+        "output_path": output_path,
+        "error_path": error_path,
+        "meta": meta,
+        "output": output_path.read_text() if output_path.exists() else "",
+    }
+
+
+def _get_git_diff(project_root: Path, branch: str) -> str:
+    """Get the diff of a forge branch vs main."""
+    try:
+        r = subprocess.run(["git", "-C", str(project_root), "diff", "main...HEAD"],
+                          capture_output=True, text=True, timeout=10)
+        if r.returncode == 0 and r.stdout:
+            return r.stdout
+    except Exception:
+        pass
+    return ""
+
+
+def sentinel_review(task_id: str, plan_path: Path, branch: str, project_root: Path, builder_model: str, cb: CircuitBreakers) -> dict:
+    """
+    Real Sentinel review via bin/sentinel.py. Falls back to stub (auto-approve
+    with clear warning) only if gemini CLI is not installed.
+    """
+    # Check if gemini is available
+    gemini_available = subprocess.run(["which", "gemini"], capture_output=True).returncode == 0
+
+    if not gemini_available:
+        # T1 not yet done — stub
+        metrics_dir = project_root / ".cae" / "metrics"
+        metrics_dir.mkdir(parents=True, exist_ok=True)
+        with open(metrics_dir / "sentinel-stub.jsonl", "a") as f:
+            f.write(json.dumps({
+                "ts": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+                "event": "sentinel_stub_invoked",
+                "task_id": task_id,
+                "builder_model": builder_model,
+                "note": "gemini CLI not installed; stub approval. Install T1 to enable real Sentinel.",
+            }) + "\n")
+        return {
+            "approve": True,
+            "reviewer_model": "stub",
+            "builder_model": builder_model,
+            "issues": [],
+            "_stub": True,
+        }
+
+    # Real Sentinel
+    from sentinel import Sentinel
+    diff = _get_git_diff(project_root, branch)
+    s = Sentinel(project_root, cb)
+    return s.review(task_id, plan_path, diff, builder_model)
+
+
+def sentinel_review_stub(task_id: str, plan_path: Path, forge_output: str, project_root: Path, builder_model: str) -> dict:
+    """DEPRECATED — kept for backwards compat. Use sentinel_review() instead."""
+    return {
+        "approve": True,
+        "reviewer_model": "stub",
+        "builder_model": builder_model,
+        "issues": [],
+        "_stub": True,
+    }
+
+
+def git_run(args: List[str], cwd: Path, env_extra: Optional[dict] = None) -> subprocess.CompletedProcess:
+    env = os.environ.copy()
+    if env_extra:
+        env.update(env_extra)
+    return subprocess.run(["git"] + args, cwd=cwd, capture_output=True, text=True, env=env)
+
+
+def forge_branch(subcommand: str, task_id: str, project_root: Path, extra: List[str] = None) -> subprocess.CompletedProcess:
+    cmd = ["bash", str(FORGE_BRANCH_SCRIPT), subcommand, task_id]
+    if extra:
+        cmd.extend(extra)
+    return subprocess.run(cmd, cwd=project_root, capture_output=True, text=True)
+
+
+# ─── Task execution with retry + Phantom ────────────────────────────────
+def execute_one_task(
+    task: dict,
+    task_id: str,
+    plan_fm: dict,
+    plan_path: Path,
+    phase_dir: Path,
+    project_root: Path,
+    forge_resolved: dict,
+    cb: CircuitBreakers,
+    phantom: Phantom,
+) -> dict:
+    """
+    Execute a single task with full retry + Phantom loop.
+    Returns dict: {success, task_id, attempts, final_status, branch, notes}
+    """
+    inv = forge_resolved["invocation_mode"]
+    model = forge_resolved["model"]
+
+    # Create forge branch
+    br = forge_branch("create", task_id, project_root)
+    if br.returncode != 0:
+        return {"success": False, "task_id": task_id, "attempts": 0, "final_status": "branch_create_failed", "notes": br.stderr.strip()}
+
+    branch = br.stdout.strip()
+
+    # Prepare prompt file in .planning/phases/<N>/tasks/<task-id>/
+    task_dir = phase_dir / "tasks" / task_id
+    task_dir.mkdir(parents=True, exist_ok=True)
+    prompt_path = task_dir / "task.md"
+    prompt_path.write_text(build_forge_prompt(task, plan_fm, project_root, phase_dir))
+
+    extra_fix_context = ""  # Fed back from Phantom on retries
+    attempts = 0
+    last_forge_output = ""
+
+    while True:
+        attempts += 1
+        cb.begin_forge_run(task_id)
+
+        # Re-write prompt if Phantom gave us fix context
+        if extra_fix_context:
+            augmented = prompt_path.read_text() + f"\n\n<retry_context>\nPrior attempts failed. Phantom's guidance:\n{extra_fix_context}\n</retry_context>\n"
+            prompt_path.write_text(augmented)
+
+        # Apply compaction cascade before spawning
+        try:
+            from compactor import Compactor
+            Compactor(project_root, model=model).compact(prompt_path)
+        except Exception as _e:
+            pass  # Compaction is best-effort; don't fail the task if it errors
+
+        # Spawn Forge
+        try:
+            with cb.acquire_forge_slot():
+                kwargs = {"model": model, "timeout": 1800}
+                if inv.get("type") == "wrap-gsd-agent":
+                    kwargs["agent_wrap"] = inv["name"]
+                else:
+                    spf = inv.get("system_prompt_file", "")
+                    kwargs["system_prompt_file"] = str(CAE_ROOT / spf) if spf else None
+                forge_result = spawn_forge(task_id, prompt_path, **kwargs)
+        except LimitExceeded as e:
+            return {"success": False, "task_id": task_id, "attempts": attempts, "final_status": f"circuit_breaker:{e.limit_name}", "branch": branch, "notes": str(e)}
+
+        forge_ok = forge_result["exit_code"] == 0
+        last_forge_output = forge_result["output"]
+        cb.record_forge_attempt(task_id, success=forge_ok)
+
+        if not forge_ok:
+            # Forge itself failed (not just a rejected review)
+            if cb.should_escalate_to_phantom(task_id):
+                # Phantom time
+                forge_summaries = sorted(task_dir.glob("SUMMARY-*.md"))
+                ph_result = phantom.investigate(
+                    task_id, plan_path, forge_summaries,
+                    git_diff="", error_output=forge_result.get("output", "") + "\n" + Path(str(prompt_path) + ".error").read_text() if Path(str(prompt_path) + ".error").exists() else "",
+                )
+                cb.record_phantom_attempt(task_id, success=(ph_result.kind in ("fix", "inline_done")))
+
+                if ph_result.kind == "fix":
+                    extra_fix_context = ph_result.fix_instructions or ""
+                    # Loop back for another Forge attempt
+                    continue
+                elif ph_result.kind == "inline_done":
+                    # Phantom says it's fixed — verify via Sentinel
+                    pass
+                else:
+                    # Escalate or failed
+                    forge_branch("abandon", task_id, project_root)
+                    return {"success": False, "task_id": task_id, "attempts": attempts, "final_status": f"phantom_{ph_result.kind}", "branch": branch, "notes": (ph_result.report or "")[:500]}
+
+                if cb.should_halt():
+                    forge_branch("abandon", task_id, project_root)
+                    return {"success": False, "task_id": task_id, "attempts": attempts, "final_status": "halt", "branch": branch, "notes": "Phantom exhausted"}
+            elif attempts < cb.cfg.max_retries:
+                # Plain retry without Phantom
+                continue
+            else:
+                forge_branch("abandon", task_id, project_root)
+                return {"success": False, "task_id": task_id, "attempts": attempts, "final_status": "forge_retry_exhausted", "branch": branch}
+
+        # Save a SUMMARY for this attempt (Phantom uses these on escalation)
+        summary_path = task_dir / f"SUMMARY-attempt{attempts}.md"
+        summary_path.write_text(last_forge_output)
+
+        # Sentinel review (stub until T8 lands)
+        verdict = sentinel_review(task_id, plan_path, branch, project_root, model, cb)
+
+        if verdict["approve"]:
+            # Merge and return
+            merge = forge_branch("merge", task_id, project_root, extra=["main"])
+            if merge.returncode != 0:
+                # Try inferring target
+                merge2 = forge_branch("merge", task_id, project_root)
+                if merge2.returncode != 0:
+                    return {"success": False, "task_id": task_id, "attempts": attempts, "final_status": "merge_failed", "branch": branch, "notes": merge.stderr + merge2.stderr}
+            return {"success": True, "task_id": task_id, "attempts": attempts, "final_status": "approved_and_merged", "branch": branch, "sentinel_stub": verdict.get("_stub", False)}
+
+        # Rejected
+        if attempts >= cb.cfg.max_retries:
+            forge_branch("abandon", task_id, project_root)
+            return {"success": False, "task_id": task_id, "attempts": attempts, "final_status": "sentinel_retry_exhausted", "branch": branch, "notes": "issues=" + str(verdict.get("issues"))}
+        # Feed issues into next retry
+        extra_fix_context = "Sentinel issues:\n" + json.dumps(verdict.get("issues", []), indent=2)
+        continue
+
+
+# ─── Wave orchestration ─────────────────────────────────────────────────
+def execute_wave(
+    wave_num: int,
+    plans: list,
+    phase_dir: Path,
+    project_root: Path,
+    agent_models: dict,
+    sc_mode: bool,
+    cb: CircuitBreakers,
+    phantom: Phantom,
+) -> List[dict]:
+    """Run all tasks in a wave in parallel (bounded by circuit breaker)."""
+    forge_resolved = resolve_role(agent_models, "forge", sc_mode)
+    results = []
+    jobs = []
+
+    for plan_path, plan_fm, plan_body in plans:
+        tasks = parse_tasks(plan_body)
+        for i, task in enumerate(tasks, 1):
+            task_id = f"p{plan_fm.get('phase', '?')}-pl{plan_fm.get('plan', 'X')}-t{i}-{uuid.uuid4().hex[:6]}"
+            jobs.append((task, task_id, plan_fm, plan_path))
+
+    max_workers = cb.cfg.max_concurrent_forge
+    print(f"  Running {len(jobs)} tasks (up to {max_workers} parallel)...")
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as pool:
+        futures = {
+            pool.submit(execute_one_task, task, tid, fm, ppath, phase_dir, project_root, forge_resolved, cb, phantom): tid
+            for (task, tid, fm, ppath) in jobs
+        }
+        for fut in concurrent.futures.as_completed(futures):
+            r = fut.result()
+            results.append(r)
+            status_mark = "✓" if r["success"] else "✗"
+            print(f"    {status_mark} {r['task_id']}: {r['final_status']} (attempts={r['attempts']})")
+
+    return results
+
+
+# ─── Commands ───────────────────────────────────────────────────────────
+def cmd_execute_phase(phase_num: str, dry_run: bool = False):
     project_root = Path.cwd()
     pcfg = load_planning_config(project_root)
-    am = load_yaml(AGENT_MODELS_PATH)
+    agent_models = load_yaml(AGENT_MODELS_PATH)
     sc_mode = detect_smart_contract_mode(project_root)
     phase_dir = find_phase_dir(project_root, phase_num)
 
     plan_files = sorted(phase_dir.glob("*-PLAN.md"))
     if not plan_files:
-        # Some GSD projects use PLAN.md directly
         if (phase_dir / "PLAN.md").exists():
             plan_files = [phase_dir / "PLAN.md"]
         else:
             die(f"no *-PLAN.md files found in {phase_dir}")
 
-    # ─── Print dispatch plan ─────────────────────────────────────────
-    print(f"CAE dispatch plan — phase {phase_num}")
-    print(f"  Project: {project_root}")
-    print(f"  Phase dir: {phase_dir.relative_to(project_root)}")
-    print(f"  Smart contract mode: {'YES' if sc_mode else 'no'}")
-    print(f"  cae_config_version: {pcfg.get('cae_config_version', '(missing)')}")
-    print(f"  Plan files: {len(plan_files)}")
-    print()
-
-    # Group plans by wave
+    # Group by wave
     waves = {}
     for pf in plan_files:
         fm, body = parse_plan_frontmatter(pf)
         wave = fm.get("wave", 1)
         waves.setdefault(wave, []).append((pf, fm, body))
 
+    print(f"CAE execute-phase {phase_num}  (dry-run={dry_run})")
+    print(f"  Project: {project_root}")
+    print(f"  Phase dir: {phase_dir.relative_to(project_root)}")
+    print(f"  Smart contract mode: {'YES' if sc_mode else 'no'}")
+    print(f"  Waves: {len(waves)}")
+    print()
+
+    if dry_run:
+        _dry_run_print(waves, agent_models, sc_mode, phase_num)
+        return
+
+    # Initialize CB + Phantom
+    cb = CircuitBreakers.load(project_root)
+    phantom = Phantom(project_root, cb)
+
+    # Install branch guard if not already
+    guard_installer = CAE_ROOT / "scripts" / "install-branch-guard.sh"
+    subprocess.run(["bash", str(guard_installer), str(project_root)], check=False)
+
+    all_results = []
+    for wave_num in sorted(waves.keys()):
+        print(f"━━ Wave {wave_num} ━━")
+        plans = waves[wave_num]
+        wave_results = execute_wave(wave_num, plans, phase_dir, project_root, agent_models, sc_mode, cb, phantom)
+        all_results.extend(wave_results)
+        if any(not r["success"] for r in wave_results):
+            print(f"  ⚠ Wave {wave_num} had failures; not proceeding to next wave without manual review")
+            break
+        if cb.should_halt():
+            print(f"  ⚠ Circuit breakers halted execution")
+            break
+
+    print()
+    print("━━ Phase summary ━━")
+    ok = sum(1 for r in all_results if r["success"])
+    fail = len(all_results) - ok
+    stubs = sum(1 for r in all_results if r.get("sentinel_stub"))
+    print(f"  Tasks: {ok} succeeded, {fail} failed")
+    if stubs:
+        print(f"  ⚠ Sentinel stub auto-approved {stubs} tasks (T8 not yet wired)")
+
+    # Write phase summary file
+    summary_path = phase_dir / "CAE-SUMMARY.md"
+    with open(summary_path, "w") as f:
+        f.write(f"# CAE Phase {phase_num} Execution Summary\n\n")
+        f.write(f"**Run:** {time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())}\n")
+        f.write(f"**Tasks:** {ok} succeeded, {fail} failed\n\n")
+        for r in all_results:
+            mark = "✓" if r["success"] else "✗"
+            f.write(f"- {mark} `{r['task_id']}` — {r['final_status']} (attempts={r['attempts']})\n")
+
+    sys.exit(0 if fail == 0 else 1)
+
+
+def _dry_run_print(waves, agent_models, sc_mode, phase_num):
+    forge_resolved = resolve_role(agent_models, "forge", sc_mode)
     total_tasks = 0
     for wave_num in sorted(waves.keys()):
         print(f"━━ Wave {wave_num} ━━")
         for pf, fm, body in waves[wave_num]:
             tasks = parse_tasks(body)
-            print(f"  Plan: {pf.name}")
-            print(f"    Objective: {fm.get('plan', '(no id)')} / type={fm.get('type', '?')}")
-            print(f"    Tasks: {len(tasks)}")
-
+            print(f"  Plan: {pf.name}  tasks={len(tasks)}")
             for i, t in enumerate(tasks, 1):
-                role = role_for_task(am, fm)
-                resolved = resolve_role(am, role, sc_mode)
-                branch = f"forge/phase-{phase_num}-p{fm.get('plan','X')}-t{i}"
-                print(f"      Task {i}: {t['name'][:60]}")
-                print(f"        role={role}  model={resolved['model']}  provider={resolved['provider']}")
-                print(f"        invocation: {format_invocation(resolved)}")
-                effort = resolved.get("effort")
-                if effort:
-                    print(f"        effort: {effort}")
-                print(f"        branch: {branch}")
+                inv = forge_resolved["invocation_mode"]
+                inv_desc = f"wrap:{inv.get('name')}" if inv.get("type") == "wrap-gsd-agent" else f"direct:{inv.get('system_prompt_file', '').split('/')[-1]}"
+                print(f"    Task {i}: {t['name'][:60]}")
+                print(f"      model={forge_resolved['model']}  invocation={inv_desc}")
                 total_tasks += 1
         print()
-
-    # Sentinel step per wave
-    print("━━ After each wave: Sentinel review ━━")
-    sent = resolve_role(am, "sentinel", sc_mode)
-    print(f"  role=sentinel  model={sent['model']}  provider={sent['provider']}")
-    print(f"  invocation: {format_invocation(sent)}")
-    print(f"  fallback: {am.get('sentinel', {}).get('fallback', '(none)')}")
+    sent = resolve_role(agent_models, "sentinel", sc_mode)
+    print(f"━━ After each wave: Sentinel ━━")
+    print(f"  model={sent['model']}  provider={sent['provider']}  (T8 wires real; currently stub)")
     print()
-
-    print(f"━━ Phase totals ━━")
-    print(f"  Tasks across all waves: {total_tasks}")
-    print(f"  Waves: {len(waves)}")
-    print()
-    print("(dry-run — no subprocesses spawned. T7 will wire the actual adapters.)")
+    print(f"Total: {total_tasks} tasks across {len(waves)} waves")
 
 
 def cmd_help():
@@ -239,10 +583,12 @@ def main():
         return
     if argv[0] == "execute-phase":
         if len(argv) < 2:
-            die("usage: cae execute-phase <phase-number>")
-        cmd_execute_phase(argv[1])
+            die("usage: cae execute-phase <phase-number> [--dry-run]")
+        phase = argv[1]
+        dry = "--dry-run" in argv[2:]
+        cmd_execute_phase(phase, dry_run=dry)
         return
-    die(f"unknown command: {argv[0]}\nrun 'cae help' for usage")
+    die(f"unknown command: {argv[0]}")
 
 
 if __name__ == "__main__":
