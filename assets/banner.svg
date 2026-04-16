@@ -1,156 +1,86 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 300" width="960" height="300" role="img" aria-label="CTRL + ALT + ELITE — retro keyboard keys">
   <defs>
-    <!-- Keycap face: top-down gradient, light at top (catching light) to darker at bottom -->
+    <!-- Keycap top (bright cream gradient) -->
     <linearGradient id="capFace" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%"   stop-color="#f6eacb"/>
-      <stop offset="45%"  stop-color="#e9dbae"/>
-      <stop offset="100%" stop-color="#c8b786"/>
+      <stop offset="0%"   stop-color="#faedcc"/>
+      <stop offset="50%"  stop-color="#ecdeb0"/>
+      <stop offset="100%" stop-color="#d4c28a"/>
     </linearGradient>
 
-    <!-- Pressed state — warm amber wash over the face -->
-    <linearGradient id="capFaceLit" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%"   stop-color="#ffe5b0"/>
-      <stop offset="100%" stop-color="#d9b770"/>
+    <!-- Keycap front/side (darker beige — the visible depth below + right of top) -->
+    <linearGradient id="capSide" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"   stop-color="#b39f6f"/>
+      <stop offset="100%" stop-color="#8a7750"/>
     </linearGradient>
 
-    <!-- Keyboard deck -->
-    <linearGradient id="deckGrad" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%"   stop-color="#d5c599"/>
-      <stop offset="100%" stop-color="#a8966d"/>
-    </linearGradient>
-
-    <!-- No surrounding "room" — whole banner is keyboard. Background matches deck. -->
+    <!-- Whole-banner beige -->
     <linearGradient id="bgGrad" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0%"   stop-color="#dccda2"/>
       <stop offset="100%" stop-color="#b09e74"/>
     </linearGradient>
-
-    <!-- Drop shadow for keycap -->
-    <filter id="keyShadow" x="-15%" y="-15%" width="130%" height="150%">
-      <feGaussianBlur in="SourceAlpha" stdDeviation="3"/>
-      <feOffset dx="0" dy="5"/>
-      <feComponentTransfer><feFuncA type="linear" slope="0.45"/></feComponentTransfer>
-      <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
-    </filter>
-
-    <!-- Under-cap amber glow on press -->
-    <radialGradient id="underGlow" cx="50%" cy="50%" r="60%">
-      <stop offset="0%"   stop-color="#ffa640" stop-opacity="0.75"/>
-      <stop offset="100%" stop-color="#ffa640" stop-opacity="0"/>
-    </radialGradient>
   </defs>
 
-  <!-- ═══ Whole banner = beige keyboard deck, no surrounding dark frame ═══ -->
   <rect width="100%" height="100%" fill="url(#bgGrad)"/>
 
-  <!-- Deck bezel (thin highlighted rim around the inside of the frame) -->
-  <rect x="4" y="4" width="952" height="292" rx="10" fill="none" stroke="#8a7952" stroke-width="2" opacity="0.6"/>
-  <rect x="6" y="6" width="948" height="2" rx="1" fill="#f6eacb" opacity="0.6"/>
-  <rect x="6" y="292" width="948" height="2" rx="1" fill="#4a3e22" opacity="0.45"/>
+  <!-- Bezel -->
+  <rect x="4" y="4" width="952" height="292" rx="10" fill="none" stroke="#8a7952" stroke-width="2" opacity="0.55"/>
+  <rect x="6" y="6" width="948" height="2" fill="#f6eacb" opacity="0.6"/>
+  <rect x="6" y="292" width="948" height="2" fill="#4a3e22" opacity="0.4"/>
 
-  <!-- Aged-plastic scuff highlights -->
+  <!-- Scuffs -->
   <g stroke="#f0e1b4" stroke-width="0.6" opacity="0.2" stroke-linecap="round">
     <line x1="70"  y1="82"  x2="180" y2="60"/>
-    <line x1="640" y1="255" x2="780" y2="232"/>
+    <line x1="640" y1="265" x2="780" y2="242"/>
     <line x1="320" y1="72"  x2="420" y2="56"/>
   </g>
 
-  <!-- Vintage nameplate -->
-  <text x="46" y="260" font-family="'Courier New','Menlo',monospace" font-size="9" fill="#5d4f2e" letter-spacing="1.8" opacity="0.85">MODEL  CAE-84  ·  C·A·E  MICROSYSTEMS</text>
+  <!-- Nameplate -->
+  <text x="46" y="279" font-family="'Courier New','Menlo',monospace" font-size="9" fill="#5d4f2e" letter-spacing="1.8" opacity="0.85">MODEL  CAE-84  ·  C·A·E  MICROSYSTEMS</text>
 
-  <!-- Power LED -->
-  <circle cx="898" cy="66" r="3.5" fill="#ff9830">
-    <animate attributeName="opacity" values="1;0.35;1" keyTimes="0;0.5;1" dur="2s" repeatCount="indefinite"/>
-  </circle>
+  <!-- PWR LED -->
+  <circle cx="898" cy="66" r="3.5" fill="#ff9830"/>
   <text x="885" y="70" text-anchor="end" font-family="'Courier New',monospace" font-size="9" fill="#5d4f2e" letter-spacing="1.5">PWR</text>
 
-  <!-- Deck strip separating top band from key area -->
+  <!-- Divider -->
   <line x1="30" y1="88" x2="930" y2="88" stroke="#8a7952" stroke-width="0.5" opacity="0.5"/>
 
   <!--
-    Simple keycap: a single rounded rectangle with a top-to-bottom gradient.
-    - Gradient light→dark fakes sculpted lighting without frame-in-frame.
-    - Thin bright line at the top edge = specular highlight
-    - Thin dark line at the bottom edge = self-shadow
-    - Drop shadow beneath whole keycap
-    - On press, keycap group translates down 6px, under-cap amber glow appears
+    3D keycap = FRONT FACE (darker) underneath + TOP FACE (lighter) on top.
+    The front face peeks out below the top face, creating the "thickness" illusion.
+    All solid shapes, no filters, no animation — renders identically everywhere.
   -->
 
-  <!-- ═══════════════════════ KEY 1: CTRL ═══════════════════════ -->
-  <g>
-    <!-- Under-cap amber glow (visible when pressed) -->
-    <ellipse cx="165" cy="212" rx="95" ry="8" fill="url(#underGlow)" opacity="0">
-      <animate attributeName="opacity" values="0;0.9;0" keyTimes="0;0.08;0.16" dur="3.6s" begin="0s" repeatCount="indefinite"/>
-    </ellipse>
+  <!-- ═══ CTRL ═══ -->
+  <!-- Under-key shadow -->
+  <ellipse cx="167" cy="238" rx="95" ry="5" fill="#4a3e22" opacity="0.32"/>
+  <!-- Front/right face (drawn first, slightly offset down+right — peeks out as depth) -->
+  <rect x="86" y="108" width="174" height="118" rx="9" ry="9" fill="url(#capSide)" stroke="#6d5d38" stroke-width="1"/>
+  <!-- Top face (cream, sits ABOVE and slightly OFFSET from the darker body) -->
+  <rect x="80" y="100" width="170" height="110" rx="8" ry="8" fill="url(#capFace)" stroke="#7a6a42" stroke-width="1.2"/>
+  <!-- Top-edge specular highlight -->
+  <line x1="88" y1="106" x2="242" y2="106" stroke="#fff8dc" stroke-width="1.4" opacity="0.75"/>
+  <!-- Bottom self-shadow -->
+  <line x1="88" y1="205" x2="242" y2="205" stroke="#5a4a2a" stroke-width="1" opacity="0.4"/>
+  <!-- Label -->
+  <text x="165" y="165" text-anchor="middle" font-family="'Courier New','Menlo','Consolas',monospace" font-weight="700" font-size="30" fill="#2a1f0c" letter-spacing="4">CTRL</text>
 
-    <!-- Keycap group — translates down on press -->
-    <g>
-      <animateTransform attributeName="transform" type="translate" values="0,0; 0,6; 0,0" keyTimes="0;0.08;0.16" dur="3.6s" begin="0s" repeatCount="indefinite"/>
-
-      <!-- Keycap body: single rounded rect, face gradient (NO fill animation — breaks in SMIL) -->
-      <rect x="80" y="100" width="170" height="110" rx="8" ry="8" fill="url(#capFace)" stroke="#7a6a42" stroke-width="1.2" filter="url(#keyShadow)"/>
-      <!-- Amber press overlay (semi-transparent, fades in on press) -->
-      <rect x="80" y="100" width="170" height="110" rx="8" ry="8" fill="#ffcc73" opacity="0" pointer-events="none">
-        <animate attributeName="opacity" values="0;0.35;0" keyTimes="0;0.08;0.16" dur="3.6s" begin="0s" repeatCount="indefinite"/>
-      </rect>
-
-      <!-- Top-edge specular highlight -->
-      <line x1="88" y1="106" x2="242" y2="106" stroke="#fff8dc" stroke-width="1.4" opacity="0.7"/>
-
-      <!-- Bottom-edge self-shadow -->
-      <line x1="88" y1="204" x2="242" y2="204" stroke="#5a4a2a" stroke-width="1" opacity="0.45"/>
-
-      <!-- Left-edge vertical sheen (subtle light catching the side) -->
-      <line x1="86" y1="110" x2="86" y2="200" stroke="#fff8dc" stroke-width="0.8" opacity="0.3"/>
-
-      <!-- Label -->
-      <text x="165" y="165" text-anchor="middle" font-family="'Courier New','Menlo','Consolas',monospace" font-weight="700" font-size="30" fill="#2a1f0c" letter-spacing="4">CTRL</text>
-    </g>
-  </g>
-
-  <!-- "+" separator CTRL/ALT -->
   <text x="285" y="162" text-anchor="middle" font-family="'Courier New',monospace" font-weight="700" font-size="28" fill="#7a683d">+</text>
 
-  <!-- ═══════════════════════ KEY 2: ALT ═══════════════════════ -->
-  <g>
-    <ellipse cx="378" cy="212" rx="88" ry="8" fill="url(#underGlow)" opacity="0">
-      <animate attributeName="opacity" values="0;0.9;0" keyTimes="0;0.08;0.16" dur="3.6s" begin="0.4s" repeatCount="indefinite"/>
-    </ellipse>
+  <!-- ═══ ALT ═══ -->
+  <ellipse cx="382" cy="238" rx="90" ry="5" fill="#4a3e22" opacity="0.32"/>
+  <rect x="306" y="108" width="164" height="118" rx="9" ry="9" fill="url(#capSide)" stroke="#6d5d38" stroke-width="1"/>
+  <rect x="300" y="100" width="160" height="110" rx="8" ry="8" fill="url(#capFace)" stroke="#7a6a42" stroke-width="1.2"/>
+  <line x1="308" y1="106" x2="452" y2="106" stroke="#fff8dc" stroke-width="1.4" opacity="0.75"/>
+  <line x1="308" y1="205" x2="452" y2="205" stroke="#5a4a2a" stroke-width="1" opacity="0.4"/>
+  <text x="380" y="165" text-anchor="middle" font-family="'Courier New','Menlo','Consolas',monospace" font-weight="700" font-size="30" fill="#2a1f0c" letter-spacing="4">ALT</text>
 
-    <g>
-      <animateTransform attributeName="transform" type="translate" values="0,0; 0,6; 0,0" keyTimes="0;0.08;0.16" dur="3.6s" begin="0.4s" repeatCount="indefinite"/>
-
-      <rect x="300" y="100" width="160" height="110" rx="8" ry="8" fill="url(#capFace)" stroke="#7a6a42" stroke-width="1.2" filter="url(#keyShadow)"/>
-      <rect x="300" y="100" width="160" height="110" rx="8" ry="8" fill="#ffcc73" opacity="0" pointer-events="none">
-        <animate attributeName="opacity" values="0;0.35;0" keyTimes="0;0.08;0.16" dur="3.6s" begin="0.4s" repeatCount="indefinite"/>
-      </rect>
-      <line x1="308" y1="106" x2="452" y2="106" stroke="#fff8dc" stroke-width="1.4" opacity="0.7"/>
-      <line x1="308" y1="204" x2="452" y2="204" stroke="#5a4a2a" stroke-width="1" opacity="0.45"/>
-      <line x1="306" y1="110" x2="306" y2="200" stroke="#fff8dc" stroke-width="0.8" opacity="0.3"/>
-      <text x="380" y="165" text-anchor="middle" font-family="'Courier New','Menlo','Consolas',monospace" font-weight="700" font-size="30" fill="#2a1f0c" letter-spacing="4">ALT</text>
-    </g>
-  </g>
-
-  <!-- "+" separator ALT/ELITE -->
   <text x="491" y="162" text-anchor="middle" font-family="'Courier New',monospace" font-weight="700" font-size="28" fill="#7a683d">+</text>
 
-  <!-- ═══════════════════════ KEY 3: ELITE ═══════════════════════ -->
-  <g>
-    <ellipse cx="695" cy="212" rx="185" ry="8" fill="url(#underGlow)" opacity="0">
-      <animate attributeName="opacity" values="0;0.9;0" keyTimes="0;0.08;0.16" dur="3.6s" begin="0.8s" repeatCount="indefinite"/>
-    </ellipse>
-
-    <g>
-      <animateTransform attributeName="transform" type="translate" values="0,0; 0,6; 0,0" keyTimes="0;0.08;0.16" dur="3.6s" begin="0.8s" repeatCount="indefinite"/>
-
-      <rect x="510" y="100" width="370" height="110" rx="8" ry="8" fill="url(#capFace)" stroke="#7a6a42" stroke-width="1.2" filter="url(#keyShadow)"/>
-      <rect x="510" y="100" width="370" height="110" rx="8" ry="8" fill="#ffcc73" opacity="0" pointer-events="none">
-        <animate attributeName="opacity" values="0;0.35;0" keyTimes="0;0.08;0.16" dur="3.6s" begin="0.8s" repeatCount="indefinite"/>
-      </rect>
-      <line x1="518" y1="106" x2="872" y2="106" stroke="#fff8dc" stroke-width="1.4" opacity="0.7"/>
-      <line x1="518" y1="204" x2="872" y2="204" stroke="#5a4a2a" stroke-width="1" opacity="0.45"/>
-      <line x1="516" y1="110" x2="516" y2="200" stroke="#fff8dc" stroke-width="0.8" opacity="0.3"/>
-      <text x="695" y="165" text-anchor="middle" font-family="'Courier New','Menlo','Consolas',monospace" font-weight="700" font-size="30" fill="#2a1f0c" letter-spacing="6">ELITE</text>
-    </g>
-  </g>
+  <!-- ═══ ELITE ═══ -->
+  <ellipse cx="697" cy="238" rx="195" ry="5" fill="#4a3e22" opacity="0.32"/>
+  <rect x="516" y="108" width="374" height="118" rx="9" ry="9" fill="url(#capSide)" stroke="#6d5d38" stroke-width="1"/>
+  <rect x="510" y="100" width="370" height="110" rx="8" ry="8" fill="url(#capFace)" stroke="#7a6a42" stroke-width="1.2"/>
+  <line x1="518" y1="106" x2="872" y2="106" stroke="#fff8dc" stroke-width="1.4" opacity="0.75"/>
+  <line x1="518" y1="205" x2="872" y2="205" stroke="#5a4a2a" stroke-width="1" opacity="0.4"/>
+  <text x="695" y="165" text-anchor="middle" font-family="'Courier New','Menlo','Consolas',monospace" font-weight="700" font-size="30" fill="#2a1f0c" letter-spacing="6">ELITE</text>
 </svg>
