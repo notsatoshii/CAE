@@ -1,0 +1,249 @@
+#!/usr/bin/env python3
+"""
+CAE — Ctrl+Alt+Elite orchestrator (Phase 1, T4 skeleton: dry-run only)
+
+Usage:
+  cae execute-phase <N>      Dry-run the execution plan for phase N
+  cae help                   Show this help
+  cae version                Print version
+
+Reads:
+  .planning/config.json          (project CAE config)
+  .planning/phases/<N>-*/PLAN.md (plans to execute)
+  config/agent-models.yaml       (from CAE repo root — roles & model routing)
+
+Does NOT (Phase 1 T4 scope): spawn subprocesses, modify git, call APIs.
+Only prints what it WOULD do.
+"""
+import json
+import os
+import re
+import sys
+from pathlib import Path
+
+VERSION = "0.1.0-T4"
+
+# Locate CAE repo root (where agent-models.yaml lives)
+_THIS = Path(__file__).resolve()
+CAE_ROOT = _THIS.parent.parent
+AGENT_MODELS_PATH = CAE_ROOT / "config" / "agent-models.yaml"
+
+
+def die(msg, code=1):
+    print(f"error: {msg}", file=sys.stderr)
+    sys.exit(code)
+
+
+def load_yaml(path):
+    try:
+        import yaml
+    except ImportError:
+        die("PyYAML required. apt install python3-yaml or pip install pyyaml")
+    with open(path) as f:
+        return yaml.safe_load(f)
+
+
+def load_planning_config(project_root):
+    cfg_file = project_root / ".planning" / "config.json"
+    if not cfg_file.exists():
+        die(f"{cfg_file} not found — run /gsd-new-project then cae-init first")
+    return json.loads(cfg_file.read_text())
+
+
+def find_phase_dir(project_root, phase_num):
+    phases_root = project_root / ".planning" / "phases"
+    if not phases_root.is_dir():
+        die(f"{phases_root} not found")
+    padded = f"{int(phase_num):02d}"
+    candidates = sorted(phases_root.glob(f"{padded}-*"))
+    if not candidates:
+        # Fallback to unpadded glob (some GSD projects use "1-foo")
+        candidates = sorted(phases_root.glob(f"{phase_num}-*"))
+    if not candidates:
+        die(f"no phase directory found for phase {phase_num} in {phases_root}")
+    return candidates[0]
+
+
+def parse_plan_frontmatter(plan_path):
+    """Extract YAML frontmatter from a PLAN.md file. Returns dict or {}."""
+    content = plan_path.read_text()
+    m = re.match(r"^---\n(.*?)\n---\n", content, re.DOTALL)
+    if not m:
+        return {}, content
+    try:
+        import yaml
+        fm = yaml.safe_load(m.group(1)) or {}
+    except Exception:
+        fm = {}
+    body = content[m.end():]
+    return fm, body
+
+
+def parse_tasks(body):
+    """Extract <task> blocks. Returns list of dicts with 'name' and raw text."""
+    tasks = []
+    for m in re.finditer(r"<task[^>]*>(.*?)</task>", body, re.DOTALL):
+        block = m.group(1)
+        name_m = re.search(r"<name>(.*?)</name>", block, re.DOTALL)
+        tasks.append({
+            "name": (name_m.group(1).strip() if name_m else "<unnamed task>"),
+            "raw": block.strip(),
+        })
+    return tasks
+
+
+def role_for_task(agent_models, plan_fm):
+    """
+    Decide which CAE role runs a Forge task for this plan.
+    Phase 1 T4: simple — executor maps to Forge.
+    Future: task frontmatter can override (e.g., specialist: aegis).
+    """
+    return "forge"
+
+
+def resolve_role(agent_models, role_name, sc_mode):
+    """
+    Given a role name and smart-contract mode, return the effective
+    {model, provider, invocation_mode, effort} for this invocation.
+    """
+    role = agent_models.get(role_name)
+    if role is None:
+        die(f"role '{role_name}' not defined in agent-models.yaml")
+
+    # Mode-aware roles (Scout currently)
+    if "modes" in role:
+        mode = role.get("default_mode")
+        role = role["modes"].get(mode, {})
+
+    model = role.get("model")
+    if sc_mode and "smart_contract_override" in role:
+        model = role["smart_contract_override"]
+
+    # Alias resolution
+    aliases = {"opus": "claude-opus-4-6", "sonnet": "claude-sonnet-4-6", "haiku": "claude-haiku-4-5"}
+    model = aliases.get(model, model)
+
+    return {
+        "model": model,
+        "provider": role.get("provider", "unknown"),
+        "invocation_mode": role.get("invocation_mode", {}),
+        "effort": role.get("effort"),
+    }
+
+
+def format_invocation(resolved):
+    inv = resolved["invocation_mode"]
+    itype = inv.get("type")
+    if itype == "wrap-gsd-agent":
+        return f"wrap → --agent {inv.get('name')}"
+    if itype == "direct-prompt":
+        return f"direct → {inv.get('system_prompt_file')}"
+    return "(unknown)"
+
+
+def detect_smart_contract_mode(project_root):
+    markers = ["*.sol", "*.vy", "foundry.toml", "hardhat.config.js",
+               "hardhat.config.ts", "hardhat.config.cjs", "truffle-config.js",
+               "remappings.txt"]
+    for m in markers:
+        # Search up to 3 levels deep
+        for candidate in project_root.rglob(m):
+            # Skip node_modules / .git hits
+            rel = candidate.relative_to(project_root)
+            if any(p in str(rel) for p in ("node_modules", ".git", ".planning")):
+                continue
+            return True
+    return False
+
+
+def cmd_execute_phase(phase_num):
+    project_root = Path.cwd()
+    pcfg = load_planning_config(project_root)
+    am = load_yaml(AGENT_MODELS_PATH)
+    sc_mode = detect_smart_contract_mode(project_root)
+    phase_dir = find_phase_dir(project_root, phase_num)
+
+    plan_files = sorted(phase_dir.glob("*-PLAN.md"))
+    if not plan_files:
+        # Some GSD projects use PLAN.md directly
+        if (phase_dir / "PLAN.md").exists():
+            plan_files = [phase_dir / "PLAN.md"]
+        else:
+            die(f"no *-PLAN.md files found in {phase_dir}")
+
+    # ─── Print dispatch plan ─────────────────────────────────────────
+    print(f"CAE dispatch plan — phase {phase_num}")
+    print(f"  Project: {project_root}")
+    print(f"  Phase dir: {phase_dir.relative_to(project_root)}")
+    print(f"  Smart contract mode: {'YES' if sc_mode else 'no'}")
+    print(f"  cae_config_version: {pcfg.get('cae_config_version', '(missing)')}")
+    print(f"  Plan files: {len(plan_files)}")
+    print()
+
+    # Group plans by wave
+    waves = {}
+    for pf in plan_files:
+        fm, body = parse_plan_frontmatter(pf)
+        wave = fm.get("wave", 1)
+        waves.setdefault(wave, []).append((pf, fm, body))
+
+    total_tasks = 0
+    for wave_num in sorted(waves.keys()):
+        print(f"━━ Wave {wave_num} ━━")
+        for pf, fm, body in waves[wave_num]:
+            tasks = parse_tasks(body)
+            print(f"  Plan: {pf.name}")
+            print(f"    Objective: {fm.get('plan', '(no id)')} / type={fm.get('type', '?')}")
+            print(f"    Tasks: {len(tasks)}")
+
+            for i, t in enumerate(tasks, 1):
+                role = role_for_task(am, fm)
+                resolved = resolve_role(am, role, sc_mode)
+                branch = f"forge/phase-{phase_num}-p{fm.get('plan','X')}-t{i}"
+                print(f"      Task {i}: {t['name'][:60]}")
+                print(f"        role={role}  model={resolved['model']}  provider={resolved['provider']}")
+                print(f"        invocation: {format_invocation(resolved)}")
+                effort = resolved.get("effort")
+                if effort:
+                    print(f"        effort: {effort}")
+                print(f"        branch: {branch}")
+                total_tasks += 1
+        print()
+
+    # Sentinel step per wave
+    print("━━ After each wave: Sentinel review ━━")
+    sent = resolve_role(am, "sentinel", sc_mode)
+    print(f"  role=sentinel  model={sent['model']}  provider={sent['provider']}")
+    print(f"  invocation: {format_invocation(sent)}")
+    print(f"  fallback: {am.get('sentinel', {}).get('fallback', '(none)')}")
+    print()
+
+    print(f"━━ Phase totals ━━")
+    print(f"  Tasks across all waves: {total_tasks}")
+    print(f"  Waves: {len(waves)}")
+    print()
+    print("(dry-run — no subprocesses spawned. T7 will wire the actual adapters.)")
+
+
+def cmd_help():
+    print(__doc__.strip())
+
+
+def main():
+    argv = sys.argv[1:]
+    if not argv or argv[0] in ("-h", "--help", "help"):
+        cmd_help()
+        return
+    if argv[0] in ("-v", "--version", "version"):
+        print(f"cae {VERSION}")
+        return
+    if argv[0] == "execute-phase":
+        if len(argv) < 2:
+            die("usage: cae execute-phase <phase-number>")
+        cmd_execute_phase(argv[1])
+        return
+    die(f"unknown command: {argv[0]}\nrun 'cae help' for usage")
+
+
+if __name__ == "__main__":
+    main()

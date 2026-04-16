@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Ctrl+Alt+Elite — Project Initialization
-# Sets up .planning/config.json with CAE agent skills and model routing.
-# Run this AFTER /gsd-new-project has created the .planning/ directory.
+# Ctrl+Alt+Elite — Project Initialization (R2)
+# Reads config/agent-models.yaml and generates .planning/config.json for GSD.
+# Also copies CAE skill files into project's .claude/skills/ for GSD agent_skills injection.
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CAE_ROOT="$(dirname "$SCRIPT_DIR")"
@@ -15,6 +15,28 @@ cd "$PROJECT_ROOT"
 if [ ! -d ".planning" ]; then
   echo "Error: .planning/ directory not found."
   echo "Run /gsd-new-project first, then run this script."
+  exit 1
+fi
+
+AGENT_MODELS_FILE="$CAE_ROOT/config/agent-models.yaml"
+if [ ! -f "$AGENT_MODELS_FILE" ]; then
+  echo "Error: $AGENT_MODELS_FILE not found. CAE install incomplete."
+  exit 1
+fi
+
+# Require js-yaml (bundled with Node via dependency, fallback to python yaml if missing)
+YAML_PARSER=""
+if command -v python3 >/dev/null 2>&1 && python3 -c "import yaml" 2>/dev/null; then
+  YAML_PARSER="python3"
+elif command -v node >/dev/null 2>&1; then
+  YAML_PARSER="node"
+  # Install js-yaml in /tmp if needed
+  if ! node -e "require('js-yaml')" 2>/dev/null; then
+    echo "Installing js-yaml..."
+    npm install -g js-yaml 2>/dev/null || npm install --prefix /tmp/cae-deps js-yaml 2>&1 | tail -2
+  fi
+else
+  echo "Error: need python3 with PyYAML or node with js-yaml to parse agent-models.yaml"
   exit 1
 fi
 
@@ -46,12 +68,7 @@ done
 
 if [ "$SMART_CONTRACT_MODE" = true ]; then
   echo ""
-  echo "  Smart contracts detected! Activating Aegis security auditor."
-  echo "  - Forge model override: claude-opus-4-6 for .sol/.vy files"
-  echo "  - Aegis security skill injected into verifier"
-  echo "  - Smart contract supplement loaded"
-
-  # Copy smart contract supplement to project AGENTS.md
+  echo "  Smart contracts detected — activating Aegis security auditor."
   if [ -f "$CAE_ROOT/config/smart-contract-supplement.md" ]; then
     if [ -f "AGENTS.md" ]; then
       echo "" >> AGENTS.md
@@ -64,67 +81,157 @@ if [ "$SMART_CONTRACT_MODE" = true ]; then
   fi
 fi
 
-# ─── Write config.json additions ──────────────────────────────────────
+# ─── Generate .planning/config.json from agent-models.yaml ─────────────
 echo ""
-echo "Configuring agent skills and model routing..."
+echo "Configuring agent skills and model routing from agent-models.yaml..."
 
 CONFIG_FILE=".planning/config.json"
-
 if [ ! -f "$CONFIG_FILE" ]; then
   echo '{}' > "$CONFIG_FILE"
 fi
 
-# Build the config patch using node
-node -e "
+# Resolve model ID from alias (short → full). Matches MODEL_ALIAS_MAP in GSD core.cjs.
+resolve_model_id() {
+  case "$1" in
+    opus) echo "claude-opus-4-6" ;;
+    sonnet) echo "claude-sonnet-4-6" ;;
+    haiku) echo "claude-haiku-4-5" ;;
+    *) echo "$1" ;;  # Already a full ID (e.g., claude-opus-4-6, gemini-2.5-pro)
+  esac
+}
+
+# Export for use in the Python/Node subshell
+export CAE_SMART_CONTRACT="$SMART_CONTRACT_MODE"
+export CAE_AGENT_MODELS_FILE="$AGENT_MODELS_FILE"
+export CAE_CONFIG_FILE="$CONFIG_FILE"
+
+if [ "$YAML_PARSER" = "python3" ]; then
+  python3 <<'PYEOF'
+import json, os, yaml
+
+am_file = os.environ["CAE_AGENT_MODELS_FILE"]
+cfg_file = os.environ["CAE_CONFIG_FILE"]
+sc_mode = os.environ["CAE_SMART_CONTRACT"] == "true"
+
+with open(am_file) as f:
+    agent_models = yaml.safe_load(f)
+
+with open(cfg_file) as f:
+    cfg = json.load(f)
+
+cfg["cae_config_version"] = 1
+cfg["agent_skills"] = cfg.get("agent_skills", {})
+cfg["model_overrides"] = cfg.get("model_overrides", {})
+cfg["resolve_model_ids"] = True
+
+def resolve_id(alias):
+    aliases = {"opus": "claude-opus-4-6", "sonnet": "claude-sonnet-4-6", "haiku": "claude-haiku-4-5"}
+    return aliases.get(alias, alias)
+
+def lookup_model_from(path):
+    """Resolve a dotted path like 'scout.modes.phase.model' in agent_models."""
+    node = agent_models
+    for part in path.split("."):
+        if isinstance(node, dict) and part in node:
+            node = node[part]
+        else:
+            return None
+    if isinstance(node, dict) and "model" in node:
+        return resolve_id(node["model"])
+    return None
+
+for gsd_agent, bridge in agent_models.get("gsd_bridge", {}).items():
+    skill = bridge.get("skill")
+    if skill:
+        existing = cfg["agent_skills"].get(gsd_agent, [])
+        if skill not in existing:
+            existing.append(skill)
+        cfg["agent_skills"][gsd_agent] = existing
+
+    model_from = bridge.get("model_from")
+    if model_from:
+        # Build a full path: e.g., "forge" → "forge.model"; "scout.modes.phase" stays
+        candidate = lookup_model_from(f"{model_from}.model") or lookup_model_from(model_from)
+        if candidate:
+            cfg["model_overrides"][gsd_agent] = candidate
+
+# Smart-contract override: forge → Opus when smart contracts detected
+if sc_mode:
+    forge_sc = agent_models.get("forge", {}).get("smart_contract_override")
+    if forge_sc:
+        cfg["model_overrides"]["gsd-executor"] = resolve_id(forge_sc)
+    # Inject Aegis skill into verifier
+    if ".claude/skills/cae-aegis" not in cfg["agent_skills"].get("gsd-verifier", []):
+        cfg["agent_skills"].setdefault("gsd-verifier", []).append(".claude/skills/cae-aegis")
+
+# Deduplicate skill arrays
+for k, v in cfg["agent_skills"].items():
+    cfg["agent_skills"][k] = list(dict.fromkeys(v))
+
+with open(cfg_file, "w") as f:
+    json.dump(cfg, f, indent=2)
+    f.write("\n")
+
+print(f"  Config written to {cfg_file}")
+PYEOF
+else
+  # Node fallback
+  node <<'NODEEOF'
 const fs = require('fs');
-const config = JSON.parse(fs.readFileSync('$CONFIG_FILE', 'utf8'));
+const yaml = require('js-yaml');
 
-// Agent skills mapping — inject CAE personas into GSD agent types
-config.agent_skills = config.agent_skills || {};
-config.agent_skills['gsd-executor'] = (config.agent_skills['gsd-executor'] || []).concat(['.claude/skills/cae-forge']);
-config.agent_skills['gsd-planner'] = (config.agent_skills['gsd-planner'] || []).concat(['.claude/skills/cae-arch']);
-config.agent_skills['gsd-plan-checker'] = (config.agent_skills['gsd-plan-checker'] || []).concat(['.claude/skills/cae-arch']);
-config.agent_skills['gsd-phase-researcher'] = (config.agent_skills['gsd-phase-researcher'] || []).concat(['.claude/skills/cae-scout']);
-config.agent_skills['gsd-project-researcher'] = (config.agent_skills['gsd-project-researcher'] || []).concat(['.claude/skills/cae-scout']);
-config.agent_skills['gsd-verifier'] = (config.agent_skills['gsd-verifier'] || []).concat(['.claude/skills/cae-sentinel']);
-config.agent_skills['gsd-doc-writer'] = (config.agent_skills['gsd-doc-writer'] || []).concat(['.claude/skills/cae-scribe']);
+const amFile = process.env.CAE_AGENT_MODELS_FILE;
+const cfgFile = process.env.CAE_CONFIG_FILE;
+const scMode = process.env.CAE_SMART_CONTRACT === "true";
 
-// Add Aegis to verifier if smart contracts detected
-const smartContract = ${SMART_CONTRACT_MODE};
-if (smartContract) {
-  config.agent_skills['gsd-verifier'].push('.claude/skills/cae-aegis');
+const am = yaml.load(fs.readFileSync(amFile, 'utf8'));
+const cfg = JSON.parse(fs.readFileSync(cfgFile, 'utf8'));
+
+cfg.cae_config_version = 1;
+cfg.agent_skills = cfg.agent_skills || {};
+cfg.model_overrides = cfg.model_overrides || {};
+cfg.resolve_model_ids = true;
+
+const aliases = {opus: "claude-opus-4-6", sonnet: "claude-sonnet-4-6", haiku: "claude-haiku-4-5"};
+const resolve = a => aliases[a] || a;
+
+const lookup = path => {
+  let node = am;
+  for (const p of path.split('.')) {
+    if (node && typeof node === 'object' && p in node) node = node[p];
+    else return null;
+  }
+  return (node && node.model) ? resolve(node.model) : null;
+};
+
+for (const [gsdAgent, bridge] of Object.entries(am.gsd_bridge || {})) {
+  if (bridge.skill) {
+    const arr = cfg.agent_skills[gsdAgent] || [];
+    if (!arr.includes(bridge.skill)) arr.push(bridge.skill);
+    cfg.agent_skills[gsdAgent] = arr;
+  }
+  if (bridge.model_from) {
+    const m = lookup(`${bridge.model_from}.model`) || lookup(bridge.model_from);
+    if (m) cfg.model_overrides[gsdAgent] = m;
+  }
 }
 
-// Model overrides for adversarial review diversity
-// Executor uses Sonnet, Verifier uses Opus — different models catch different bugs
-config.model_overrides = config.model_overrides || {};
-config.model_overrides['gsd-planner'] = 'claude-opus-4-6';
-config.model_overrides['gsd-plan-checker'] = 'claude-opus-4-6';
-config.model_overrides['gsd-verifier'] = 'claude-opus-4-6';
-config.model_overrides['gsd-debugger'] = 'claude-opus-4-6';
-
-if (smartContract) {
-  // Smart contract tasks use Opus for builders too
-  config.model_overrides['gsd-executor'] = 'claude-opus-4-6';
-} else {
-  // Standard: Sonnet for builders (fast, adversarial vs Opus reviewer)
-  config.model_overrides['gsd-executor'] = 'claude-sonnet-4-6';
+if (scMode) {
+  const fsc = am.forge && am.forge.smart_contract_override;
+  if (fsc) cfg.model_overrides['gsd-executor'] = resolve(fsc);
+  const v = cfg.agent_skills['gsd-verifier'] || [];
+  if (!v.includes('.claude/skills/cae-aegis')) v.push('.claude/skills/cae-aegis');
+  cfg.agent_skills['gsd-verifier'] = v;
 }
 
-// Enable full model ID resolution
-config.resolve_model_ids = true;
-
-// Ensure parallelization is on
-config.parallelization = config.parallelization !== undefined ? config.parallelization : true;
-
-// Deduplicate arrays
-for (const [key, val] of Object.entries(config.agent_skills)) {
-  config.agent_skills[key] = [...new Set(val)];
+for (const k of Object.keys(cfg.agent_skills)) {
+  cfg.agent_skills[k] = [...new Set(cfg.agent_skills[k])];
 }
 
-fs.writeFileSync('$CONFIG_FILE', JSON.stringify(config, null, 2) + '\n');
-console.log('  Config written to $CONFIG_FILE');
-"
+fs.writeFileSync(cfgFile, JSON.stringify(cfg, null, 2) + '\n');
+console.log(`  Config written to ${cfgFile}`);
+NODEEOF
+fi
 
 # ─── Create AGENTS.md if it doesn't exist ─────────────────────────────
 if [ ! -f "AGENTS.md" ]; then
@@ -132,34 +239,23 @@ if [ ! -f "AGENTS.md" ]; then
 # AGENTS.md — Team Knowledge Base
 
 ## Project Conventions
-<!-- Scribe will populate this as the team builds -->
 
 ## Patterns That Work
-<!-- Validated approaches from completed tasks -->
 
 ## Gotchas
-<!-- Things that bit a builder — so the next one doesn't repeat it -->
 
 ## Library/API Notes
-<!-- Technology-specific knowledge from Scout research + builder experience -->
 AGENTS_EOF
   echo "  + Created AGENTS.md template"
 fi
 
 # ─── Summary ──────────────────────────────────────────────────────────
 echo ""
-echo "Ctrl+Alt+Elite initialized!"
-echo ""
-echo "Agent routing:"
-echo "  Planner (Arch)     → claude-opus-4-6 + cae-arch skill"
-echo "  Researcher (Scout) → profile default  + cae-scout skill"
+echo "Ctrl+Alt+Elite initialized (config-driven from agent-models.yaml)."
 if [ "$SMART_CONTRACT_MODE" = true ]; then
-  echo "  Executor (Forge)   → claude-opus-4-6 + cae-forge skill [SMART CONTRACT MODE]"
-  echo "  Verifier (Sentinel)→ claude-opus-4-6 + cae-sentinel + cae-aegis skills"
-else
-  echo "  Executor (Forge)   → claude-sonnet-4-6 + cae-forge skill"
-  echo "  Verifier (Sentinel)→ claude-opus-4-6   + cae-sentinel skill"
+  echo "  [SMART CONTRACT MODE] Forge overridden to Opus, Aegis auto-activated."
 fi
-echo "  Doc Writer (Scribe)→ profile default  + cae-scribe skill"
 echo ""
-echo "Next: Use /gsd-plan-phase to start planning, or /gsd-autonomous to run all phases."
+echo "Next:"
+echo "  /gsd-plan-phase  or  /gsd-autonomous  to proceed with Claude-side GSD workflow."
+echo "  bin/cae (once built) to use CAE orchestrator with cross-provider agents."

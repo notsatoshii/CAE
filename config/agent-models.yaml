@@ -1,0 +1,178 @@
+# CAE Agent Models Configuration
+# Schema: cae_config_version 1 (see CONFIG_SCHEMA.md)
+#
+# Each role defines:
+#   model            : short alias (opus/sonnet/haiku/gemini-2.5-pro/gemini-flash) or full ID
+#   provider         : claude-code | gemini-cli
+#   invocation_mode  : object with type and either "name" (wrap) or "system_prompt_file"
+#     type: wrap-gsd-agent  →  claude --print --agent <name>
+#     type: direct-prompt   →  claude --print --system-prompt-file <file>  OR  gemini with our prompt
+#   effort (optional): low | medium | high | max — Claude Code only, default=max for Claude roles
+#   fallback (optional): role name to fall back to when this role's output fails validation
+#   modes (optional): per-mode overrides (currently only used by scout)
+#   smart_contract_override (optional): model to use when smart contracts detected in project
+#
+# Shift generates this file. CAE reads it at cae-init time and every orchestrator run.
+
+cae_config_version: 1
+
+# ─── Core roles (run in every project) ────────────────────────────────
+
+nexus:
+  model: claude-opus-4-6
+  provider: claude-code
+  invocation_mode:
+    type: direct-prompt
+    system_prompt_file: agents/cae-nexus.md
+  effort: max
+
+arch:
+  # Arch uses gsd-planner for authoring plans
+  model: claude-opus-4-6
+  provider: claude-code
+  invocation_mode:
+    type: wrap-gsd-agent
+    name: gsd-planner
+  effort: max
+
+arch_plan_check:
+  # Sub-role: validate a plan after it's been authored
+  model: claude-opus-4-6
+  provider: claude-code
+  invocation_mode:
+    type: wrap-gsd-agent
+    name: gsd-plan-checker
+  effort: max
+
+forge:
+  model: claude-sonnet-4-6
+  provider: claude-code
+  invocation_mode:
+    type: direct-prompt
+    system_prompt_file: agents/cae-forge.md
+  effort: max
+  smart_contract_override: claude-opus-4-6
+
+sentinel:
+  # Cross-provider adversarial review
+  model: gemini-2.5-pro
+  provider: gemini-cli
+  invocation_mode:
+    type: direct-prompt
+    system_prompt_file: agents/cae-sentinel-gemini.md
+  fallback: sentinel_fallback
+  smart_contract_override: gemini-2.5-pro  # no change — Gemini is reviewer either way
+
+sentinel_fallback:
+  # Used when Gemini Sentinel produces bad JSON twice
+  model: claude-opus-4-6
+  provider: claude-code
+  invocation_mode:
+    type: wrap-gsd-agent
+    name: gsd-verifier
+  effort: max
+
+scout:
+  # Mode-dependent: project-level uses Gemini (1M context), phase-level wraps Claude
+  default_mode: phase
+  modes:
+    project:
+      model: gemini-2.5-pro
+      provider: gemini-cli
+      invocation_mode:
+        type: direct-prompt
+        system_prompt_file: agents/cae-scout-gemini.md
+    phase:
+      model: claude-sonnet-4-6
+      provider: claude-code
+      invocation_mode:
+        type: wrap-gsd-agent
+        name: gsd-phase-researcher
+      effort: max
+    ad-hoc:
+      model: claude-sonnet-4-6
+      provider: claude-code
+      invocation_mode:
+        type: direct-prompt
+        system_prompt_file: agents/cae-scout.md
+      effort: max
+
+scribe:
+  model: gemini-flash
+  provider: gemini-cli
+  invocation_mode:
+    type: direct-prompt
+    system_prompt_file: agents/cae-scribe-gemini.md
+
+# ─── Specialists (on-demand or auto-activated) ────────────────────────
+
+phantom:
+  model: claude-sonnet-4-6
+  provider: claude-code
+  invocation_mode:
+    type: wrap-gsd-agent
+    name: gsd-debugger
+  effort: max
+
+prism:
+  model: claude-sonnet-4-6
+  provider: claude-code
+  invocation_mode:
+    type: wrap-gsd-agent
+    name: gsd-ui-checker
+
+aegis:
+  model: claude-opus-4-6
+  provider: claude-code
+  invocation_mode:
+    type: direct-prompt
+    system_prompt_file: agents/cae-aegis.md
+  effort: max
+  auto_activate_on: [".sol", ".vy", "foundry.toml", "hardhat.config.*", "remappings.txt"]
+
+flux:
+  model: claude-sonnet-4-6
+  provider: claude-code
+  invocation_mode:
+    type: direct-prompt
+    system_prompt_file: agents/cae-flux.md
+  effort: max
+
+# ─── Phase 2 (commented out — not wired in Phase 1) ────────────────────
+
+# herald:
+#   model: claude-sonnet-4-6
+#   provider: claude-code
+#   invocation_mode:
+#     type: wrap-gsd-agent
+#     name: gsd-doc-writer
+#   effort: max
+
+# ─── GSD bridge mappings (which GSD agent types get which CAE persona) ─
+# Used by cae-init.sh to generate .planning/config.json's agent_skills + model_overrides.
+# Only relevant for Claude-side paths that route through GSD's Task() tool.
+
+gsd_bridge:
+  gsd-executor:
+    skill: .claude/skills/cae-forge
+    model_from: forge
+  gsd-planner:
+    skill: .claude/skills/cae-arch
+    model_from: arch
+  gsd-plan-checker:
+    skill: .claude/skills/cae-arch
+    model_from: arch_plan_check
+  gsd-phase-researcher:
+    skill: .claude/skills/cae-scout
+    model_from: scout.modes.phase
+  gsd-project-researcher:
+    skill: .claude/skills/cae-scout
+    # project-researcher goes to Gemini Scout; see orchestrator routing
+  gsd-verifier:
+    skill: .claude/skills/cae-sentinel
+    model_from: sentinel_fallback
+  gsd-doc-writer:
+    skill: .claude/skills/cae-scribe
+    # Scribe goes to Gemini; this injection only matters for GSD-side doc-writer tasks
+  gsd-debugger:
+    model_from: phantom

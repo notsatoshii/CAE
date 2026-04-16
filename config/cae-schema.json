@@ -1,0 +1,303 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ctrl-alt-elite.dev/schemas/cae-config/v1.json",
+  "title": "CAE Configuration (v1)",
+  "description": "Validates the full CAE configuration surface. See CONFIG_SCHEMA.md for stability commitments.",
+  "type": "object",
+  "properties": {
+    "agent_models": { "$ref": "#/$defs/agentModelsYaml" },
+    "circuit_breakers": { "$ref": "#/$defs/circuitBreakersYaml" },
+    "dangerous_actions": { "$ref": "#/$defs/dangerousActionsYaml" },
+    "cae_user": { "$ref": "#/$defs/caeUserYaml" },
+    "planning_config_json": { "$ref": "#/$defs/planningConfigJson" }
+  },
+  "additionalProperties": false,
+
+  "$defs": {
+    "version": {
+      "type": "integer",
+      "const": 1,
+      "description": "cae_config_version must be 1 for this schema."
+    },
+
+    "shortAlias": {
+      "type": "string",
+      "enum": ["opus", "sonnet", "haiku"]
+    },
+
+    "modelId": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Either a short alias (opus/sonnet/haiku) or a full model ID (claude-opus-4-6, gemini-2.5-pro, etc.)"
+    },
+
+    "provider": {
+      "type": "string",
+      "enum": ["claude-code", "gemini-cli"]
+    },
+
+    "effort": {
+      "type": "string",
+      "enum": ["low", "medium", "high", "max"]
+    },
+
+    "invocationMode": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "type": { "const": "wrap-gsd-agent" },
+            "name": {
+              "type": "string",
+              "pattern": "^gsd-[a-z0-9-]+$",
+              "description": "Name of the GSD agent to invoke via claude --agent"
+            }
+          },
+          "required": ["type", "name"],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": { "const": "direct-prompt" },
+            "system_prompt_file": {
+              "type": "string",
+              "description": "Path relative to CAE repo root"
+            }
+          },
+          "required": ["type", "system_prompt_file"],
+          "additionalProperties": false
+        }
+      ]
+    },
+
+    "roleDefinition": {
+      "type": "object",
+      "properties": {
+        "model": { "$ref": "#/$defs/modelId" },
+        "provider": { "$ref": "#/$defs/provider" },
+        "invocation_mode": { "$ref": "#/$defs/invocationMode" },
+        "effort": { "$ref": "#/$defs/effort" },
+        "fallback": {
+          "type": "string",
+          "description": "Role name to fall back to on validation failure"
+        },
+        "smart_contract_override": { "$ref": "#/$defs/modelId" },
+        "auto_activate_on": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Glob patterns that trigger auto-activation of this role"
+        }
+      },
+      "required": ["model", "provider", "invocation_mode"],
+      "additionalProperties": false
+    },
+
+    "roleWithModes": {
+      "type": "object",
+      "properties": {
+        "default_mode": { "type": "string" },
+        "modes": {
+          "type": "object",
+          "patternProperties": {
+            "^[a-z][a-z0-9-]*$": { "$ref": "#/$defs/roleDefinition" }
+          },
+          "additionalProperties": false
+        }
+      },
+      "required": ["default_mode", "modes"],
+      "additionalProperties": false
+    },
+
+    "agentModelsYaml": {
+      "type": "object",
+      "properties": {
+        "cae_config_version": { "$ref": "#/$defs/version" },
+        "nexus": { "$ref": "#/$defs/roleDefinition" },
+        "arch": { "$ref": "#/$defs/roleDefinition" },
+        "arch_plan_check": { "$ref": "#/$defs/roleDefinition" },
+        "forge": { "$ref": "#/$defs/roleDefinition" },
+        "sentinel": { "$ref": "#/$defs/roleDefinition" },
+        "sentinel_fallback": { "$ref": "#/$defs/roleDefinition" },
+        "scout": { "$ref": "#/$defs/roleWithModes" },
+        "scribe": { "$ref": "#/$defs/roleDefinition" },
+        "phantom": { "$ref": "#/$defs/roleDefinition" },
+        "prism": { "$ref": "#/$defs/roleDefinition" },
+        "aegis": { "$ref": "#/$defs/roleDefinition" },
+        "flux": { "$ref": "#/$defs/roleDefinition" },
+        "herald": { "$ref": "#/$defs/roleDefinition" },
+        "gsd_bridge": {
+          "type": "object",
+          "patternProperties": {
+            "^gsd-[a-z-]+$": {
+              "type": "object",
+              "properties": {
+                "skill": {
+                  "type": "string",
+                  "pattern": "^\\.?\\.?/?(\\.claude/skills/|\\.agents/skills/)[a-z0-9-]+$"
+                },
+                "model_from": { "type": "string" }
+              },
+              "additionalProperties": false
+            }
+          }
+        }
+      },
+      "required": ["cae_config_version", "gsd_bridge"],
+      "additionalProperties": false
+    },
+
+    "circuitBreakersYaml": {
+      "type": "object",
+      "properties": {
+        "per_forge": {
+          "type": "object",
+          "properties": {
+            "max_turns": { "type": "integer", "minimum": 1 },
+            "max_input_tokens": { "type": "integer", "minimum": 1 },
+            "max_output_tokens": { "type": "integer", "minimum": 1 }
+          },
+          "required": ["max_turns", "max_input_tokens", "max_output_tokens"],
+          "additionalProperties": false
+        },
+        "per_task": {
+          "type": "object",
+          "properties": {
+            "max_retries": { "type": "integer", "minimum": 0 }
+          },
+          "required": ["max_retries"],
+          "additionalProperties": false
+        },
+        "parallelism": {
+          "type": "object",
+          "properties": {
+            "max_concurrent_forge": { "type": "integer", "minimum": 1 }
+          },
+          "required": ["max_concurrent_forge"],
+          "additionalProperties": false
+        },
+        "escalation": {
+          "type": "object",
+          "properties": {
+            "forge_failures_spawn_phantom": { "type": "integer", "minimum": 1 },
+            "phantom_failures_halt": { "type": "integer", "minimum": 1 },
+            "on_halt": {
+              "type": "object",
+              "properties": {
+                "telegram_notify": { "type": "boolean" }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        },
+        "sentinel": {
+          "type": "object",
+          "properties": {
+            "max_json_parse_failures": { "type": "integer", "minimum": 1 }
+          },
+          "additionalProperties": false
+        },
+        "gemini_cli": {
+          "type": "object",
+          "properties": {
+            "per_call_timeout_seconds": { "type": "integer", "minimum": 1 }
+          },
+          "additionalProperties": false
+        },
+        "claude_code": {
+          "type": "object",
+          "properties": {
+            "per_call_timeout_seconds": { "type": "integer", "minimum": 1 }
+          },
+          "additionalProperties": false
+        }
+      },
+      "required": ["per_forge", "per_task", "parallelism"],
+      "additionalProperties": false
+    },
+
+    "dangerousActionsYaml": {
+      "type": "object",
+      "properties": {
+        "patterns": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" },
+              "regex": { "type": "string" },
+              "description": { "type": "string" },
+              "telegram_timeout_minutes": { "type": "integer", "minimum": 1 }
+            },
+            "required": ["name", "regex", "description", "telegram_timeout_minutes"],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": ["patterns"],
+      "additionalProperties": false
+    },
+
+    "caeUserYaml": {
+      "type": "object",
+      "properties": {
+        "user_id": { "type": "string" },
+        "telegram": {
+          "type": "object",
+          "properties": {
+            "bot": {
+              "type": "object",
+              "properties": {
+                "name": { "type": "string" },
+                "chat_id_env": { "type": "string", "description": "Name of env var holding chat ID, not the value itself" }
+              },
+              "required": ["name", "chat_id_env"],
+              "additionalProperties": false
+            },
+            "notification_level": { "type": "string", "enum": ["all", "important", "none"] }
+          },
+          "required": ["bot"],
+          "additionalProperties": false
+        },
+        "profile": { "type": "string", "enum": ["quality", "balanced", "budget"] },
+        "preferences": {
+          "type": "object",
+          "properties": {
+            "auto_merge_on_approve": { "type": "boolean" },
+            "verbose_logging": { "type": "boolean" }
+          },
+          "additionalProperties": true
+        }
+      },
+      "required": ["user_id", "telegram"],
+      "additionalProperties": false
+    },
+
+    "planningConfigJson": {
+      "description": "CAE additions to GSD's .planning/config.json",
+      "type": "object",
+      "properties": {
+        "cae_config_version": { "$ref": "#/$defs/version" },
+        "agent_skills": {
+          "type": "object",
+          "patternProperties": {
+            "^gsd-[a-z-]+$": {
+              "type": "array",
+              "items": { "type": "string" },
+              "uniqueItems": true
+            }
+          }
+        },
+        "model_overrides": {
+          "type": "object",
+          "patternProperties": {
+            "^gsd-[a-z-]+$": { "$ref": "#/$defs/modelId" }
+          }
+        },
+        "resolve_model_ids": { "type": "boolean" }
+      },
+      "required": ["cae_config_version"]
+    }
+  }
+}
