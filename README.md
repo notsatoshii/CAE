@@ -3,13 +3,17 @@
 </p>
 
 ```
-   ┌──────┐   ┌──────┐   ┌──────────┐
-   │ CTRL │ + │ ALT  │ + │  ELITE   │
-   └──────┘   └──────┘   └──────────┘
-       a multi-agent AI dev team
+  ┏━━━━━━━━━━━━┓   ┏━━━━━━━━━━━━┓   ┏━━━━━━━━━━━━━━━━━━┓
+  ┃ ╭────────╮ ┃   ┃ ╭────────╮ ┃   ┃ ╭──────────────╮ ┃
+  ┃ │  CTRL  │ ┃ ╋ ┃ │  ALT   │ ┃ ╋ ┃ │    ELITE     │ ┃
+  ┃ ╰────────╯ ┃   ┃ ╰────────╯ ┃   ┃ ╰──────────────╯ ┃
+  ┗━━━━━━━━━━━━┛   ┗━━━━━━━━━━━━┛   ┗━━━━━━━━━━━━━━━━━━┛
+   ▀▀▀▀▀▀▀▀▀▀▀▀     ▀▀▀▀▀▀▀▀▀▀▀▀     ▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀
+
+          ▸▸ multi-agent  AI  dev  team ▸▸
 ```
 
-> **The AI dev team where the reviewer isn't the coder.** Claude builds. Gemini reviews. Nothing ships rubber-stamped.
+> **The AI coder that gets code-reviewed.**
 
 <p align="center">
   <a href="./PHASE_1_TASKS.md"><img src="https://img.shields.io/badge/phase-1%20complete-brightgreen" alt="Phase 1 complete"/></a>
