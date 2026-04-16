@@ -588,7 +588,104 @@ def main():
         dry = "--dry-run" in argv[2:]
         cmd_execute_phase(phase, dry_run=dry)
         return
+    if argv[0] == "herald":
+        if len(argv) < 2:
+            die("usage: cae herald <doc-type>    doc-type = readme|architecture|deployment|changelog|custom")
+        cmd_herald(argv[1], argv[2:])
+        return
     die(f"unknown command: {argv[0]}")
+
+
+def cmd_herald(doc_type: str, extra_args: List[str]):
+    """
+    Spawn Herald to write/update a user-facing project doc.
+    Uses the `gsd-doc-writer` wrap with the cae-herald persona injected
+    as --append-system-prompt-file (per the wrap contract).
+    """
+    project_root = Path.cwd()
+    agent_models = load_yaml(AGENT_MODELS_PATH)
+
+    herald = agent_models.get("herald")
+    if herald is None:
+        die("herald role not found in config/agent-models.yaml")
+
+    target_map = {
+        "readme":       "README.md",
+        "architecture": "ARCHITECTURE.md",
+        "deployment":   "DEPLOYMENT.md",
+        "changelog":    "CHANGELOG.md",
+    }
+    target_file = target_map.get(doc_type.lower(), None)
+    if target_file is None and doc_type.lower() != "custom":
+        die(f"unknown doc-type '{doc_type}'. Supported: {', '.join(target_map.keys())} | custom")
+
+    session_id = f"herald-{doc_type}-{uuid.uuid4().hex[:6]}"
+    work_dir = project_root / ".planning" / "herald" / session_id
+    work_dir.mkdir(parents=True, exist_ok=True)
+    prompt_path = work_dir / "herald-prompt.md"
+
+    existing = ""
+    if target_file and (project_root / target_file).exists():
+        existing = (project_root / target_file).read_text()[:8000]
+
+    agents_md = ""
+    if (project_root / "AGENTS.md").exists():
+        agents_md = (project_root / "AGENTS.md").read_text()[:3000]
+
+    # Inject Herald persona inline at top of user prompt (adapter blocks
+    # combined --agent + --system-prompt-file, so we can't use system injection).
+    herald_persona_path = CAE_ROOT / "agents" / "cae-herald.md"
+    persona = herald_persona_path.read_text() if herald_persona_path.exists() else ""
+
+    prompt_path.write_text(f"""<persona>
+{persona}
+</persona>
+
+<objective>
+Produce or update `{target_file or '<ask user for target filename>'}` for this project.
+Doc-type contract: {doc_type}
+</objective>
+
+<doc_type>{doc_type}</doc_type>
+
+<project_root>{project_root}</project_root>
+
+<existing_doc>
+{existing or '(none — produce from scratch)'}
+</existing_doc>
+
+<team_knowledge>
+{agents_md or '(no AGENTS.md yet)'}
+</team_knowledge>
+
+<instructions>
+You are acting as Herald (persona above). Verify every factual claim against
+the actual codebase via Read/Grep/Glob before writing. Write to {target_file
+or 'the agreed filename'}. Honest status over aspirational — if something is
+planned not built, say so. Then print a brief SUMMARY of what you changed.
+</instructions>
+""")
+
+    inv = herald["invocation_mode"]
+    if inv.get("type") != "wrap-gsd-agent":
+        die(f"herald invocation_mode must be wrap-gsd-agent; got {inv.get('type')}")
+
+    cmd = [
+        str(CLAUDE_ADAPTER),
+        str(prompt_path),
+        herald["model"],
+        session_id,
+        "--agent", inv["name"],
+        "--effort", herald.get("effort", "max"),
+        "--timeout", "1800",
+    ]
+
+    print(f"Herald spawning ({doc_type}) → {target_file or '<custom>'}")
+    result = subprocess.run(cmd, capture_output=False)
+    output_path = Path(str(prompt_path) + ".output")
+    if output_path.exists():
+        print(f"Herald done. Output: {output_path}")
+    sys.exit(result.returncode)
 
 
 if __name__ == "__main__":
