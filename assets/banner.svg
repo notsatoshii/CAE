@@ -1,16 +1,16 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 300" width="960" height="300" role="img" aria-label="CTRL + ALT + ELITE — retro keyboard keys">
   <defs>
-    <!-- Keycap top (bright cream gradient) -->
-    <linearGradient id="capFace" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%"   stop-color="#faedcc"/>
-      <stop offset="50%"  stop-color="#ecdeb0"/>
-      <stop offset="100%" stop-color="#d4c28a"/>
+    <!-- Top face: cream with subtle dish gradient -->
+    <linearGradient id="capTop" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"   stop-color="#f8edcb"/>
+      <stop offset="55%"  stop-color="#ecdfae"/>
+      <stop offset="100%" stop-color="#d0bf87"/>
     </linearGradient>
 
-    <!-- Keycap front/side (darker beige — the visible depth below + right of top) -->
-    <linearGradient id="capSide" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%"   stop-color="#b39f6f"/>
-      <stop offset="100%" stop-color="#8a7750"/>
+    <!-- Front face: darker beige (the visible "thickness" below the top face, in shadow from overhang) -->
+    <linearGradient id="capFront" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"   stop-color="#ae9b6c"/>
+      <stop offset="100%" stop-color="#887550"/>
     </linearGradient>
 
     <!-- Whole-banner beige -->
@@ -45,42 +45,46 @@
   <line x1="30" y1="88" x2="930" y2="88" stroke="#8a7952" stroke-width="0.5" opacity="0.5"/>
 
   <!--
-    3D keycap = FRONT FACE (darker) underneath + TOP FACE (lighter) on top.
-    The front face peeks out below the top face, creating the "thickness" illusion.
-    All solid shapes, no filters, no animation — renders identically everywhere.
+    Real-keycap silhouette:
+      TOP FACE  = trapezoid (narrower at top, widens toward base) — real keycap shape
+      FRONT FACE = rectangle below top face (the visible skirt/side in shadow)
+      GROUND SHADOW = soft ellipse beneath
+
+    Top face: narrow=152 wide at y=100, wide=174 at y=190 (bottom)
+    Front face: 174 wide at y=190 to y=208 (18px tall)
   -->
 
   <!-- ═══ CTRL ═══ -->
-  <!-- Under-key shadow -->
-  <ellipse cx="167" cy="238" rx="95" ry="5" fill="#4a3e22" opacity="0.32"/>
-  <!-- Front/right face (drawn first, slightly offset down+right — peeks out as depth) -->
-  <rect x="86" y="108" width="174" height="118" rx="9" ry="9" fill="url(#capSide)" stroke="#6d5d38" stroke-width="1"/>
-  <!-- Top face (cream, sits ABOVE and slightly OFFSET from the darker body) -->
-  <rect x="80" y="100" width="170" height="110" rx="8" ry="8" fill="url(#capFace)" stroke="#7a6a42" stroke-width="1.2"/>
+  <!-- Ground shadow -->
+  <ellipse cx="165" cy="222" rx="95" ry="5" fill="#4a3e22" opacity="0.4"/>
+  <!-- Front face (skirt below the top face — in shadow) -->
+  <path d="M 78 190 L 252 190 L 258 210 L 72 210 Z" fill="url(#capFront)" stroke="#6d5d38" stroke-width="1"/>
+  <!-- Top face (trapezoid — narrower at top, widens to meet front face) -->
+  <path d="M 89 100 Q 85 100 85 104 L 85 186 Q 85 190 89 190 L 241 190 Q 245 190 245 186 L 245 104 Q 245 100 241 100 Z" fill="url(#capTop)" stroke="#7a6a42" stroke-width="1.2"/>
   <!-- Top-edge specular highlight -->
-  <line x1="88" y1="106" x2="242" y2="106" stroke="#fff8dc" stroke-width="1.4" opacity="0.75"/>
-  <!-- Bottom self-shadow -->
-  <line x1="88" y1="205" x2="242" y2="205" stroke="#5a4a2a" stroke-width="1" opacity="0.4"/>
+  <line x1="92" y1="106" x2="238" y2="106" stroke="#fff8dc" stroke-width="1.4" opacity="0.8"/>
+  <!-- Side highlights (light catching keycap sides near top) -->
+  <line x1="88" y1="110" x2="88" y2="180" stroke="#fff8dc" stroke-width="0.6" opacity="0.4"/>
   <!-- Label -->
-  <text x="165" y="165" text-anchor="middle" font-family="'Courier New','Menlo','Consolas',monospace" font-weight="700" font-size="30" fill="#2a1f0c" letter-spacing="4">CTRL</text>
+  <text x="165" y="155" text-anchor="middle" font-family="'Courier New','Menlo','Consolas',monospace" font-weight="700" font-size="30" fill="#2a1f0c" letter-spacing="4">CTRL</text>
 
-  <text x="285" y="162" text-anchor="middle" font-family="'Courier New',monospace" font-weight="700" font-size="28" fill="#7a683d">+</text>
+  <text x="285" y="155" text-anchor="middle" font-family="'Courier New',monospace" font-weight="700" font-size="28" fill="#7a683d">+</text>
 
   <!-- ═══ ALT ═══ -->
-  <ellipse cx="382" cy="238" rx="90" ry="5" fill="#4a3e22" opacity="0.32"/>
-  <rect x="306" y="108" width="164" height="118" rx="9" ry="9" fill="url(#capSide)" stroke="#6d5d38" stroke-width="1"/>
-  <rect x="300" y="100" width="160" height="110" rx="8" ry="8" fill="url(#capFace)" stroke="#7a6a42" stroke-width="1.2"/>
-  <line x1="308" y1="106" x2="452" y2="106" stroke="#fff8dc" stroke-width="1.4" opacity="0.75"/>
-  <line x1="308" y1="205" x2="452" y2="205" stroke="#5a4a2a" stroke-width="1" opacity="0.4"/>
-  <text x="380" y="165" text-anchor="middle" font-family="'Courier New','Menlo','Consolas',monospace" font-weight="700" font-size="30" fill="#2a1f0c" letter-spacing="4">ALT</text>
+  <ellipse cx="382" cy="222" rx="90" ry="5" fill="#4a3e22" opacity="0.4"/>
+  <path d="M 298 190 L 462 190 L 468 210 L 292 210 Z" fill="url(#capFront)" stroke="#6d5d38" stroke-width="1"/>
+  <path d="M 309 100 Q 305 100 305 104 L 305 186 Q 305 190 309 190 L 451 190 Q 455 190 455 186 L 455 104 Q 455 100 451 100 Z" fill="url(#capTop)" stroke="#7a6a42" stroke-width="1.2"/>
+  <line x1="312" y1="106" x2="448" y2="106" stroke="#fff8dc" stroke-width="1.4" opacity="0.8"/>
+  <line x1="308" y1="110" x2="308" y2="180" stroke="#fff8dc" stroke-width="0.6" opacity="0.4"/>
+  <text x="380" y="155" text-anchor="middle" font-family="'Courier New','Menlo','Consolas',monospace" font-weight="700" font-size="30" fill="#2a1f0c" letter-spacing="4">ALT</text>
 
-  <text x="491" y="162" text-anchor="middle" font-family="'Courier New',monospace" font-weight="700" font-size="28" fill="#7a683d">+</text>
+  <text x="491" y="155" text-anchor="middle" font-family="'Courier New',monospace" font-weight="700" font-size="28" fill="#7a683d">+</text>
 
   <!-- ═══ ELITE ═══ -->
-  <ellipse cx="697" cy="238" rx="195" ry="5" fill="#4a3e22" opacity="0.32"/>
-  <rect x="516" y="108" width="374" height="118" rx="9" ry="9" fill="url(#capSide)" stroke="#6d5d38" stroke-width="1"/>
-  <rect x="510" y="100" width="370" height="110" rx="8" ry="8" fill="url(#capFace)" stroke="#7a6a42" stroke-width="1.2"/>
-  <line x1="518" y1="106" x2="872" y2="106" stroke="#fff8dc" stroke-width="1.4" opacity="0.75"/>
-  <line x1="518" y1="205" x2="872" y2="205" stroke="#5a4a2a" stroke-width="1" opacity="0.4"/>
-  <text x="695" y="165" text-anchor="middle" font-family="'Courier New','Menlo','Consolas',monospace" font-weight="700" font-size="30" fill="#2a1f0c" letter-spacing="6">ELITE</text>
+  <ellipse cx="697" cy="222" rx="195" ry="5" fill="#4a3e22" opacity="0.4"/>
+  <path d="M 508 190 L 882 190 L 888 210 L 502 210 Z" fill="url(#capFront)" stroke="#6d5d38" stroke-width="1"/>
+  <path d="M 519 100 Q 515 100 515 104 L 515 186 Q 515 190 519 190 L 871 190 Q 875 190 875 186 L 875 104 Q 875 100 871 100 Z" fill="url(#capTop)" stroke="#7a6a42" stroke-width="1.2"/>
+  <line x1="522" y1="106" x2="868" y2="106" stroke="#fff8dc" stroke-width="1.4" opacity="0.8"/>
+  <line x1="518" y1="110" x2="518" y2="180" stroke="#fff8dc" stroke-width="0.6" opacity="0.4"/>
+  <text x="695" y="155" text-anchor="middle" font-family="'Courier New','Menlo','Consolas',monospace" font-weight="700" font-size="30" fill="#2a1f0c" letter-spacing="6">ELITE</text>
 </svg>
