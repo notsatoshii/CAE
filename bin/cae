@@ -555,13 +555,27 @@ def _dry_run_print(waves, agent_models, sc_mode, phase_num):
     print(f"Total: {total_tasks} tasks across {len(waves)} waves")
 
 
+def cmd_banner():
+    banner_path = CAE_ROOT / "assets" / "banner.txt"
+    if banner_path.exists():
+        print(banner_path.read_text())
+
+
 def cmd_help():
     print(__doc__.strip())
 
 
 def main():
     argv = sys.argv[1:]
-    if not argv or argv[0] in ("-h", "--help", "help"):
+    if not argv:
+        cmd_banner()
+        print()
+        cmd_help()
+        return
+    if argv[0] in ("banner",):
+        cmd_banner()
+        return
+    if argv[0] in ("-h", "--help", "help"):
         cmd_help()
         return
     if argv[0] in ("-v", "--version", "version"):

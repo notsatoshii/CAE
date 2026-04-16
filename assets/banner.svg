@@ -1,186 +1,203 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 320" width="900" height="320" role="img" aria-label="CTRL + ALT + ELITE — retro 3D keyboard keys">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 300" width="960" height="300" role="img" aria-label="CTRL + ALT + ELITE — keyboard shortcut">
   <defs>
-    <!-- Retro synthwave gradients -->
-    <linearGradient id="capTop" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%"   stop-color="#ff2ec3"/>
-      <stop offset="55%"  stop-color="#a41fff"/>
-      <stop offset="100%" stop-color="#4a0caa"/>
-    </linearGradient>
+    <!-- Realistic keycap top face — dark charcoal with subtle concave dish via radial gradient -->
+    <radialGradient id="capTop" cx="50%" cy="45%" r="60%">
+      <stop offset="0%"   stop-color="#2a2a30"/>
+      <stop offset="70%"  stop-color="#353541"/>
+      <stop offset="100%" stop-color="#3c3c48"/>
+    </radialGradient>
 
-    <linearGradient id="capTopLit" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%"   stop-color="#00ffe0"/>
-      <stop offset="100%" stop-color="#00a7b3"/>
-    </linearGradient>
+    <!-- Pressed state: subtle cyan backlight bleeds through (mechanical keyboard RGB vibe) -->
+    <radialGradient id="capTopLit" cx="50%" cy="50%" r="70%">
+      <stop offset="0%"   stop-color="#4aa8ff" stop-opacity="0.3"/>
+      <stop offset="60%"  stop-color="#2a2a30"/>
+      <stop offset="100%" stop-color="#3c3c48"/>
+    </radialGradient>
 
+    <!-- Front face — the visible depth strip below top -->
     <linearGradient id="capFront" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%"   stop-color="#3b0a5a"/>
-      <stop offset="100%" stop-color="#190330"/>
+      <stop offset="0%"   stop-color="#1e1e23"/>
+      <stop offset="100%" stop-color="#101014"/>
     </linearGradient>
 
-    <linearGradient id="capRight" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0%"   stop-color="#5d157d"/>
-      <stop offset="100%" stop-color="#2a0645"/>
+    <!-- Right side face — slightly darker than front -->
+    <linearGradient id="capSide" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%"   stop-color="#16161a"/>
+      <stop offset="100%" stop-color="#0a0a0d"/>
     </linearGradient>
 
-    <linearGradient id="bgSky" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%"   stop-color="#0a0218"/>
-      <stop offset="50%"  stop-color="#1b0632"/>
-      <stop offset="100%" stop-color="#3c0a58"/>
+    <!-- Keyboard base plate -->
+    <linearGradient id="boardGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"   stop-color="#18181d"/>
+      <stop offset="100%" stop-color="#0a0a0e"/>
     </linearGradient>
 
-    <!-- CRT scanlines -->
-    <pattern id="scanlines" patternUnits="userSpaceOnUse" width="3" height="3">
-      <rect width="3" height="3" fill="transparent"/>
-      <rect width="3" height="1" y="0" fill="rgba(0,0,0,0.25)"/>
-    </pattern>
+    <!-- Backlight glow (under keycap when pressed) -->
+    <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%"   stop-color="#4aa8ff" stop-opacity="0.55"/>
+      <stop offset="100%" stop-color="#4aa8ff" stop-opacity="0"/>
+    </radialGradient>
 
-    <!-- Neon glow -->
-    <filter id="neon" x="-50%" y="-50%" width="200%" height="200%">
-      <feGaussianBlur stdDeviation="3.5" result="b"/>
-      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
-    </filter>
-
-    <filter id="bigneon" x="-80%" y="-80%" width="260%" height="260%">
-      <feGaussianBlur stdDeviation="7" result="b"/>
-      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    <!-- Drop shadow under keycap -->
+    <filter id="keyShadow" x="-20%" y="-20%" width="140%" height="160%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="3"/>
+      <feOffset dx="0" dy="4"/>
+      <feComponentTransfer><feFuncA type="linear" slope="0.65"/></feComponentTransfer>
+      <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
     </filter>
   </defs>
 
-  <!-- Synthwave sky -->
-  <rect width="100%" height="100%" fill="url(#bgSky)"/>
+  <!-- Background (near-black with subtle vertical gradient — "desk in dim room") -->
+  <rect width="100%" height="100%" fill="#050508"/>
 
-  <!-- Retro sun (semi-arc above horizon) -->
-  <g opacity="0.8">
-    <circle cx="450" cy="80" r="58" fill="#ff2ec3" filter="url(#bigneon)"/>
-    <rect x="390" y="100" width="120" height="3" fill="#0a0218"/>
-    <rect x="392" y="108" width="116" height="3" fill="#0a0218"/>
-    <rect x="396" y="116" width="108" height="3" fill="#0a0218"/>
-    <rect x="400" y="124" width="100" height="3" fill="#0a0218"/>
+  <!-- Keyboard base plate -->
+  <rect x="40" y="200" width="880" height="70" rx="8" fill="url(#boardGrad)" stroke="#1a1a1f" stroke-width="1"/>
+  <!-- Key wells (slight recesses where each key sits) -->
+  <g opacity="0.6">
+    <rect x="80"  y="208" width="180" height="54" rx="6" fill="#060608"/>
+    <rect x="300" y="208" width="170" height="54" rx="6" fill="#060608"/>
+    <rect x="510" y="208" width="370" height="54" rx="6" fill="#060608"/>
   </g>
 
-  <!-- Horizon line (neon pink) -->
-  <line x1="0" y1="235" x2="900" y2="235" stroke="#ff2ec3" stroke-width="2" filter="url(#neon)"/>
-
-  <!-- Grid floor (perspective lines converging to center) -->
-  <g stroke="#ff2ec3" stroke-width="1" opacity="0.55" filter="url(#neon)">
-    <!-- vertical converging lines -->
-    <line x1="0"   y1="320" x2="380" y2="235"/>
-    <line x1="150" y1="320" x2="400" y2="235"/>
-    <line x1="300" y1="320" x2="425" y2="235"/>
-    <line x1="450" y1="320" x2="450" y2="235"/>
-    <line x1="600" y1="320" x2="475" y2="235"/>
-    <line x1="750" y1="320" x2="500" y2="235"/>
-    <line x1="900" y1="320" x2="520" y2="235"/>
-    <!-- horizontal grid lines (closer = further apart) -->
-    <line x1="0" y1="250" x2="900" y2="250"/>
-    <line x1="0" y1="270" x2="900" y2="270"/>
-    <line x1="0" y1="295" x2="900" y2="295"/>
-  </g>
-
-  <!-- ═══ KEY 1: CTRL ═══ -->
+  <!-- ═══════════════════════ KEY 1: CTRL ═══════════════════════ -->
   <g>
-    <!-- right face (depth) -->
-    <polygon points="220,90 238,76 238,170 220,184" fill="url(#capRight)" stroke="#ff66cc" stroke-width="1.2">
-      <animate attributeName="points" values="220,90 238,76 238,170 220,184 ; 220,100 238,86 238,170 220,184 ; 220,90 238,76 238,170 220,184" keyTimes="0;0.07;0.14" dur="3.8s" begin="0s" repeatCount="indefinite"/>
-    </polygon>
-    <!-- front face (depth) -->
-    <polygon points="60,184 220,184 238,170 78,170" fill="url(#capFront)" stroke="#ff66cc" stroke-width="1.2">
-      <animate attributeName="points" values="60,184 220,184 238,170 78,170 ; 60,184 220,184 238,170 78,170 ; 60,184 220,184 238,170 78,170" keyTimes="0;0.07;0.14" dur="3.8s" begin="0s" repeatCount="indefinite"/>
-    </polygon>
-    <!-- top face -->
-    <rect x="60" y="76" width="178" height="94" rx="8" fill="url(#capTop)" stroke="#ff66cc" stroke-width="2" filter="url(#neon)">
-      <animate attributeName="y" values="76;90;76" keyTimes="0;0.07;0.14" dur="3.8s" begin="0s" repeatCount="indefinite"/>
-      <animate attributeName="fill" values="url(#capTop);url(#capTopLit);url(#capTop)" keyTimes="0;0.07;0.14" dur="3.8s" begin="0s" repeatCount="indefinite"/>
+    <!-- Soft shadow under the key (intensifies when key up, softens when pressed) -->
+    <ellipse cx="170" cy="218" rx="90" ry="6" fill="#000" opacity="0.55">
+      <animate attributeName="opacity" values="0.55;0.15;0.55" keyTimes="0;0.08;0.16" dur="4s" begin="0s" repeatCount="indefinite"/>
+      <animate attributeName="ry" values="6;3;6" keyTimes="0;0.08;0.16" dur="4s" begin="0s" repeatCount="indefinite"/>
+    </ellipse>
+
+    <!-- Backlight glow (only visible when pressed) -->
+    <rect x="80" y="80" width="180" height="110" rx="10" fill="url(#glow)" opacity="0">
+      <animate attributeName="opacity" values="0;0.7;0" keyTimes="0;0.08;0.16" dur="4s" begin="0s" repeatCount="indefinite"/>
+      <animate attributeName="y" values="80;92;80" keyTimes="0;0.08;0.16" dur="4s" begin="0s" repeatCount="indefinite"/>
     </rect>
-    <!-- top highlight edge -->
-    <line x1="68" y1="82" x2="230" y2="82" stroke="#ffffff" stroke-width="1.5" opacity="0.4">
-      <animate attributeName="y1" values="82;96;82" keyTimes="0;0.07;0.14" dur="3.8s" begin="0s" repeatCount="indefinite"/>
-      <animate attributeName="y2" values="82;96;82" keyTimes="0;0.07;0.14" dur="3.8s" begin="0s" repeatCount="indefinite"/>
-    </line>
-    <!-- CTRL label with chromatic aberration -->
-    <g font-family="'Courier New', 'Monaco', monospace" font-weight="900" font-size="38" text-anchor="middle" filter="url(#neon)">
-      <text x="147" y="132" fill="#ff00aa" opacity="0.8">CTRL
-        <animate attributeName="y" values="132;146;132" keyTimes="0;0.07;0.14" dur="3.8s" begin="0s" repeatCount="indefinite"/>
-      </text>
-      <text x="149" y="132" fill="#00ffff" opacity="0.8">CTRL
-        <animate attributeName="y" values="132;146;132" keyTimes="0;0.07;0.14" dur="3.8s" begin="0s" repeatCount="indefinite"/>
-      </text>
-      <text x="148" y="132" fill="#ffffff">CTRL
-        <animate attributeName="y" values="132;146;132" keyTimes="0;0.07;0.14" dur="3.8s" begin="0s" repeatCount="indefinite"/>
-      </text>
-    </g>
-  </g>
 
-  <!-- ═══ + between CTRL and ALT ═══ -->
-  <text x="278" y="150" text-anchor="middle" font-family="'Courier New', monospace" font-weight="900" font-size="56" fill="#00ffff" filter="url(#bigneon)">+</text>
+    <!-- Front face (vertical depth strip visible below the top face) -->
+    <path d="M 80 170 L 260 170 L 260 190 L 80 190 Z" fill="url(#capFront)">
+      <animate attributeName="d" values="M 80 170 L 260 170 L 260 190 L 80 190 Z ; M 80 182 L 260 182 L 260 190 L 80 190 Z ; M 80 170 L 260 170 L 260 190 L 80 190 Z" keyTimes="0;0.08;0.16" dur="4s" begin="0s" repeatCount="indefinite"/>
+    </path>
 
-  <!-- ═══ KEY 2: ALT ═══ -->
-  <g>
-    <polygon points="470,90 488,76 488,170 470,184" fill="url(#capRight)" stroke="#ff66cc" stroke-width="1.2"/>
-    <polygon points="320,184 470,184 488,170 338,170" fill="url(#capFront)" stroke="#ff66cc" stroke-width="1.2"/>
-    <rect x="320" y="76" width="168" height="94" rx="8" fill="url(#capTop)" stroke="#ff66cc" stroke-width="2" filter="url(#neon)">
-      <animate attributeName="y" values="76;90;76" keyTimes="0;0.07;0.14" dur="3.8s" begin="0.5s" repeatCount="indefinite"/>
-      <animate attributeName="fill" values="url(#capTop);url(#capTopLit);url(#capTop)" keyTimes="0;0.07;0.14" dur="3.8s" begin="0.5s" repeatCount="indefinite"/>
+    <!-- Right side face (small trapezoid showing depth on the right) -->
+    <path d="M 260 85 L 272 78 L 272 180 L 260 190 Z" fill="url(#capSide)">
+      <animate attributeName="d" values="M 260 85 L 272 78 L 272 180 L 260 190 Z ; M 260 97 L 272 90 L 272 180 L 260 190 Z ; M 260 85 L 272 78 L 272 180 L 260 190 Z" keyTimes="0;0.08;0.16" dur="4s" begin="0s" repeatCount="indefinite"/>
+    </path>
+
+    <!-- Top face (concave charcoal dish) -->
+    <rect x="80" y="80" width="180" height="92" rx="10" fill="url(#capTop)" stroke="#1f1f25" stroke-width="1.2" filter="url(#keyShadow)">
+      <animate attributeName="y" values="80;92;80" keyTimes="0;0.08;0.16" dur="4s" begin="0s" repeatCount="indefinite"/>
+      <animate attributeName="fill" values="url(#capTop);url(#capTopLit);url(#capTop)" keyTimes="0;0.08;0.16" dur="4s" begin="0s" repeatCount="indefinite"/>
     </rect>
-    <line x1="328" y1="82" x2="480" y2="82" stroke="#ffffff" stroke-width="1.5" opacity="0.4">
-      <animate attributeName="y1" values="82;96;82" keyTimes="0;0.07;0.14" dur="3.8s" begin="0.5s" repeatCount="indefinite"/>
-      <animate attributeName="y2" values="82;96;82" keyTimes="0;0.07;0.14" dur="3.8s" begin="0.5s" repeatCount="indefinite"/>
+
+    <!-- Top-edge highlight (light catching the upper bevel) -->
+    <line x1="88" y1="86" x2="252" y2="86" stroke="#5c5c6a" stroke-width="1.3" opacity="0.7">
+      <animate attributeName="y1" values="86;98;86" keyTimes="0;0.08;0.16" dur="4s" begin="0s" repeatCount="indefinite"/>
+      <animate attributeName="y2" values="86;98;86" keyTimes="0;0.08;0.16" dur="4s" begin="0s" repeatCount="indefinite"/>
     </line>
-    <g font-family="'Courier New', 'Monaco', monospace" font-weight="900" font-size="38" text-anchor="middle" filter="url(#neon)">
-      <text x="402" y="132" fill="#ff00aa" opacity="0.8">ALT
-        <animate attributeName="y" values="132;146;132" keyTimes="0;0.07;0.14" dur="3.8s" begin="0.5s" repeatCount="indefinite"/>
-      </text>
-      <text x="404" y="132" fill="#00ffff" opacity="0.8">ALT
-        <animate attributeName="y" values="132;146;132" keyTimes="0;0.07;0.14" dur="3.8s" begin="0.5s" repeatCount="indefinite"/>
-      </text>
-      <text x="403" y="132" fill="#ffffff">ALT
-        <animate attributeName="y" values="132;146;132" keyTimes="0;0.07;0.14" dur="3.8s" begin="0.5s" repeatCount="indefinite"/>
-      </text>
-    </g>
-  </g>
 
-  <!-- ═══ + between ALT and ELITE ═══ -->
-  <text x="528" y="150" text-anchor="middle" font-family="'Courier New', monospace" font-weight="900" font-size="56" fill="#00ffff" filter="url(#bigneon)">+</text>
+    <!-- Inner dish shadow (subtle darker ring inside the top face suggesting concavity) -->
+    <ellipse cx="170" cy="130" rx="72" ry="28" fill="none" stroke="#1c1c22" stroke-width="1" opacity="0.55">
+      <animate attributeName="cy" values="130;142;130" keyTimes="0;0.08;0.16" dur="4s" begin="0s" repeatCount="indefinite"/>
+    </ellipse>
 
-  <!-- ═══ KEY 3: ELITE ═══ -->
-  <g>
-    <polygon points="830,90 848,76 848,170 830,184" fill="url(#capRight)" stroke="#ff66cc" stroke-width="1.2"/>
-    <polygon points="570,184 830,184 848,170 588,170" fill="url(#capFront)" stroke="#ff66cc" stroke-width="1.2"/>
-    <rect x="570" y="76" width="278" height="94" rx="8" fill="url(#capTop)" stroke="#ff66cc" stroke-width="2" filter="url(#neon)">
-      <animate attributeName="y" values="76;90;76" keyTimes="0;0.07;0.14" dur="3.8s" begin="1s" repeatCount="indefinite"/>
-      <animate attributeName="fill" values="url(#capTop);url(#capTopLit);url(#capTop)" keyTimes="0;0.07;0.14" dur="3.8s" begin="1s" repeatCount="indefinite"/>
-    </rect>
-    <line x1="578" y1="82" x2="840" y2="82" stroke="#ffffff" stroke-width="1.5" opacity="0.4">
-      <animate attributeName="y1" values="82;96;82" keyTimes="0;0.07;0.14" dur="3.8s" begin="1s" repeatCount="indefinite"/>
-      <animate attributeName="y2" values="82;96;82" keyTimes="0;0.07;0.14" dur="3.8s" begin="1s" repeatCount="indefinite"/>
-    </line>
-    <g font-family="'Courier New', 'Monaco', monospace" font-weight="900" font-size="38" text-anchor="middle" filter="url(#neon)">
-      <text x="708" y="132" fill="#ff00aa" opacity="0.8">ELITE
-        <animate attributeName="y" values="132;146;132" keyTimes="0;0.07;0.14" dur="3.8s" begin="1s" repeatCount="indefinite"/>
-      </text>
-      <text x="710" y="132" fill="#00ffff" opacity="0.8">ELITE
-        <animate attributeName="y" values="132;146;132" keyTimes="0;0.07;0.14" dur="3.8s" begin="1s" repeatCount="indefinite"/>
-      </text>
-      <text x="709" y="132" fill="#ffffff">ELITE
-        <animate attributeName="y" values="132;146;132" keyTimes="0;0.07;0.14" dur="3.8s" begin="1s" repeatCount="indefinite"/>
-      </text>
-    </g>
-  </g>
-
-  <!-- Subtitle (retro phosphor green with blinking cursor) -->
-  <g transform="translate(450,280)" text-anchor="middle">
-    <text font-family="'Courier New', monospace" font-size="15" fill="#00ff88" letter-spacing="4" filter="url(#neon)">
-      ▸ MULTI-AGENT AI DEV TEAM ▸ REVIEWER ≠ BUILDER
-    </text>
-    <text x="242" y="0" font-family="'Courier New', monospace" font-size="15" fill="#00ff88" filter="url(#neon)">
-      <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.5;0.5;1" dur="0.9s" repeatCount="indefinite"/>
-      _
+    <!-- Label (clean white, slight letter-spacing, keyboard font) -->
+    <text x="170" y="138" text-anchor="middle" font-family="'SF Mono','Menlo','Consolas',monospace" font-weight="700" font-size="28" fill="#e5e5ea" letter-spacing="4">
+      CTRL
+      <animate attributeName="y" values="138;150;138" keyTimes="0;0.08;0.16" dur="4s" begin="0s" repeatCount="indefinite"/>
+      <animate attributeName="fill" values="#e5e5ea;#c8e4ff;#e5e5ea" keyTimes="0;0.08;0.16" dur="4s" begin="0s" repeatCount="indefinite"/>
     </text>
   </g>
 
-  <!-- CRT scanlines over everything (subtle) -->
-  <rect width="100%" height="100%" fill="url(#scanlines)" pointer-events="none"/>
+  <!-- "+" separator CTRL/ALT -->
+  <text x="288" y="140" text-anchor="middle" font-family="'SF Mono','Menlo',monospace" font-weight="400" font-size="26" fill="#3a3a42">+</text>
 
-  <!-- CRT vignette (darken corners) -->
-  <rect width="100%" height="100%" fill="none" stroke="#000" stroke-width="30" opacity="0.5" pointer-events="none"/>
+  <!-- ═══════════════════════ KEY 2: ALT ═══════════════════════ -->
+  <g>
+    <ellipse cx="385" cy="218" rx="85" ry="6" fill="#000" opacity="0.55">
+      <animate attributeName="opacity" values="0.55;0.15;0.55" keyTimes="0;0.08;0.16" dur="4s" begin="0.5s" repeatCount="indefinite"/>
+      <animate attributeName="ry" values="6;3;6" keyTimes="0;0.08;0.16" dur="4s" begin="0.5s" repeatCount="indefinite"/>
+    </ellipse>
+
+    <rect x="300" y="80" width="170" height="110" rx="10" fill="url(#glow)" opacity="0">
+      <animate attributeName="opacity" values="0;0.7;0" keyTimes="0;0.08;0.16" dur="4s" begin="0.5s" repeatCount="indefinite"/>
+      <animate attributeName="y" values="80;92;80" keyTimes="0;0.08;0.16" dur="4s" begin="0.5s" repeatCount="indefinite"/>
+    </rect>
+
+    <path d="M 300 170 L 470 170 L 470 190 L 300 190 Z" fill="url(#capFront)">
+      <animate attributeName="d" values="M 300 170 L 470 170 L 470 190 L 300 190 Z ; M 300 182 L 470 182 L 470 190 L 300 190 Z ; M 300 170 L 470 170 L 470 190 L 300 190 Z" keyTimes="0;0.08;0.16" dur="4s" begin="0.5s" repeatCount="indefinite"/>
+    </path>
+
+    <path d="M 470 85 L 482 78 L 482 180 L 470 190 Z" fill="url(#capSide)">
+      <animate attributeName="d" values="M 470 85 L 482 78 L 482 180 L 470 190 Z ; M 470 97 L 482 90 L 482 180 L 470 190 Z ; M 470 85 L 482 78 L 482 180 L 470 190 Z" keyTimes="0;0.08;0.16" dur="4s" begin="0.5s" repeatCount="indefinite"/>
+    </path>
+
+    <rect x="300" y="80" width="170" height="92" rx="10" fill="url(#capTop)" stroke="#1f1f25" stroke-width="1.2" filter="url(#keyShadow)">
+      <animate attributeName="y" values="80;92;80" keyTimes="0;0.08;0.16" dur="4s" begin="0.5s" repeatCount="indefinite"/>
+      <animate attributeName="fill" values="url(#capTop);url(#capTopLit);url(#capTop)" keyTimes="0;0.08;0.16" dur="4s" begin="0.5s" repeatCount="indefinite"/>
+    </rect>
+
+    <line x1="308" y1="86" x2="462" y2="86" stroke="#5c5c6a" stroke-width="1.3" opacity="0.7">
+      <animate attributeName="y1" values="86;98;86" keyTimes="0;0.08;0.16" dur="4s" begin="0.5s" repeatCount="indefinite"/>
+      <animate attributeName="y2" values="86;98;86" keyTimes="0;0.08;0.16" dur="4s" begin="0.5s" repeatCount="indefinite"/>
+    </line>
+
+    <ellipse cx="385" cy="130" rx="68" ry="28" fill="none" stroke="#1c1c22" stroke-width="1" opacity="0.55">
+      <animate attributeName="cy" values="130;142;130" keyTimes="0;0.08;0.16" dur="4s" begin="0.5s" repeatCount="indefinite"/>
+    </ellipse>
+
+    <text x="385" y="138" text-anchor="middle" font-family="'SF Mono','Menlo','Consolas',monospace" font-weight="700" font-size="28" fill="#e5e5ea" letter-spacing="4">
+      ALT
+      <animate attributeName="y" values="138;150;138" keyTimes="0;0.08;0.16" dur="4s" begin="0.5s" repeatCount="indefinite"/>
+      <animate attributeName="fill" values="#e5e5ea;#c8e4ff;#e5e5ea" keyTimes="0;0.08;0.16" dur="4s" begin="0.5s" repeatCount="indefinite"/>
+    </text>
+  </g>
+
+  <!-- "+" separator ALT/ELITE -->
+  <text x="498" y="140" text-anchor="middle" font-family="'SF Mono','Menlo',monospace" font-weight="400" font-size="26" fill="#3a3a42">+</text>
+
+  <!-- ═══════════════════════ KEY 3: ELITE ═══════════════════════ -->
+  <g>
+    <ellipse cx="695" cy="218" rx="190" ry="6" fill="#000" opacity="0.55">
+      <animate attributeName="opacity" values="0.55;0.15;0.55" keyTimes="0;0.08;0.16" dur="4s" begin="1s" repeatCount="indefinite"/>
+      <animate attributeName="ry" values="6;3;6" keyTimes="0;0.08;0.16" dur="4s" begin="1s" repeatCount="indefinite"/>
+    </ellipse>
+
+    <rect x="510" y="80" width="370" height="110" rx="10" fill="url(#glow)" opacity="0">
+      <animate attributeName="opacity" values="0;0.7;0" keyTimes="0;0.08;0.16" dur="4s" begin="1s" repeatCount="indefinite"/>
+      <animate attributeName="y" values="80;92;80" keyTimes="0;0.08;0.16" dur="4s" begin="1s" repeatCount="indefinite"/>
+    </rect>
+
+    <path d="M 510 170 L 880 170 L 880 190 L 510 190 Z" fill="url(#capFront)">
+      <animate attributeName="d" values="M 510 170 L 880 170 L 880 190 L 510 190 Z ; M 510 182 L 880 182 L 880 190 L 510 190 Z ; M 510 170 L 880 170 L 880 190 L 510 190 Z" keyTimes="0;0.08;0.16" dur="4s" begin="1s" repeatCount="indefinite"/>
+    </path>
+
+    <path d="M 880 85 L 892 78 L 892 180 L 880 190 Z" fill="url(#capSide)">
+      <animate attributeName="d" values="M 880 85 L 892 78 L 892 180 L 880 190 Z ; M 880 97 L 892 90 L 892 180 L 880 190 Z ; M 880 85 L 892 78 L 892 180 L 880 190 Z" keyTimes="0;0.08;0.16" dur="4s" begin="1s" repeatCount="indefinite"/>
+    </path>
+
+    <rect x="510" y="80" width="370" height="92" rx="10" fill="url(#capTop)" stroke="#1f1f25" stroke-width="1.2" filter="url(#keyShadow)">
+      <animate attributeName="y" values="80;92;80" keyTimes="0;0.08;0.16" dur="4s" begin="1s" repeatCount="indefinite"/>
+      <animate attributeName="fill" values="url(#capTop);url(#capTopLit);url(#capTop)" keyTimes="0;0.08;0.16" dur="4s" begin="1s" repeatCount="indefinite"/>
+    </rect>
+
+    <line x1="518" y1="86" x2="872" y2="86" stroke="#5c5c6a" stroke-width="1.3" opacity="0.7">
+      <animate attributeName="y1" values="86;98;86" keyTimes="0;0.08;0.16" dur="4s" begin="1s" repeatCount="indefinite"/>
+      <animate attributeName="y2" values="86;98;86" keyTimes="0;0.08;0.16" dur="4s" begin="1s" repeatCount="indefinite"/>
+    </line>
+
+    <ellipse cx="695" cy="130" rx="160" ry="28" fill="none" stroke="#1c1c22" stroke-width="1" opacity="0.55">
+      <animate attributeName="cy" values="130;142;130" keyTimes="0;0.08;0.16" dur="4s" begin="1s" repeatCount="indefinite"/>
+    </ellipse>
+
+    <text x="695" y="138" text-anchor="middle" font-family="'SF Mono','Menlo','Consolas',monospace" font-weight="700" font-size="28" fill="#e5e5ea" letter-spacing="6">
+      ELITE
+      <animate attributeName="y" values="138;150;138" keyTimes="0;0.08;0.16" dur="4s" begin="1s" repeatCount="indefinite"/>
+      <animate attributeName="fill" values="#e5e5ea;#c8e4ff;#e5e5ea" keyTimes="0;0.08;0.16" dur="4s" begin="1s" repeatCount="indefinite"/>
+    </text>
+  </g>
+
+  <!-- Subtle subtitle below the keyboard -->
+  <text x="480" y="290" text-anchor="middle" font-family="'SF Mono','Menlo',monospace" font-size="12" fill="#4a4a52" letter-spacing="5">
+    MULTI-AGENT AI DEV TEAM · REVIEWER ≠ BUILDER
+  </text>
 </svg>
