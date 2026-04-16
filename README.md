@@ -30,16 +30,22 @@ Built on top of [GSD (Get-Shit-Done)](https://github.com/gsd-build/get-shit-done
 ## 30-second quick start
 
 ```bash
+# One-time install on your machine
 git clone https://github.com/notsatoshii/CAE.git
 cd CAE && ./scripts/install.sh
 
 # In any project directory
 cd your-project
-gsd-new-project        # one-time intake
-cae execute-phase 1    # ship it
+claude                  # opens Claude Code REPL
+# Inside Claude: type /gsd-new-project   (intake wizard; produces PROJECT.md + ROADMAP.md)
+# Back at your shell:
+bash ~/CAE/scripts/cae-init.sh .   # generates .planning/config.json for CAE
+cae execute-phase 1     # dispatch — builds + reviews phase 1 tasks
 ```
 
-Requires: Claude Code CLI (authenticated), Python 3.9+, Bash, tmux, git. Gemini CLI optional (real Sentinel upgrades to cross-provider if available; falls back to Claude Opus `gsd-verifier` otherwise).
+Requires: Claude Code CLI (authenticated), Python 3.9+, Bash, tmux, git. Gemini CLI optional (real Sentinel upgrades to cross-provider if available; falls back to Claude Opus `gsd-verifier` wrap otherwise).
+
+**Not a developer?** Phase 2 ships Shift (`/shift-start`) — a Claude Code skill that takes you from "I want to build X" to a ready CAE project through a guided chat, no terminal knowledge required. Until then the flow above assumes you can run shell commands.
 
 ## What makes it different
 
@@ -90,13 +96,23 @@ Every arrow is a file on disk. Every agent is `claude --print` or `gemini -p` in
 
 ## The harness
 
-CAE isn't a model. It's a harness — the scaffolding around models that makes them work as a team.
+CAE is **partly a harness and partly an orchestration layer** that composes other harnesses. Precisely:
 
-- **Process harness:** `tmux` — every agent invocation spawns a detached pane, captures stdout/stderr/meta to files, times out cleanly. Patterns borrowed from [OMC/OMX](./OMC_OMX_REFERENCE.md).
-- **Agent harness:** Claude Code CLI (`claude --print --agent gsd-<name>`) + Gemini CLI (`gemini -p`). CAE doesn't reinvent these — it wraps them.
-- **Workflow harness:** GSD methodology. Phase decomposition, wave execution, plan validation, goal-backward verification, worktree isolation. CAE inherits 3,150 lines of workflow prompt engineering without porting it.
-- **File harness:** `.planning/` directory (`PLAN.md`, `PROJECT.md`, `STATE.md`, phase dirs), `AGENTS.md`, `KNOWLEDGE/`, `.cae/metrics/`. Every agent reads from and writes to this filesystem. No in-memory state to lose.
-- **Safety harness:** circuit breakers, branch isolation (`forge/<task-id>` with pre-push hook), Telegram dangerous-action gate, Phantom escalation on repeated failures.
+- **Composed from:**
+  - [Claude Code](https://docs.anthropic.com/en/docs/claude-code) — LLM agent runtime (every Claude-side agent is `claude --print --agent <name>` under the hood)
+  - [Gemini CLI](https://github.com/google-gemini/gemini-cli) — secondary LLM runtime for adversarial review + cheap knowledge extraction
+  - [Oh My Claude Code (OMC)](./OMC_OMX_REFERENCE.md) — multi-agent orchestration primitives (tmux worker panes, `/team` patterns). CAE's adapter design borrows directly from OMC.
+  - [GSD (Get-Shit-Done)](https://github.com/gsd-build/get-shit-done) — workflow methodology. 3,150 lines of phase/wave/verification prompt engineering inherited via `claude --print --agent gsd-*` wraps
+  - [Caveman](https://github.com/JuliusBrussee/caveman) — output-compression plugin (65–75% reduction)
+  - [Karpathy Guidelines](https://github.com/forrestchang/andrej-karpathy-skills) — quality guardrails plugin
+  - `tmux` + `bash` — process scheduling + detached execution
+- **What CAE itself adds (the actually-new code):**
+  - **Enforcement** — the reviewer-≠-builder rule is in code, not convention. Verdicts where models match are rejected and re-run on the fallback path.
+  - **Safety** — 6 circuit breakers (turn budget, retries, parallel count, input/output tokens, sentinel JSON failures), branch isolation via git hook, Telegram dangerous-action gate.
+  - **Composition** — the Python orchestrator (`bin/cae`) that parses GSD's `PLAN.md`, resolves roles to models via config, dispatches waves, routes Sentinel verdicts back to Forge retry loops, and hands off to Phantom on repeated failure.
+  - **File-mediated state** — `.planning/` (PLAN.md, phases), `AGENTS.md` (300-line cap), `KNOWLEDGE/<topic>.md` (overflow), `.cae/metrics/*.jsonl` (every decision logged).
+
+TL;DR: Claude Code + OMC + GSD + Gemini CLI are the harnesses. CAE is the **config-driven orchestrator with hard safety rails** that makes them work as a dev team instead of a loose collection of CLIs.
 
 ## Saving context (why CAE doesn't run out of tokens)
 
@@ -115,7 +131,7 @@ Long-horizon coding burns context. Single-agent tools spiral once the conversati
 
 **4. Caveman token compression** — Caveman plugin runs on Forge output, converting prose into terse caveman-style bullets. Preserves code blocks, file paths, error messages verbatim; strips articles, hedging, pleasantries. 65–75% reduction on natural prose with zero semantic loss on technical content. Install auto-managed by `scripts/install.sh`.
 
-**5. AGENTS.md 300-line hard cap** — Scribe maintains one lean shared-knowledge file capped at 300 lines. Overflow rotates to `KNOWLEDGE/<topic>.md`. Tasks tagged `tags: [solidity, auth]` pull in only the matching topic files, not the whole knowledge base. No infinitely-growing context rot.
+**5. AGENTS.md 300-line hard cap** — Scribe maintains one lean shared-knowledge file capped at 300 lines. When it exceeds cap, older entries rotate out to `KNOWLEDGE/<topic>.md` files (tagged by topic when Scribe writes them). No infinitely-growing context rot. *Tag-based auto-injection into task prompts is a planned enhancement; today `AGENTS.md` is the single file every task reads.*
 
 **Bonus: [Karpathy Guidelines](https://github.com/forrestchang/andrej-karpathy-skills) plugin** — installed during setup, prevents over-engineering (no premature abstractions, surgical changes, explicit assumptions). Smaller diffs = smaller reviews = less Sentinel token spend.
 
@@ -148,36 +164,42 @@ Sentinel falls back to `gsd-verifier` wrap on Claude Opus if Gemini isn't availa
 
 ## CAE vs other AI coding tools
 
-| Capability                               | Claude Code solo | Aider    | Cursor   | Devin    | **CAE**       |
-|------------------------------------------|------------------|----------|----------|----------|---------------|
-| Multi-agent team                         | ✗                | ✗        | ✗        | ~        | ✅            |
-| Reviewer ≠ builder model, enforced       | ✗                | ✗        | ✗        | ✗        | ✅            |
-| File-mediated handoffs (no context rot)  | ✗                | ✗        | ✗        | ✗        | ✅            |
-| GSD phase/wave workflow                  | ✗                | ✗        | ✗        | ✗        | ✅            |
-| Production circuit breakers              | ✗                | ✗        | ✗        | ~        | ✅            |
-| Smart-contract mode                      | ✗                | ✗        | ✗        | ✗        | ✅            |
-| Telegram approval for dangerous ops      | ✗                | ✗        | ✗        | ✗        | ✅            |
-| Persistent learning across sessions      | ~                | ~        | ~        | ~        | ✅ AGENTS.md  |
-| Fresh context per task                   | ✗                | ✗        | ✗        | ✗        | ✅            |
-| IDE integration                          | CLI              | CLI      | ✅       | web      | CLI           |
-| Runs on own API key (no vendor lock)     | ✅               | ✅       | ✗        | ✗        | ✅            |
+Being honest about what's unique vs what competitors also have:
 
-`~` = partial / unclear / mode-dependent.
+| Capability                                    | Claude Code solo | Aider    | OpenHands | Cursor   | Devin    | **CAE**       |
+|-----------------------------------------------|------------------|----------|-----------|----------|----------|---------------|
+| Multi-agent team                              | ~ (`/agents`)    | ✗        | ✅         | ✗        | ✅        | ✅            |
+| Reviewer ≠ builder model, **enforced in code**| ✗                | ~ (opt.) | ✗         | ✗        | ✗        | ✅            |
+| File-mediated handoffs between agents         | ✗                | ✗        | ~         | ✗        | ~        | ✅            |
+| GSD phase/wave workflow inheritance           | ✗                | ✗        | ✗         | ✗        | ✗        | ✅            |
+| Production circuit breakers (budget/retry)    | ✗                | ✗        | ~         | ✗        | ~        | ✅            |
+| Smart-contract auto-mode (`.sol` detection)   | ✗                | ✗        | ✗         | ✗        | ✗        | ✅            |
+| Dangerous-action approval gate (Telegram)     | ✗                | ✗        | ✗         | ✗        | ✗        | ✅            |
+| Persistent team knowledge (`AGENTS.md` + KB)  | ✗                | ✗        | ✗         | ✗        | ✗        | ✅            |
+| Fresh context per task (no session rot)       | ~ (subagents)    | ~        | ~         | ✗        | ~        | ✅            |
+| IDE integration                               | CLI              | CLI      | web UI    | ✅       | web      | CLI           |
+| Runs on your API key                          | ✅                | ✅        | ✅         | partial  | ✗        | ✅            |
+| SWE-bench score published                     | —                | ~27%     | ~55%      | —        | —        | — (untested)  |
+| GitHub stars (as of writing)                  | closed           | ~30k     | ~40k      | closed   | closed   | day-1         |
+
+`~` = partial / optional / mode-dependent. Aider's architect+editor mode gets close to reviewer-≠-builder but it's opt-in convention; CAE rejects same-model verdicts in `bin/sentinel.py`. OpenHands has step/budget limits that function like circuit breakers. CAE is alpha; both Aider and OpenHands are battle-tested at scale.
+
+**CAE's real uniqueness reduces to three things:** (1) enforced model diversity, (2) GSD methodology inheritance (3,150 lines of workflow prompts for free), (3) smart-contract auto-mode. Everything else is better or comparable in bigger projects.
 
 ## Who this is for
 
-- **Founders shipping real products** who can't afford one-shot AI's silent confabulation.
-- **Smart-contract teams** where mistakes cost $10K+ — Aegis auditor + Opus on contract code + Gemini adversarial review.
-- **Long-horizon projects** where context rot kills quality by week 3. File-mediated handoffs don't rot.
-- **People building with AI on nights/weekends** who need a team to catch their mistakes while they sleep.
+- **Non-technical founders shipping an MVP** (Phase 2: via Shift, the guided chat onboarding). You describe the product in plain English; CAE's team scaffolds, builds, reviews, and documents it.
+- **Devs on long-horizon projects** who want structured review without hiring a reviewer. Forge + Sentinel gives you a second opinion every merge.
+- **Smart-contract teams** where bugs ship to mainnet. `.sol` auto-detect → Opus on contract code + Aegis security audit + Gemini adversarial review before any merge.
+- **Nights/weekends solo builders** who want a team to catch their mistakes while they sleep.
 
-Not for: one-off scripts (use `claude` directly), pair-programming flow (use Cursor), or research prototypes where review is noise.
+**Not for:** one-off scripts (use `claude` directly), in-IDE pair-programming flow (use Cursor), or research prototypes where review is noise.
 
 ## Status
 
-**Phase 1 complete** — orchestrator, safety layer, wrapped GSD agents, cross-provider Sentinel, automated Scribe, Phantom integration, Telegram gate, compaction cascade, full acceptance gate (23/0/4 passing on Claude-only; Gemini PART B live now). See [`PHASE_1_TASKS.md`](./PHASE_1_TASKS.md).
+**Phase 1 complete** — orchestrator, safety layer, wrapped GSD agents, cross-provider Sentinel, automated Scribe, Phantom integration, Telegram gate, compaction cascade, acceptance gate 23 pass / 0 fail / 4 Gemini-extension tests TODO on `scripts/t14-acceptance.sh`. Gemini CLI is installed + authed + headless-tested — the 4 skipped tests are acceptance-script extensions, not missing functionality. See [`PHASE_1_TASKS.md`](./PHASE_1_TASKS.md).
 
-**Phase 2 in progress** — Herald (doc writer), Timmy bridge (external orchestration), Shift (normie-facing project genesis). See [`PHASE_2_PLAN.md`](./PHASE_2_PLAN.md).
+**Phase 2 landing** — Herald (user-facing doc writer, imminent), Timmy bridge (external orchestration via Hermes `/delegate`), Shift (normie-facing project genesis). See [`PHASE_2_PLAN.md`](./PHASE_2_PLAN.md).
 
 **Roadmap** — multi-project orchestration, metrics UI, real job queue (upgrade from file-lock semaphore), Slack/email notifications, rollback automation.
 
@@ -263,6 +285,26 @@ CAE/
 
 ### Honest credits
 CAE is overwhelmingly thin glue. The three heavyweights doing the real work are **GSD** (the methodology), **Claude Code** (the agent runtime), and **Gemini CLI** (the reviewer runtime). Most of what CAE adds is enforcement (reviewer ≠ builder), safety (circuit breakers, branch isolation, dangerous-action gate), and composition (wave orchestration, compaction cascade, Scribe/Herald split). If you remove any of the three upstream projects, CAE doesn't exist.
+
+## FAQ
+
+**Q: How is this different from Aider's architect + editor mode?**
+Aider's architect/editor uses different models by convention — the user picks a bigger model for planning, smaller for editing, both within one session. CAE rejects verdicts where `reviewer_model == builder_model` in `bin/sentinel.py` (not just convention, actual code). Agents also run as separate subprocesses with fresh context each spawn, not turns in one conversation.
+
+**Q: Why not just use Claude Code's built-in `/agents` or Task() tool?**
+`/agents` gives you Claude subagents. Great for single-provider orchestration. CAE adds (a) **cross-provider** — Gemini as the reviewer, actually on a different pipeline; (b) **file-mediated handoffs** — state lives on disk, not in a parent conversation; (c) **production safety rails** — circuit breakers, branch isolation, Telegram gate; (d) **GSD phase/wave workflow** on top. If those don't matter to you, `/agents` alone may be enough.
+
+**Q: What does a real CAE run cost in tokens?**
+Unknown in practice — depends heavily on phase size. Design targets: Forge prompts stay under ~30k tokens via the compaction cascade. Scribe/Sentinel on Gemini are effectively free (Code Assist generous tier). Haiku file summaries add minimal overhead. Rough estimate: $0.50–$2 per phase on Claude Max + Gemini Code Assist free. Actual numbers will land once Phase 2 has run real workloads.
+
+**Q: Isn't this just a wrapper with extra safety?**
+Yes — and that's the point. CAE doesn't invent new models or a new agent runtime. It enforces composition rules that real dev teams take for granted (reviewer ≠ builder, branch isolation, dangerous-op approval) on top of tools that already work. If those rules don't matter for your workflow, CAE is overkill.
+
+**Q: Is this production-ready?**
+No. Alpha. Phase 1 passed a calc.py toy workload. Not run on production codebases, not SWE-bench tested, no case studies. Star to follow; expect breakage if you try it this week.
+
+**Q: Can I use this without Gemini (Claude-only)?**
+Yes. When Gemini CLI isn't installed, Sentinel falls back to `claude-opus` wrapping `gsd-verifier` (reviewing a `claude-sonnet` builder — still different models). Scribe falls back to Claude Haiku. No functionality blocked.
 
 ## Contributing
 
