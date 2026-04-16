@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="./assets/banner.svg" alt="CTRL + ALT + ELITE" width="800"/>
+  <img src="https://raw.githubusercontent.com/notsatoshii/CAE/main/assets/banner.svg?v=3" alt="CTRL + ALT + ELITE" width="800"/>
 </p>
 
 > **The AI coder that gets code-reviewed.**
