@@ -590,102 +590,382 @@ def main():
         return
     if argv[0] == "herald":
         if len(argv) < 2:
-            die("usage: cae herald <doc-type>    doc-type = readme|architecture|deployment|changelog|custom")
+            die("usage: cae herald <doc-type> [--fast|--plan|--review <file>] [--auto]\n"
+                "  doc-type = readme|architecture|deployment|changelog|custom\n"
+                "  default : propose outline → user approve → write → sentinel review → iterate\n"
+                "  --fast  : skip gates, one-shot (v0.1 behavior)\n"
+                "  --plan  : only propose outline, stop\n"
+                "  --review <file> : Sentinel-review existing doc, report issues\n"
+                "  --auto  : skip interactive user gates, auto-approve outline + merge")
         cmd_herald(argv[1], argv[2:])
         return
     die(f"unknown command: {argv[0]}")
 
 
-def cmd_herald(doc_type: str, extra_args: List[str]):
-    """
-    Spawn Herald to write/update a user-facing project doc.
-    Uses the `gsd-doc-writer` wrap with the cae-herald persona injected
-    as --append-system-prompt-file (per the wrap contract).
-    """
-    project_root = Path.cwd()
-    agent_models = load_yaml(AGENT_MODELS_PATH)
+# ───────────────────────────────────────────────────────────────────────
+# HERALD v0.2 — plan + review loops with user gates
+# ───────────────────────────────────────────────────────────────────────
 
+HERALD_TARGET_MAP = {
+    "readme":       "README.md",
+    "architecture": "ARCHITECTURE.md",
+    "deployment":   "DEPLOYMENT.md",
+    "changelog":    "CHANGELOG.md",
+}
+
+
+def _herald_config(project_root: Path):
+    """Load herald + sentinel_fallback config; validate."""
+    agent_models = load_yaml(AGENT_MODELS_PATH)
     herald = agent_models.get("herald")
     if herald is None:
         die("herald role not found in config/agent-models.yaml")
+    fallback = agent_models.get("sentinel_fallback", {})
+    return herald, fallback
 
-    target_map = {
-        "readme":       "README.md",
-        "architecture": "ARCHITECTURE.md",
-        "deployment":   "DEPLOYMENT.md",
-        "changelog":    "CHANGELOG.md",
-    }
-    target_file = target_map.get(doc_type.lower(), None)
-    if target_file is None and doc_type.lower() != "custom":
-        die(f"unknown doc-type '{doc_type}'. Supported: {', '.join(target_map.keys())} | custom")
 
+def _herald_session_dir(project_root: Path, doc_type: str) -> Path:
     session_id = f"herald-{doc_type}-{uuid.uuid4().hex[:6]}"
     work_dir = project_root / ".planning" / "herald" / session_id
     work_dir.mkdir(parents=True, exist_ok=True)
-    prompt_path = work_dir / "herald-prompt.md"
+    return work_dir
 
-    existing = ""
-    if target_file and (project_root / target_file).exists():
-        existing = (project_root / target_file).read_text()[:8000]
 
-    agents_md = ""
-    if (project_root / "AGENTS.md").exists():
-        agents_md = (project_root / "AGENTS.md").read_text()[:3000]
-
-    # Inject Herald persona inline at top of user prompt (adapter blocks
-    # combined --agent + --system-prompt-file, so we can't use system injection).
-    herald_persona_path = CAE_ROOT / "agents" / "cae-herald.md"
-    persona = herald_persona_path.read_text() if herald_persona_path.exists() else ""
-
-    prompt_path.write_text(f"""<persona>
-{persona}
-</persona>
-
-<objective>
-Produce or update `{target_file or '<ask user for target filename>'}` for this project.
-Doc-type contract: {doc_type}
-</objective>
-
-<doc_type>{doc_type}</doc_type>
-
-<project_root>{project_root}</project_root>
-
-<existing_doc>
-{existing or '(none — produce from scratch)'}
-</existing_doc>
-
-<team_knowledge>
-{agents_md or '(no AGENTS.md yet)'}
-</team_knowledge>
-
-<instructions>
-You are acting as Herald (persona above). Verify every factual claim against
-the actual codebase via Read/Grep/Glob before writing. Write to {target_file
-or 'the agreed filename'}. Honest status over aspirational — if something is
-planned not built, say so. Then print a brief SUMMARY of what you changed.
-</instructions>
-""")
-
-    inv = herald["invocation_mode"]
+def _herald_spawn(prompt_path: Path, herald_cfg: dict, session_id: str) -> int:
+    inv = herald_cfg["invocation_mode"]
     if inv.get("type") != "wrap-gsd-agent":
         die(f"herald invocation_mode must be wrap-gsd-agent; got {inv.get('type')}")
-
     cmd = [
         str(CLAUDE_ADAPTER),
         str(prompt_path),
-        herald["model"],
+        herald_cfg["model"],
         session_id,
         "--agent", inv["name"],
-        "--effort", herald.get("effort", "max"),
+        "--effort", herald_cfg.get("effort", "max"),
         "--timeout", "1800",
     ]
+    return subprocess.run(cmd, capture_output=False).returncode
 
-    print(f"Herald spawning ({doc_type}) → {target_file or '<custom>'}")
-    result = subprocess.run(cmd, capture_output=False)
-    output_path = Path(str(prompt_path) + ".output")
-    if output_path.exists():
-        print(f"Herald done. Output: {output_path}")
-    sys.exit(result.returncode)
+
+def _herald_persona() -> str:
+    p = CAE_ROOT / "agents" / "cae-herald.md"
+    return p.read_text() if p.exists() else ""
+
+
+def _herald_context(project_root: Path, target_file: Optional[str]) -> dict:
+    existing = ""
+    if target_file and (project_root / target_file).exists():
+        existing = (project_root / target_file).read_text()[:8000]
+    agents_md = ""
+    if (project_root / "AGENTS.md").exists():
+        agents_md = (project_root / "AGENTS.md").read_text()[:3000]
+    return {"existing": existing, "agents_md": agents_md}
+
+
+def _herald_ask_user(prompt_text: str, auto: bool, default: str = "y") -> bool:
+    """Interactive yes/no gate. Returns True for yes/approve. --auto returns True always."""
+    if auto:
+        return True
+    try:
+        reply = input(f"{prompt_text} [y/N]: ").strip().lower()
+    except (EOFError, KeyboardInterrupt):
+        return False
+    return reply in ("y", "yes")
+
+
+def _herald_plan(doc_type: str, target_file: Optional[str], project_root: Path, work_dir: Path, herald_cfg: dict) -> Optional[str]:
+    """Stage 1: ask Herald to propose a section outline, save to HERALD-PLAN.md."""
+    ctx = _herald_context(project_root, target_file)
+    session_id = work_dir.name + "-plan"
+    prompt_path = work_dir / "plan-prompt.md"
+    prompt_path.write_text(f"""<persona>
+{_herald_persona()}
+</persona>
+
+<task>
+Propose a section-level outline for `{target_file or '<to-be-named>'}` ({doc_type}).
+DO NOT write the full doc. Only propose:
+  1. Section headings (in order)
+  2. One-line purpose per section
+  3. Key facts/commits/files each section should reference (grep the code first)
+  4. Estimated line count per section (target ≤300 total)
+Write your output to `{work_dir / 'HERALD-PLAN.md'}`.
+</task>
+
+<project_root>{project_root}</project_root>
+<existing_doc>
+{ctx['existing'] or '(none)'}
+</existing_doc>
+<team_knowledge>
+{ctx['agents_md'] or '(none)'}
+</team_knowledge>
+
+<instructions>
+Scan the codebase briefly (README, bin/, config/, recent git log) to ground section
+ideas in real structure. Then write HERALD-PLAN.md. Be concrete — name real files,
+real commits, real features. No marketing fluff. Print "PLAN WRITTEN" when done.
+</instructions>
+""")
+    print(f"Herald: proposing outline for {target_file or doc_type}...")
+    rc = _herald_spawn(prompt_path, herald_cfg, session_id)
+    plan_path = work_dir / "HERALD-PLAN.md"
+    if plan_path.exists():
+        return plan_path.read_text()
+    out = Path(str(prompt_path) + ".output")
+    if out.exists():
+        return out.read_text()
+    return None
+
+
+def _herald_write(doc_type: str, target_file: str, approved_outline: str, project_root: Path, work_dir: Path, herald_cfg: dict) -> int:
+    """Stage 2: Herald writes the full doc per approved outline."""
+    ctx = _herald_context(project_root, target_file)
+    session_id = work_dir.name + "-write"
+    prompt_path = work_dir / "write-prompt.md"
+    prompt_path.write_text(f"""<persona>
+{_herald_persona()}
+</persona>
+
+<task>
+Write `{target_file}` for this project per the APPROVED OUTLINE below.
+Every factual claim must be grep-verifiable against the current codebase.
+</task>
+
+<approved_outline>
+{approved_outline}
+</approved_outline>
+
+<project_root>{project_root}</project_root>
+<existing_doc>
+{ctx['existing'] or '(none — produce from scratch)'}
+</existing_doc>
+<team_knowledge>
+{ctx['agents_md'] or '(none)'}
+</team_knowledge>
+
+<instructions>
+Write the doc to `{target_file}`. Follow the approved outline sections. Verify
+every file path, function name, command, and version number against the live
+code. Mark planned-not-built items clearly. When done, print "WRITE DONE" with
+a brief change summary.
+</instructions>
+""")
+    print(f"Herald: writing {target_file}...")
+    return _herald_spawn(prompt_path, herald_cfg, session_id)
+
+
+def _herald_review(doc_path: Path, project_root: Path, work_dir: Path, fallback_cfg: dict) -> Optional[dict]:
+    """Stage 3: Sentinel-style review — fact-check every claim in the doc against actual code."""
+    if not doc_path.exists():
+        return None
+    doc_text = doc_path.read_text()
+    session_id = work_dir.name + "-review"
+    prompt_path = work_dir / "review-prompt.md"
+    prompt_path.write_text(f"""<task>
+Fact-check this document against the actual codebase at `{project_root}`.
+Look for:
+  • Hallucinated file paths, function names, config keys, version numbers
+  • Aspirational claims stated as present-tense fact
+  • Internal contradictions
+  • Missing honest-status markers for planned-not-built features
+Produce a JSON verdict with this exact shape:
+{{
+  "verdict": "pass" | "fail",
+  "issues": [
+    {{"severity": "CRITICAL|MAJOR|MINOR", "claim": "...", "problem": "...", "fix": "..."}}
+  ]
+}}
+</task>
+
+<doc_to_review>
+{doc_text[:20000]}
+</doc_to_review>
+
+<instructions>
+Use Read/Grep/Glob to verify. Be strict — prefer flagging false positives over
+missing real hallucinations. Return ONLY the JSON verdict at the end. "pass" means
+zero CRITICAL or MAJOR issues.
+</instructions>
+""")
+    print(f"Herald: Sentinel reviewing {doc_path.name}...")
+    # Use sentinel_fallback (Claude Opus gsd-verifier) for adversarial review
+    inv = fallback_cfg.get("invocation_mode", {})
+    agent = inv.get("name", "gsd-verifier")
+    model = fallback_cfg.get("model", "claude-opus-4-6")
+    cmd = [str(CLAUDE_ADAPTER), str(prompt_path), model, session_id,
+           "--agent", agent, "--effort", "max", "--timeout", "1800"]
+    subprocess.run(cmd, capture_output=False)
+    out = Path(str(prompt_path) + ".output")
+    if not out.exists():
+        return None
+    raw = out.read_text()
+    # Extract JSON
+    start = raw.find("{")
+    if start < 0:
+        return None
+    depth = 0
+    for i in range(start, len(raw)):
+        if raw[i] == "{": depth += 1
+        elif raw[i] == "}":
+            depth -= 1
+            if depth == 0:
+                try:
+                    return json.loads(raw[start:i+1])
+                except json.JSONDecodeError:
+                    return None
+    return None
+
+
+def _herald_revise(doc_path: Path, issues: list, project_root: Path, work_dir: Path, herald_cfg: dict) -> int:
+    """Stage 4: Herald revises the doc to address review issues."""
+    session_id = work_dir.name + f"-revise-{uuid.uuid4().hex[:4]}"
+    prompt_path = work_dir / f"revise-prompt-{session_id[-4:]}.md"
+    issues_text = "\n".join(f"- [{i.get('severity','?')}] {i.get('claim','?')}\n  problem: {i.get('problem','?')}\n  fix: {i.get('fix','?')}" for i in issues)
+    prompt_path.write_text(f"""<persona>
+{_herald_persona()}
+</persona>
+
+<task>
+Fix the issues below in `{doc_path}`. Re-read the file, fix each issue, and write
+the corrected version back to the same path. Verify fixes don't introduce new
+hallucinations. Print "REVISE DONE" when finished.
+</task>
+
+<review_issues>
+{issues_text}
+</review_issues>
+
+<project_root>{project_root}</project_root>
+""")
+    print(f"Herald: revising {doc_path.name} ({len(issues)} issues)...")
+    return _herald_spawn(prompt_path, herald_cfg, session_id)
+
+
+def cmd_herald(doc_type: str, extra_args: List[str]):
+    """
+    v0.2: propose outline → user approve → write → sentinel review → iterate.
+    Flags: --fast (v0.1 one-shot), --plan (outline only), --review <file>, --auto (skip gates)
+    """
+    project_root = Path.cwd()
+    herald_cfg, fallback_cfg = _herald_config(project_root)
+
+    # Flag parsing
+    fast = "--fast" in extra_args
+    plan_only = "--plan" in extra_args
+    auto = "--auto" in extra_args
+    review_target = None
+    if "--review" in extra_args:
+        i = extra_args.index("--review")
+        if i + 1 < len(extra_args):
+            review_target = extra_args[i + 1]
+
+    target_file = HERALD_TARGET_MAP.get(doc_type.lower())
+    if target_file is None and doc_type.lower() != "custom":
+        die(f"unknown doc-type '{doc_type}'. Supported: {', '.join(HERALD_TARGET_MAP.keys())} | custom")
+
+    # ─── --review mode: Sentinel-review an existing doc, report, exit ──
+    if review_target:
+        doc_path = (project_root / review_target).resolve()
+        if not doc_path.exists():
+            die(f"review target not found: {doc_path}")
+        work_dir = _herald_session_dir(project_root, doc_type + "-review")
+        verdict = _herald_review(doc_path, project_root, work_dir, fallback_cfg)
+        if verdict is None:
+            die("review failed — no JSON verdict from Sentinel")
+        print(f"\n━━ HERALD REVIEW — {doc_path.name} ━━")
+        print(f"Verdict: {verdict.get('verdict', '?').upper()}")
+        issues = verdict.get("issues", [])
+        if not issues:
+            print("No issues found.")
+        else:
+            for i, iss in enumerate(issues, 1):
+                print(f"  {i}. [{iss.get('severity','?')}] {iss.get('claim','?')}")
+                print(f"     problem: {iss.get('problem','?')}")
+                print(f"     fix:     {iss.get('fix','?')}")
+        review_md = work_dir / "HERALD-REVIEW.md"
+        review_md.write_text(json.dumps(verdict, indent=2))
+        print(f"\nFull report: {review_md}")
+        sys.exit(0)
+
+    # ─── --fast mode: v0.1 one-shot behavior (keep existing flow) ──────
+    if fast:
+        work_dir = _herald_session_dir(project_root, doc_type)
+        ctx = _herald_context(project_root, target_file)
+        prompt_path = work_dir / "herald-prompt.md"
+        prompt_path.write_text(f"""<persona>
+{_herald_persona()}
+</persona>
+
+<objective>
+Produce or update `{target_file or '<ask user>'}` for this project.
+Doc-type: {doc_type}. One-shot mode.
+</objective>
+
+<project_root>{project_root}</project_root>
+<existing_doc>
+{ctx['existing'] or '(none)'}
+</existing_doc>
+<team_knowledge>
+{ctx['agents_md'] or '(none)'}
+</team_knowledge>
+
+<instructions>
+You are Herald (persona above). Verify claims against the actual code.
+Write to {target_file or 'the agreed filename'}. Print a brief SUMMARY when done.
+</instructions>
+""")
+        print(f"Herald --fast spawning ({doc_type}) → {target_file or '<custom>'}")
+        sys.exit(_herald_spawn(prompt_path, herald_cfg, work_dir.name))
+
+    # ─── Default: plan → approve → write → review → revise loop ────────
+    work_dir = _herald_session_dir(project_root, doc_type)
+
+    # Stage 1: Plan
+    plan = _herald_plan(doc_type, target_file, project_root, work_dir, herald_cfg)
+    if plan is None:
+        die("plan stage failed — no HERALD-PLAN.md produced")
+    print("\n━━ HERALD OUTLINE ━━")
+    print(plan[:2500] + ("\n... (truncated)" if len(plan) > 2500 else ""))
+    print("━━━━━━━━━━━━━━━━━━━━")
+
+    if plan_only:
+        print(f"\nPlan saved: {work_dir / 'HERALD-PLAN.md'}")
+        sys.exit(0)
+
+    if not _herald_ask_user("Approve this outline and proceed to write?", auto):
+        print("Aborted. Outline saved for your review; re-run with --fast or adjust and re-run.")
+        sys.exit(1)
+
+    # Stage 2: Write
+    if target_file is None:
+        die("--custom requires a target filename; not yet implemented for default flow (use --fast)")
+    rc = _herald_write(doc_type, target_file, plan, project_root, work_dir, herald_cfg)
+    doc_path = project_root / target_file
+    if rc != 0 or not doc_path.exists():
+        die(f"write stage failed (rc={rc}) — check {work_dir}")
+
+    # Stage 3 + 4: Review + revise loop (max 2 revise rounds)
+    for round_num in range(1, 3):
+        verdict = _herald_review(doc_path, project_root, work_dir, fallback_cfg)
+        if verdict is None:
+            print(f"⚠ review round {round_num}: Sentinel produced no verdict — stopping loop")
+            break
+        issues = verdict.get("issues", [])
+        blocking = [i for i in issues if i.get("severity", "").upper() in ("CRITICAL", "MAJOR")]
+        print(f"\n━━ HERALD REVIEW (round {round_num}) ━━")
+        print(f"Verdict: {verdict.get('verdict','?').upper()} ({len(issues)} issues, {len(blocking)} blocking)")
+        for i, iss in enumerate(issues[:10], 1):
+            print(f"  {i}. [{iss.get('severity','?')}] {iss.get('claim','?')[:100]}")
+        if verdict.get("verdict", "").lower() == "pass" and not blocking:
+            print("✓ Doc passes Sentinel review.")
+            break
+        if not _herald_ask_user(f"Revise {target_file} to fix these issues?", auto):
+            print("Skipping revise; doc left as-is.")
+            break
+        _herald_revise(doc_path, issues, project_root, work_dir, herald_cfg)
+
+    print(f"\nHerald done. Doc: {doc_path}\nAudit trail: {work_dir}")
+    sys.exit(0)
 
 
 if __name__ == "__main__":
