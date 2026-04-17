@@ -1,0 +1,9 @@
+**SUMMARY**
+
+Wrote `CHANGELOG.md` from scratch — 3 sections:
+
+- **Phase 2 (in progress)** — Herald shipped (with `cae herald` subcommand details, commit `5c5ee4e`), Phase 2 plan, README overhaul series. Explicitly marks Timmy bridge and Shift as planned-not-built.
+- **Phase 1 (complete)** — All 14 tasks: orchestrator, adapters, Sentinel (real + fallback), circuit breakers, Phantom, Telegram gate, Scribe, compactor, branch isolation, acceptance gate. Notes Gemini + Telegram token gaps honestly. Flags auto-approve removal as breaking internal behavior.
+- **Phase 0 (foundation)** — Initial personas, GSD skill injection, Multica bridge, hooks, install scripts. Notes `model-profiles.json` is orphaned.
+
+Every claim verified against git log, commit messages, and `CURRENT_STATE.md`. No aspirational claims in present tense.
