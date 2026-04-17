@@ -1,204 +1,266 @@
 # CAE Session Handoff
-**Date:** 2026-04-17
-**From:** Claude Opus 4.6 (1M context) — session running out of context
-**To:** Next Claude session picking up CAE Phase 1 work
+**Date:** 2026-04-17 (session 2, mid-Phase 2)
+**From:** Claude Opus 4.7 (1M context) — context running out after Herald v0.1 + v0.2 shipped
+**To:** Next Claude session picking up Phase 2 (Timmy bridge + Shift v3)
 
 ---
 
-## Read these three first (in order)
+## Read first (in order, all short)
 
-1. **This file** (HANDOFF.md) — the 60-second orientation
-2. **PIVOT_PLAN.md** — the 9 architectural decisions + GSD-wrap strategy
-3. **PHASE_1_TASKS.md** — the 14 tasks, 13 done
-
-Docs are viewable in browser at: `http://165.245.186.254:8765/` (Python http.server running on background task, port 8765 open in ufw).
-
-If the viewer is down: `cd /tmp/cae-docs-viewer/site && python3 -m http.server 8765 --bind 0.0.0.0 &`
+1. **This file (HANDOFF.md)** — 60-second orientation
+2. **PHASE_2_PLAN.md** — Phase 2 scope (Herald ✅, Timmy bridge ⏳, Shift v3 ⏳)
+3. **CHANGELOG.md** — full change history through 2026-04-17
+4. **README.md** — just-audited, should be accurate
 
 ---
 
-## What CAE is (30-second version)
+## Where we are
 
-Ctrl+Alt+Elite is a multi-agent coding team. Orchestrator spawns Claude Code and Gemini CLI as subprocesses (tmux panes), wraps GSD agents for Claude-side roles, ports methodology to Gemini for cross-provider adversarial review. Forge builds → Sentinel (different model) reviews → Scribe (Gemini Flash) extracts learnings → all mediated through files (PLAN.md, AGENTS.md, git).
+**Phase 1: SHIPPED** (acceptance 23/0/4 passing on Claude-only, Gemini auth'd + headless-tested but PART B acceptance-extension TODO)
 
-Separate from Timmy (the user's Life OS / orchestrator, lives in `/home/timmy/.hermes/`, Phase 2 scope).
-
-**Phase 1 goal:** build CAE correctly. Acceptance gate is a toy integration test (markdown-to-JSON converter, or similar). LEVER redeployment was dropped as Phase 1 target — see `CURRENT_STATE.md` for why.
+**Phase 2 progress:**
+- ✅ Herald v0.1 — `cae herald <doc-type>` one-shot
+- ✅ Herald v0.2 — plan → user gate → write → Sentinel review → revise loop (commit `2f4ebf8`)
+- ✅ Herald dogfood — generated this project's CHANGELOG.md successfully
+- ✅ README factual audit — Herald mentions, Phase 2 status, comparison table, FAQ all corrected
+- ✅ Repo pushed to https://github.com/notsatoshii/CAE (deploy key + SSH config at `/home/cae/.ssh/cae_deploy_key`)
+- ✅ Gemini OAuth done (`/root/.gemini/oauth_creds.json` exists; `gemini -p "..."` works headless)
+- ⏳ **Timmy bridge (H3)** — not started. Scope: Hermes `/delegate` skill → CAE orchestrator via file-mediated inbox/outbox.
+- ⏳ **Shift v3 (hero)** — not started. Scope EXPANDED from PHASE_2_PLAN.md: proactive AI mentor, tri-interface (Claude Code skill + Telegram bot + web app), phased v3.0 → v3.1 → v3.2 rollout.
 
 ---
 
-## Where everything lives
+## What's live + working
 
 ```
-/home/cae/ctrl-alt-elite/         ← main repo (local-only, no remote push yet)
-├── HANDOFF.md                    ← this file
-├── CURRENT_STATE.md              ← pre-pivot honest audit
-├── PIVOT_PLAN.md                 ← R2 — active plan
-├── PHASE_1_TASKS.md              ← R2 — 14 tasks
-├── CONFIG_SCHEMA.md              ← public API v1 for Shift to generate
-├── TIMELINE.md                   ← 15/20/25 days
-├── QUESTIONS_FOR_MASTER.md       ← open blockers (Q1, Q4, Q5 still open)
-├── OMC_OMX_REFERENCE.md          ← patterns from OMC/OMX (tmux etc.)
-├── docs/
-│   ├── WRAPPED_AGENT_CONTRACTS.md ← validated prompts for gsd-ui-checker, gsd-plan-checker
-│   └── WHEN_T1_LANDS.md           ← what activates when user does T1
+cae                        # bare invocation: prints banner + help
+cae banner                 # ASCII banner only
+cae version                # version string
+cae execute-phase <N>      # phase execution (wave parallelism, safety rails)
+cae herald <doc-type>      # v0.2 plan+review+revise (DEFAULT)
+cae herald <doc-type> --fast       # v0.1 one-shot
+cae herald <doc-type> --plan       # outline only
+cae herald <doc-type> --review <f> # Sentinel-review existing doc
+cae herald <doc-type> --auto       # skip user gates (for CI)
+```
+
+Installed globally at `/usr/local/bin/cae` (symlink → `/home/cae/ctrl-alt-elite/bin/cae`).
+
+---
+
+## Critical context for the next session
+
+### User's explicit decisions (honor these)
+
+- **"Fuck estimated days plan — we are just gonna do this all today."** User wants Phase 2 shipped in this working session. No "1 day" / "2 day" estimates that push work to tomorrow.
+- **Shift v3 is the hero feature.** Proactive AI mentor, not a one-shot wizard. Drives conversation, asks questions, explains every step, translates jargon, safety-gates irreversible actions. Persists state in `.shift/state.json` across sessions.
+- **Shift tri-interface:** ALL THREE — Claude Code skill + Telegram bot + web app. Phased delivery v3.0 → v3.1 → v3.2 but all three are required.
+- **Priority order (user confirmed 'c'):** Herald v0.2 ✅ → Timmy bridge → Shift v3.
+- **Dogfood aggressively.** Use CAE to build remaining Phase 2 items (Timmy bridge + Shift). This is the validation story. Safeguard: git branch isolation + ability to `git reset --hard origin/main` if Forge wrecks something.
+- **User is non-coding founder** — explain strategy/architecture before deep-diving code. Keep updates short. Save memory about decisions in `/root/.claude/projects/-root/memory/`.
+
+### What Shift v3 needs (for the next session to scope precisely)
+
+**Proactive mentor behavior model:**
+- Always proposes next action, never leaves user with "what do you want to do?"
+- Explains WHY at each step — when spawning CAE, narrates what it means in plain English
+- Translates jargon on first use, references earlier definitions
+- Suggests defaults when user says "I don't know"
+- Safety-gates irreversible actions (git push, deploy, API key usage)
+- Persistent across sessions — `/shift` on day 5 resumes where day 1 left off
+
+**Shift modes:**
+- `/shift new` — new project intake → PRD → ROADMAP → CAE runs
+- `/shift` — resume existing project mentor state
+- `/shift next` — proactively do the next thing (with confirm)
+- `/shift help` — reads current state, explains in plain English, offers 3 fixes for any stuck state
+- `/shift status` — what's done / in-progress / blocked / next
+- `/shift learn <topic>` — teaches about CAE concepts (phases, Forge, Sentinel, etc.)
+
+**Shift lifecycle (what it mentors through):**
+IDEA → (Scout research) → PRD → user approves → ROADMAP decomposition → user approves → CAE execute → UAT walk-through → iterate → ship (GitHub + optional deploy).
+
+**Interfaces (all three, same backend):**
+1. Claude Code skill — terminal-native devs, existing CAE users
+2. Telegram bot — reuses Telegram gate infrastructure already in CAE, notifications + chat
+3. Web app — `shift.cae.dev` or similar; hosted, auth-lite, visual
+
+**State:** `.shift/state.json` per project. Any interface reads/writes the same state file. User can start on web, Telegram-ping to approve a phase, finish on terminal.
+
+**Technical backing:**
+- Python backend `bin/shift` (mentor logic, state, proactive triggers)
+- Uses CAE's Scout (Gemini 2.5 Pro) for research phase
+- Uses CAE's Arch (Claude Opus via `gsd-planner` wrap) for PRD + ROADMAP drafts
+- Uses sentinel_fallback (Claude Opus `gsd-verifier`) for PRD + ROADMAP review gates
+- Hands off to `cae execute-phase` for build
+
+### What Timmy bridge needs
+
+See PHASE_2_PLAN.md H3 section. Summary:
+- Hermes skill at `/home/timmy/.hermes/skills/delegate`
+- Writes buildplan to `/home/cae/inbox/<task-id>/BUILDPLAN.md`
+- Fires `cae execute-buildplan <task-id>` in detached tmux
+- CAE runs, writes completion sentinel to `/home/cae/outbox/<task-id>/DONE.md`
+- Hermes file-watcher → Telegram/WhatsApp notification to user
+
+Entry point on CAE side: new subcommand `cae execute-buildplan <task-id>` that reads buildplan from inbox, runs like execute-phase but from a freeform plan file, writes DONE.md to outbox when finished.
+
+---
+
+## File landmarks
+
+```
+/home/cae/ctrl-alt-elite/           ← main repo
+├── HANDOFF.md                      ← this file
+├── PHASE_2_PLAN.md                 ← Phase 2 scope (Herald+Timmy+Shift)
+├── PHASE_1_TASKS.md                ← Phase 1 complete record
+├── README.md                       ← audited, accurate
+├── CHANGELOG.md                    ← Herald-generated
+├── CONFIG_SCHEMA.md                ← stable config surface
+├── PIVOT_PLAN.md                   ← original architectural decisions
+├── assets/banner.svg               ← retro beige keyboard (static)
+├── assets/banner.txt               ← ASCII banner (terminal-only)
+├── agents/
+│   ├── cae-*.md                    ← 12 persona files (including new cae-herald.md)
+├── skills/
+│   ├── cae-herald/                 ← new (Phase 2)
+│   ├── cae-*/                      ← 7 existing skill dirs
 ├── bin/
-│   ├── cae                       ← orchestrator (Python, executable)
-│   ├── circuit_breakers.py       ← 6 limits
-│   ├── phantom.py                ← gsd-debugger integration
-│   ├── sentinel.py               ← Gemini Sentinel + Claude fallback
-│   ├── scribe.py                 ← Scribe (Gemini Flash primary)
-│   ├── compactor.py              ← 5-layer cascade
-│   └── telegram_gate.py          ← dangerous-action approval
+│   ├── cae                         ← orchestrator + herald subcommand
+│   ├── sentinel.py                 ← cross-provider review (gemini primary, opus fallback)
+│   ├── scribe.py                   ← knowledge extractor (gemini flash → haiku fallback)
+│   ├── phantom.py                  ← debugger escalation
+│   ├── compactor.py                ← 5-layer compaction cascade
+│   ├── circuit_breakers.py         ← 6 hard limits
+│   └── telegram_gate.py            ← dangerous-action approval gate
 ├── adapters/
-│   ├── claude-code.sh            ← tmux-spawned `claude --print`
-│   └── gemini-cli.sh             ← tmux-spawned `gemini --print` (untested until T1)
-├── agents/                       ← 10 persona docs + 2 Gemini-specific prompts
-├── skills/                       ← 7 SKILL.md files injected into GSD agents
+│   ├── claude-code.sh              ← tmux-wrapped `claude --print`
+│   └── gemini-cli.sh               ← tmux-wrapped `gemini -p`
 ├── config/
-│   ├── agent-models.yaml         ← role → {model, provider, invocation_mode}
-│   ├── circuit-breakers.yaml     ← 6 limits
-│   ├── dangerous-actions.yaml    ← 8 regex patterns
-│   └── cae-schema.json           ← JSON Schema validator for all configs
+│   ├── agent-models.yaml           ← roles → {model, provider, invocation_mode}
+│   ├── circuit-breakers.yaml       ← 6 limits config
+│   ├── dangerous-actions.yaml      ← regex patterns
+│   ├── cae-schema.json             ← JSON Schema v1
+│   ├── model-profiles.json         ← quality/balanced/budget profiles
+│   └── smart-contract-supplement.md
 └── scripts/
-    ├── cae-init.sh               ← project initializer (reads agent-models.yaml)
-    ├── install.sh                ← main installer
-    ├── install-hooks.sh          ← Claude Code hook installer
-    ├── install-branch-guard.sh   ← git pre-push hook
-    ├── forge-branch.sh           ← create/merge/abandon/cleanup
-    ├── multica-bridge.sh         ← (carried over, optional)
-    └── t14-acceptance.sh         ← acceptance test runner (23 checks)
+    ├── install.sh
+    ├── cae-init.sh
+    ├── forge-branch.sh
+    ├── install-branch-guard.sh
+    ├── install-hooks.sh
+    ├── multica-bridge.sh
+    └── t14-acceptance.sh           ← 23/0/4 passing on Claude-only
 ```
-
-**Auto-memory:** `/root/.claude/projects/-root/memory/` has pointers — see MEMORY.md there.
 
 ---
 
-## Phase 1 status
+## Running infrastructure on this server
 
-15 of 15 tasks complete (including T2.5 prototype + T14 acceptance). Two things the user (Master) needs to do before anything lights up:
+```
+port 8765  — Python http.server serving /tmp/cae-docs-viewer/site (may still be running)
+port 8090  — Multica backend (Docker, unrelated to CAE work)
+port 3002  — Multica frontend
+port 5433  — Multica Postgres
+```
 
-- **T1 — Gemini CLI + OAuth.** Recommended path (per QUESTIONS_FOR_MASTER.md Q4): user OAuths on their local machine, scp-es credentials to this server. See `docs/WHEN_T1_LANDS.md` for the exact smoke test.
-- **T11 — Telegram bot token.** User creates bot via @BotFather, sets env vars `CAE_TELEGRAM_BOT_TOKEN` + `CAE_TELEGRAM_CHAT_ID`. Code is already in place and running in stub mode.
-
-Everything else runs today. **Run `bash scripts/t14-acceptance.sh` to verify — 23 checks should pass, 4 skip (awaiting T1).**
+Tools installed:
+- `claude` (Claude Code CLI) — auth'd via `/root/.claude/`
+- `gemini` (Gemini CLI) — auth'd via OAuth (`/root/.gemini/oauth_creds.json`)
+- `gh` — NOT auth'd (repo uses deploy key via SSH alias `github.com-cae`)
+- `gcloud` — installed at `/opt/google-cloud-sdk` (used for Gemini OAuth)
+- `tmux`, `python3-yaml`, `rsvg-convert` (for SVG→PNG preview)
 
 ---
 
-## The biggest-risk check that passed
-
-**GSD-wrap strategy validated in T2.5.** The concern was that `claude --print --agent gsd-<name>` might not honor the system prompt when the workflow-expected XML wrappers weren't in the user prompt. Tested on gsd-ui-checker and gsd-plan-checker. Both produced structured output matching their declared formats — plan-checker found 7 real issues in a hastily-written test plan (6 beyond what I planted). The 3,150 lines of GSD prompt engineering inherits cleanly.
-
-**Contracts documented** in `docs/WRAPPED_AGENT_CONTRACTS.md` — prompt structure per wrapped agent, known preamble behavior, parser strategy (scan for section markers, skip preamble).
-
----
-
-## What's running on this server right now (for context)
+## Git state
 
 ```
-port 8765  — Python http.server serving /tmp/cae-docs-viewer/site (background task)
-port 8090  — Multica backend (Docker, healthy)
-port 3002  — Multica frontend (Docker, healthy)
-port 5433  — Multica Postgres (Docker, healthy)
-ufw:       — 8765 opened this session
-gh auth:   — NOT configured. Repo is local-only.
+branch: main (5 unpushed? no — all pushed)
+remote: git@github.com-cae:notsatoshii/CAE.git
+latest commit: 2f4ebf8 "Herald v0.2 — plan + review + revise loop with user gates"
 ```
 
-Plus the Lever-protocol and RECON services (unrelated to CAE, don't disturb).
-
----
-
-## Unpushed commits
-
-Local git history for `/home/cae/ctrl-alt-elite/`:
-```
-4167f20  T14 Phase 1 acceptance gate + T1-unlock documentation
-3e1cc12  Phase 1: orchestrator wiring, Sentinel, Telegram gate, Scribe, compactor
-2935027  Phase 1: adapter, branch isolation, circuit breakers, Phantom integration
-b6ef815  Phase 1 pivot: drop LEVER, wrap GSD agents, orchestrator skeleton
-4620292  Initial commit: Ctrl+Alt+Elite multi-agent coding team
-```
-
-Five commits, all local. `gh auth login` needed for remote push (QUESTIONS_FOR_MASTER Q5 — not yet decided if repo lives as personal or org).
-
----
-
-## User's working style (preserved from this session)
-
-Documented in auto-memory already. Highlights:
-- Wants critical self-assessment, not surface-level sign-off
-- Prefers decisive action and reasoned defaults over "want me to continue?" questions
-- Karpathy-style rules: no gold-plating, surgical changes, explicit assumptions
-- When user says "keep going" they mean really keep going; don't ask for permission at checkpoints
-- Master is a non-coding founder — explain architecture/strategy level first, go deeper only on ask
-- When in doubt, prefer smaller scope
-
-**One specific rule the user stated this session:** All Claude Code subprocesses CAE spawns use `--effort max` by default (baked into adapter defaults + agent-models.yaml). Overridable per-task via task.md frontmatter.
+SSH config at `/root/.ssh/config` has `github.com-cae` alias pointing at the deploy key. `ssh -T git@github.com-cae` returns `Hi notsatoshii/CAE!`.
 
 ---
 
 ## What the next session should do first
 
-1. **Run the acceptance test** — `bash /home/cae/ctrl-alt-elite/scripts/t14-acceptance.sh`. Confirms nothing regressed during the context handoff.
+1. **Read PHASE_2_PLAN.md + this file** (5 min).
 
-2. **Check task list** — TaskList tool in the next session will show 17 tasks (#18-#34). 15 complete, 2 pending (T1, T11 — both blocked on user).
+2. **Choose mode for remaining Phase 2 work:**
+   - **Option A — Direct implement (fast):** write Timmy bridge + Shift v3.0 (Claude Code skill variant) directly, no CAE dogfooding. Ship in one session.
+   - **Option B — Dogfood via CAE (validates CAE):** use `/gsd-plan-phase` to plan Timmy bridge, `cae execute-phase` to build, same for Shift. Slower but proves CAE works on its own codebase. Branch isolation + pre-push hook protects against Forge wrecking the repo.
+   - User's strong preference: ship everything today. Probably Option A for speed, Option B for the one feature that most benefits from dogfooding (likely Shift since it has the most review-heavy phases).
 
-3. **Check with Master:**
-   - Has T1 (Gemini CLI OAuth) been completed? If yes, proceed to PART B of T14 + wire post-phase Scribe into bin/cae (~half day work, documented in `docs/WHEN_T1_LANDS.md`).
-   - Has a Telegram bot been created? If yes, set env vars and run a dangerous-action test.
-   - If neither: the system is waiting. Options are (a) push the repo to GitHub (needs gh auth), (b) start designing Phase 2 (LEVER redeployment re-scoped, or Timmy integration), or (c) wait.
+3. **Timmy bridge** — scope is tight (~2h direct implement):
+   - New `cae execute-buildplan <task-id>` subcommand in `bin/cae`
+   - Reads from `/home/cae/inbox/<id>/BUILDPLAN.md`, writes to `/home/cae/outbox/<id>/DONE.md`
+   - Hermes `/delegate` skill in `/home/timmy/.hermes/skills/delegate/`
+   - Integration test: delegate a dummy buildplan, confirm DONE.md appears
 
-4. **If nothing is blocked and Master wants to proceed:** the next reasonable build target is the post-phase Scribe trigger in `bin/cae` (~5 lines, described in WHEN_T1_LANDS.md) — but it's a no-op until T1. Or start scoping Phase 2.
+4. **Shift v3.0** — scope is BIG (~6h direct implement for backend + Claude Code skill):
+   - `bin/shift` Python backend (state, proactive triggers, CAE spawn)
+   - `.shift/state.json` schema
+   - Claude Code skill at `~/.claude/skills/shift/` with intake flow
+   - Ideation → PRD → ROADMAP pipeline using CAE's Scout + Arch + Sentinel
+   - Modes: new / resume / next / help / status / learn
+   - Persistent across sessions
+   - Get it to a place where user can run `/shift new` and walk a concrete project all the way through to `cae execute-phase 1` firing.
+
+5. **Shift v3.1 (Telegram client)** and **v3.2 (web app)** — can be subsequent sessions if this one runs out of context.
 
 ---
 
 ## Known quirks / gotchas
 
-- `cae-init.sh` has BOTH Python and Node fallback paths for YAML parsing. Python (with `python3-markdown` / PyYAML) is preferred on this server.
-- `forge-branch.sh create` used to refuse on untracked files; now only refuses on MODIFIED tracked files. This matters because `cae-init.sh` generates untracked files (AGENTS.md, `.claude/skills/`) which would have blocked orchestration.
-- Sentinel auto-detects gemini: `subprocess.run(["which", "gemini"], ...)`. No gemini = stub with clear warning logged to `.cae/metrics/sentinel-stub.jsonl`.
-- Telegram gate auto-detects bot token: env var missing → stub mode, loud stderr warnings, `CAE_GATE_STUB_AUTO` controls auto-approve vs auto-deny.
-- Compactor layers (b) and (e) use Haiku (not Gemini) for summarization. They technically work today because Haiku is available via Claude Code — the T14 "skip" for them is conservative.
-- The `.gitignore` has `__pycache__/` — don't commit .pyc files.
-- PyYAML is installed via `apt install python3-yaml` (PEP 668 blocks `pip install` at system level).
+- `claude-code.sh` adapter blocks combined `--agent` + `--system-prompt-file` (mutually exclusive). When wrapping `gsd-doc-writer` with a custom persona (as Herald does), inject persona inline at top of user prompt with `<persona>...</persona>` block. This is what Herald v0.2 does.
+- SMIL animation in SVG can't smoothly interpolate between `url(#gradient)` fills — renders as black in most browsers. Keep SVG static or use opacity-overlay tricks for press effects. Banner.svg is currently static.
+- GitHub aggressively caches SVG banners. When updating, add `?v=N` query param to the `<img src>` URL to force cache miss. Current README uses `?v=3`.
+- Gemini CLI on this server uses OAuth personal (Code Assist free tier). `/root/.gemini/oauth_creds.json` holds the token. Don't commit this file (it's in `.gitignore` now via the .planning dir exclusion).
+- When modifying bin/cae, always Read it first before Edit — hook enforces this.
+- For dogfooding CAE on its own repo, the `.planning/` directory is gitignored from Phase 1 but Herald's session artifacts are NOT — they're committed for audit trail. Keep this pattern (maybe revisit if .planning grows large).
 
 ---
 
-## Quick reference — useful commands
+## Quick reference commands
 
 ```bash
-# Test the whole pipeline (23 checks)
-bash /home/cae/ctrl-alt-elite/scripts/t14-acceptance.sh
+# Run Herald v0.2 (plan + review + revise)
+cae herald readme
+cae herald changelog --auto     # non-interactive, good for dogfood
 
-# Dry-run any project
-/home/cae/ctrl-alt-elite/bin/cae execute-phase N --dry-run
+# Run Herald v0.1 (one-shot)
+cae herald readme --fast
 
-# Initialize CAE for a new project (run AFTER gsd-new-project)
-cd /path/to/project
-bash /home/cae/ctrl-alt-elite/scripts/cae-init.sh .
+# Only propose outline
+cae herald architecture --plan
 
-# Smoke-test Claude adapter manually
-echo '<objective>say hi</objective>' > /tmp/p.md
-bash /home/cae/ctrl-alt-elite/adapters/claude-code.sh /tmp/p.md claude-sonnet-4-6 smoke \
-  --system-prompt-file /home/cae/ctrl-alt-elite/agents/cae-forge.md --effort low --timeout 60
+# Fact-check an existing doc
+cae herald readme --review README.md
 
-# Inspect CAE metrics after a run
-ls .cae/metrics/
-cat .cae/metrics/circuit-breakers.jsonl | tail
-cat .cae/metrics/compaction.jsonl | tail
+# Phase execution
+cae execute-phase 2 --dry-run   # see what would happen
+cae execute-phase 2             # actually run
 
-# View docs in browser
-# http://165.245.186.254:8765/
+# Acceptance gate
+bash scripts/t14-acceptance.sh
+
+# Tail metrics
+tail -f /path/to/project/.cae/metrics/*.jsonl
+
+# Check infrastructure
+which claude gemini tmux python3
+gemini -p "reply with OK"
 ```
 
 ---
 
-## Final note
+## Final note from this session
 
-Everything this session was asked to ship (excluding user-gated bits) is shipped. No partial code, no TODO stubs masquerading as features. T14 acceptance gate is green on 23 checks. Stub modes are all explicit and loud about being stubs.
-
-The wrap strategy paid off. ~3,150 lines of GSD prompt engineering inherited for free; our code surface is small. Re-read `docs/WRAPPED_AGENT_CONTRACTS.md` if the wrap approach confuses later work.
+Phase 2 is half-shipped. Herald works end-to-end (dogfood generated this repo's CHANGELOG). Next session needs to build Timmy bridge + Shift v3 in one working session per user's directive. Shift is the biggest piece and the most user-facing — the hero of Phase 2. When the user says "just ship everything today", they mean it, so prefer direct implementation over CAE dogfooding for speed. Save dogfooding for one specific Shift sub-phase that most benefits from showing CAE reviewing itself.
 
 Good luck.
 
-— The session that built Phase 1.
+— The session that shipped Herald.
