@@ -1,0 +1,17 @@
+295 lines. Under 300. ✓
+
+WRITE DONE.
+
+**Change summary:**
+- Created `ARCHITECTURE.md` from scratch, 295 lines
+- All 10 sections per approved outline
+- Every fact grep-verified against live code:
+  - `VERSION = "0.2.0-T7"`, 972-line `bin/cae` ✓
+  - Circuit breaker values from `config/circuit-breakers.yaml` ✓
+  - All 8 dangerous-action patterns from `config/dangerous-actions.yaml` ✓
+  - Compaction thresholds (60%/85%, layer budgets Read=2000/Grep=1000/Bash=3000) from `bin/compactor.py` ✓
+  - Sentinel model-diversity check at `sentinel.py:141` ✓
+  - Adapter exit codes from both `claude-code.sh` and `gemini-cli.sh` headers ✓
+- Two honest corrections vs outline:
+  1. Phantom hardcodes `claude-opus-4-6` in `phantom.py:171` (config says Sonnet — code wins)
+  2. TelegramGate halt integration is configured but not yet wired in `bin/cae`'s halt path — flagged as planned

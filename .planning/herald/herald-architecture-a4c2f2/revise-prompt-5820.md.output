@@ -1,0 +1,12 @@
+All 6 fixes confirmed:
+
+1. ✅ Step 11: `Post-phase` (not `Post-wave`), note added about single run per phase
+2. ✅ Step 4: `concurrent.futures.ThreadPoolExecutor` as primary, `BoundedSemaphore` noted as per-task guard
+3. ✅ `PhantomResult.kind`: `"failed"` added
+4. ✅ Table title: "Core agent roster" + "12 roles total" + Specialists sub-table with Prism/Flux/Arch Plan Check
+5. ✅ Mermaid: `N -->` for Phantom/Sentinel/Aegis arrows (Forge no longer implies orchestration)
+6. ✅ `approvals.jsonl`: "(not yet active — see §6 Telegram Gate status)" appended
+
+Bonus: `scribe.py` comment and hook comment in §9 also updated from "Post-wave" to "Post-phase" for consistency.
+
+REVISE DONE

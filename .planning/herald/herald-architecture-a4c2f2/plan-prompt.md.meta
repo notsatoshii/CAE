@@ -1,0 +1,13 @@
+{
+  "session_id": "herald-architecture-a4c2f2-plan",
+  "tmux_session": "cae-herald-architecture-a4c2f2-plan",
+  "exit_code": 0,
+  "duration_seconds": 110,
+  "model": "claude-sonnet-4-6",
+  "invocation": "wrap:gsd-doc-writer",
+  "effort": "max",
+  "permission_mode": "default",
+  "output_bytes": 743,
+  "error_bytes": 0,
+  "timestamp": "2026-04-17T06:40:13Z"
+}

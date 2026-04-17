@@ -1,0 +1,13 @@
+{
+  "session_id": "herald-architecture-a4c2f2-review",
+  "tmux_session": "cae-herald-architecture-a4c2f2-review",
+  "exit_code": 0,
+  "duration_seconds": 498,
+  "model": "claude-opus-4-6",
+  "invocation": "wrap:gsd-verifier",
+  "effort": "max",
+  "permission_mode": "default",
+  "output_bytes": 3107,
+  "error_bytes": 0,
+  "timestamp": "2026-04-17T07:02:42Z"
+}

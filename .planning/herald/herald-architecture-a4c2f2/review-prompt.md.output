@@ -1,0 +1,45 @@
+All checks complete. Here's the verdict:
+
+```json
+{
+  "verdict": "fail",
+  "issues": [
+    {
+      "severity": "MAJOR",
+      "claim": "Step 11: 'Post-wave: bin/scribe.py (Gemini Flash) extracts learnings → AGENTS.md'",
+      "problem": "Scribe runs post-PHASE, not post-wave. bin/cae lines 510-521 run Scribe once after the wave loop exits (line 492-502), not after each wave. Comment in code literally says 'Post-phase Scribe'. A 3-wave phase gets 1 Scribe run, not 3.",
+      "fix": "Change 'Post-wave' to 'Post-phase' in step 11. Renumber as a phase-level step, not a wave-level step."
+    },
+    {
+      "severity": "MINOR",
+      "claim": "Section 3 step 4: 'parallel up to circuit_breakers.max_concurrent_forge (4) via threading.BoundedSemaphore'",
+      "problem": "Primary parallelism mechanism is concurrent.futures.ThreadPoolExecutor(max_workers=max_concurrent_forge) at line 436. BoundedSemaphore in acquire_forge_slot() is a secondary guard inside each task, not the wave-level parallelism driver.",
+      "fix": "Change 'via threading.BoundedSemaphore' to 'via concurrent.futures.ThreadPoolExecutor' (with BoundedSemaphore as per-task guard)."
+    },
+    {
+      "severity": "MINOR",
+      "claim": "PhantomResult.kind returns 'fix', 'inline_done', or 'escalate'",
+      "problem": "Actual type is Literal['fix', 'escalate', 'inline_done', 'failed'] — 4 variants. 'failed' (internal error state) is omitted from the doc.",
+      "fix": "Add 'failed' to the kind list or note it's an internal error variant."
+    },
+    {
+      "severity": "MINOR",
+      "claim": "Section 2 table labeled 'Agent roster and backing files (config/agent-models.yaml)' lists 9 roles",
+      "problem": "config/agent-models.yaml defines 12 roles. Missing: prism (claude-sonnet-4-6, wraps gsd-ui-checker), flux (claude-sonnet-4-6, direct-prompt), arch_plan_check (claude-opus-4-6, wraps gsd-plan-checker). Table title implies completeness.",
+      "fix": "Either add the 3 missing roles to the table or qualify the title (e.g., 'Core agent roster' or add a Specialists sub-table)."
+    },
+    {
+      "severity": "MINOR",
+      "claim": "Mermaid diagram: FO -->|'3 Forge failures'| PH, FO --> SE, FO -.-> AE",
+      "problem": "Arrows originate from Forge (FO), implying Forge orchestrates Sentinel/Phantom/Aegis. Actually Nexus (bin/cae) orchestrates all three. Forge is a stateless subprocess that doesn't spawn other agents.",
+      "fix": "Change arrows to N --> SE, N --> PH, N --> AE (or add a note that arrows show data flow, not orchestration)."
+    },
+    {
+      "severity": "MINOR",
+      "claim": "Section 4 table: '.cae/metrics/approvals.jsonl — Written by bin/telegram_gate.py — Gate triggers and approval decisions'",
+      "problem": "Presented as actively-written state with no caveat. Since telegram_gate.py is not wired into bin/cae (correctly noted in Section 6), this file is never written during execution. Section 4 table lacks the 'not yet integrated' qualifier.",
+      "fix": "Add a note like '(not yet active — see §6 Telegram Gate status)' to the table entry."
+    }
+  ]
+}
+```

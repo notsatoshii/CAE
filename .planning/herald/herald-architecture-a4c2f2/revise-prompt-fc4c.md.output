@@ -1,0 +1,13 @@
+All 7 issues fixed:
+
+| Issue | Fix |
+|-------|-----|
+| CRITICAL: `cae-scout-gemini.md` phantom ref | → `cae-scout.md` + "planned" note in ARCHITECTURE.md §2 + config/agent-models.yaml line 84 |
+| MAJOR: TelegramGate presented as active | → `Status: implemented but not yet integrated` blockquote in §6 |
+| MAJOR: Gemini adapter untested omitted | → UNTESTED note in §3 step 6 + §9 adapter listing |
+| MAJOR: Phantom line 171, config contradiction hidden | → `:172`, added "config value is vestigial" note |
+| MINOR: Nexus model shown as `—` | → `claude-opus-4-6 / claude-code` with direct-prompt note |
+| MINOR: `hooks/` dir missing from §9 | → added with both files |
+| MINOR: "six enforced limits" undercounts | → "key limits include:" + expanded to all 10 entries |
+
+REVISE DONE

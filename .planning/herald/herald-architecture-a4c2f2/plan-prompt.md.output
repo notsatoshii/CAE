@@ -1,0 +1,10 @@
+PLAN WRITTEN
+
+10 sections, 270 estimated lines. Key decisions:
+
+- **No marketing** — every fact traces to a real file (`bin/cae:972`, `bin/circuit_breakers.py`, `config/circuit-breakers.yaml`, etc.)
+- **Heaviest sections** are Execution Flow (40 lines) and Safety Layer (35) — that's where the architecture's actual novelty lives
+- **Compaction Cascade** gets its own section because it's non-obvious and well-evidenced in `bin/compactor.py`
+- **Smart Contract Mode** isolated — it's a meaningful auto-detection branch, not a footnote
+- **Extension Points** last — gives contributors a "where do I touch?" map without padding earlier sections
+- Mermaid diagram in Section 2 stays ≤10 nodes (adapters fold into one node per provider)
