@@ -1,6 +1,15 @@
 # cae-dashboard UI spec v1
 
-**Status:** design lock-in after 3 rounds of critique + audience reframe. Locked ✓. Open ⚠.
+**Status:** design lock-in after 3 rounds of critique + audience reframe + session 4 decisions. Locked ✓. Open ⚠.
+
+> **⚠ READ FIRST — Session 4 decisions (2026-04-20) supersede earlier contradictions in this doc. See [§Session 4 resolutions](#session-4-resolutions-2026-04-20) at bottom. High-traffic overrides:**
+> - Mode toggle = **Plan** (Shift FE, was "Build") / **Build** (CAE FE, was "Ops")
+> - **Memory** and **Metrics** pulled OUT of tabs → global top-bar icons
+> - Build mode tabs reduced to 5: Home / Agents / Workflows / Queue / Changes
+> - Plan mode tabs: Projects / PRDs / Roadmaps / UAT (4)
+> - Screen shake on merge = **REVIVED** (subtle, respects prefers-reduced-motion)
+> - Explain-mode default = **ON everywhere**, Ctrl+E toggles off
+> - Graphify = safishamsi/graphify (Python CLI) → JSON → native react-flow render
 
 ## 0. Audience, voice, vibe
 
@@ -501,3 +510,86 @@ Single global setting `dev_mode: true | false`. When true:
 - Kanban column names use technical state machine
 
 Persist per-user. Keyboard shortcut to toggle (⌘Shift+D). Subtle visual indicator when on (e.g., `dev` badge in top bar).
+
+---
+
+# Session 4 resolutions (2026-04-20)
+
+Eric resolved all 6 open questions from the addendum + earlier §Final open questions. Decisions below supersede anything above that contradicts.
+
+## §S4.1 — Mode toggle: Plan / Build
+
+Top-bar toggle renamed and **semantically reassigned**:
+
+| Label | Product | Content |
+|-------|---------|---------|
+| **Plan** | Shift FE | Projects · PRDs · Roadmaps · UAT (4 tabs) |
+| **Build** | CAE FE | Home · Agents · Workflows · Queue · Changes (5 tabs) |
+
+**Important naming swap vs. prior drafts:**
+- Old "Build" (Shift planning) → now called **Plan**
+- Old "Ops" (CAE orchestration) → now called **Build**
+
+Semantic: *Plan the work, then Build it.* Matches founder workflow. "Build" fits CAE better than "Ops" since CAE literally executes code.
+
+When translating legacy docs: `Build mode = Shift` (old) becomes `Plan mode = Shift` (new). `Ops mode = CAE` (old) becomes `Build mode = CAE` (new).
+
+## §S4.2 — Memory + Metrics are global, not per-mode
+
+Memory and Metrics pulled OUT of the mode toggle. They live on the global top-bar as icons, accessible from both Plan and Build.
+
+**Why:** A PRD (Plan) and its resulting phases (Build) share memory. Spending totals cover both products combined. Forcing users to mode-switch for cross-cutting context is friction.
+
+**Updated top-bar layout:**
+
+```
+┌────────────────────────────────────────────────────────────────────────────┐
+│ CAE · [Plan|Build]  proj▾   $12.34/48k·today  🧠 Memory  📊 Metrics  ⌘K   🟢 live  avatar │
+└────────────────────────────────────────────────────────────────────────────┘
+```
+
+Memory/Metrics = icon buttons, open as full-page routes (not modals). Keyboard shortcuts: `G M` (go memory), `G $` (go metrics). Icons placed between cost ticker and ⌘K.
+
+## §S4.3 — Queue = top-level Build tab
+
+Queue stays as its own top-level tab in Build mode (5 tabs total). Workflows tab keeps Definitions + Schedule sub-tabs only. Runs aggregation lives in Queue.
+
+## §S4.4 — Live Floor = isometric
+
+Confirmed isometric 2.5D (Stardew × Habbo vibe). Not 2D top-down. Phase 9 polish, last phase.
+
+## §S4.5 — Graphify integration
+
+**Tool:** `safishamsi/graphify` — Python CLI, MIT, `pip install graphifyy`. Ingests folders (code/docs/PDFs/media), outputs JSON knowledge graphs via NetworkX+Leiden+Tree-sitter+Claude.
+
+**Pipeline:**
+1. Cron or watch-mode runs graphify against `.planning/` + notes dirs
+2. Writes JSON to `.cae/graph.json`
+3. Memory page reads JSON, renders **natively with react-flow** (no iframe stopgap — ship full integration immediately per Eric)
+4. Manual "Regenerate graph" button in UI
+5. Filter UI by node type: phases / agents / notes / PRDs / commits
+6. Click node → drawer with content + back-links ("who references this?")
+
+## §S4.6 — Polish confirms
+
+**Screen shake on merge:** REVIVED. Subtle (~150ms, low amplitude) when a Sentinel merge lands. Respect `prefers-reduced-motion`. Overrides §13 "no screen shake" and critique item #10.
+
+**Explain-mode default:** ON everywhere (both Plan and Build). Kills the old "ON for Plan, OFF for Build" split. **Ctrl+E** keyboard shortcut toggles off. Preference in localStorage.
+
+## §S4.7 — Consequences for Phase 2.5 plan
+
+Phase 2.5 (design system foundation) must now include:
+- Top-bar refactor: swap Build/Ops → Plan/Build; add Memory + Metrics icon slots
+- Route reorg: `/ops/*` → `/build/*`; existing `/build/*` (Shift) → `/plan/*`; middleware protection updated
+- `ExplainModeProvider` with Ctrl+E binding, localStorage persistence, default `true`
+- `DevModeProvider` with ⌘Shift+D binding (per addendum §Dev-mode toggle spec)
+- Screen-shake hook (receives Sentinel merge SSE event; respects `prefers-reduced-motion`)
+- Dark theme + Geist fonts + cyan accent + base component library (shadcn-aligned)
+- Founder-speak copy pass across all existing Phase 1+2 tab labels / button text / column headers
+
+## §S4.8 — Still open, deferred
+
+- Nexus `docs/VOICE.md` do/don't examples — write before Phase 8 (chat) ships, not Phase 2.5
+- Mode toggle Option Y (single IA, no mode) from addendum line 463 — NOT chosen; Plan/Build toggle stays per §S4.1
+- Screen-shake amplitude + curve — dial during Phase 8 when merge SSE events exist
+
