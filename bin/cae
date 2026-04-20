@@ -990,9 +990,18 @@ def _buildplan_now() -> str:
 
 
 def _buildplan_write_done(task_id: str, payload: dict, body: str) -> Path:
-    """Atomic DONE.md write: .tmp → rename."""
+    """Atomic DONE.md write: .tmp → rename. Group-writable so timmy watcher can touch .processed."""
     outbox_dir = OUTBOX_ROOT / task_id
     outbox_dir.mkdir(parents=True, exist_ok=True)
+    try:
+        import grp, shutil as _shutil
+        _shutil.chown(outbox_dir, group=grp.getgrnam("timmy").gr_gid)
+    except Exception:
+        pass
+    try:
+        os.chmod(outbox_dir, 0o2775)
+    except Exception:
+        pass
     done_path = outbox_dir / "DONE.md"
     tmp_path = outbox_dir / "DONE.md.tmp"
 
@@ -1004,7 +1013,6 @@ def _buildplan_write_done(task_id: str, payload: dict, body: str) -> Path:
 
     content = f"---\n{fm}\n---\n\n{body}"
     tmp_path.write_text(content)
-    # fsync + rename for atomicity
     try:
         fd = os.open(str(tmp_path), os.O_RDWR)
         os.fsync(fd)
@@ -1012,6 +1020,10 @@ def _buildplan_write_done(task_id: str, payload: dict, body: str) -> Path:
     except Exception:
         pass
     os.rename(str(tmp_path), str(done_path))
+    try:
+        os.chmod(done_path, 0o664)
+    except Exception:
+        pass
     return done_path
 
 
@@ -1086,8 +1098,7 @@ def cmd_execute_buildplan(task_id: str, dry_run: bool = False):
 
     target_repo = Path(meta.get("target_repo") or CAE_ROOT).resolve()
     branch_base = meta.get("branch_base", "main")
-    short_id = task_id.split("-")[0] if "-" in task_id else task_id[:8]
-    exec_branch = f"buildplan/{short_id}"
+    exec_branch = f"buildplan/{task_id}"
     started_at = _buildplan_now()
 
     print(f"━━ cae execute-buildplan {task_id} ━━")
