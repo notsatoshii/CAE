@@ -1,0 +1,19 @@
+# Node
+node_modules/
+.next/
+*.log
+tsconfig.tsbuildinfo
+
+# Env
+.env
+.env.local
+
+# CAE runtime state (regenerated per run; not code)
+.cae/
+.planning/phases/*/tasks/
+.planning/phases/*/CAE-SUMMARY.md
+.planning/review/
+.planning/herald/
+.shift/state.json
+.shift/arch/
+.shift/research/
