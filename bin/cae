@@ -599,6 +599,15 @@ def main():
                 "  --auto  : skip interactive user gates, auto-approve outline + merge")
         cmd_herald(argv[1], argv[2:])
         return
+    if argv[0] == "execute-buildplan":
+        if len(argv) < 2:
+            die("usage: cae execute-buildplan <task-id> [--dry-run]\n"
+                "  Reads /home/cae/inbox/<task-id>/BUILDPLAN.md + optional META.yaml\n"
+                "  Runs CAE Forge on isolated branch, writes /home/cae/outbox/<task-id>/DONE.md")
+        task_id = argv[1]
+        dry = "--dry-run" in argv[2:]
+        cmd_execute_buildplan(task_id, dry_run=dry)
+        return
     die(f"unknown command: {argv[0]}")
 
 
@@ -966,6 +975,277 @@ Write to {target_file or 'the agreed filename'}. Print a brief SUMMARY when done
 
     print(f"\nHerald done. Doc: {doc_path}\nAudit trail: {work_dir}")
     sys.exit(0)
+
+
+# ───────────────────────────────────────────────────────────────────────
+# EXECUTE-BUILDPLAN — file-mediated Hermes → CAE bridge (Phase 3)
+# ───────────────────────────────────────────────────────────────────────
+
+INBOX_ROOT = Path("/home/cae/inbox")
+OUTBOX_ROOT = Path("/home/cae/outbox")
+
+
+def _buildplan_now() -> str:
+    return time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+
+
+def _buildplan_write_done(task_id: str, payload: dict, body: str) -> Path:
+    """Atomic DONE.md write: .tmp → rename."""
+    outbox_dir = OUTBOX_ROOT / task_id
+    outbox_dir.mkdir(parents=True, exist_ok=True)
+    done_path = outbox_dir / "DONE.md"
+    tmp_path = outbox_dir / "DONE.md.tmp"
+
+    try:
+        import yaml
+        fm = yaml.safe_dump(payload, sort_keys=False, default_flow_style=False).strip()
+    except Exception:
+        fm = "\n".join(f"{k}: {json.dumps(v) if not isinstance(v, str) else v}" for k, v in payload.items())
+
+    content = f"---\n{fm}\n---\n\n{body}"
+    tmp_path.write_text(content)
+    # fsync + rename for atomicity
+    try:
+        fd = os.open(str(tmp_path), os.O_RDWR)
+        os.fsync(fd)
+        os.close(fd)
+    except Exception:
+        pass
+    os.rename(str(tmp_path), str(done_path))
+    return done_path
+
+
+def _buildplan_load_meta(task_dir: Path) -> dict:
+    meta_path = task_dir / "META.yaml"
+    if not meta_path.exists():
+        return {}
+    try:
+        import yaml
+        return yaml.safe_load(meta_path.read_text()) or {}
+    except Exception as e:
+        print(f"warning: META.yaml parse failed: {e}")
+        return {}
+
+
+def _buildplan_build_forge_prompt(task_id: str, buildplan_text: str, meta: dict, target_repo: Path) -> str:
+    constraints = meta.get("constraints") or []
+    constraints_block = ""
+    if constraints:
+        constraints_block = "<constraints>\n" + "\n".join(f"- {c}" for c in constraints) + "\n</constraints>\n"
+    budget = meta.get("budget") or {}
+    budget_block = ""
+    if budget:
+        budget_block = f"<budget>\n{json.dumps(budget, indent=2)}\n</budget>\n"
+
+    agents_md = ""
+    am_path = target_repo / "AGENTS.md"
+    if am_path.exists():
+        agents_md = "- AGENTS.md (team conventions — read and apply)\n"
+
+    return f"""<objective>
+Execute delegated buildplan (task_id={task_id}) in repo {target_repo}.
+</objective>
+
+<buildplan>
+{buildplan_text}
+</buildplan>
+
+{constraints_block}{budget_block}<files_to_read>
+{agents_md}- README.md (if present)
+</files_to_read>
+
+<instructions>
+Implement the buildplan. Make ALL changes, commit each logical unit with a concise
+message, and surface any blockers explicitly. Do NOT push to remote — leave commits
+on the current branch for review.
+
+When done (or blocked), return a SUMMARY in this exact format:
+
+## SUMMARY
+- Status: success | failed | blocked
+- Changed: {{list of files}}
+- Commits: {{list of commit SHAs}}
+- Tests: {{passed/failed/none-run}}
+- Notes: {{anything Master should know; if blocked, explain what's needed}}
+</instructions>
+"""
+
+
+def cmd_execute_buildplan(task_id: str, dry_run: bool = False):
+    """
+    Read /home/cae/inbox/<task-id>/BUILDPLAN.md (+ optional META.yaml),
+    execute on an isolated branch, write /home/cae/outbox/<task-id>/DONE.md.
+    """
+    task_dir = INBOX_ROOT / task_id
+    buildplan_path = task_dir / "BUILDPLAN.md"
+    if not buildplan_path.exists():
+        die(f"buildplan not found: {buildplan_path}")
+
+    buildplan_text = buildplan_path.read_text()
+    meta = _buildplan_load_meta(task_dir)
+
+    target_repo = Path(meta.get("target_repo") or CAE_ROOT).resolve()
+    branch_base = meta.get("branch_base", "main")
+    short_id = task_id.split("-")[0] if "-" in task_id else task_id[:8]
+    exec_branch = f"buildplan/{short_id}"
+    started_at = _buildplan_now()
+
+    print(f"━━ cae execute-buildplan {task_id} ━━")
+    print(f"  task_dir:    {task_dir}")
+    print(f"  target_repo: {target_repo}")
+    print(f"  branch_base: {branch_base}")
+    print(f"  exec_branch: {exec_branch}")
+    print(f"  dry_run:     {dry_run}")
+    print()
+
+    if dry_run:
+        print("DRY RUN — would:")
+        print(f"  1. git -C {target_repo} checkout -b {exec_branch} {branch_base}")
+        print(f"  2. spawn Forge with buildplan ({len(buildplan_text)} chars)")
+        print(f"  3. commit result, write DONE.md to {OUTBOX_ROOT / task_id / 'DONE.md'}")
+        return
+
+    # Validate target repo
+    if not (target_repo / ".git").exists():
+        _buildplan_write_done(task_id, {
+            "task_id": task_id,
+            "status": "failed",
+            "started_at": started_at,
+            "finished_at": _buildplan_now(),
+            "repo": str(target_repo),
+            "branch": None,
+            "commits": [],
+            "summary": f"target_repo is not a git repo: {target_repo}",
+        }, f"# Failed\n\nTarget repo `{target_repo}` has no `.git` directory.\n")
+        sys.exit(1)
+
+    # Create isolated branch
+    br_create = subprocess.run(
+        ["git", "-C", str(target_repo), "checkout", "-b", exec_branch, branch_base],
+        capture_output=True, text=True,
+    )
+    if br_create.returncode != 0:
+        _buildplan_write_done(task_id, {
+            "task_id": task_id,
+            "status": "failed",
+            "started_at": started_at,
+            "finished_at": _buildplan_now(),
+            "repo": str(target_repo),
+            "branch": None,
+            "commits": [],
+            "summary": f"failed to create branch {exec_branch} from {branch_base}",
+        }, f"# Branch creation failed\n\n```\n{br_create.stderr}\n```\n")
+        sys.exit(1)
+
+    # Record starting SHA so we can diff commits made during execution
+    start_sha = subprocess.run(
+        ["git", "-C", str(target_repo), "rev-parse", "HEAD"],
+        capture_output=True, text=True,
+    ).stdout.strip()
+
+    # Prepare prompt
+    agent_models = load_yaml(AGENT_MODELS_PATH)
+    sc_mode = detect_smart_contract_mode(target_repo)
+    forge_resolved = resolve_role(agent_models, "forge", sc_mode)
+    inv = forge_resolved["invocation_mode"]
+
+    work_dir = OUTBOX_ROOT / task_id
+    work_dir.mkdir(parents=True, exist_ok=True)
+    prompt_path = work_dir / "forge-prompt.md"
+    prompt_path.write_text(_buildplan_build_forge_prompt(task_id, buildplan_text, meta, target_repo))
+
+    # Spawn Forge (single attempt — buildplans are less structured than phase tasks;
+    # user can re-delegate on failure rather than relying on Sentinel/Phantom retry loops)
+    kwargs = {"model": forge_resolved["model"], "timeout": 1800}
+    if inv.get("type") == "wrap-gsd-agent":
+        kwargs["agent_wrap"] = inv["name"]
+    else:
+        spf = inv.get("system_prompt_file", "")
+        kwargs["system_prompt_file"] = str(CAE_ROOT / spf) if spf else None
+
+    print(f"Forge (model={forge_resolved['model']}) executing...")
+    try:
+        forge_result = spawn_forge(task_id, prompt_path, **kwargs)
+    except Exception as e:
+        _buildplan_write_done(task_id, {
+            "task_id": task_id,
+            "status": "failed",
+            "started_at": started_at,
+            "finished_at": _buildplan_now(),
+            "repo": str(target_repo),
+            "branch": exec_branch,
+            "commits": [],
+            "summary": f"Forge spawn raised: {type(e).__name__}: {e}",
+        }, f"# Forge spawn exception\n\n```\n{e}\n```\n")
+        sys.exit(1)
+
+    # Gather commits made on this branch
+    commits_raw = subprocess.run(
+        ["git", "-C", str(target_repo), "log", "--format=%H", f"{start_sha}..HEAD"],
+        capture_output=True, text=True,
+    ).stdout.strip()
+    commits = [c for c in commits_raw.split("\n") if c.strip()] if commits_raw else []
+
+    forge_output = forge_result.get("output", "") or ""
+    forge_ok = forge_result["exit_code"] == 0
+
+    # Infer status from Forge output + commits
+    status = "success"
+    if not forge_ok:
+        status = "failed"
+    elif "Status: blocked" in forge_output or "status: blocked" in forge_output.lower():
+        status = "blocked"
+    elif not commits:
+        # Forge exited clean but made no commits — treat as blocked (nothing changed)
+        status = "blocked"
+
+    # Extract a short summary line from Forge's SUMMARY block if present
+    summary = ""
+    if "## SUMMARY" in forge_output:
+        post = forge_output.split("## SUMMARY", 1)[1]
+        # first non-empty line after "Notes:" or fall back to the header chunk
+        for line in post.splitlines():
+            line = line.strip()
+            if line.startswith("- Notes:"):
+                summary = line[len("- Notes:"):].strip()
+                break
+        if not summary:
+            summary = post.strip().splitlines()[0][:160] if post.strip() else ""
+    if not summary:
+        summary = f"{len(commits)} commit(s) on {exec_branch}" if commits else "No commits produced"
+
+    done_body = f"""# CAE execution report — {task_id}
+
+## Summary
+{summary}
+
+## Commits ({len(commits)})
+{chr(10).join(f'- `{c}`' for c in commits) if commits else '(none)'}
+
+## Branch
+`{exec_branch}` in `{target_repo}`
+
+## Forge output (tail)
+```
+{forge_output[-3000:]}
+```
+"""
+
+    done_path = _buildplan_write_done(task_id, {
+        "task_id": task_id,
+        "status": status,
+        "started_at": started_at,
+        "finished_at": _buildplan_now(),
+        "repo": str(target_repo),
+        "branch": exec_branch,
+        "commits": commits,
+        "summary": summary[:200],
+    }, done_body)
+
+    print()
+    print(f"DONE.md written: {done_path}")
+    print(f"Status: {status}  Commits: {len(commits)}  Branch: {exec_branch}")
+    sys.exit(0 if status == "success" else 1)
 
 
 if __name__ == "__main__":
