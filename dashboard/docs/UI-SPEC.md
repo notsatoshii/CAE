@@ -1,11 +1,12 @@
 # cae-dashboard UI spec v1
 
-**Status:** design lock-in after round 2 critique. Locked decisions marked ✓. Open questions marked ⚠.
+**Status:** design lock-in after 3 rounds of critique + audience reframe. Locked ✓. Open ⚠.
 
 ## 0. Audience, voice, vibe
 
-- **Primary users:** you (dev/operator) + Shift founders (non-devs peeking at Ops)
+- **Primary users (BOTH modes):** **non-dev founders / product people** — not developers. Eric is also non-coding. This is not a dev tool — it's a founder tool that happens to drive agents.
 - **Platform priority:** desktop-first (1440×900 baseline), mobile deferred ✓
+- **Implication:** every surface must pass a "would a PM understand this without a dev next to them" test. No raw YAML, git SHAs, file paths, or agent-internal jargon as primary UI. Dev-speak is behind an "Advanced" toggle (off by default).
 - **Voice:** **Nexus** = playful + smart-ass. Dry humor, not quippy. First-name with agents, honest about uncertainty, drops dev jargon then translates inline. Example tone:
   > "Forge botched that one three times. Want me to hand it to Phantom? He's scary but he reads logs for a living."
 
@@ -417,3 +418,86 @@ If you greenlight, next step is: translate this spec into phase plans (probably 
 - **Phase 8** — Changes + Chat rail
 - **Phase 9** — Live Floor (pixel-agents fork + port)
 - **Phase 10** — Command palette + polish + empty states
+
+---
+
+# § Audience reframe addendum (2026-04-20, late session 3)
+
+Eric clarified: **primary users for BOTH modes are non-dev founders / product people, NOT devs.** This invalidates several prior assumptions and triggers translation/simplification across the spec.
+
+## Language changes (all jargon → founder-speak)
+
+| Dev-speak (was) | Founder-speak (now) |
+|-----------------|---------------------|
+| Ops | **Ship** (what happens after planning — watch, approve, celebrate) |
+| phase / wave / task | feature / step / job |
+| Forge / Sentinel / Scout / Scribe / ... | keep names but introduce as personalities ("the builder", "the checker", "the researcher", "the memory-keeper") |
+| merge commit / SHA / branch | "shipped", "version" |
+| YAML workflow | recipe / routine (chat-drafted, visual preview) |
+| token burn / model override | "how much it cost", hide model routing as Advanced |
+| KANBAN cols: Planned→Queued→Building→Reviewing→Blocked→Merged | **Waiting → In progress → Double-checking → Stuck (needs you) → Shipped** |
+| circuit breaker halt | "CAE paused itself — something's wrong" |
+| ROADMAP / PRD / PLAN.md | plan / spec / next steps |
+| Git commit log | "What changed" timeline, always plain English |
+
+## Implications applied
+
+1. **Explain-mode default = ON everywhere.** Dev-mode (show SHAs, raw YAML, file paths, token counts as primary) is a single global "Advanced" toggle in settings. Off by default.
+2. **Workflows YAML is secondary.** Primary entry = chat. Ask Nexus "every Monday audit all my projects" → Nexus drafts workflow → preview (visual step graph) → user approves. YAML editor is under "Advanced" in the workflow detail page.
+3. **Agents tab simplified.** Cards show "Forge — the builder" as headline. Current activity in plain English ("writing the signin page now"). Model chip + token counter collapsed under expand. Persona edit = Advanced only.
+4. **Changes tab prose-default ALWAYS.** Tech view toggle only visible with Advanced on.
+5. **Metrics renamed panels.**
+   - Cost → **Spending** ("spending today: ~$X — subscription covers it")
+   - Reliability → **How well it's going** ("CAE is getting things right 94% of the time this week")
+   - Speed → **How fast** ("most tasks finish in ~3 min; your slowest was …")
+6. **Memory renamed → "Notes"**, or **"What CAE remembers"** as tab label. Graph view = "Advanced" button opens Graphify canvas. Default view = list with search + "most recent".
+7. **Ops Home language rewritten.** Not "phase 3 wave 2/5". Say: **"Building `cae-dashboard` — 62% done, ~4 min left."**. Pinned one-liner: "Right now: builder is working on the signin page, checker is double-checking the auth code."
+8. **Emergency brake labeling.** Big visible **"Pause this"** button. Keyboard shortcut (Ctrl+.) is bonus.
+9. **Chat drives the app.** For non-devs, the chat is the primary surface for understanding + directing. Should get MORE real estate — default expanded to 360px, not 300px. Collapse only when user wants max screen for detail.
+10. **Mode labels.** "Build" / "Ops" → maybe **"Plan" / "Ship"**. ("Plan your next feature. Ship the one CAE is building.") Or even dissolve mode-toggle into one-flow IA — but that's a bigger rethink, flagged below.
+
+## New open question: mode toggle itself
+
+Binary Build/Ops toggle was MY assumption — based on thinking Ops = dev-facing. With both non-dev, might be wrong:
+- **Option X:** keep toggle, rename **Plan / Ship**. Simple.
+- **Option Y:** single IA — everything accessible from one nav. Active projects are cards on home; click one → shows its whole lifecycle (plan + progress + ship together). No mode.
+- **Option Z:** toggle stays but it's a *view* filter not a mode ("my planning stuff" vs "my shipping stuff"), same nav otherwise.
+
+Eric — pick next session.
+
+## Scribe-mode Nexus
+
+Because users are non-dev, Nexus's playful-smartass voice needs a specific constraint: **always explain before doing**. Rule:
+- Never execute an agent command without narrating it first in non-jargon language
+- "Heads up — I'm going to ask Forge (the builder) to try that task again. Should take ~3 min. Go?"
+- Confirmation gate by default on anything that spawns/runs/spends tokens
+
+This slows down power-user flows but saves non-devs from confusion. Dev-mode disables the extra gating.
+
+## Spec sections that need revision during Phase 2.5
+
+When next session starts Phase 2.5, rewrite these sections with founder-speak:
+- §2 (left-rail tab icons + labels)
+- §3 (Ops Home language)
+- §4 (KANBAN column names)
+- §5 (Task detail sheet labels)
+- §6 (Agents tab)
+- §7 (Workflows chat-first entry)
+- §8 (Metrics renamed panels)
+- §9 (Memory → Notes)
+- §10 (Changes tab — prose default forced)
+- §12 (Chat as primary surface — increase default width)
+
+All other sections (visual system, colors, typography, motion) unchanged.
+
+## Dev-mode toggle spec
+
+Single global setting `dev_mode: true | false`. When true:
+- Tab labels flip to technical (Ops, not Ship; Memory, not Notes; etc.)
+- Task cards show SHAs, branches, wave numbers
+- YAML editor is primary in Workflows
+- Model chips visible on agent cards
+- Metrics show raw token counts + percentiles
+- Kanban column names use technical state machine
+
+Persist per-user. Keyboard shortcut to toggle (⌘Shift+D). Subtle visual indicator when on (e.g., `dev` badge in top bar).

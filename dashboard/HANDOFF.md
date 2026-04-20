@@ -88,12 +88,29 @@ Read `dashboard/docs/UI-SPEC.md` for the full 400-line design doc. Key decisions
 
 ---
 
+## ⚠ LATE-SESSION REFRAME — read this first
+
+Eric clarified after the main spec was written: **primary users for BOTH modes are non-dev founders / product people, not developers.** This invalidated the "Ops = dev, Build = normie" mental model. See UI-SPEC.md § Audience reframe addendum for full implications.
+
+**TL;DR of reframe:**
+- Explain-mode is DEFAULT ON everywhere; dev-mode (SHAs, YAML, raw metrics) is an "Advanced" toggle
+- KANBAN columns translated to founder-speak (Waiting / In progress / Double-checking / Stuck / Shipped)
+- Workflows chat-first (Nexus drafts from natural language); YAML editor = Advanced
+- Memory tab renamed **Notes**; Commits tab shows prose always
+- Metrics panels renamed Spending / How well it's going / How fast
+- Agents tab simplified — "Forge the builder" framing, model/token chips hidden under expand
+- Nexus voice rule: **always explain before doing**, confirmation gate on anything that spends tokens
+- Possible mode renaming: **Build → Plan**, **Ops → Ship**. Or dissolve the toggle entirely — open question.
+
+Phase 2.5 (design system) should include: component library + the dev-mode global toggle + founder-first copy across every tab label, button, column header.
+
 ## Open questions next session must resolve with user
 
-Tagged in UI-SPEC.md §final-open-questions:
+Tagged in UI-SPEC.md §final-open-questions + reframe addendum:
 
-1. **Queue as 7th tab** — confirm (spec says yes, was originally a sub-tab under Workflows)
-2. **Live Floor isometric vs 2D top-down** — spec picked isometric, Eric said "up to me" → confirm before building
+1. **Mode structure** — keep Build/Ops toggle with founder rename (Plan/Ship)? OR dissolve into single unified IA? OR toggle as view-filter only?
+2. **Queue as 7th tab** — confirm (spec says yes, was originally a sub-tab under Workflows)
+3. **Live Floor isometric vs 2D top-down** — spec picked isometric, Eric said "up to me" → confirm before building
 3. **Graphify specifics** — is this graphify.dev, an Obsidian plugin, or something internal? Need API docs before designing Memory graph view
 4. **Screen shake on merge** — spec removed; confirm killed
 5. **Explain-mode default** — on for Build, off for Ops — confirm
