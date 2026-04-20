@@ -1,0 +1,35 @@
+{
+  "cae_config_version": 1,
+  "agent_skills": {
+    "gsd-executor": [
+      ".claude/skills/cae-forge"
+    ],
+    "gsd-planner": [
+      ".claude/skills/cae-arch"
+    ],
+    "gsd-plan-checker": [
+      ".claude/skills/cae-arch"
+    ],
+    "gsd-phase-researcher": [
+      ".claude/skills/cae-scout"
+    ],
+    "gsd-project-researcher": [
+      ".claude/skills/cae-scout"
+    ],
+    "gsd-verifier": [
+      ".claude/skills/cae-sentinel"
+    ],
+    "gsd-doc-writer": [
+      ".claude/skills/cae-scribe"
+    ]
+  },
+  "model_overrides": {
+    "gsd-executor": "claude-sonnet-4-6",
+    "gsd-planner": "claude-opus-4-6",
+    "gsd-plan-checker": "claude-opus-4-6",
+    "gsd-phase-researcher": "claude-sonnet-4-6",
+    "gsd-verifier": "claude-opus-4-6",
+    "gsd-debugger": "claude-sonnet-4-6"
+  },
+  "resolve_model_ids": true
+}

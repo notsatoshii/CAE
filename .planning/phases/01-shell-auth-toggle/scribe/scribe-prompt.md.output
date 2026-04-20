@@ -1,0 +1,24 @@
+```json
+{
+  "agents_md_additions": [
+    {
+      "section": "Library/API Notes",
+      "entry": "NextAuth v5 route.ts must re-export: `import { handlers } from \"@/auth\"; export const { GET, POST } = handlers`. GET/POST are handler object properties, not direct auth.ts exports.",
+      "attribution": "phase 1, p1-plA-t1-c0416e"
+    },
+    {
+      "section": "Gotchas",
+      "entry": "shadcn DropdownMenuTrigger + Avatar incompatible with `asChild` prop — Avatar doesn't support polymorphic render. Use className directly on trigger element instead.",
+      "attribution": "phase 1, p1-plA-t1-c1b4cf"
+    }
+  ],
+  "knowledge_topic_updates": [
+    {
+      "topic": "nextauth-v5-setup",
+      "content": "## Route Handler Pattern\n\nV5 uses a handlers export object. Route files re-export its GET/POST properties:\n\n```typescript\n// app/api/auth/[...nextauth]/route.ts\nimport { handlers } from \"@/auth\";\nexport const { GET, POST } = handlers;\n```\n\n## Middleware + Route Protection\n\nMiddleware checks session and redirects unauth users:\n\n```typescript\nexport const config = {\n  matcher: [\"/build/:path*\", \"/ops/:path*\"],\n};\n\nexport default auth((req) => {\n  if (!req.auth && req.nextUrl.pathname.match(/^\\/(build|ops)/)) {\n    return NextResponse.redirect(new URL(`/signin?from=${req.nextUrl.pathname}`, req.url));\n  }\n});\n```\n\n## Environment Variables\n\n- `AUTH_SECRET` — generated via `openssl rand -hex 32`\n- `AUTH_GITHUB_ID`, `AUTH_GITHUB_SECRET` — from GitHub OAuth app\n- `AUTH_URL` — deployed URL for production, `http://localhost:3000` for dev",
+      "tags": ["nextauth", "v5", "auth", "middleware", "github-oauth"]
+    }
+  ],
+  "stale_entries_to_remove": []
+}
+```
