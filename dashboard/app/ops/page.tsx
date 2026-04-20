@@ -2,7 +2,9 @@ export const dynamic = "force-dynamic"
 
 import { listPhases, listProjects } from "@/lib/cae-state"
 import { ProjectSelector } from "./project-selector"
+import { BreakersPanel } from "./breakers-panel"
 import { PhasesList } from "./phases-list"
+import { MetricsTabs } from "./metrics-tabs"
 
 interface OpsPageProps {
   searchParams: Promise<{ project?: string }>
@@ -34,7 +36,9 @@ export default async function OpsPage({ searchParams }: OpsPageProps) {
       <p className="text-sm text-muted-foreground mb-6">
         Live phase execution status for this project. Refreshes every 5 seconds.
       </p>
+      <BreakersPanel projectPath={selected?.path ?? ""} />
       <PhasesList phases={phases} projectPath={selected?.path ?? ""} />
+      <MetricsTabs projectPath={selected?.path ?? ""} />
     </main>
   )
 }
