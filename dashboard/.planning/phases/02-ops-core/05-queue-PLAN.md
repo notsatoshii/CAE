@@ -1,7 +1,7 @@
 ---
 phase: 2
 plan: A
-wave: 5
+wave: 6
 name: Wave 5 — delegation queue (inbox/outbox) + manual delegation
 ---
 

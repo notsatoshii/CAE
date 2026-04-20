@@ -1,7 +1,7 @@
 ---
 phase: 2
 plan: A
-wave: 4
+wave: 5
 name: Wave 4 — circuit-breaker panel + metrics viewer
 ---
 
