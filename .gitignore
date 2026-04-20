@@ -1,2 +1,7 @@
 __pycache__/
 .gstack/
+
+# Dashboard runtime
+dashboard/node_modules/
+dashboard/.next/
+dashboard/.env.local
