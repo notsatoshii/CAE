@@ -6,15 +6,16 @@ import { buttonVariants } from "@/components/ui/button"
 import { listProjects } from "@/lib/cae-state"
 import { getPhaseDetail } from "@/lib/cae-phase-detail"
 import { WavesView } from "./waves-view"
+import { TailSheet } from "@/components/tail-sheet"
 
 interface PhasePageProps {
   params: Promise<{ num: string }>
-  searchParams: Promise<{ project?: string }>
+  searchParams: Promise<{ project?: string; tail?: string }>
 }
 
 export default async function PhasePage({ params, searchParams }: PhasePageProps) {
   const { num } = await params
-  const { project: projectParam } = await searchParams
+  const { project: projectParam, tail: tailParam } = await searchParams
 
   const allProjects = await listProjects()
   const selected =
@@ -25,6 +26,7 @@ export default async function PhasePage({ params, searchParams }: PhasePageProps
   const detail = selected ? await getPhaseDetail(selected.path, phaseNumber) : null
 
   const backParams = new URLSearchParams({ project: selected?.path ?? "" })
+  const phaseHref = `/ops/phase/${num}?${backParams.toString()}`
 
   return (
     <main className="p-8 max-w-5xl">
@@ -53,6 +55,7 @@ export default async function PhasePage({ params, searchParams }: PhasePageProps
       ) : (
         <p className="mt-8 text-sm text-muted-foreground">No project selected.</p>
       )}
+      {tailParam && <TailSheet tail={tailParam} backHref={phaseHref} />}
     </main>
   )
 }
