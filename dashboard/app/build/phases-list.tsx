@@ -14,6 +14,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { useDevMode } from "@/lib/providers/dev-mode"
+import { labelFor } from "@/lib/copy/labels"
 import type { Phase } from "@/lib/cae-types"
 
 const STATUS_VARIANT: Record<Phase["status"], "default" | "secondary" | "destructive" | "outline"> = {
@@ -30,6 +32,8 @@ interface PhasesListProps {
 
 export function PhasesList({ phases, projectPath }: PhasesListProps) {
   const router = useRouter()
+  const { dev } = useDevMode()
+  const t = labelFor(dev)
 
   useEffect(() => {
     const id = setInterval(() => router.refresh(), 5000)
@@ -55,9 +59,9 @@ export function PhasesList({ phases, projectPath }: PhasesListProps) {
       <TableHeader>
         <TableRow>
           <TableHead className="w-16">#</TableHead>
-          <TableHead>Name</TableHead>
+          <TableHead>{t.phasesListColName}</TableHead>
           <TableHead>Status</TableHead>
-          <TableHead className="w-24">Plans</TableHead>
+          <TableHead className="w-24">{t.phasesListColPlans}</TableHead>
           <TableHead className="w-20">Actions</TableHead>
         </TableRow>
       </TableHeader>

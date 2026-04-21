@@ -14,6 +14,8 @@ import {
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { DelegateForm } from "./delegate-form";
+import { BuildQueueHeading } from "@/components/shell/build-queue-heading";
+import { labelFor } from "@/lib/copy/labels";
 import type { InboxTask, OutboxTask } from "@/lib/cae-types";
 
 function ageLabel(createdAt: Date): string {
@@ -33,30 +35,33 @@ const STATUS_VARIANT: Record<string, "default" | "secondary" | "destructive" | "
 
 export default async function QueuePage() {
   const [inbox, outbox] = await Promise.all([listInbox(), listOutbox()]);
+  const labels = labelFor(false);
 
   return (
     <main className="p-8 max-w-6xl">
-      <h1 className="text-2xl font-semibold tracking-tight mb-6">CAE Queue</h1>
+      <div className="mb-6">
+        <BuildQueueHeading />
+      </div>
 
       <DelegateForm />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <section>
           <h2 className="text-base font-semibold mb-3">
-            Inbox{" "}
+            {labels.queueInboxHeading}{" "}
             <span className="text-muted-foreground font-normal text-sm">
-              awaiting execution
+              {labels.queueInboxSub}
             </span>
           </h2>
           {inbox.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No tasks in inbox.</p>
+            <p className="text-sm text-muted-foreground">No jobs waiting.</p>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Task ID</TableHead>
+                  <TableHead>{labels.queueColTaskId}</TableHead>
                   <TableHead>Age</TableHead>
-                  <TableHead>BUILDPLAN</TableHead>
+                  <TableHead>{labels.queueColBuildplan}</TableHead>
                   <TableHead>META</TableHead>
                   <TableHead></TableHead>
                 </TableRow>
@@ -87,7 +92,7 @@ export default async function QueuePage() {
                           href={`/build/queue/inbox/${t.taskId}`}
                           className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
                         >
-                          View BUILDPLAN
+                          View instructions
                         </Link>
                       )}
                     </TableCell>
@@ -100,22 +105,22 @@ export default async function QueuePage() {
 
         <section>
           <h2 className="text-base font-semibold mb-3">
-            Outbox{" "}
+            {labels.queueOutboxHeading}{" "}
             <span className="text-muted-foreground font-normal text-sm">
-              completed
+              {labels.queueOutboxSub}
             </span>
           </h2>
           {outbox.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No completed tasks.</p>
+            <p className="text-sm text-muted-foreground">No finished jobs yet.</p>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Task ID</TableHead>
+                  <TableHead>{labels.queueColTaskId}</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Summary</TableHead>
-                  <TableHead>Branch</TableHead>
-                  <TableHead>Commits</TableHead>
+                  <TableHead>{labels.queueColBranch}</TableHead>
+                  <TableHead>{labels.queueColCommits}</TableHead>
                   <TableHead></TableHead>
                 </TableRow>
               </TableHeader>
@@ -150,7 +155,7 @@ export default async function QueuePage() {
                           href={`/build/queue/outbox/${t.taskId}`}
                           className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
                         >
-                          View DONE
+                          View result
                         </Link>
                       )}
                     </TableCell>

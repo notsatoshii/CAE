@@ -7,6 +7,8 @@ import { listProjects } from "@/lib/cae-state"
 import { getPhaseDetail } from "@/lib/cae-phase-detail"
 import { WavesView } from "./waves-view"
 import { TailSheet } from "@/components/tail-sheet"
+import { PhaseDetailHeading } from "@/components/shell/phase-detail-heading"
+import { labelFor } from "@/lib/copy/labels"
 
 interface PhasePageProps {
   params: Promise<{ num: string }>
@@ -27,6 +29,7 @@ export default async function PhasePage({ params, searchParams }: PhasePageProps
 
   const backParams = new URLSearchParams({ project: selected?.path ?? "" })
   const phaseHref = `/build/phase/${num}?${backParams.toString()}`
+  const labels = labelFor(false)
 
   return (
     <main className="p-8 max-w-5xl">
@@ -35,25 +38,23 @@ export default async function PhasePage({ params, searchParams }: PhasePageProps
           href={`/build?${backParams.toString()}`}
           className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "text-muted-foreground")}
         >
-          ← Build
+          {labels.phaseDetailBackLabel}
         </Link>
-        <h1 className="text-2xl font-semibold tracking-tight">
-          Phase {String(phaseNumber).padStart(2, "0")} —{" "}
-          <span className="text-muted-foreground font-normal">
-            {detail?.name ?? "unknown"}
-          </span>
-        </h1>
+        <PhaseDetailHeading
+          phaseNumber={phaseNumber}
+          phaseName={detail?.name ?? "unknown"}
+        />
       </div>
       {detail?.currentBranch && (
         <p className="text-sm text-muted-foreground mb-6">
-          Branch:{" "}
+          {labels.phaseDetailBranchLabel}:{" "}
           <code className="rounded bg-muted px-1 py-0.5 text-xs">{detail.currentBranch}</code>
         </p>
       )}
       {detail ? (
         <WavesView detail={detail} projectPath={selected?.path ?? ""} />
       ) : (
-        <p className="mt-8 text-sm text-muted-foreground">No project selected.</p>
+        <p className="mt-8 text-sm text-muted-foreground">Pick a project first.</p>
       )}
       {tailParam && <TailSheet tail={tailParam} backHref={phaseHref} />}
     </main>

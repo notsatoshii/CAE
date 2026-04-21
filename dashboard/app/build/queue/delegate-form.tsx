@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { useDevMode } from "@/lib/providers/dev-mode";
+import { labelFor } from "@/lib/copy/labels";
 import { createDelegation } from "./actions";
 
 export function DelegateForm() {
@@ -13,6 +15,8 @@ export function DelegateForm() {
   const [taskId, setTaskId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+  const { dev } = useDevMode();
+  const t = labelFor(dev);
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -31,10 +35,10 @@ export function DelegateForm() {
 
   return (
     <form ref={formRef} onSubmit={handleSubmit} className="space-y-4 mb-8 max-w-2xl">
-      <h2 className="text-lg font-semibold">Delegate to CAE</h2>
+      <h2 className="text-lg font-semibold">{t.delegateHeading}</h2>
 
       <div className="space-y-1">
-        <Label htmlFor="target_repo">Target repo path (optional)</Label>
+        <Label htmlFor="target_repo">{t.delegateRepoField}</Label>
         <Input
           id="target_repo"
           name="target_repo"
@@ -43,7 +47,7 @@ export function DelegateForm() {
       </div>
 
       <div className="space-y-1">
-        <Label htmlFor="buildplan">BUILDPLAN (required)</Label>
+        <Label htmlFor="buildplan">{t.delegateBuildplanField}</Label>
         <Textarea
           id="buildplan"
           name="buildplan"
@@ -54,7 +58,7 @@ export function DelegateForm() {
       </div>
 
       <Button type="submit" disabled={pending}>
-        {pending ? "Delegating…" : "Delegate to CAE"}
+        {pending ? t.delegateSubmitPending : t.delegateSubmit}
       </Button>
 
       {error && (
@@ -63,7 +67,7 @@ export function DelegateForm() {
 
       {taskId && (
         <p className="text-sm text-muted-foreground">
-          Task created:{" "}
+          Job created:{" "}
           <code className="rounded bg-muted px-1 py-0.5 text-xs">{taskId}</code>
           {" — "}
           <Link href="/build/queue" className="underline underline-offset-2">

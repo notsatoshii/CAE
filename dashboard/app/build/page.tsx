@@ -1,6 +1,7 @@
 export const dynamic = "force-dynamic"
 
 import { listPhases, listProjects } from "@/lib/cae-state"
+import { BuildHomeHeading } from "@/components/shell/build-home-heading"
 import { ProjectSelector } from "./project-selector"
 import { BreakersPanel } from "./breakers-panel"
 import { PhasesList } from "./phases-list"
@@ -19,16 +20,12 @@ export default async function BuildPage({ searchParams }: BuildPageProps) {
     allProjects[0]
 
   const phases = selected ? await listPhases(selected.path) : []
+  const projectName = selected?.name ?? "no project"
 
   return (
     <main className="p-8 max-w-5xl">
       <div className="flex items-center gap-3 mb-2">
-        <h1 className="text-2xl font-semibold tracking-tight">
-          Build —{" "}
-          <span className="text-muted-foreground font-normal">
-            {selected?.name ?? "no project"}
-          </span>
-        </h1>
+        <BuildHomeHeading projectName={projectName} />
         {allProjects.length > 0 && selected && (
           <ProjectSelector projects={allProjects} selected={selected} />
         )}

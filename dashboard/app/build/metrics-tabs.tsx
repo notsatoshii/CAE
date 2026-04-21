@@ -10,6 +10,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { useDevMode } from "@/lib/providers/dev-mode"
+import { labelFor } from "@/lib/copy/labels"
 
 type Row = Record<string, unknown>
 
@@ -70,6 +72,8 @@ const EMPTY: MetricsData = { breakers: [], sentinel: [], compaction: [], approva
 
 export function MetricsTabs({ projectPath }: MetricsTabsProps) {
   const [metrics, setMetrics] = useState<MetricsData>(EMPTY)
+  const { dev } = useDevMode()
+  const t = labelFor(dev)
 
   useEffect(() => {
     const url = `/api/state?project=${encodeURIComponent(projectPath)}`
@@ -94,14 +98,14 @@ export function MetricsTabs({ projectPath }: MetricsTabsProps) {
   return (
     <div className="mt-8">
       <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground mb-3">
-        Metrics
+        {t.metricsSectionHeading}
       </h2>
       <Tabs defaultValue="breakers">
         <TabsList>
-          <TabsTrigger value="breakers">Breakers</TabsTrigger>
-          <TabsTrigger value="sentinel">Sentinel</TabsTrigger>
-          <TabsTrigger value="compaction">Compaction</TabsTrigger>
-          <TabsTrigger value="approvals">Approvals</TabsTrigger>
+          <TabsTrigger value="breakers">{t.metricTabBreakers}</TabsTrigger>
+          <TabsTrigger value="sentinel">{t.metricTabSentinel}</TabsTrigger>
+          <TabsTrigger value="compaction">{t.metricTabCompaction}</TabsTrigger>
+          <TabsTrigger value="approvals">{t.metricTabApprovals}</TabsTrigger>
         </TabsList>
         <TabsContent value="breakers">
           <StreamTable rows={metrics.breakers} />

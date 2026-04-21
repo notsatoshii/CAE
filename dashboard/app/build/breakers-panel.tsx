@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { useDevMode } from "@/lib/providers/dev-mode"
+import { labelFor } from "@/lib/copy/labels"
 
 interface BreakerStats {
   activeForgeCount: number
@@ -19,6 +21,8 @@ interface BreakersPanelProps {
 
 export function BreakersPanel({ projectPath }: BreakersPanelProps) {
   const [stats, setStats] = useState<BreakerStats | null>(null)
+  const { dev } = useDevMode()
+  const t = labelFor(dev)
 
   useEffect(() => {
     const url = `/api/state?project=${encodeURIComponent(projectPath)}`
@@ -44,22 +48,22 @@ export function BreakersPanel({ projectPath }: BreakersPanelProps) {
 
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
-      <StatCard label="Active Forge" value={stats.activeForgeCount} />
-      <StatCard label="Input tokens today" value={stats.inputTokensToday.toLocaleString()} />
-      <StatCard label="Output tokens today" value={stats.outputTokensToday.toLocaleString()} />
-      <StatCard label="Retries" value={stats.retryCount} />
-      <StatCard label="Phantom escalations" value={stats.recentPhantomEscalations} />
+      <StatCard label={t.breakerActiveForge} value={stats.activeForgeCount} />
+      <StatCard label={t.breakerInputTokens} value={stats.inputTokensToday.toLocaleString()} />
+      <StatCard label={t.breakerOutputTokens} value={stats.outputTokensToday.toLocaleString()} />
+      <StatCard label={t.breakerRetries} value={stats.retryCount} />
+      <StatCard label={t.breakerPhantom} value={stats.recentPhantomEscalations} />
       <Card size="sm">
         <CardHeader>
           <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-            Halted
+            {t.breakerHalted}
           </CardTitle>
         </CardHeader>
         <CardContent>
           {stats.halted ? (
-            <Badge variant="destructive">halted</Badge>
+            <Badge variant="destructive">{t.breakerHaltedYes}</Badge>
           ) : (
-            <Badge variant="outline">running</Badge>
+            <Badge variant="outline">{t.breakerHaltedNo}</Badge>
           )}
         </CardContent>
       </Card>
