@@ -36,3 +36,13 @@ export interface CbState {
   recentPhantomEscalations: number
   halted: boolean
 }
+
+// Phase 4 home state types (re-exported for convenience)
+export type {
+  Rollup,
+  AgentActive,
+  PhaseSummary,
+  RecentEvent,
+  NeedsYouItem,
+  HomeState,
+} from "./cae-home-state"
