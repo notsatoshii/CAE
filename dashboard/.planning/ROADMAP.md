@@ -73,12 +73,12 @@ Phases 1 and 2 shipped a functional-but-ugly proof (shell + Ops core). After Ses
 **Plans:** 6 plans
 
 Plans:
-- [ ] 03-01-PLAN.md — Dark theme tokens + Geist fonts + shake keyframes (wave 1)
-- [ ] 03-02-PLAN.md — ExplainMode + DevMode providers + useScreenShake hook + Toaster mount (wave 2)
-- [ ] 03-03-PLAN.md — Top-bar refactor (Plan/Build toggle + Memory/Metrics icons + tokens-only cost ticker + heartbeat + dev badge + shared /api/state poll hook) (wave 3)
-- [ ] 03-04-PLAN.md — Route reorg (/ops → /build, /build → /plan, /memory + /metrics stubs) + middleware (wave 2)
-- [ ] 03-05-PLAN.md — Founder-speak copy pass + centralized label dictionary + heading client-islands (wave 4)
-- [ ] 03-06-PLAN.md — Shadcn primitives: Dialog, Sonner (Toast), ScrollArea (wave 1)
+- [x] 03-01-PLAN.md — Dark theme tokens + Geist fonts + shake keyframes (wave 1)
+- [x] 03-02-PLAN.md — ExplainMode + DevMode providers + useScreenShake hook + Toaster mount (wave 2)
+- [x] 03-03-PLAN.md — Top-bar refactor (Plan/Build toggle + Memory/Metrics icons + tokens-only cost ticker + heartbeat + dev badge + shared /api/state poll hook) (wave 3)
+- [x] 03-04-PLAN.md — Route reorg (/ops → /build, /build → /plan, /memory + /metrics stubs) + middleware (wave 2)
+- [x] 03-05-PLAN.md — Founder-speak copy pass + centralized label dictionary + heading client-islands (wave 4)
+- [x] 03-06-PLAN.md — Shadcn primitives: Dialog, Sonner (Toast), ScrollArea (wave 1)
 
 ## Phase 4: Build Home rewrite (hierarchy + rollup + needs-you)
 

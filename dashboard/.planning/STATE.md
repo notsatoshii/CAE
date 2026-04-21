@@ -1,7 +1,21 @@
+---
+gsd_state_version: 1.0
+milestone: v0.1
+milestone_name: milestone
+status: planning
+last_updated: "2026-04-21T10:38:00.434Z"
+progress:
+  total_phases: 12
+  completed_phases: 1
+  total_plans: 14
+  completed_plans: 7
+  percent: 50
+---
+
 # cae-dashboard — Project State
 
 **Current milestone:** v0.1 — Founder-facing UI over CAE + Shift
-**Status:** Active
+**Status:** Ready to plan
 
 ## Completed Phases
 
@@ -21,6 +35,7 @@ Primary users for BOTH modes (Plan + Build) are **non-dev founders / product peo
 ### Design law
 
 `dashboard/docs/UI-SPEC.md` is the canonical design spec. Session 4 resolutions at bottom supersede earlier contradictions. Key locks:
+
 - Mode toggle: **Plan** (Shift FE) / **Build** (CAE FE) — names swapped from earlier drafts
 - Memory + Metrics pulled OUT of tabs → global top-bar icons
 - Build tabs (5): Home / Agents / Workflows / Queue / Changes
