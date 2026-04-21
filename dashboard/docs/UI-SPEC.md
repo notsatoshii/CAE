@@ -10,6 +10,7 @@
 > - Screen shake on merge = **REVIVED** (subtle, respects prefers-reduced-motion)
 > - Explain-mode default = **ON everywhere**, Ctrl+E toggles off
 > - Graphify = safishamsi/graphify (Python CLI) → JSON → native react-flow render
+> - **Cost ticker = tokens only, no USD** (2026-04-21 revision — OAuth sub, not metered)
 
 ## 0. Audience, voice, vibe
 
@@ -34,7 +35,7 @@ Every agent has a distinct voice in chat (short attribution):
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
-│ CAE · [Build|Ops]  proj▾   $12.34/48k·today  ⌘K   🟢 live  avatar │ ← 40px top
+│ CAE · [Plan|Build]  proj▾   48k tok today · est.   ⌘K   🟢 live  avatar │ ← 40px top
 ├──┬────────────────────────────────────────────────────────┬──────┤
 │▼│                                                          │ ▶    │
 │⌂ │                                                          │      │
@@ -49,8 +50,8 @@ Every agent has a distinct voice in chat (short attribution):
 ```
 
 - **Top bar (40px):**
-  - Left: CAE wordmark · Build/Ops segmented toggle · project selector
-  - Middle: **cost + token ticker** ("$12.34 · 48k tok today") — not cap-enforced (OAuth sub) but visibility
+  - Left: CAE wordmark · Plan/Build segmented toggle · project selector
+  - Middle: **token ticker** ("48k tok today · est.") — OAuth subscription, not billed per call. No USD shown.
   - Right: ⌘K palette · live-heartbeat dot (green=up, amber=degraded, red=halt) · avatar menu
 - **Left rail (48px):** icon-only nav, per-mode (6 Ops tabs / 4 Build tabs), active tab highlighted with cyan bar
 - **Right rail chat (Ctrl+T):** default 48px collapsed icon-column with latest msg preview + unread dot. Click or Ctrl+T → 300px. Auto-expand when agent is streaming. Escape to collapse.
@@ -83,7 +84,7 @@ Pixel-agents = **"Live Floor"** icon 🎮 in top bar (not a tab). Click → full
 ┌──────────────────────────────────────────────────────────────────┐
 │ Today                                                            │
 │ ┌──────────────────────────────────────────────────────────────┐ │
-│ │ 14 shipped · 48k tok · $6.20 · 3 in-flight · 2 blocked · ⚠1 │ │  rollup strip
+│ │ 14 shipped · 48k tok · 3 in-flight · 2 blocked · ⚠1         │ │  rollup strip
 │ └──────────────────────────────────────────────────────────────┘ │
 │                                                                  │
 │ Active phases (3)                                                │
@@ -192,11 +193,11 @@ Tab layout:
 ## 8. Metrics tab (3 panels, not 4 tabs)
 
 ### Cost panel
-- Big number: today + month-to-date + projected-monthly
-- Stacked bar: $ by agent (7d, 30d toggle)
-- Line: daily $ for 30d with drift detection
-- Table: top 10 most expensive tasks ever (with links)
-- Note banner: "OAuth subscription — these are cost *estimates* for tracking, not billed amounts"
+- Big number: today's token usage (input + output separately, sum)
+- Stacked bar: tokens by agent (7d, 30d toggle)
+- Line: daily tokens for 30d with drift detection
+- Table: top 10 most token-heavy tasks ever (with links)
+- Note banner: "OAuth subscription — token counts from local logs, not billed per call"
 
 ### Reliability panel
 - Per-agent success rate gauges (last 7d)
@@ -339,7 +340,7 @@ running-pulse   cyan gradient with 1.5s pulse
 
 ## 14. Cross-cutting features
 
-- **Always-visible cost ticker** (top bar): current today $ + tokens, click → Metrics/Cost
+- **Always-visible token ticker** (top bar): today's input + output token total with "est." label, click → Metrics/Cost. No USD (OAuth subscription, not billed per call).
 - **Emergency brake** per running task: Pause (Ctrl+.) / Abort (Ctrl+Shift+.)
 - **Live Floor pop-out** for second-monitor use
 - **Empty states** guide action, not blank page
@@ -384,7 +385,7 @@ I pushed hard last round. Pushing again.
 
 **12. Memory graph view scalability.** If AGENTS.md has 500+ entries across projects + KNOWLEDGE/, graph becomes hairball. Need clustering / project-filter / node-count cap with "load more."
 
-**13. Cost ticker accuracy.** Anthropic OAuth doesn't report token counts back in every SDK usage. We read metrics from `.cae/metrics/*.jsonl` which may not have precise cost. Show "estimated" label with tooltip.
+**13. Cost ticker accuracy.** Anthropic OAuth doesn't report token counts back in every SDK usage. We read metrics from `.cae/metrics/*.jsonl` which may not have precise cost. Show "estimated" label with tooltip. **(2026-04-21 update: cost ticker is tokens-only. No USD conversion. Estimate label retained because token counts themselves depend on local log accuracy.)**
 
 **14. No "what is CAE doing RIGHT NOW" view.** Closest is Active Phases on Home. But during heavy build, *specifically which Forge is on which task right now* is buried. Add: pinned "Live Ops" status line above Active Phases showing "Forge→p3-t3 · Sentinel→p3-t2-review · Scout→idle" real-time, one-line.
 
@@ -400,7 +401,7 @@ I pushed hard last round. Pushing again.
 - Scribe-style idle card = "inactive 6d · last run Thu"
 - No screen shake on merge (pulse/flash only)
 - Chat split-screen mode for pop-out
-- Cost ticker labeled **"est."**
+- Cost ticker labeled **"est."** — **2026-04-21: tokens only, no USD**
 - Live Ops status line above Active Phases (1-line real-time agent assignment)
 - Nexus voice examples doc (`docs/VOICE.md`) to ship with build
 - Live Floor = last phase; core UI ships first
@@ -456,7 +457,7 @@ Eric clarified: **primary users for BOTH modes are non-dev founders / product pe
 3. **Agents tab simplified.** Cards show "Forge — the builder" as headline. Current activity in plain English ("writing the signin page now"). Model chip + token counter collapsed under expand. Persona edit = Advanced only.
 4. **Changes tab prose-default ALWAYS.** Tech view toggle only visible with Advanced on.
 5. **Metrics renamed panels.**
-   - Cost → **Spending** ("spending today: ~$X — subscription covers it")
+   - Cost → **Spending** ("reading 28k, writing 20k today — subscription covers it")
    - Reliability → **How well it's going** ("CAE is getting things right 94% of the time this week")
    - Speed → **How fast** ("most tasks finish in ~3 min; your slowest was …")
 6. **Memory renamed → "Notes"**, or **"What CAE remembers"** as tab label. Graph view = "Advanced" button opens Graphify canvas. Default view = list with search + "most recent".
@@ -540,15 +541,17 @@ Memory and Metrics pulled OUT of the mode toggle. They live on the global top-ba
 
 **Why:** A PRD (Plan) and its resulting phases (Build) share memory. Spending totals cover both products combined. Forcing users to mode-switch for cross-cutting context is friction.
 
-**Updated top-bar layout:**
+**Updated top-bar layout (2026-04-21 revision — tokens only, no USD):**
 
 ```
-┌────────────────────────────────────────────────────────────────────────────┐
-│ CAE · [Plan|Build]  proj▾   $12.34/48k·today  🧠 Memory  📊 Metrics  ⌘K   🟢 live  avatar │
-└────────────────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│ CAE · [Plan|Build]  proj▾   48k tok today · est.   🧠 Memory  📊 Metrics  ⌘K   🟢 live  avatar │
+└─────────────────────────────────────────────────────────────────────────────────┘
 ```
 
-Memory/Metrics = icon buttons, open as full-page routes (not modals). Keyboard shortcuts: `G M` (go memory), `G $` (go metrics). Icons placed between cost ticker and ⌘K.
+Memory/Metrics = icon buttons, open as full-page routes (not modals). Keyboard shortcuts: `G M` (go memory), `G $` (go metrics). Icons placed between token ticker and ⌘K.
+
+**Token ticker format:** `{input+output} tok today` with small-caps `est.` suffix. Tooltip: `Token usage from local logs. OAuth subscription — not billed per call.` No USD shown anywhere. No hardcoded token rates anywhere in code.
 
 ## §S4.3 — Queue = top-level Build tab
 
@@ -592,4 +595,3 @@ Phase 2.5 (design system foundation) must now include:
 - Nexus `docs/VOICE.md` do/don't examples — write before Phase 8 (chat) ships, not Phase 2.5
 - Mode toggle Option Y (single IA, no mode) from addendum line 463 — NOT chosen; Plan/Build toggle stays per §S4.1
 - Screen-shake amplitude + curve — dial during Phase 8 when merge SSE events exist
-
