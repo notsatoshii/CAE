@@ -78,7 +78,7 @@ export function PhasesList({ phases, projectPath }: PhasesListProps) {
             </TableCell>
             <TableCell>
               <Link
-                href={`/ops/phase/${phase.number}?${params.toString()}`}
+                href={`/build/phase/${phase.number}?${params.toString()}`}
                 className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
               >
                 View

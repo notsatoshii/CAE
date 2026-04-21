@@ -26,16 +26,16 @@ export default async function PhasePage({ params, searchParams }: PhasePageProps
   const detail = selected ? await getPhaseDetail(selected.path, phaseNumber) : null
 
   const backParams = new URLSearchParams({ project: selected?.path ?? "" })
-  const phaseHref = `/ops/phase/${num}?${backParams.toString()}`
+  const phaseHref = `/build/phase/${num}?${backParams.toString()}`
 
   return (
     <main className="p-8 max-w-5xl">
       <div className="flex items-center gap-3 mb-2">
         <Link
-          href={`/ops?${backParams.toString()}`}
+          href={`/build?${backParams.toString()}`}
           className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "text-muted-foreground")}
         >
-          ← Ops
+          ← Build
         </Link>
         <h1 className="text-2xl font-semibold tracking-tight">
           Phase {String(phaseNumber).padStart(2, "0")} —{" "}

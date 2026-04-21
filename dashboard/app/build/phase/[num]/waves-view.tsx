@@ -149,7 +149,7 @@ function TaskCard({ task, detail, projectPath }: TaskCardProps) {
       </div>
       {tailParams && (
         <Link
-          href={`/ops/phase/${detail.number}?${tailParams.toString()}`}
+          href={`/build/phase/${detail.number}?${tailParams.toString()}`}
           className={cn(buttonVariants({ variant: "outline", size: "sm" }), "shrink-0")}
         >
           View output

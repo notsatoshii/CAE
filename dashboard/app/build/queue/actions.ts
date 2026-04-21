@@ -35,6 +35,6 @@ export async function createDelegation(formData: FormData): Promise<string> {
   );
   child.unref();
 
-  revalidatePath("/ops/queue");
+  revalidatePath("/build/queue");
   return taskId;
 }

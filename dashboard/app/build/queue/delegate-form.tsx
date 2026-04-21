@@ -66,7 +66,7 @@ export function DelegateForm() {
           Task created:{" "}
           <code className="rounded bg-muted px-1 py-0.5 text-xs">{taskId}</code>
           {" — "}
-          <Link href="/ops/queue" className="underline underline-offset-2">
+          <Link href="/build/queue" className="underline underline-offset-2">
             view queue
           </Link>
         </p>

@@ -84,7 +84,7 @@ export default async function QueuePage() {
                     <TableCell>
                       {t.hasBuildplan && (
                         <Link
-                          href={`/ops/queue/inbox/${t.taskId}`}
+                          href={`/build/queue/inbox/${t.taskId}`}
                           className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
                         >
                           View BUILDPLAN
@@ -147,7 +147,7 @@ export default async function QueuePage() {
                     <TableCell>
                       {t.hasDone && (
                         <Link
-                          href={`/ops/queue/outbox/${t.taskId}`}
+                          href={`/build/queue/outbox/${t.taskId}`}
                           className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
                         >
                           View DONE

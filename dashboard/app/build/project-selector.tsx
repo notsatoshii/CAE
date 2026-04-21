@@ -21,7 +21,7 @@ export function ProjectSelector({ projects, selected }: ProjectSelectorProps) {
 
   function pick(path: string) {
     const params = new URLSearchParams({ project: path })
-    router.push(`/ops?${params.toString()}`)
+    router.push(`/build?${params.toString()}`)
   }
 
   return (
