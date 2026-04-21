@@ -16,7 +16,7 @@ Rewrite `/build` home page from the Phase 2 functional-but-ugly proof into the h
 4. Recent ledger — last 20 events with ✓/✗ status, timestamp, agent, tokens
 5. Live Ops one-liner — pinned above Active Phases, real-time agent assignment
 6. Click phase card → right-slide task detail sheet (UI-SPEC §5)
-7. Right-slide task detail sheet with: header (title/status/agents/urgency/tags/close/Pause/Abort), summary, live log (SSE tail, 500 line cap), changes (commits with plain-English rewrite), memory referenced, comments, actions (Approve/Deny/Retry/Abandon/Reassign/Edit plan)
+7. Right-slide task detail sheet with: header (title/status/agents/urgency/tags/close/Pause/Abort), summary, live log (SSE tail, 500 line cap), changes (commits with plain-English rewrite), memory referenced (section header + Phase-8 placeholder only; list+click-through defer), comments, actions (Approve/Deny/Retry/Abandon/Reassign/Edit plan)
 
 **Not in scope (deferred):**
 - Agents tab content (Phase 5)
@@ -117,13 +117,13 @@ Founder-speak for event row (dev off):
 
 Triggered by clicking an active phase card OR a "Needs you" row. Slides from right, 50% viewport width on desktop, full width on narrow screens.
 
-Sections (all collapsible, expanded by default):
+Sections (all collapsible, expanded by default except where noted):
 
 1. **Header:** title, status pill, agents working (avatar row), urgency dot, tags. Actions: close (Esc key), Pause (Ctrl+.), Abort (Ctrl+Shift+.)
 2. **Summary:** buildplan text (from PLAN.md `<objective>`), expandable
 3. **Live log:** SSE tail at `/api/tail?phase={N}&plan={M}`, pause/resume scroll button, hard cap 500 lines visible
 4. **Changes:** commits landed with SHA + plain-English rewrite (use `labelFor` consumer for dev toggle), GitHub compare link
-5. **Memory referenced:** AGENTS.md + KNOWLEDGE/ entries invoked during this task, click → Memory tab filtered (Phase 8)
+5. **Memory referenced:** **section present as placeholder only in Phase 4.** Renders the section heading (`"What CAE looked at"` / `"Memory referenced"`) with an empty body reading `"ships in Phase 8"` (subtle `text-muted` styling). Collapsed by default (uses `<details>/<summary>` native disclosure). The LIST of AGENTS.md + KNOWLEDGE/ entries invoked during this task AND the click-through to a filtered Memory tab are BOTH deferred to Phase 8 (when the Memory tab ships). In Phase 4 we ship ONLY the scaffolded section so the sheet's 7-section layout is visually complete; actual content lands with Phase 8.
 6. **Comments:** thread (stub — tied to chat rail from Phase 9; show "Comments ship in Phase 9" if before then)
 7. **Actions:** Approve / Deny / Retry / Abandon / Reassign / Edit plan — only the ones applicable to current status
 
@@ -134,9 +134,13 @@ Keyboard:
 
 Use `components/ui/sheet.tsx` (shadcn, from Phase 1; dark-themed via Phase 3 tokens).
 
+**Close behaviour contract:** When the sheet closes (Esc / overlay click / URL-state removal), the `project` query param MUST BE PRESERVED in the URL. Only `sheet`, `phase`, `plan`, `task` are removed. The founder's selected project context survives sheet dismissal.
+
 ### Live tail integration
 
 Reuse `/api/tail` SSE endpoint from Phase 2. Sheet opens → fetch begins → appended lines stream in. Pause button → stops auto-scroll but keeps stream. Close sheet → aborts fetch (client-side EventSource close).
+
+**Cross-project extension (Phase 4):** `/api/tail`'s Phase 2/3 ALLOWED_ROOTS whitelist covered ONLY the dashboard project's CWD. For the Build Home (cross-project by design), Plan 04-01 Task 4 extends the whitelist at request time to include every `{project_path}/.cae/logs`, `/.cae/metrics`, and `/.planning/phases` directory discovered by `listProjects()`. Non-dashboard project logs now stream successfully instead of returning 403.
 
 Hard cap 500 lines visible: prepend buffer trim after 500 lines. Show "…earlier lines truncated" banner when triggered.
 
@@ -184,13 +188,13 @@ All empty-state copy pulls from `lib/copy/labels.ts` so dev-mode toggle flips to
 - `app/build/phases-list.tsx` — current active phase list (refactor into new card format)
 - `app/build/breakers-panel.tsx` — circuit breaker panel (move into task detail sheet or absorb into live-ops one-liner)
 - `app/build/metrics-tabs.tsx` — metrics tabs (REMOVE — Phase 7 owns full metrics at /metrics)
-- `app/api/tail/route.ts` — existing SSE endpoint (reuse)
+- `app/api/tail/route.ts` — existing SSE endpoint (reuse + extend ALLOWED_ROOTS for cross-project paths)
 - `app/api/state/route.ts` — existing state endpoint (extend shape)
 
 ### Phase 3 artifacts (dependencies)
 - `lib/providers/dev-mode.tsx` — useDevMode hook
 - `lib/providers/explain-mode.tsx` — useExplainMode hook
-- `lib/copy/labels.ts` — labelFor dictionary (extend with Phase 4 labels)
+- `lib/copy/labels.ts` — labelFor dictionary (extend with Phase 4 labels; baseline 9 `$` template literals in Phase 3 keys MUST be preserved)
 - `lib/hooks/use-state-poll.tsx` — shared poll hook (extend for richer state)
 - `components/ui/sheet.tsx` — right-slide sheet primitive
 - `components/ui/scroll-area.tsx` — for live log overflow
@@ -255,11 +259,15 @@ type StateResponse = {
 
 Server aggregates via reading `.planning/`, `.cae/metrics/`, inbox/outbox. Cached for 1s to avoid thrashing.
 
+**Status enum source of truth:** The aggregator depends on `TaskStatus` from `lib/cae-phase-detail.ts` (values: `"pending" | "running" | "merged" | "failed"`). Plan 04-01 Task 1 imports these values rather than hardcoding — TypeScript enforces drift detection.
+
 ### Task detail sheet opening pattern
 
 Use URL state: clicking card navigates to `/build/phase/[num]?sheet=open` or similar — allows deep-linking + browser back button closes sheet. Alternative: pure React state (no URL change) — simpler but less shareable.
 
 Recommend URL state for shareability. Planner picks exact scheme.
+
+URL scheme (LOCKED by Plan 04-03): `?sheet=open&phase={N}&project={path}` (+ optional `plan={id}&task={id}` when opening from a Needs-you row). Sheet close removes `sheet`, `phase`, `plan`, `task` — preserves `project`.
 
 ### Agent avatar rendering
 
@@ -273,6 +281,8 @@ export const AGENT_META = {
 ```
 
 Avatar = emoji + color pill. Dots = concurrent task count.
+
+**Single source of truth rule:** Plan 04-01 (wave 1) and Plan 04-02 (wave 1) both need the founder_label mapping, but run in parallel so neither can import from the other during execution. Plan 04-01 ships with a DELIBERATE inline duplicate `FOUNDER_LABEL` map to break the parallel-wave dependency. Plan 04-06 (wave 4) THEN refactors `lib/cae-home-state.ts` to import `agentMetaFor` from `lib/copy/agent-meta.ts`, eliminating the duplicate. After Plan 04-06, `agent-meta.ts` is the single source of truth.
 
 ### Live Ops line composition
 
@@ -288,13 +298,14 @@ Max 3 agents shown; "+{N} more idle" if more.
 ## Deferred Ideas
 
 - **Full task comments thread** → Phase 9 (chat rail)
-- **Memory-referenced click-through to Memory tab** → Phase 8 (Memory tab ships then)
+- **Memory-referenced LIST and click-through to Memory tab** → Phase 8 (Memory tab ships then). In Phase 4, the Task Detail Sheet renders ONLY the section heading with a subtle "ships in Phase 8" placeholder; the list of AGENTS.md / KNOWLEDGE entries and the click-through navigation both wait for the Memory tab.
 - **Screen-shake on Sentinel merge** → Phase 9 (SSE integration lives there)
 - **Agent detail drawer** → Phase 5 (Agents tab)
 - **Metrics panels (old metrics-tabs)** → Phase 7 (dedicated /metrics page)
 - **Project picker** (switching which projects show on /build home) → Phase 6 or later; for Phase 4 show all projects
 - **Pinning favorite phases** → deferred to v2
 - **Drag-to-reorder "Needs you"** → deferred (no drag in v1 per UI-SPEC critique #11)
+- **Real pause/abort wiring** (SheetActions' 6 buttons + Pause/Abort hotkeys) → Phase 9 or later. Phase 4 ships them as `toast.info()` stubs; the button testids + keyboard shortcuts + URL-state scaffolding are in place so future phases only wire behaviour, not UI.
 
 </deferred>
 
@@ -302,3 +313,4 @@ Max 3 agents shown; "+{N} more idle" if more.
 
 *Phase: 04-build-home-rewrite*
 *Context gathered: 2026-04-21*
+*Revised: 2026-04-20 (checker feedback round — memory-referenced deferral clarified, cross-project tail extension called out, status-enum source-of-truth noted, FOUNDER_LABEL consolidation plan documented, sheet close project-preservation contract locked)*
