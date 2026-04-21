@@ -11,5 +11,5 @@ export default auth((req) => {
 });
 
 export const config = {
-  matcher: ["/build/:path*", "/ops/:path*"],
+  matcher: ["/plan/:path*", "/build/:path*", "/memory", "/metrics"],
 };
