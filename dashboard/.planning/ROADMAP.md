@@ -137,6 +137,16 @@ Plans:
 - Card click → right-slide detail sheet
 - Chat-first workflow drafting (Nexus drafts from natural language; YAML behind Advanced toggle)
 
+**Plans:** 6 plans
+
+Plans:
+- [ ] 06-01-PLAN.md — Workflow domain: schema + YAML parser + file CRUD + NL heuristic + labels.ts workflows/queue keys (wave 1)
+- [ ] 06-02-PLAN.md — API routes: /api/workflows CRUD + /[slug]/run (tmux spawn) + /api/queue aggregator (wave 2)
+- [ ] 06-03-PLAN.md — Widgets: StepGraph SVG + MonacoYamlEditor (dynamic import) + NlDraftTextarea (wave 2)
+- [ ] 06-04-PLAN.md — /build/workflows list + new + [slug] edit pages with dev-mode-gated Monaco (wave 3)
+- [ ] 06-05-PLAN.md — /build/queue 5-column KANBAN rewrite + New-job modal wrapping Phase 2 DelegateForm (wave 4)
+- [ ] 06-06-PLAN.md — Integration + VERIFICATION.md + human sign-off checkpoint (wave 5)
+
 ## Phase 7: Metrics (global top-bar icon → page)
 
 **Goal:** `/metrics` — 3 panels (Spending / How well it's going / How fast) per UI-SPEC §8 + §Audience reframe.
