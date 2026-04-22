@@ -20,7 +20,7 @@ import { resolveCbPath } from "@/lib/floor/cb-path";
 import FloorPopoutHost from "@/components/floor/floor-popout-host";
 
 interface PageProps {
-  searchParams: { project?: string };
+  searchParams: Promise<{ project?: string }>;
 }
 
 export default async function FloorPopoutPage({ searchParams }: PageProps) {
@@ -30,6 +30,9 @@ export default async function FloorPopoutPage({ searchParams }: PageProps) {
     redirect("/signin?from=/floor/popout");
   }
 
+  // Next 16 requires searchParams to be awaited before reading (CR-01)
+  const { project } = await searchParams;
+
   // Project resolution for pop-out:
   // 1. Explicit searchParams.project (set by toolbar's window.open call)
   // 2. Most-recent Shift project (bookmarked / typed URL fallback)
@@ -37,9 +40,9 @@ export default async function FloorPopoutPage({ searchParams }: PageProps) {
   // 4. null (empty project list or listProjects threw) — idle scene, no SSE
   let projectPath: string | null = null;
 
-  if (searchParams.project) {
+  if (project) {
     // Trust the explicit path — /api/tail enforces ALLOWED_ROOTS (T-11-04)
-    projectPath = searchParams.project;
+    projectPath = project;
   } else {
     try {
       const projects = await listProjects();

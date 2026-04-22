@@ -21,7 +21,7 @@ import { resolveCbPath } from "@/lib/floor/cb-path";
 import FloorClient from "@/components/floor/floor-client";
 
 interface PageProps {
-  searchParams: { project?: string; popout?: string };
+  searchParams: Promise<{ project?: string; popout?: string }>;
 }
 
 export default async function FloorPage({ searchParams }: PageProps) {
@@ -31,12 +31,15 @@ export default async function FloorPage({ searchParams }: PageProps) {
     redirect("/signin?from=/floor");
   }
 
+  // Next 16 requires searchParams to be awaited before reading (CR-01)
+  const { project, popout: popoutParam } = await searchParams;
+
   // Project resolution: explicit > most-recent Shift > first project > null (D-10)
   let projectPath: string | null = null;
 
-  if (searchParams.project) {
+  if (project) {
     // Trust the explicit path — /api/tail enforces ALLOWED_ROOTS (T-11-04)
-    projectPath = searchParams.project;
+    projectPath = project;
   } else {
     try {
       const projects = await listProjects();
@@ -54,7 +57,7 @@ export default async function FloorPage({ searchParams }: PageProps) {
   }
 
   const cbPath = resolveCbPath(projectPath);
-  const popout = searchParams.popout === "1";
+  const popout = popoutParam === "1";
 
   return (
     <main className={popout ? "h-screen" : "h-[calc(100vh-40px)]"}>

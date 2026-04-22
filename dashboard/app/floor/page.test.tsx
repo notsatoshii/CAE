@@ -59,7 +59,7 @@ describe("/floor page", () => {
   it("11. Unauthenticated redirects to /signin?from=/floor", async () => {
     mockAuth.mockResolvedValue(null);
     // render as async server component
-    await FloorPage({ searchParams: {} });
+    await FloorPage({ searchParams: Promise.resolve({}) });
     expect(mockRedirect).toHaveBeenCalledWith("/signin?from=/floor");
   });
 
@@ -69,7 +69,7 @@ describe("/floor page", () => {
       { path: "/a", name: "a", shiftUpdated: "2026-04-20T00:00:00Z" },
       { path: "/b", name: "b", shiftUpdated: "2026-04-23T00:00:00Z" },
     ]);
-    const result = await FloorPage({ searchParams: {} });
+    const result = await FloorPage({ searchParams: Promise.resolve({}) });
     render(result as React.ReactElement);
     const stub = screen.getByTestId("floor-client-stub");
     expect(stub.dataset.projectpath).toBe("/b");
@@ -83,7 +83,7 @@ describe("/floor page", () => {
       { path: "/c", name: "c", shiftUpdated: "2026-04-22T00:00:00Z" },
       { path: "/b", name: "b", shiftUpdated: "2026-04-23T00:00:00Z" },
     ]);
-    const result = await FloorPage({ searchParams: { project: "/c" } });
+    const result = await FloorPage({ searchParams: Promise.resolve({ project: "/c" }) });
     render(result as React.ReactElement);
     const stub = screen.getByTestId("floor-client-stub");
     expect(stub.dataset.projectpath).toBe("/c");
@@ -94,7 +94,7 @@ describe("/floor page", () => {
     mockListProjects.mockResolvedValue([
       { path: "/b", name: "b", shiftUpdated: "2026-04-23T00:00:00Z" },
     ]);
-    const result = await FloorPage({ searchParams: { project: "/unknown" } });
+    const result = await FloorPage({ searchParams: Promise.resolve({ project: "/unknown" }) });
     render(result as React.ReactElement);
     const stub = screen.getByTestId("floor-client-stub");
     expect(stub.dataset.projectpath).toBe("/unknown");
@@ -104,7 +104,7 @@ describe("/floor page", () => {
   it("15. Authenticated, no projects — FloorClient mounts with projectPath=null and cbPath=null", async () => {
     mockAuth.mockResolvedValue({ user: { email: "test@example.com" }, expires: "2099-01-01" });
     mockListProjects.mockResolvedValue([]);
-    const result = await FloorPage({ searchParams: {} });
+    const result = await FloorPage({ searchParams: Promise.resolve({}) });
     render(result as React.ReactElement);
     const stub = screen.getByTestId("floor-client-stub");
     expect(stub.dataset.projectpath).toBe("");
@@ -116,7 +116,7 @@ describe("/floor page", () => {
     mockListProjects.mockResolvedValue([
       { path: "/b", name: "b", shiftUpdated: "2026-04-23T00:00:00Z" },
     ]);
-    const result = await FloorPage({ searchParams: { popout: "1" } });
+    const result = await FloorPage({ searchParams: Promise.resolve({ popout: "1" }) });
     render(result as React.ReactElement);
     const stub = screen.getByTestId("floor-client-stub");
     expect(stub.dataset.popout).toBe("true");
@@ -127,10 +127,24 @@ describe("/floor page", () => {
     mockListProjects.mockResolvedValue([
       { path: "/b", name: "b", shiftUpdated: "2026-04-23T00:00:00Z" },
     ]);
-    const result = await FloorPage({ searchParams: { popout: "1" } });
+    const result = await FloorPage({ searchParams: Promise.resolve({ popout: "1" }) });
     render(result as React.ReactElement);
     const main = screen.getByRole("main");
     expect(main.className).toContain("h-screen");
     expect(main.className).not.toContain("calc(100vh-40px)");
+  });
+
+  it("18. searchParams is a Promise — awaiting it resolves project correctly (CR-01 regression)", async () => {
+    // This test would FAIL with the old sync signature because Promise.resolve({project:"/z"})
+    // accessed as a plain object returns `undefined` for `.project` — the fallback fires instead.
+    mockAuth.mockResolvedValue({ user: { email: "test@example.com" }, expires: "2099-01-01" });
+    mockListProjects.mockResolvedValue([
+      { path: "/fallback", name: "fallback", shiftUpdated: "2026-04-23T00:00:00Z" },
+    ]);
+    const result = await FloorPage({ searchParams: Promise.resolve({ project: "/z" }) });
+    render(result as React.ReactElement);
+    const stub = screen.getByTestId("floor-client-stub");
+    // Must be "/z", not "/fallback" — proves the await happened
+    expect(stub.dataset.projectpath).toBe("/z");
   });
 });

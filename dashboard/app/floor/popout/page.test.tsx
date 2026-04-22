@@ -58,14 +58,14 @@ describe("/floor/popout page", () => {
 
   it("3. Unauthenticated redirects to /signin?from=/floor/popout", async () => {
     mockAuth.mockResolvedValue(null);
-    await FloorPopoutPage({ searchParams: { project: "/x" } });
+    await FloorPopoutPage({ searchParams: Promise.resolve({ project: "/x" }) });
     expect(mockRedirect).toHaveBeenCalledWith("/signin?from=/floor/popout");
   });
 
   it("4. Authenticated + explicit project: FloorPopoutHost receives correct projectPath + cbPath", async () => {
     mockAuth.mockResolvedValue({ user: { email: "test@example.com" }, expires: "2099-01-01" });
     mockListProjects.mockResolvedValue([]);
-    const result = await FloorPopoutPage({ searchParams: { project: "/a" } });
+    const result = await FloorPopoutPage({ searchParams: Promise.resolve({ project: "/a" }) });
     render(result as React.ReactElement);
     const stub = screen.getByTestId("floor-popout-host-stub");
     expect(stub.getAttribute("data-projectpath")).toBe("/a");
@@ -78,7 +78,7 @@ describe("/floor/popout page", () => {
       { path: "/a", name: "a", shiftUpdated: "2026-04-20" },
       { path: "/b", name: "b", shiftUpdated: "2026-04-23" },
     ]);
-    const result = await FloorPopoutPage({ searchParams: {} });
+    const result = await FloorPopoutPage({ searchParams: Promise.resolve({}) });
     render(result as React.ReactElement);
     const stub = screen.getByTestId("floor-popout-host-stub");
     expect(stub.getAttribute("data-projectpath")).toBe("/b");
@@ -87,7 +87,7 @@ describe("/floor/popout page", () => {
   it("6. Authenticated + no project + no projects: FloorPopoutHost receives null, null", async () => {
     mockAuth.mockResolvedValue({ user: { email: "test@example.com" }, expires: "2099-01-01" });
     mockListProjects.mockResolvedValue([]);
-    const result = await FloorPopoutPage({ searchParams: {} });
+    const result = await FloorPopoutPage({ searchParams: Promise.resolve({}) });
     render(result as React.ReactElement);
     const stub = screen.getByTestId("floor-popout-host-stub");
     expect(stub.getAttribute("data-projectpath")).toBe("");
@@ -97,12 +97,26 @@ describe("/floor/popout page", () => {
   it("7. Chrome-suppression style present in rendered output", async () => {
     mockAuth.mockResolvedValue({ user: { email: "test@example.com" }, expires: "2099-01-01" });
     mockListProjects.mockResolvedValue([]);
-    const result = await FloorPopoutPage({ searchParams: { project: "/x" } });
+    const result = await FloorPopoutPage({ searchParams: Promise.resolve({ project: "/x" }) });
     const { container } = render(result as React.ReactElement);
     const styleEl = container.querySelector("style");
     expect(styleEl).not.toBeNull();
     // Must include display: none for top-nav
     expect(styleEl?.textContent).toMatch(/display:\s*none/i);
     expect(styleEl?.textContent).toMatch(/top-nav/);
+  });
+
+  it("8. searchParams is a Promise — awaiting it resolves project correctly (CR-01 regression)", async () => {
+    // This test would FAIL with the old sync signature: Promise.resolve({project:"/z"})
+    // read as a plain object returns undefined for `.project` — fallback fires instead.
+    mockAuth.mockResolvedValue({ user: { email: "test@example.com" }, expires: "2099-01-01" });
+    mockListProjects.mockResolvedValue([
+      { path: "/fallback", name: "fallback", shiftUpdated: "2026-04-23" },
+    ]);
+    const result = await FloorPopoutPage({ searchParams: Promise.resolve({ project: "/z" }) });
+    render(result as React.ReactElement);
+    const stub = screen.getByTestId("floor-popout-host-stub");
+    // Must be "/z", not "/fallback" — proves the await happened
+    expect(stub.getAttribute("data-projectpath")).toBe("/z");
   });
 });
