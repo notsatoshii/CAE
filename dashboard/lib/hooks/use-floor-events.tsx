@@ -181,6 +181,7 @@ export function useFloorEvents(opts: UseFloorEventsOpts): UseFloorEventsResult {
       }
     };
 
+    void probe(); // CR-02: fire immediately on mount so expired sessions surface at once
     const id = setInterval(probe, AUTH_POLL_MS);
 
     return () => {

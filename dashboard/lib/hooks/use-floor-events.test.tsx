@@ -376,31 +376,34 @@ describe("useFloorEvents", () => {
     expect(sceneRef.current.effects.length).toBeLessThanOrEqual(effectsBeforeSecond);
   });
 
-  // Test 14: Auth-drift probe fires at 30s
-  it("14. auth-drift probe calls /api/state after 30s", async () => {
+  // Test 14: Auth-drift probe fires at 30s (interval-based)
+  it("14. auth-drift probe calls /api/state again after 30s interval", async () => {
     const cbPath = "/abs/.cae/metrics/circuit-breakers.jsonl";
 
-    const { result } = renderHook(() =>
+    renderHook(() =>
       useFloorEvents({ cbPath, paused: false, sceneRef: setupRef() }),
     );
 
-    const fetchBefore = (fetch as ReturnType<typeof vi.fn>).mock.calls.length;
+    // Drain the immediate probe first
+    await act(async () => {
+      await Promise.resolve();
+    });
+    const fetchAfterMount = (fetch as ReturnType<typeof vi.fn>).mock.calls.length;
 
+    // Advance a full poll interval — should fire again
     await act(async () => {
       vi.advanceTimersByTime(__test.AUTH_POLL_MS + 100);
       await Promise.resolve();
     });
 
-    const fetchAfter = (fetch as ReturnType<typeof vi.fn>).mock.calls.length;
-    expect(fetchAfter).toBeGreaterThan(fetchBefore);
+    const fetchAfterInterval = (fetch as ReturnType<typeof vi.fn>).mock.calls.length;
+    expect(fetchAfterInterval).toBeGreaterThan(fetchAfterMount);
 
-    // The URL should include /api/state
+    // Every call must target /api/state
     const calls = (fetch as ReturnType<typeof vi.fn>).mock.calls;
-    const lastUrl = calls[calls.length - 1][0] as string;
-    expect(lastUrl).toMatch(/\/api\/state/);
-
-    // Default stub returns 200 → authDrifted stays false
-    expect(result.current.authDrifted).toBe(false);
+    for (const call of calls) {
+      expect(call[0] as string).toMatch(/\/api\/state/);
+    }
   });
 
   // Test 15: Auth-drift probe 401 flips authDrifted
@@ -416,11 +419,37 @@ describe("useFloorEvents", () => {
       useFloorEvents({ cbPath, paused: false, sceneRef: setupRef() }),
     );
 
+    // Immediate probe fires on mount — drain it
     await act(async () => {
-      vi.advanceTimersByTime(__test.AUTH_POLL_MS + 100);
       await Promise.resolve();
     });
 
+    expect(result.current.authDrifted).toBe(true);
+  });
+
+  // Test 17: Auth-drift probe fires immediately on mount (CR-02 regression)
+  it("17. auth-drift probe fires immediately on mount without waiting 30s (CR-02)", async () => {
+    // This test would FAIL before the CR-02 fix: the probe only ran after AUTH_POLL_MS delay,
+    // so at t=0 fetch would still be at 0 calls.
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => new Response("", { status: 401 })),
+    );
+
+    const cbPath = "/abs/.cae/metrics/circuit-breakers.jsonl";
+
+    const { result } = renderHook(() =>
+      useFloorEvents({ cbPath, paused: false, sceneRef: setupRef() }),
+    );
+
+    // Do NOT advance timers — only drain the microtask queue
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    // Fetch must have fired even though 0ms have elapsed
+    expect((fetch as ReturnType<typeof vi.fn>).mock.calls.length).toBeGreaterThan(0);
+    // And authDrifted must already be true (session was expired on mount)
     expect(result.current.authDrifted).toBe(true);
   });
 
