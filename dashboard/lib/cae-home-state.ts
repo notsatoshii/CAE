@@ -6,7 +6,7 @@ import { listPhases, listProjects, tailJsonl, listOutbox } from "./cae-state"
 import { getPhaseDetail, type TaskStatus } from "./cae-phase-detail"
 import { OUTBOX_ROOT } from "./cae-config"
 import { agentMetaFor } from "./copy/agent-meta"
-import type { Project } from "./cae-types"
+import type { Project, CbEvent } from "./cae-types"
 
 const execAsync = promisify(exec)
 
@@ -111,29 +111,47 @@ async function exists(p: string): Promise<boolean> {
   }
 }
 
-function eventTs(e: Record<string, unknown>): string | undefined {
-  if (typeof e.timestamp === "string") return e.timestamp
+// === Event-field readers — Phase 7 Wave 0 (D-02) snake_case repoint ===
+// Ground truth: bin/circuit_breakers.py _log() emits { ts, event, ...fields }
+// with snake_case everywhere. Aggregators MUST NOT read camelCase fields.
+
+function eventTs(e: CbEvent | Record<string, unknown>): string | undefined {
   if (typeof e.ts === "string") return e.ts
   return undefined
 }
 
-function eventAgent(e: Record<string, unknown>): string {
-  const a = e.agent
+function eventAgent(e: CbEvent | Record<string, unknown>): string {
+  const a = (e as CbEvent).agent
   if (typeof a === "string" && a) return a
   return "forge"
 }
 
-function eventModel(e: Record<string, unknown>): string {
-  const m = e.model
+function eventModel(e: CbEvent | Record<string, unknown>): string {
+  const m = (e as CbEvent).model
   if (typeof m === "string" && m) return m
   return "sonnet"
 }
 
-function eventTokens(e: Record<string, unknown>): number {
+function eventTaskId(e: CbEvent | Record<string, unknown>): string {
+  const t = (e as CbEvent).task_id
+  if (typeof t === "string" && t) return t
+  return ""
+}
+
+// Phase id derivation from task_id — real jsonl has no phaseId field.
+// Task ids shape like "p2-plA-t1-b12bb5" → phase prefix = "p2".
+function eventPhasePrefix(e: CbEvent | Record<string, unknown>): string {
+  const tid = eventTaskId(e)
+  if (!tid) return ""
+  const m = tid.match(/^p(\d+)-/)
+  return m ? `p${m[1]}` : ""
+}
+
+function eventTokens(e: CbEvent | Record<string, unknown>): number {
   let n = 0
-  if (typeof e.inputTokens === "number") n += e.inputTokens
-  if (typeof e.outputTokens === "number") n += e.outputTokens
-  if (typeof e.tokens === "number" && n === 0) n = e.tokens
+  const cb = e as CbEvent
+  if (typeof cb.input_tokens === "number") n += cb.input_tokens
+  if (typeof cb.output_tokens === "number") n += cb.output_tokens
   return n
 }
 
@@ -188,21 +206,27 @@ async function buildRollup(
     }
   }
 
-  // tokens_today + warnings across all projects' circuit-breakers.jsonl
+  // tokens_today + warnings across all projects' circuit-breakers.jsonl.
+  // Tokens now come from real snake_case input_tokens/output_tokens fields
+  // (primarily on `token_usage` events emitted by the Phase-7-Wave-0
+  // adapter patch, but sum any event that carries them — a future
+  // Python-side logger could add tokens to forge_end rows without breaking
+  // the dashboard).
   const nowMs = Date.now()
   for (const p of projects) {
     const cbPath = join(p.path, ".cae", "metrics", "circuit-breakers.jsonl")
     const entries = await tailJsonl(cbPath, 500)
     for (const raw of entries) {
       if (typeof raw !== "object" || raw === null) continue
-      const e = raw as Record<string, unknown>
+      const e = raw as CbEvent
       const ts = eventTs(e)
       if (!ts) continue
       if (ts.startsWith(today)) {
-        if (typeof e.inputTokens === "number") tokens_today += e.inputTokens
-        if (typeof e.outputTokens === "number") tokens_today += e.outputTokens
+        if (typeof e.input_tokens === "number") tokens_today += e.input_tokens
+        if (typeof e.output_tokens === "number") tokens_today += e.output_tokens
       }
-      if (e.event === "phantom_escalation") {
+      // Phase 7 Wave 0 (D-02): real event name is escalate-to-phantom.
+      if (e.event === "escalate_to_phantom") {
         const tsMs = Date.parse(ts)
         if (!Number.isNaN(tsMs) && nowMs - tsMs <= msPerDay()) warnings++
       }
@@ -249,29 +273,36 @@ async function computeAgentsActiveForPhase(
   const nowMs = Date.now()
   const windowMs = 30_000
 
-  // Track active forge_start events (no matching forge_done/fail) in the last 30s window
-  // keyed by (taskId, agent)
+  // Phase 7 Wave 0 (D-02): real schema has no `phaseId` field. Derive phase
+  // tag from task_id prefix (e.g. "p2-plA-t1-b12bb5" → "p2"). Match against
+  // the phaseName's leading digits.
+  const pm = phaseName.match(/^(\d+)-/)
+  const phasePrefix = pm ? `p${parseInt(pm[1], 10)}` : ""
+
+  // Track active forge_begin events (no matching forge_end) in the last 30s
+  // window keyed by (agent, task_id).
   const openStarts = new Map<string, { agent: string; count: number }>()
 
   for (const raw of entries) {
     if (typeof raw !== "object" || raw === null) continue
-    const e = raw as Record<string, unknown>
-    if (e.phaseId !== phaseName) continue
+    const e = raw as CbEvent
+    if (phasePrefix && eventPhasePrefix(e) !== phasePrefix) continue
     const ts = eventTs(e)
     if (!ts) continue
     const tsMs = Date.parse(ts)
     if (Number.isNaN(tsMs)) continue
     if (nowMs - tsMs > windowMs) continue
 
-    const taskId = typeof e.taskId === "string" ? e.taskId : "unknown"
+    const taskId = eventTaskId(e) || "unknown"
     const agent = eventAgent(e)
     const key = `${agent}::${taskId}`
 
-    if (e.event === "forge_start") {
+    if (e.event === "forge_begin") {
       const existing = openStarts.get(key)
       if (existing) existing.count++
       else openStarts.set(key, { agent, count: 1 })
-    } else if (e.event === "forge_done" || e.event === "forge_fail") {
+    } else if (e.event === "forge_end") {
+      // forge_end subsumes old completion events via its success bool.
       const existing = openStarts.get(key)
       if (existing) {
         existing.count--
@@ -289,15 +320,19 @@ async function computeAgentsActiveForPhase(
 }
 
 async function tokensForPhase(projectPath: string, phaseName: string): Promise<number> {
+  // Phase 7 Wave 0 (D-02): phaseId field doesn't exist. Derive phase tag
+  // "pN" from phaseName's leading digits and match task_id prefix.
   const cbPath = join(projectPath, ".cae", "metrics", "circuit-breakers.jsonl")
   const entries = await tailJsonl(cbPath, 1000)
+  const pm = phaseName.match(/^(\d+)-/)
+  const phasePrefix = pm ? `p${parseInt(pm[1], 10)}` : ""
   let tokens = 0
   for (const raw of entries) {
     if (typeof raw !== "object" || raw === null) continue
-    const e = raw as Record<string, unknown>
-    if (e.phaseId !== phaseName) continue
-    if (typeof e.inputTokens === "number") tokens += e.inputTokens
-    if (typeof e.outputTokens === "number") tokens += e.outputTokens
+    const e = raw as CbEvent
+    if (phasePrefix && eventPhasePrefix(e) !== phasePrefix) continue
+    if (typeof e.input_tokens === "number") tokens += e.input_tokens
+    if (typeof e.output_tokens === "number") tokens += e.output_tokens
   }
   return tokens
 }
@@ -410,13 +445,19 @@ async function buildEventsRecent(projects: Project[]): Promise<RecentEvent[]> {
     const entries = await tailJsonl(cbPath, 500)
     for (const raw of entries) {
       if (typeof raw !== "object" || raw === null) continue
-      const e = raw as Record<string, unknown>
-      if (e.event !== "forge_done" && e.event !== "forge_fail") continue
+      const e = raw as CbEvent
+      // Phase 7 Wave 0 (D-02): the old two-event completion shape collapsed
+      // into one forge_end event carrying a `success` bool. Shipped = true,
+      // aborted = false.
+      if (e.event !== "forge_end") continue
       const ts = eventTs(e)
       if (!ts) continue
-      const phaseId = typeof e.phaseId === "string" ? e.phaseId : ""
-      const phaseNumber = phaseNumberFromDir(phaseId)
-      const taskId = typeof e.taskId === "string" ? e.taskId : ""
+      // Real schema has no phaseId — derive from task_id prefix ("p2-..."→2).
+      const taskId = eventTaskId(e)
+      const phasePrefix = eventPhasePrefix(e)
+      const phaseNumberMatch = phasePrefix.match(/^p(\d+)$/)
+      const phaseNumber = phaseNumberMatch ? parseInt(phaseNumberMatch[1], 10) : 0
+      const phaseLabel = phasePrefix
       const planId =
         phaseNumber > 0 && taskId ? formatPlanId(phaseNumber, taskId) : taskId
 
@@ -424,9 +465,9 @@ async function buildEventsRecent(projects: Project[]): Promise<RecentEvent[]> {
         ts,
         project: p.path,
         projectName: toProjectName(p.path),
-        phase: phaseId,
+        phase: phaseLabel,
         plan: planId,
-        status: e.event === "forge_done" ? "shipped" : "aborted",
+        status: e.success === true ? "shipped" : "aborted",
         commits: 0, // v1: not in event payload; real count requires git log per branch
         agent: eventAgent(e),
         model: eventModel(e),
@@ -448,29 +489,32 @@ async function buildNeedsYou(projects: Project[]): Promise<NeedsYouItem[]> {
     if (!p.hasPlanning) continue
     const projectName = toProjectName(p.path)
 
-    // blocked: tasks with recentFailures >= 3 in last 24h OR status === failed
+    // blocked: tasks with 3+ failed attempts in last 24h OR status === failed.
+    // Phase 7 Wave 0 (D-02): failure is now forge_end with success:false.
+    // Phase tag derived from task_id prefix since jsonl has no phaseId field.
     const cbPath = join(p.path, ".cae", "metrics", "circuit-breakers.jsonl")
     const entries = await tailJsonl(cbPath, 500)
-    const failCounts = new Map<string, { phaseId: string; count: number }>()
+    const failCounts = new Map<string, { phaseTag: string; count: number }>()
     for (const raw of entries) {
       if (typeof raw !== "object" || raw === null) continue
-      const e = raw as Record<string, unknown>
-      if (e.event !== "forge_fail") continue
+      const e = raw as CbEvent
+      if (e.event !== "forge_end" || e.success !== false) continue
       const ts = eventTs(e)
       if (!ts) continue
       const tsMs = Date.parse(ts)
       if (Number.isNaN(tsMs) || nowMs - tsMs > windowMs) continue
-      const taskId = typeof e.taskId === "string" ? e.taskId : ""
-      const phaseId = typeof e.phaseId === "string" ? e.phaseId : ""
+      const taskId = eventTaskId(e)
+      const phaseTag = eventPhasePrefix(e)
       if (!taskId) continue
       const cur = failCounts.get(taskId)
       if (cur) cur.count++
-      else failCounts.set(taskId, { phaseId, count: 1 })
+      else failCounts.set(taskId, { phaseTag, count: 1 })
     }
 
-    for (const [taskId, { phaseId, count }] of failCounts.entries()) {
+    for (const [taskId, { phaseTag, count }] of failCounts.entries()) {
       if (count < 3) continue
-      const phaseNum = phaseNumberFromDir(phaseId)
+      const phaseNumMatch = phaseTag.match(/^p(\d+)$/)
+      const phaseNum = phaseNumMatch ? parseInt(phaseNumMatch[1], 10) : 0
       const href = `/build?project=${encodeURIComponent(
         p.path,
       )}&sheet=open&phase=${phaseNum}&plan=${encodeURIComponent(
@@ -480,7 +524,7 @@ async function buildNeedsYou(projects: Project[]): Promise<NeedsYouItem[]> {
         type: "blocked",
         project: p.path,
         projectName,
-        phase: phaseId,
+        phase: phaseTag,
         task: taskId,
         summary: `Sentinel rejected ${count}×`,
         actions: [{ label: "Review", href }],
@@ -611,22 +655,23 @@ async function buildGlobalActiveAgents(
     const entries = await tailJsonl(cbPath, 500)
     for (const raw of entries) {
       if (typeof raw !== "object" || raw === null) continue
-      const e = raw as Record<string, unknown>
+      const e = raw as CbEvent
       const ts = eventTs(e)
       if (!ts) continue
       const tsMs = Date.parse(ts)
       if (Number.isNaN(tsMs) || nowMs - tsMs > windowMs) continue
 
-      const taskId = typeof e.taskId === "string" ? e.taskId : "unknown"
-      const phaseId = typeof e.phaseId === "string" ? e.phaseId : ""
+      // Phase 7 Wave 0 (D-02): no phaseId — derive tag from task_id prefix.
+      const taskId = eventTaskId(e) || "unknown"
+      const phaseTag = eventPhasePrefix(e)
       const agent = eventAgent(e)
-      const key = `${agent}::${phaseId}::${taskId}`
+      const key = `${agent}::${phaseTag}::${taskId}`
 
-      if (e.event === "forge_start") {
+      if (e.event === "forge_begin") {
         const existing = openStarts.get(key)
         if (existing) existing.count++
         else openStarts.set(key, { agent, taskId, count: 1 })
-      } else if (e.event === "forge_done" || e.event === "forge_fail") {
+      } else if (e.event === "forge_end") {
         const existing = openStarts.get(key)
         if (existing) {
           existing.count--

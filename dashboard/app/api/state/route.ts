@@ -11,6 +11,7 @@ import {
 } from "@/lib/cae-state"
 import { CAE_ROOT } from "@/lib/cae-config"
 import { getHomeState, type HomeState } from "@/lib/cae-home-state"
+import type { CbEvent } from "@/lib/cae-types"
 
 export async function GET(req: NextRequest) {
   const project = req.nextUrl.searchParams.get("project") ?? CAE_ROOT
@@ -48,17 +49,26 @@ export async function GET(req: NextRequest) {
     }),
   ])
 
+  // Phase 7 Wave 0 (D-02): sum tokens from real snake_case jsonl schema.
+  // Real schema uses `ts` (not `timestamp`), `input_tokens` / `output_tokens`
+  // (not `inputTokens` / `outputTokens`). Retries are implicit in
+  // `forge_end` rows with `success:false` — no standalone "retry" event.
+  //
+  // IMPORTANT boundary (D-02): the response fields below keep the existing
+  // camelCase names (`inputTokensToday`, `outputTokensToday`, `retryCount`)
+  // because consumers (cost-ticker, use-state-poll type) still read those
+  // keys. Internal (jsonl) = snake_case; API envelope = camelCase.
   let inputTokensToday = 0
   let outputTokensToday = 0
   let retryCount = 0
   for (const entry of cbEntries) {
     if (typeof entry !== "object" || entry === null) continue
-    const e = entry as Record<string, unknown>
-    const ts = e.timestamp as string | undefined
+    const e = entry as CbEvent
+    const ts = e.ts
     if (!ts?.startsWith(today)) continue
-    if (typeof e.inputTokens === "number") inputTokensToday += e.inputTokens
-    if (typeof e.outputTokens === "number") outputTokensToday += e.outputTokens
-    if (e.event === "retry") retryCount++
+    if (typeof e.input_tokens === "number") inputTokensToday += e.input_tokens
+    if (typeof e.output_tokens === "number") outputTokensToday += e.output_tokens
+    if (e.event === "forge_end" && e.success === false) retryCount++
   }
 
   return Response.json({

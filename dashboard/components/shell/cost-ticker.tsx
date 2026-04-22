@@ -26,6 +26,10 @@ export function CostTicker() {
     );
   }
 
+  // Phase 7 Wave 0 (D-02): inputTokensToday / outputTokensToday are the
+  // camelCase API-response envelope fields from /api/state. The underlying
+  // .cae/metrics/circuit-breakers.jsonl uses snake_case input_tokens /
+  // output_tokens — the aggregator converts at the API boundary.
   const totalTokens = data.breakers.inputTokensToday + data.breakers.outputTokensToday;
 
   return (

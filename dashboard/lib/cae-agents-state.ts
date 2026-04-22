@@ -21,7 +21,7 @@ import { join } from "path"
 import { listProjects, tailJsonl } from "./cae-state"
 import { CAE_ROOT } from "./cae-config"
 import { AGENT_META, agentMetaFor, type AgentName } from "./copy/agent-meta"
-import type { Project } from "./cae-types"
+import type { Project, CbEvent } from "./cae-types"
 
 // === Exported types ===
 
@@ -103,46 +103,76 @@ interface CollectedEvent {
   event: Record<string, unknown>
 }
 
-// === Defensive event-field readers (mirror cae-home-state.ts conventions) ===
+// === Defensive event-field readers ===
+// Phase 7 Wave 0 (D-02) rewrite: ground truth is bin/circuit_breakers.py
+// _log() output — snake_case ts, event, task_id, input_tokens, output_tokens.
+// No wallMs field; wall times derived from forge_begin→forge_end ts deltas.
 
-function eventTs(e: Record<string, unknown>): string | undefined {
-  if (typeof e.timestamp === "string") return e.timestamp
-  if (typeof e.ts === "string") return e.ts
+function eventTs(e: CbEvent | Record<string, unknown>): string | undefined {
+  if (typeof (e as CbEvent).ts === "string") return (e as CbEvent).ts
   return undefined
 }
 
-function eventAgent(e: Record<string, unknown>): string {
-  const a = e.agent
+function eventAgent(e: CbEvent | Record<string, unknown>): string {
+  const a = (e as CbEvent).agent
   if (typeof a === "string" && a) return a.toLowerCase()
   return "forge"
 }
 
-function eventModel(e: Record<string, unknown>): string | null {
-  const m = e.model
+function eventModel(e: CbEvent | Record<string, unknown>): string | null {
+  const m = (e as CbEvent).model
   if (typeof m === "string" && m) return m
   return null
 }
 
-function eventTokens(e: Record<string, unknown>): number {
+function eventTokens(e: CbEvent | Record<string, unknown>): number {
   let n = 0
-  if (typeof e.inputTokens === "number") n += e.inputTokens
-  if (typeof e.outputTokens === "number") n += e.outputTokens
-  if (n === 0 && typeof e.tokens === "number") n = e.tokens
+  const cb = e as CbEvent
+  if (typeof cb.input_tokens === "number") n += cb.input_tokens
+  if (typeof cb.output_tokens === "number") n += cb.output_tokens
   return n
 }
 
-function eventWallMs(e: Record<string, unknown>): number | null {
-  if (typeof e.wallMs === "number") return e.wallMs
-  return null
+function eventTaskId(e: CbEvent | Record<string, unknown>): string {
+  const t = (e as CbEvent).task_id
+  if (typeof t === "string" && t) return t
+  return ""
 }
 
-function derivePlanFromPhase(phaseId: string, taskId: string): string {
-  // Phase 4 task ids look like "pl01-t1"; older shape embeds plan in phaseId
-  // e.g. "04-build-home-rewrite" → no plan. Prefer the "pl{X}" prefix of taskId.
-  const m = taskId.match(/^pl[0-9A-Za-z]+/)
+function eventAttempt(e: CbEvent | Record<string, unknown>): number {
+  const a = (e as CbEvent).attempt
+  if (typeof a === "number" && Number.isFinite(a)) return a
+  return 1
+}
+
+// Phase id derivation — real jsonl has no phaseId field. Task ids shape
+// "p{N}-pl{L}-t{id}-{hash}" → phase prefix "p{N}". Returns "" if task_id
+// doesn't match.
+function eventPhasePrefix(e: CbEvent | Record<string, unknown>): string {
+  const tid = eventTaskId(e)
+  if (!tid) return ""
+  const m = tid.match(/^p(\d+)-/)
+  return m ? `p${m[1]}` : ""
+}
+
+// Wall-time delta helper. TODO(Phase 7 Wave 1 metrics aggregator): the
+// dedicated new aggregator will do this more carefully (per-attempt pairing
+// with better edge-case handling). Here we keep it simple and pair each
+// forge_end with its most-recent forge_begin for the same (task_id, attempt).
+function wallMsFromDelta(beginTs: string, endTs: string): number | null {
+  const a = Date.parse(beginTs)
+  const b = Date.parse(endTs)
+  if (Number.isNaN(a) || Number.isNaN(b)) return null
+  const delta = b - a
+  if (delta < 0) return null
+  return delta
+}
+
+function derivePlanFromTaskId(taskId: string): string {
+  // Phase 4 task ids look like "pl01-t1" or "p{N}-pl{L}-t{id}-{hash}".
+  // Return the first `pl...` fragment.
+  const m = taskId.match(/pl[0-9A-Za-z]+/)
   if (m) return m[0]
-  const mp = phaseId.match(/-pl([0-9A-Za-z]+)/)
-  if (mp) return "pl" + mp[1]
   return ""
 }
 
@@ -207,6 +237,21 @@ function buildRosterEntryForAgent(
   const last_run_days_ago =
     lastTsMs === null ? null : Math.floor((now - lastTsMs) / DAY_MS)
 
+  // Phase 7 Wave 0 (D-02): real jsonl has no `wallMs` field. Derive wall
+  // time by pairing forge_begin(task_id, attempt) with forge_end of the
+  // same key. Build a (task_id::attempt → beginTs) map on a forward pass
+  // so we can look up wall_ms when we see a forge_end row.
+  const beginByKey = new Map<string, string>()
+  // Sort parsed ascending for the pairing pass (don't mutate original order).
+  const parsedAsc = parsed.slice().sort((a, b) => a.tsMs - b.tsMs)
+  for (const p of parsedAsc) {
+    const ev = p.ce.event as unknown as CbEvent
+    if (ev.event === "forge_begin") {
+      const key = `${eventTaskId(ev)}::${eventAttempt(ev)}`
+      beginByKey.set(key, p.tsStr)
+    }
+  }
+
   // Sparkline buckets (10 over 7d). Bucket index 0 = oldest, 9 = newest.
   const tokensPerBucket = new Array<number>(BUCKET_COUNT).fill(0)
   const successCountPerBucket = new Array<number>(BUCKET_COUNT).fill(0)
@@ -227,13 +272,19 @@ function buildRosterEntryForAgent(
 
   for (const p of parsed) {
     const ageMs = now - p.tsMs
-    const ev = p.ce.event
+    const ev = p.ce.event as unknown as CbEvent
     const kind = typeof ev.event === "string" ? ev.event : ""
     const tok = eventTokens(ev)
-    const wall = eventWallMs(ev)
-    const isDone = kind === "forge_done"
-    const isFail = kind === "forge_fail"
-    const isCompleted = isDone || isFail
+    // Real schema: forge_end with success:bool. Completion = any forge_end.
+    const isCompleted = kind === "forge_end"
+    const isDone = isCompleted && ev.success === true
+    // Wall time only defined for completions where we have a matching begin.
+    let wall: number | null = null
+    if (isCompleted) {
+      const key = `${eventTaskId(ev)}::${eventAttempt(ev)}`
+      const beginTs = beginByKey.get(key)
+      if (beginTs) wall = wallMsFromDelta(beginTs, p.tsStr)
+    }
 
     if (ageMs >= 0 && ageMs < WINDOW_24H_MS) last24hCount++
 
@@ -295,18 +346,19 @@ function buildRosterEntryForAgent(
     success_rate_30d > 0 &&
     success_rate_7d < success_rate_30d * DRIFT_THRESHOLD
 
-  // Concurrency (30s sliding window; forge_start minus matching forge_done/fail)
+  // Concurrency (30s sliding window; forge_begin minus matching forge_end).
+  // Phase 7 Wave 0 (D-02): no phaseId — key by (phase_prefix, task_id).
   const openStarts = new Map<string, number>()
   for (const p of parsed) {
     if (now - p.tsMs > WINDOW_CONCURRENT_MS) continue
-    const ev = p.ce.event
+    const ev = p.ce.event as unknown as CbEvent
     const kind = typeof ev.event === "string" ? ev.event : ""
-    const taskId = typeof ev.taskId === "string" ? ev.taskId : "unknown"
-    const phaseId = typeof ev.phaseId === "string" ? ev.phaseId : ""
-    const key = phaseId + "::" + taskId
-    if (kind === "forge_start") {
+    const taskId = eventTaskId(ev) || "unknown"
+    const phaseTag = eventPhasePrefix(ev)
+    const key = phaseTag + "::" + taskId
+    if (kind === "forge_begin") {
       openStarts.set(key, (openStarts.get(key) ?? 0) + 1)
-    } else if (kind === "forge_done" || kind === "forge_fail") {
+    } else if (kind === "forge_end") {
       const c = (openStarts.get(key) ?? 0) - 1
       if (c <= 0) openStarts.delete(key)
       else openStarts.set(key, c)
@@ -428,6 +480,19 @@ export async function getAgentDetail(
     mine.push({ ce, tsMs, tsStr: ts })
   }
 
+  // Phase 7 Wave 0 (D-02): derive wall from forge_begin→forge_end ts deltas.
+  // Pre-pass builds a (task_id::attempt → beginTs) map across this agent's
+  // event stream.
+  const beginByKey = new Map<string, string>()
+  const mineAsc = mine.slice().sort((a, b) => a.tsMs - b.tsMs)
+  for (const { ce, tsStr } of mineAsc) {
+    const ev = ce.event as unknown as CbEvent
+    if (ev.event === "forge_begin") {
+      const key = `${eventTaskId(ev)}::${eventAttempt(ev)}`
+      beginByKey.set(key, tsStr)
+    }
+  }
+
   let tasks_total = 0
   let tokens_total = 0
   let success_count = 0
@@ -446,13 +511,17 @@ export async function getAgentDetail(
   const costRows: CostRow[] = []
 
   for (const { ce, tsStr } of mine) {
-    const ev = ce.event
+    const ev = ce.event as unknown as CbEvent
     const kind = typeof ev.event === "string" ? ev.event : ""
     const tok = eventTokens(ev)
-    const wall = eventWallMs(ev)
-    const isDone = kind === "forge_done"
-    const isFail = kind === "forge_fail"
-    const isCompleted = isDone || isFail
+    const isCompleted = kind === "forge_end"
+    const isDone = isCompleted && ev.success === true
+    let wall: number | null = null
+    if (isCompleted) {
+      const key = `${eventTaskId(ev)}::${eventAttempt(ev)}`
+      const beginTs = beginByKey.get(key)
+      if (beginTs) wall = wallMsFromDelta(beginTs, tsStr)
+    }
 
     if (isCompleted) {
       tasks_total++
@@ -465,12 +534,12 @@ export async function getAgentDetail(
     }
     if (tok > 0) {
       tokens_total += tok
-      const phaseId = typeof ev.phaseId === "string" ? ev.phaseId : ""
-      const taskId = typeof ev.taskId === "string" ? ev.taskId : ""
+      const taskId = eventTaskId(ev)
+      const phaseTag = eventPhasePrefix(ev)
       costRows.push({
         project: ce.project,
-        phase: phaseId,
-        plan: derivePlanFromPhase(phaseId, taskId),
+        phase: phaseTag,
+        plan: derivePlanFromTaskId(taskId),
         task: taskId,
         tokens: tok,
         timestamp: tsStr,
@@ -485,30 +554,32 @@ export async function getAgentDetail(
     completed_count === 0 ? 0 : success_count / completed_count
   const lifetime_avg_wall_ms = wall_count === 0 ? 0 : wall_sum / wall_count
 
-  // Recent invocations — newest-first, only completed events, max 50
+  // Recent invocations — newest-first, only completed events, max 50.
+  // Phase 7 Wave 0 (D-02): completion = single forge_end row.
   const completedOnly = mine.filter(({ ce }) => {
     const kind = typeof ce.event.event === "string" ? ce.event.event : ""
-    return kind === "forge_done" || kind === "forge_fail"
+    return kind === "forge_end"
   })
   completedOnly.sort((a, b) => b.tsMs - a.tsMs)
 
   const recent_invocations: AgentInvocation[] = completedOnly
     .slice(0, 50)
     .map(({ ce, tsStr }) => {
-      const ev = ce.event
-      const kind = typeof ev.event === "string" ? ev.event : ""
-      const phaseId = typeof ev.phaseId === "string" ? ev.phaseId : ""
-      const taskId = typeof ev.taskId === "string" ? ev.taskId : ""
-      const wall = eventWallMs(ev) ?? 0
+      const ev = ce.event as unknown as CbEvent
+      const taskId = eventTaskId(ev)
+      const phaseTag = eventPhasePrefix(ev)
+      const key = `${taskId}::${eventAttempt(ev)}`
+      const beginTs = beginByKey.get(key)
+      const wall = beginTs ? (wallMsFromDelta(beginTs, tsStr) ?? 0) : 0
       return {
         ts: tsStr,
         project: ce.project,
-        phase: phaseId,
+        phase: phaseTag,
         task: taskId,
         model: eventModel(ev) ?? roster.model,
         tokens: eventTokens(ev),
         wall_ms: wall,
-        status: kind === "forge_done" ? "ok" : "fail",
+        status: ev.success === true ? "ok" : "fail",
       }
     })
 
