@@ -22,6 +22,14 @@
 #   <task_file>.output  = stdout from claude
 #   <task_file>.error   = stderr from claude
 #   <task_file>.meta    = metadata (session_id, exit_code, duration, model, invocation)
+#
+# Side-effect files (written when invoker's cwd is a CAE project i.e.
+# `<cwd>/.cae/metrics/` already exists):
+#   <cwd>/.cae/metrics/circuit-breakers.jsonl
+#     Appended with a `token_usage` event per successful run, when claude
+#     was invoked with `--output-format json` (added automatically unless the
+#     caller already specified a format) and the usage envelope parses.
+#     Logging failure is swallowed — never breaks the caller.
 
 set -uo pipefail
 
@@ -39,6 +47,12 @@ SYSTEM_PROMPT_FILE=""
 EFFORT="max"
 PERM_MODE=""
 TIMEOUT_SECS=1800
+# Phase 7 Wave 0 (D-01): Adapter auto-adds `--output-format json` so that
+# claude's usage envelope (input_tokens/output_tokens) lands in OUT_FILE and
+# we can append a `token_usage` event to .cae/metrics/circuit-breakers.jsonl.
+# If a caller ever needs to override the format they can add a `--output-format`
+# flag; today no caller passes one so we don't plumb it through the while-loop.
+CALLER_SET_OUTPUT_FORMAT=0
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -69,6 +83,12 @@ META_FILE="${TASK_FILE}.meta"
 : > "$ERR_FILE"
 
 CLAUDE_ARGS=(--print --effort "$EFFORT" --model "$MODEL")
+# Phase 7 Wave 0 (D-01): request JSON envelope so usage tokens are parseable.
+# `--output-format json` makes claude emit a single JSON document on stdout
+# containing .usage.input_tokens and .usage.output_tokens at exit.
+if [[ $CALLER_SET_OUTPUT_FORMAT -eq 0 ]]; then
+  CLAUDE_ARGS+=(--output-format json)
+fi
 if [[ -n "$AGENT" ]]; then
   CLAUDE_ARGS+=(--agent "$AGENT")
   INVOCATION_DESC="wrap:$AGENT"
@@ -153,5 +173,63 @@ cat > "$META_FILE" <<META_EOF
   "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 }
 META_EOF
+
+# ─── Phase 7 Wave 0: emit token_usage event to circuit-breakers.jsonl ───
+# (D-01) Extract input_tokens/output_tokens from the claude --output-format
+# json envelope sitting in OUT_FILE and append a line to the invoker's
+# `.cae/metrics/circuit-breakers.jsonl`. Silent no-op when:
+#   - run was not successful (EXIT_CODE != 0)
+#   - invoker's cwd has no `.cae/metrics/` dir (not a CAE project)
+#   - neither input_tokens nor output_tokens could be parsed
+# ALL errors in this block are swallowed (|| true / 2>/dev/null) so a broken
+# metrics path can never crash the adapter. Do NOT create the metrics dir —
+# its presence is the signal for "this project opted in".
+if [[ "$EXIT_CODE" -eq 0 && -s "$OUT_FILE" ]]; then
+  CB_JSONL="$CWD/.cae/metrics/circuit-breakers.jsonl"
+  CB_DIR="$(dirname "$CB_JSONL")"
+  if [[ -d "$CB_DIR" ]]; then
+    # Extract input_tokens / output_tokens. Prefer jq if available.
+    INPUT_TOKENS=0
+    OUTPUT_TOKENS=0
+    if command -v jq >/dev/null 2>&1; then
+      # `// 0` coerces null/missing to 0; `-r` avoids JSON-quoting the number.
+      INPUT_TOKENS=$(jq -r '.usage.input_tokens // 0' "$OUT_FILE" 2>/dev/null || echo 0)
+      OUTPUT_TOKENS=$(jq -r '.usage.output_tokens // 0' "$OUT_FILE" 2>/dev/null || echo 0)
+    fi
+    # Fallback (or recover from a non-numeric jq result) via regex on the raw file.
+    if ! [[ "$INPUT_TOKENS" =~ ^[0-9]+$ ]]; then
+      INPUT_TOKENS=$(grep -oE '"input_tokens"[[:space:]]*:[[:space:]]*[0-9]+' "$OUT_FILE" 2>/dev/null \
+        | head -1 | grep -oE '[0-9]+' || echo 0)
+      [[ -z "$INPUT_TOKENS" ]] && INPUT_TOKENS=0
+    fi
+    if ! [[ "$OUTPUT_TOKENS" =~ ^[0-9]+$ ]]; then
+      OUTPUT_TOKENS=$(grep -oE '"output_tokens"[[:space:]]*:[[:space:]]*[0-9]+' "$OUT_FILE" 2>/dev/null \
+        | head -1 | grep -oE '[0-9]+' || echo 0)
+      [[ -z "$OUTPUT_TOKENS" ]] && OUTPUT_TOKENS=0
+    fi
+
+    # Only write if at least one count is > 0 (otherwise the event would be noise).
+    if [[ "$INPUT_TOKENS" -gt 0 || "$OUTPUT_TOKENS" -gt 0 ]]; then
+      # task_id from task file basename (strip .txt/.md). Arbitrary strings OK —
+      # aggregator tolerates non-CAE-pattern ids.
+      TASK_ID=$(basename "$TASK_FILE" | sed -E 's/\.(txt|md)$//')
+
+      # agent label mirrors INVOCATION_DESC: wrap:X → X; direct:* → "direct"; fallback forge.
+      if [[ "$INVOCATION_DESC" == wrap:* ]]; then
+        AGENT_FOR_LOG="${INVOCATION_DESC#wrap:}"
+      elif [[ "$INVOCATION_DESC" == direct:* ]]; then
+        AGENT_FOR_LOG="direct"
+      else
+        AGENT_FOR_LOG="forge"
+      fi
+
+      TS=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+      # Field order matches bin/circuit_breakers.py _log(): ts, event, then alphabetical.
+      printf '{"ts": "%s", "event": "token_usage", "agent": "%s", "input_tokens": %d, "model": "%s", "output_tokens": %d, "task_id": "%s"}\n' \
+        "$TS" "$AGENT_FOR_LOG" "$INPUT_TOKENS" "$MODEL" "$OUTPUT_TOKENS" "$TASK_ID" \
+        >> "$CB_JSONL" 2>/dev/null || true
+    fi
+  fi
+fi
 
 exit "$EXIT_CODE"
