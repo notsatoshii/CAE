@@ -9,6 +9,17 @@ export interface Project {
   name: string
   path: string
   hasPlanning: boolean
+  /**
+   * Phase 10 D-02: Shift lifecycle phase from `.shift/state.json::phase`.
+   * null or undefined when the project has no `.shift/` directory (not a Shift project).
+   */
+  shiftPhase?: string | null
+  /**
+   * Phase 10 D-02: ISO timestamp from `.shift/state.json::updated`.
+   * null or undefined when the project has no `.shift/` directory.
+   * Used as Plan-home sort key (descending).
+   */
+  shiftUpdated?: string | null
 }
 
 export interface InboxTask {
