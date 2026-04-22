@@ -209,7 +209,7 @@ Plans:
 - [x] 09-05-PLAN.md — Wave 2b: ChatRailProvider + `components/chat/{chat-rail,chat-panel,message,suggestions}.tsx` mounted in `app/layout.tsx` (wave 2, parallel with 09-04)
 - [x] 09-06-PLAN.md — Wave 3: ConfirmActionDialog + useGatedAction hook + wiring into existing token-spending server actions (queue delegate, workflows Run-now) (wave 3)
 - [x] 09-07-PLAN.md — Wave 4: `/chat` full-page split route + ChatMirror picker + top-nav pop-out icon (wave 4)
-- [ ] 09-08-PLAN.md — Wave 5: 09-VERIFICATION.md + human UAT checkpoint (wave 5, non-autonomous)
+- [x] 09-08-PLAN.md — Wave 5: 09-VERIFICATION.md + human UAT checkpoint (wave 5, non-autonomous)
 
 ## Phase 10: Plan mode — Projects / PRDs / Roadmaps / UAT
 
