@@ -13,6 +13,7 @@
  *   - <AgentStackedBar>     for by_agent_30d (recharts)
  *   - <SpendingDailyLine>   for daily_30d (sparkline reuse)
  *   - <TopExpensiveTasks>   for top_expensive (<ol> list)
+ *   - <ExplainTooltip>      next to big-number labels + top-tasks heading (07-05)
  *
  * Design notes:
  * - <section aria-labelledby="spending-heading"> makes the whole panel a
@@ -34,6 +35,7 @@ import { AgentStackedBar } from "./agent-stacked-bar";
 import { SpendingDailyLine } from "./spending-daily-line";
 import { TopExpensiveTasks } from "./top-expensive-tasks";
 import { EstDisclaimer } from "./est-disclaimer";
+import { ExplainTooltip } from "./explain-tooltip";
 
 function formatTokens(n: number): string {
   if (n < 1000) return String(n);
@@ -110,16 +112,19 @@ export function SpendingPanel() {
           label={L.metricsSpendingTodayLabel}
           value={formatTokens(s.tokens_today) + " tok"}
           testId="spending-today"
+          explainText={L.metricsExplainTokens}
         />
         <BigNumber
           label={L.metricsSpendingMtdLabel}
           value={formatTokens(s.tokens_mtd) + " tok"}
           testId="spending-mtd"
+          explainText={L.metricsExplainTokens}
         />
         <BigNumber
           label={L.metricsSpendingProjectedLabel}
           value={"~" + formatTokens(s.tokens_projected_monthly) + " tok"}
           testId="spending-projected"
+          explainText={L.metricsExplainProjected}
         />
       </div>
 
@@ -141,8 +146,12 @@ export function SpendingPanel() {
 
       {/* Top-10 expensive */}
       <div className="flex flex-col gap-2">
-        <h3 className="text-sm font-medium text-[color:var(--text-muted)]">
-          {L.metricsSpendingTopTasksHeading}
+        <h3 className="flex items-center gap-2 text-sm font-medium text-[color:var(--text-muted)]">
+          <span>{L.metricsSpendingTopTasksHeading}</span>
+          <ExplainTooltip
+            text={L.metricsExplainTokens}
+            ariaLabel="Explain expensive tasks"
+          />
         </h3>
         <TopExpensiveTasks data={s.top_expensive} />
       </div>
@@ -154,16 +163,20 @@ interface BigNumberProps {
   label: string;
   value: string;
   testId: string;
+  explainText?: string;
 }
 
-function BigNumber({ label, value, testId }: BigNumberProps) {
+function BigNumber({ label, value, testId, explainText }: BigNumberProps) {
   return (
     <div
       data-testid={testId}
       className="flex flex-col gap-1 rounded-md bg-[color:var(--surface-hover)] p-4"
     >
-      <span className="text-xs uppercase tracking-wider text-[color:var(--text-muted)]">
+      <span className="flex items-center gap-1.5 text-xs uppercase tracking-wider text-[color:var(--text-muted)]">
         {label}
+        {explainText ? (
+          <ExplainTooltip text={explainText} ariaLabel={"Explain " + label} />
+        ) : null}
       </span>
       <span className="font-mono text-2xl text-[color:var(--text)]">
         {value}

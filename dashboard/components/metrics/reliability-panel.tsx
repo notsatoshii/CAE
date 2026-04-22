@@ -18,6 +18,9 @@
  * Lede math: weight success_rate by sample_n so a 100% / n=5 agent doesn't
  * outweigh a 90% / n=500 agent. Agents with n<5 are excluded from the lede
  * (and the underlying gauges show the insufficient-samples banner).
+ *
+ * 07-05: ExplainTooltip anchors attached next to lede (success rate) and
+ * retry-heatmap h3.
  */
 
 import { useMetricsPoll } from "@/lib/hooks/use-metrics-poll";
@@ -28,6 +31,7 @@ import { SuccessGauge } from "./success-gauge";
 import { RetryHeatmap } from "./retry-heatmap";
 import { HaltEventsLog } from "./halt-events-log";
 import { SentinelRejectTrend } from "./sentinel-reject-trend";
+import { ExplainTooltip } from "./explain-tooltip";
 
 const MIN_SAMPLES_FOR_LEDE = 5;
 
@@ -104,8 +108,12 @@ export function ReliabilityPanel() {
         >
           {L.metricsWellHeading}
         </h2>
-        <p className="mt-1 text-sm text-[color:var(--text-muted)]">
-          {L.metricsWellLede(weightedRate)}
+        <p className="mt-1 flex items-center gap-1.5 text-sm text-[color:var(--text-muted)]">
+          <span>{L.metricsWellLede(weightedRate)}</span>
+          <ExplainTooltip
+            text={L.metricsExplainSuccessRate}
+            ariaLabel="Explain success rate"
+          />
         </p>
       </header>
 
@@ -133,8 +141,12 @@ export function ReliabilityPanel() {
 
       {/* Retry heatmap */}
       <div className="flex flex-col gap-2">
-        <h3 className="text-sm font-medium text-[color:var(--text-muted)]">
-          {L.metricsWellRetryHeatmapHeading}
+        <h3 className="flex items-center gap-2 text-sm font-medium text-[color:var(--text-muted)]">
+          <span>{L.metricsWellRetryHeatmapHeading}</span>
+          <ExplainTooltip
+            text={L.metricsExplainRetryHeatmap}
+            ariaLabel="Explain retry heatmap"
+          />
         </h3>
         <RetryHeatmap cells={r.retry_heatmap} />
       </div>
