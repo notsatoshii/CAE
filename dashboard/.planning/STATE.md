@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v0.1
 milestone_name: milestone
 status: planning
-stopped_at: Completed 13-01-PLAN.md
-last_updated: "2026-04-22T19:49:22.015Z"
+stopped_at: Completed 13-02-PLAN.md
+last_updated: "2026-04-22T19:54:40.905Z"
 progress:
   total_phases: 14
   completed_phases: 10
   total_plans: 83
-  completed_plans: 59
-  percent: 71
+  completed_plans: 60
+  percent: 72
 ---
 
 # cae-dashboard — Project State
@@ -29,8 +29,14 @@ progress:
 Phase 10 — Plan mode: Projects / PRDs / Roadmaps / UAT (`/plan/*` routes wrapping Shift).
 Plan 10-04 complete (Wave 1 closed). Next: plan 10-05 (API routes).
 
-**Last session:** 2026-04-22T19:49:22.010Z
-**Stopped at:** Completed 13-01-PLAN.md
+**Last session:** 2026-04-22T19:54:40.900Z
+**Stopped at:** Completed 13-02-PLAN.md
+
+## Key Decisions (Phase 13 — Plan 02)
+
+- **13-02:** Auth-gated routes skipped gracefully (storage-state.json absent, deferred per session-7); 8 public-route PNGs captured, 61 auth-gated deferred pending authsetup.sh run.
+- **13-02:** console-baseline.tsv captures public routes only (root + signin); both clean (0 errors/warns/page errors).
+- **13-02:** BASELINE.md is the only git-trackable artifact from this plan; shots + working/ remain gitignored per threat model T-13-02-02.
 
 ## Key Decisions (Phase 13 — Plan 01)
 
