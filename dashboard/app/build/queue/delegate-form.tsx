@@ -10,7 +10,7 @@ import { useDevMode } from "@/lib/providers/dev-mode";
 import { labelFor } from "@/lib/copy/labels";
 import { createDelegation } from "./actions";
 
-export function DelegateForm() {
+export function DelegateForm({ onSuccess }: { onSuccess?: (taskId: string) => void } = {}) {
   const formRef = useRef<HTMLFormElement>(null);
   const [taskId, setTaskId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -27,6 +27,7 @@ export function DelegateForm() {
         const id = await createDelegation(data);
         setTaskId(id);
         formRef.current?.reset();
+        onSuccess?.(id);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Delegation failed");
       }
