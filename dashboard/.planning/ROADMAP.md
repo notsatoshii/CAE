@@ -256,7 +256,7 @@ Plans:
 **Progress:**
 - [x] Plan 12-01: Wave 0 prereqs (fuzzysort, axe-cli, KEYBINDINGS, motion CSS, audit scripts)
 - [x] Plan 12-02: Palette pure libs + CommandPalette + ShortcutOverlay (49 tests)
-- [ ] Plan 12-03: Empty-state library
+- [x] Plan 12-03: Empty-state library (EmptyState primitive + 31 labels keys + 9 surfaces migrated)
 - [ ] Plan 12-04: Polish + mount (layout wiring)
 
 ## Phase 13: UI/UX review + polish loop (expanded scope)

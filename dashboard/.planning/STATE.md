@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v0.1
 milestone_name: milestone
 status: planning
-stopped_at: Completed 12-02-PLAN.md
-last_updated: "2026-04-22T18:58:18Z"
+stopped_at: Completed 12-03-PLAN.md
+last_updated: "2026-04-22T19:14:00Z"
 progress:
   total_phases: 14
   completed_phases: 9
   total_plans: 83
-  completed_plans: 56
-  percent: 67
+  completed_plans: 57
+  percent: 69
 ---
 
 # cae-dashboard — Project State
@@ -29,8 +29,17 @@ progress:
 Phase 10 — Plan mode: Projects / PRDs / Roadmaps / UAT (`/plan/*` routes wrapping Shift).
 Plan 10-04 complete (Wave 1 closed). Next: plan 10-05 (API routes).
 
-**Last session:** 2026-04-22T18:13:29.887Z
-**Stopped at:** Completed 11-02-PLAN.md
+**Last session:** 2026-04-22T19:14:00Z
+**Stopped at:** Completed 12-03-PLAN.md
+
+## Key Decisions (Phase 12 — Plan 03)
+
+- **12-03:** EmptyState uses `testId` prop (not `data-testid` spread) — callers must use testId="…" not data-testid="…".
+- **12-03:** Memory browse CTA routes to /memory?view=graph (less invasive than adding onRegenerate prop to FileTree).
+- **12-03:** Graph pane empty reuses RegenerateButton from existing pane imports as actions slot.
+- **12-03:** Metrics panels keep section/h2 landmark shell on !data branch; EmptyState renders inside.
+- **12-03:** Plan page stays server component — uses Link + Button (no use client needed).
+- **12-03:** workflowsListEmpty reused as body copy in workflows EmptyState (no duplicate string).
 
 ## Key Decisions (Phase 11 — Plan 05)
 
