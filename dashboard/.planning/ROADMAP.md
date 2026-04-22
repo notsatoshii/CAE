@@ -107,11 +107,23 @@ Plans:
 **Goal:** Build mode `/build/agents` — agent roster with sparklines + detail drawer per UI-SPEC §6.
 
 **What it includes:**
-- Grid of agent cards (~8) with token/hr sparkline, 7d success rate, avg wall time
+- Grid of agent cards (9 agents) with token/hr sparkline, 7d success rate, avg wall time
 - Grouping: Active / Recently used / Dormant
-- Card click → full drawer: persona MD render, model override, lifetime stats, last 50 invocations, drift banner
+- Card click → full drawer: persona MD render, model override (stub), lifetime stats, last 50 invocations, drift banner
 - Idle-agent card variant ("inactive 6d · last run Thu")
 - Founder-speak headlines ("Forge — the builder")
+- Left-rail (5 tabs) added to /build layout — Home · Agents · Workflows · Queue · Changes
+- Stub routes for /build/workflows (Phase 6) and /build/changes (Phase 9) so rail has no broken links
+- Data API: /api/agents roster + /api/agents/[name] detail, aggregated from .cae/metrics/*.jsonl across projects
+- Drift detection: 7d success rate < 85% of 30d baseline (with >=5 samples in 7d)
+
+**Plans:** 4 plans
+
+Plans:
+- [ ] 05-01-PLAN.md — Data API (/api/agents + [name]) + cae-agents-state aggregator + Sparkline primitive + labels.ts agents.* keys (wave 1)
+- [ ] 05-02-PLAN.md — BuildRail left-nav + /build layout rewrite + stub routes for /build/workflows + /build/changes (wave 1)
+- [ ] 05-03-PLAN.md — /build/agents page + AgentGrid + AgentCard (active + idle variants + drift indicator) (wave 2)
+- [ ] 05-04-PLAN.md — AgentDetailDrawer (persona MD + model override + drift banner + lifetime stats + recent invocations) + integration + a11y + Phase 5 VERIFICATION (wave 3)
 
 ## Phase 6: Workflows + Queue
 
