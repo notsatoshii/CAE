@@ -51,6 +51,10 @@ vi.mock("./heartbeat-dot", () => ({
   HeartbeatDot: () => <div data-testid="heartbeat-dot" />,
 }));
 
+vi.mock("./ambient-clock", () => ({
+  AmbientClock: () => <span data-testid="ambient-clock">10:05:30</span>,
+}));
+
 vi.mock("./liveness-chip", () => ({
   LivenessChip: () => <div data-testid="liveness-chip" />,
 }));

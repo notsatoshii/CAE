@@ -7,6 +7,7 @@ import { MemoryIcon } from "./memory-icon";
 import { MetricsIcon } from "./metrics-icon";
 import { ChatPopOutIcon } from "./chat-pop-out-icon";
 import { HeartbeatDot } from "./heartbeat-dot";
+import { AmbientClock } from "./ambient-clock";
 import { LivenessChip } from "./liveness-chip";
 import { DevBadge } from "./dev-badge";
 import { ShortcutHelpButton } from "@/components/ui/shortcut-overlay";
@@ -47,6 +48,7 @@ export function TopNav({ session }: TopNavProps) {
         <ShortcutHelpButton />
         <span className="mx-1 h-4 w-px bg-[color:var(--border-subtle)]" aria-hidden="true" />
         <HeartbeatDot />
+        <AmbientClock />
         <LivenessChip />
         <DevBadge />
         <span className="mx-1 h-4 w-px bg-[color:var(--border-subtle)]" aria-hidden="true" />
