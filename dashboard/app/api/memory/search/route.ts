@@ -14,10 +14,14 @@ import {
   badRequest,
   internalError,
 } from "@/lib/cae-memory-api-helpers";
+import { log } from "@/lib/log";
+import { withLog } from "@/lib/with-log";
 
 export const dynamic = "force-dynamic";
 
-export async function GET(req: NextRequest): Promise<NextResponse> {
+const l = log("api.memory.search");
+
+async function getHandler(req: NextRequest): Promise<NextResponse> {
   const session = await auth();
   if (!session) return unauthorized();
 
@@ -42,7 +46,9 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     if (message.toLowerCase().includes("too long")) {
       return badRequest("query_too_long");
     }
-    console.error("/api/memory/search failed", err);
+    l.error({ err }, "memory search failed");
     return internalError("search_failed");
   }
 }
+
+export const GET = withLog(getHandler, "/api/memory/search");

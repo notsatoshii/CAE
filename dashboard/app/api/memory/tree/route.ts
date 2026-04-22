@@ -11,17 +11,23 @@ import {
   unauthorized,
   internalError,
 } from "@/lib/cae-memory-api-helpers";
+import { log } from "@/lib/log";
+import { withLog } from "@/lib/with-log";
 
 export const dynamic = "force-dynamic";
 
-export async function GET(): Promise<NextResponse> {
+const l = log("api.memory.tree");
+
+async function getHandler(): Promise<NextResponse> {
   const session = await auth();
   if (!session) return unauthorized();
   try {
     const projects = await buildMemoryTree();
     return NextResponse.json({ projects });
   } catch (err) {
-    console.error("/api/memory/tree failed", err);
+    l.error({ err }, "memory tree build failed");
     return internalError("tree_failed");
   }
 }
+
+export const GET = withLog(getHandler as (req: Request) => Promise<Response>, "/api/memory/tree");

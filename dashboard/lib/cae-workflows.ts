@@ -27,6 +27,9 @@ import {
   serializeWorkflow,
 } from "./cae-workflows-schema";
 import type { WorkflowSpec, WorkflowRecord } from "./cae-workflows-schema";
+import { log } from "./log";
+
+const lWorkflows = log("cae-workflows");
 
 // ---------- Re-exports (pure schema, back-compat for server-side importers) ----------
 
@@ -88,8 +91,9 @@ export async function listWorkflows(): Promise<WorkflowRecord[]> {
       const yaml = await readFile(filepath, "utf8");
       const { spec, errors } = parseWorkflow(yaml);
       if (!spec) {
-        console.warn(
-          `[cae-workflows] Skipping malformed workflow ${name}: ${errors.map((e) => `${e.path}: ${e.message}`).join("; ")}`,
+        lWorkflows.warn(
+          { name, errors: errors.map((e) => `${e.path}: ${e.message}`).join("; ") },
+          "skipping malformed workflow",
         );
         continue;
       }
@@ -103,7 +107,7 @@ export async function listWorkflows(): Promise<WorkflowRecord[]> {
       });
     } catch (e) {
       const message = e instanceof Error ? e.message : String(e);
-      console.warn(`[cae-workflows] Failed to read ${name}: ${message}`);
+      lWorkflows.warn({ name, message }, "failed to read workflow file");
       continue;
     }
   }
@@ -123,8 +127,9 @@ export async function getWorkflow(slug: string): Promise<WorkflowRecord | null> 
   }
   const { spec, errors } = parseWorkflow(yaml);
   if (!spec) {
-    console.warn(
-      `[cae-workflows] getWorkflow(${slug}) malformed: ${errors.map((e) => `${e.path}: ${e.message}`).join("; ")}`,
+    lWorkflows.warn(
+      { slug, errors: errors.map((e) => `${e.path}: ${e.message}`).join("; ") },
+      "getWorkflow: workflow file is malformed",
     );
     return null;
   }

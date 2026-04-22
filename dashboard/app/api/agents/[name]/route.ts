@@ -1,8 +1,12 @@
 export const dynamic = "force-dynamic"
 
 import { getAgentDetail } from "@/lib/cae-agents-state"
+import { log } from "@/lib/log"
+import { withLog } from "@/lib/with-log"
 
-export async function GET(
+const l = log("api.agents.detail")
+
+async function getHandler(
   _req: Request,
   context: { params: Promise<{ name: string }> },
 ) {
@@ -14,7 +18,13 @@ export async function GET(
     }
     return Response.json(detail)
   } catch (err) {
-    console.error("[/api/agents/" + name + "] failed:", err)
+    l.error({ err, agentName: name }, "agent detail aggregator failed")
     return Response.json({ error: "aggregator_failed" }, { status: 500 })
   }
 }
+
+type NameCtx = { params: Promise<{ name: string }> }
+export const GET = withLog(
+  getHandler as (req: Request, ctx: NameCtx) => Promise<Response>,
+  "/api/agents/[name]",
+)

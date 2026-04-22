@@ -19,12 +19,15 @@ import {
   internalError,
   reconstituteAbsPath,
 } from "@/lib/cae-memory-api-helpers";
+import { log } from "@/lib/log";
+import { withLog } from "@/lib/with-log";
 
 export const dynamic = "force-dynamic";
 
+const l = log("api.memory.file");
 const MAX_BYTES = 512 * 1024;
 
-export async function GET(
+async function getHandler(
   _req: NextRequest,
   ctx: { params: Promise<{ path: string[] }> },
 ): Promise<NextResponse> {
@@ -53,7 +56,13 @@ export async function GET(
   } catch (err) {
     const code = (err as NodeJS.ErrnoException | null)?.code;
     if (code === "ENOENT") return notFound("missing_file");
-    console.error("/api/memory/file failed", err);
+    l.error({ err }, "memory file read failed");
     return internalError("read_failed");
   }
 }
+
+type PathCtx = { params: Promise<{ path: string[] }> };
+export const GET = withLog(
+  getHandler as (req: Request, ctx: PathCtx) => Promise<Response>,
+  "/api/memory/file",
+);

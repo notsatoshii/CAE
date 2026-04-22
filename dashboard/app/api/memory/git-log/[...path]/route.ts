@@ -17,12 +17,15 @@ import {
   reconstituteAbsPath,
   resolveProjectRoot,
 } from "@/lib/cae-memory-api-helpers";
+import { log } from "@/lib/log";
+import { withLog } from "@/lib/with-log";
 
 export const dynamic = "force-dynamic";
 
+const l = log("api.memory.git-log");
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
-export async function GET(
+async function getHandler(
   req: NextRequest,
   ctx: { params: Promise<{ path: string[] }> },
 ): Promise<NextResponse> {
@@ -46,10 +49,16 @@ export async function GET(
   if (until && !DATE_RE.test(until)) return forbidden("bad_until");
 
   try {
-    const log = await gitLogForFile(projectRoot, abs, since, until);
-    return NextResponse.json({ path: abs, log });
+    const gitLog = await gitLogForFile(projectRoot, abs, since, until);
+    return NextResponse.json({ path: abs, log: gitLog });
   } catch (err) {
-    console.error("/api/memory/git-log failed", err);
+    l.error({ err }, "git log for file failed");
     return internalError("git_log_failed");
   }
 }
+
+type PathCtx = { params: Promise<{ path: string[] }> };
+export const GET = withLog(
+  getHandler as (req: Request, ctx: PathCtx) => Promise<Response>,
+  "/api/memory/git-log",
+);

@@ -3,8 +3,9 @@ export const dynamic = "force-dynamic"
 import { NextRequest } from "next/server"
 import { unlink } from "fs/promises"
 import { getWorkflow, parseWorkflow, writeWorkflow } from "@/lib/cae-workflows"
+import { withLog } from "@/lib/with-log"
 
-export async function GET(
+async function getHandler(
   _req: NextRequest,
   ctx: { params: Promise<{ slug: string }> },
 ) {
@@ -14,7 +15,7 @@ export async function GET(
   return Response.json({ workflow })
 }
 
-export async function PUT(
+async function putHandler(
   req: NextRequest,
   ctx: { params: Promise<{ slug: string }> },
 ) {
@@ -35,7 +36,7 @@ export async function PUT(
   return Response.json({ workflow: record })
 }
 
-export async function DELETE(
+async function deleteHandler(
   _req: NextRequest,
   ctx: { params: Promise<{ slug: string }> },
 ) {
@@ -45,3 +46,10 @@ export async function DELETE(
   await unlink(existing.filepath)
   return new Response(null, { status: 204 })
 }
+
+type SlugCtx = { params: Promise<{ slug: string }> }
+type SlugHandler = (req: Request, ctx: SlugCtx) => Promise<Response>
+
+export const GET = withLog(getHandler as SlugHandler, "/api/workflows/[slug]")
+export const PUT = withLog(putHandler as SlugHandler, "/api/workflows/[slug]")
+export const DELETE = withLog(deleteHandler as SlugHandler, "/api/workflows/[slug]")

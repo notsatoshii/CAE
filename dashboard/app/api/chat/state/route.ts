@@ -23,8 +23,9 @@ import {
   listSessions,
   ValidationError,
 } from "@/lib/cae-chat-state";
+import { withLog } from "@/lib/with-log";
 
-export async function GET(req: NextRequest) {
+async function getHandler(req: NextRequest) {
   const session = await auth();
   if (!session) {
     // TODO: chat.errorUnauthorized (owned by plan 09-02 Task 3)
@@ -65,3 +66,5 @@ export async function GET(req: NextRequest) {
     sessions,
   });
 }
+
+export const GET = withLog(getHandler, "/api/chat/state");

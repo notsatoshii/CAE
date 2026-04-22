@@ -16,6 +16,9 @@ import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { relative } from "node:path";
 import { getAllowedRoots, isMemorySourcePath } from "./cae-memory-sources";
+import { log } from "./log";
+
+const lGit = log("cae-memory-git");
 
 const TIMEOUT_MS = 30_000;
 const MAX_BUFFER = 5 * 1024 * 1024;
@@ -121,7 +124,7 @@ export async function gitLogForFile(
     }
     return entries;
   } catch (err) {
-    console.error("[cae-memory-git] gitLogForFile failed", err);
+    lGit.error({ err }, "gitLogForFile failed");
     return [];
   }
 }
@@ -153,7 +156,7 @@ export async function gitDiff(
     );
     return stdout;
   } catch (err) {
-    console.error("[cae-memory-git] gitDiff failed", err);
+    lGit.error({ err }, "gitDiff failed");
     return "";
   }
 }

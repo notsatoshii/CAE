@@ -35,6 +35,9 @@ import {
 import { OUTBOX_ROOT } from "./cae-config"
 import { AGENT_META, type AgentName } from "./copy/agent-meta"
 import type { CbEvent, Project, OutboxTask } from "./cae-types"
+import { log } from "./log"
+
+const lMetrics = log("cae-metrics-state")
 
 // === Constants ===
 
@@ -231,7 +234,7 @@ async function build(): Promise<MetricsState> {
         cbEvents.push({ project: p, event: ev })
       }
     } catch (err) {
-      console.error(`[cae-metrics-state] cb read failed for ${p.name}:`, err)
+      lMetrics.error({ err, project: p.name }, "cb read failed")
     }
 
     // sentinel.jsonl: only sentinel_rejects_30d needs this. May not exist
@@ -252,11 +255,11 @@ async function build(): Promise<MetricsState> {
 
   const [inbox, outbox] = await Promise.all([
     listInbox().catch((err): [] => {
-      console.error("[cae-metrics-state] listInbox failed:", err)
+      lMetrics.error({ err }, "listInbox failed")
       return []
     }),
     listOutbox().catch((err): [] => {
-      console.error("[cae-metrics-state] listOutbox failed:", err)
+      lMetrics.error({ err }, "listOutbox failed")
       return []
     }),
   ])

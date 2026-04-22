@@ -12,10 +12,14 @@ import {
   unauthorized,
   internalError,
 } from "@/lib/cae-memory-api-helpers";
+import { log } from "@/lib/log";
+import { withLog } from "@/lib/with-log";
 
 export const dynamic = "force-dynamic";
 
-export async function POST(): Promise<NextResponse> {
+const l = log("api.memory.regenerate");
+
+async function postHandler(): Promise<NextResponse> {
   const session = await auth();
   if (!session) return unauthorized();
   try {
@@ -41,7 +45,9 @@ export async function POST(): Promise<NextResponse> {
       total_nodes: result.total_nodes,
     });
   } catch (err) {
-    console.error("/api/memory/regenerate failed", err);
+    l.error({ err }, "memory graph regeneration failed");
     return internalError("regenerate_failed");
   }
 }
+
+export const POST = withLog(postHandler as (req: Request) => Promise<Response>, "/api/memory/regenerate");

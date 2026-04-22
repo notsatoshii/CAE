@@ -17,6 +17,7 @@ import { NextRequest } from "next/server";
 import { auth } from "@/auth";
 import { listSessions, getOrCreateSession } from "@/lib/cae-chat-state";
 import type { AgentName } from "@/lib/copy/agent-meta";
+import { withLog } from "@/lib/with-log";
 
 const VALID_AGENTS: readonly AgentName[] = [
   "nexus",
@@ -34,7 +35,7 @@ function isAgentName(x: unknown): x is AgentName {
   return typeof x === "string" && (VALID_AGENTS as readonly string[]).includes(x);
 }
 
-export async function GET(_req: NextRequest) {
+async function getHandler(_req: NextRequest) {
   const session = await auth();
   if (!session) {
     // TODO: chat.errorUnauthorized (owned by plan 09-02 Task 3)
@@ -44,7 +45,7 @@ export async function GET(_req: NextRequest) {
   return Response.json({ sessions });
 }
 
-export async function POST(req: NextRequest) {
+async function postHandler(req: NextRequest) {
   const session = await auth();
   if (!session) {
     // TODO: chat.errorUnauthorized
@@ -56,3 +57,6 @@ export async function POST(req: NextRequest) {
   const id = await getOrCreateSession(agent);
   return Response.json({ sessionId: id, agent });
 }
+
+export const GET = withLog(getHandler, "/api/chat/sessions");
+export const POST = withLog(postHandler, "/api/chat/sessions");

@@ -20,8 +20,9 @@ import {
   getSessionMeta,
   ValidationError,
 } from "@/lib/cae-chat-state";
+import { withLog } from "@/lib/with-log";
 
-export async function GET(
+async function getHandler(
   _req: NextRequest,
   ctx: { params: Promise<{ sessionId: string }> },
 ) {
@@ -48,3 +49,8 @@ export async function GET(
   ]);
   return Response.json({ messages, meta });
 }
+
+export const GET = withLog(
+  getHandler as (req: Request, ...rest: unknown[]) => Promise<Response>,
+  "/api/chat/history",
+);

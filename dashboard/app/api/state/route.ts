@@ -12,8 +12,12 @@ import {
 import { CAE_ROOT } from "@/lib/cae-config"
 import { getHomeState, type HomeState } from "@/lib/cae-home-state"
 import type { CbEvent } from "@/lib/cae-types"
+import { log } from "@/lib/log"
+import { withLog } from "@/lib/with-log"
 
-export async function GET(req: NextRequest) {
+const l = log("api.state")
+
+async function getHandler(req: NextRequest) {
   const project = req.nextUrl.searchParams.get("project") ?? CAE_ROOT
   const metricsDir = join(project, ".cae", "metrics")
   const today = new Date().toISOString().slice(0, 10)
@@ -38,7 +42,7 @@ export async function GET(req: NextRequest) {
     tailJsonl(join(metricsDir, "compaction.jsonl"), 50),
     tailJsonl(join(metricsDir, "approvals.jsonl"), 50),
     getHomeState().catch((err): HomeState => {
-      console.error("[/api/state] getHomeState failed:", err)
+      l.error({ err }, "getHomeState failed")
       return {
         rollup: { shipped_today: 0, tokens_today: 0, in_flight: 0, blocked: 0, warnings: 0 },
         phases: [],
@@ -92,3 +96,5 @@ export async function GET(req: NextRequest) {
     live_ops_line: home.live_ops_line,
   })
 }
+
+export const GET = withLog(getHandler, "/api/state")

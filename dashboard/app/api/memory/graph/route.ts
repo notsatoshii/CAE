@@ -13,10 +13,14 @@ import {
   unauthorized,
   internalError,
 } from "@/lib/cae-memory-api-helpers";
+import { log } from "@/lib/log";
+import { withLog } from "@/lib/with-log";
 
 export const dynamic = "force-dynamic";
 
-export async function GET(): Promise<NextResponse> {
+const l = log("api.memory.graph");
+
+async function getHandler(): Promise<NextResponse> {
   const session = await auth();
   if (!session) return unauthorized();
   try {
@@ -35,7 +39,9 @@ export async function GET(): Promise<NextResponse> {
     }
     return NextResponse.json(graph);
   } catch (err) {
-    console.error("/api/memory/graph failed", err);
+    l.error({ err }, "memory graph load failed");
     return internalError("graph_failed");
   }
 }
+
+export const GET = withLog(getHandler as (req: Request) => Promise<Response>, "/api/memory/graph");

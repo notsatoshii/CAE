@@ -22,6 +22,9 @@ import { listProjects, tailJsonl } from "./cae-state"
 import { CAE_ROOT } from "./cae-config"
 import { AGENT_META, agentMetaFor, type AgentName } from "./copy/agent-meta"
 import type { Project, CbEvent } from "./cae-types"
+import { log } from "./log"
+
+const lAgents = log("cae-agents-state")
 
 // === Exported types ===
 
@@ -193,7 +196,7 @@ async function collectAllEvents(projects: Project[]): Promise<CollectedEvent[]> 
         })
       }
     } catch (err) {
-      console.error("[cae-agents-state] failed reading " + cbPath + ":", err)
+      lAgents.error({ err, cbPath }, "failed reading cb events")
     }
   }
   return out

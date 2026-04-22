@@ -17,12 +17,15 @@ import {
   internalError,
   resolveProjectRoot,
 } from "@/lib/cae-memory-api-helpers";
+import { log } from "@/lib/log";
+import { withLog } from "@/lib/with-log";
 
 export const dynamic = "force-dynamic";
 
+const l = log("api.memory.diff");
 const SHA_RE = /^[0-9a-f]{7,40}$/;
 
-export async function POST(req: NextRequest): Promise<NextResponse> {
+async function postHandler(req: NextRequest): Promise<NextResponse> {
   const session = await auth();
   if (!session) return unauthorized();
 
@@ -53,7 +56,9 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     const diff = await gitDiff(projectRoot, shaA, shaB, abs);
     return NextResponse.json({ path: abs, sha_a: shaA, sha_b: shaB, diff });
   } catch (err) {
-    console.error("/api/memory/diff failed", err);
+    l.error({ err }, "git diff failed");
     return internalError("diff_failed");
   }
 }
+
+export const POST = withLog(postHandler, "/api/memory/diff");

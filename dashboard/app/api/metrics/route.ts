@@ -1,6 +1,10 @@
 export const dynamic = "force-dynamic"
 
 import { getMetricsState } from "@/lib/cae-metrics-state"
+import { log } from "@/lib/log"
+import { withLog } from "@/lib/with-log"
+
+const l = log("api.metrics")
 
 /**
  * GET /api/metrics — aggregator endpoint for the Phase 7 /metrics page.
@@ -10,12 +14,12 @@ import { getMetricsState } from "@/lib/cae-metrics-state"
  * zeros + a top-level `error` field so the UI never has to branch between
  * error and success shapes. Middleware handles auth (Phase 3 pattern).
  */
-export async function GET() {
+async function getHandler() {
   try {
     const state = await getMetricsState()
     return Response.json(state)
   } catch (err) {
-    console.error("[/api/metrics] failed:", err)
+    l.error({ err }, "aggregator failed")
     return Response.json(
       {
         error: "aggregator_failed",
@@ -44,3 +48,5 @@ export async function GET() {
     )
   }
 }
+
+export const GET = withLog(getHandler as (req: Request) => Promise<Response>, "/api/metrics")

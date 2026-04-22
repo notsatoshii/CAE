@@ -28,6 +28,9 @@ import { dirname, isAbsolute, join, resolve } from "node:path";
 import { CAE_ROOT } from "./cae-config";
 import { listProjects } from "./cae-state";
 import { isMemorySourcePath, listMemorySources } from "./cae-memory-sources";
+import { log } from "./log";
+
+const lGraph = log("cae-graph-state");
 
 export type NodeKind = "phases" | "agents" | "notes" | "PRDs";
 
@@ -255,7 +258,7 @@ async function walkMemorySources(): Promise<WalkResult> {
       rawContents.set(abs, contents);
       labels.set(abs, extractLabel(abs, contents));
     } catch (err) {
-      console.error("[cae-graph-state] read failed", abs, err);
+      lGraph.error({ err, abs }, "file read failed");
       continue;
     }
   }
@@ -343,7 +346,7 @@ export async function regenerateGraph(): Promise<{
   try {
     walk = await walkMemorySources();
   } catch (err) {
-    console.error("[cae-graph-state] walk failed", err);
+    lGraph.error({ err }, "memory walk failed");
     return {
       ok: false,
       error: "walk_failed",
@@ -367,7 +370,7 @@ export async function regenerateGraph(): Promise<{
     await writeFile(tmpPath, JSON.stringify(payload, null, 2), "utf8");
     await rename(tmpPath, graphPath);
   } catch (err) {
-    console.error("[cae-graph-state] write failed", err);
+    lGraph.error({ err }, "graph.json write failed");
     return {
       ok: false,
       error: "write_failed",

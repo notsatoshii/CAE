@@ -48,6 +48,7 @@ import { encodeSSE } from "@/lib/sse";
 import { pickPersona, modelForAgent } from "@/lib/voice-router";
 import { spawnClaudeChat } from "@/lib/chat-spawn";
 import type { AgentName } from "@/lib/copy/agent-meta";
+import { withLog } from "@/lib/with-log";
 
 const MAX_MESSAGE_LEN = 4000;
 
@@ -59,7 +60,7 @@ const OVERRIDE_RE =
   /^@(nexus|forge|sentinel|scout|scribe|phantom|aegis|arch|herald)\b/i;
 
 
-export async function POST(req: NextRequest) {
+async function postHandler(req: NextRequest) {
   const session = await auth();
   if (!session) {
     // TODO: chat.errorUnauthorized (owned by plan 09-02 Task 3)
@@ -315,3 +316,5 @@ export async function POST(req: NextRequest) {
     },
   });
 }
+
+export const POST = withLog(postHandler, "/api/chat/send");

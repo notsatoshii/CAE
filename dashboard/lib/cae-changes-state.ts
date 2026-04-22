@@ -32,6 +32,9 @@ import { basename, join } from "path";
 import { listProjects, tailJsonl } from "./cae-state";
 import { agentMetaFor } from "./copy/agent-meta";
 import type { CbEvent, Project } from "./cae-types";
+import { log } from "./log";
+
+const lChanges = log("cae-changes-state");
 
 /**
  * Indirection over `promisify(exec)` so tests can substitute a stub without
@@ -398,7 +401,7 @@ async function readChangesForProject(p: Project): Promise<ChangeEvent[]> {
     }
     return out;
   } catch (err) {
-    console.error(`[changes] ${p.name} failed:`, err);
+    lChanges.error({ err, project: p.name }, "project changes aggregation failed");
     return [];
   }
 }

@@ -2,14 +2,15 @@ export const dynamic = "force-dynamic"
 
 import { NextRequest } from "next/server"
 import { listWorkflows, parseWorkflow, writeWorkflow } from "@/lib/cae-workflows"
+import { withLog } from "@/lib/with-log"
 
-export async function GET() {
+async function getHandler() {
   const workflows = await listWorkflows()
   workflows.sort((a, b) => b.mtime - a.mtime)
   return Response.json({ workflows })
 }
 
-export async function POST(req: NextRequest) {
+async function postHandler(req: NextRequest) {
   const body = await req.json().catch(() => null)
   if (!body || typeof (body as { yaml?: unknown }).yaml !== "string") {
     return Response.json({ error: "yaml required" }, { status: 400 })
@@ -21,3 +22,6 @@ export async function POST(req: NextRequest) {
   const record = await writeWorkflow(spec)
   return Response.json({ workflow: record }, { status: 201 })
 }
+
+export const GET = withLog(getHandler as (req: Request) => Promise<Response>, "/api/workflows")
+export const POST = withLog(postHandler, "/api/workflows")

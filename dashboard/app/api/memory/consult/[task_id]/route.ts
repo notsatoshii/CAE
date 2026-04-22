@@ -24,10 +24,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { getMemoryConsultEntries } from "@/lib/cae-memory-consult";
+import { log } from "@/lib/log";
+import { withLog } from "@/lib/with-log";
 
 export const dynamic = "force-dynamic";
 
-export async function GET(
+const l = log("api.memory.consult");
+
+async function getHandler(
   _req: NextRequest,
   ctx: { params: Promise<{ task_id: string }> },
 ): Promise<NextResponse> {
@@ -44,7 +48,13 @@ export async function GET(
     return NextResponse.json(result);
   } catch (err) {
     // Log full error server-side but don't leak path/fs details to client.
-    console.error("/api/memory/consult error", err);
+    l.error({ err }, "memory consult lookup failed");
     return NextResponse.json({ error: "internal" }, { status: 500 });
   }
 }
+
+type TaskCtx = { params: Promise<{ task_id: string }> };
+export const GET = withLog(
+  getHandler as (req: Request, ctx: TaskCtx) => Promise<Response>,
+  "/api/memory/consult",
+);

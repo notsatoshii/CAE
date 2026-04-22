@@ -9,6 +9,7 @@ import { auth } from "@/auth"
 import { INBOX_ROOT } from "@/lib/cae-config"
 import { getWorkflow } from "@/lib/cae-workflows"
 import type { WorkflowStep } from "@/lib/cae-workflows"
+import { withLog } from "@/lib/with-log"
 
 function firstAgentStep(
   steps: WorkflowStep[],
@@ -48,7 +49,7 @@ function renderBuildplan(
   ].join("\n")
 }
 
-export async function POST(
+async function postHandler(
   _req: NextRequest,
   ctx: { params: Promise<{ slug: string }> },
 ) {
@@ -107,3 +108,9 @@ export async function POST(
 
   return Response.json({ taskId, slug, ts }, { status: 202 })
 }
+
+type SlugCtx = { params: Promise<{ slug: string }> }
+export const POST = withLog(
+  postHandler as (req: Request, ctx: SlugCtx) => Promise<Response>,
+  "/api/workflows/[slug]/run",
+)

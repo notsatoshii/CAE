@@ -20,8 +20,12 @@ export const dynamic = "force-dynamic";
 import { NextRequest } from "next/server";
 import { auth } from "@/auth";
 import { getChangesGrouped } from "@/lib/cae-changes-state";
+import { log } from "@/lib/log";
+import { withLog } from "@/lib/with-log";
 
-export async function GET(_req: NextRequest) {
+const l = log("api.changes");
+
+async function getHandler(_req: NextRequest) {
   const session = await auth();
   if (!session) {
     return new Response("unauthorized", { status: 401 });
@@ -34,7 +38,9 @@ export async function GET(_req: NextRequest) {
       cache_ttl_ms: 30_000,
     });
   } catch (err) {
-    console.error("[/api/changes] failed:", err);
+    l.error({ err }, "changes aggregator failed");
     return Response.json({ error: "changes_failed" }, { status: 500 });
   }
 }
+
+export const GET = withLog(getHandler, "/api/changes");

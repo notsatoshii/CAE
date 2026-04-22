@@ -2,7 +2,10 @@ import { NextRequest } from "next/server"
 import path from "path"
 import { createTailStream } from "@/lib/tail-stream"
 import { listProjects } from "@/lib/cae-state"
+import { log } from "@/lib/log"
+import { withLog } from "@/lib/with-log"
 
+const l = log("api.tail")
 const CWD = process.cwd()
 
 const STATIC_ALLOWED_ROOTS = [
@@ -22,7 +25,7 @@ async function computeAllowedRoots(): Promise<string[]> {
       roots.push(path.resolve(p.path, ".planning", "phases"))
     }
   } catch (err) {
-    console.error("[/api/tail] listProjects() failed, falling back to static roots:", err)
+    l.error({ err }, "listProjects() failed, falling back to static roots")
   }
   return roots
 }
@@ -34,7 +37,7 @@ function isAllowedPath(filePath: string, roots: string[]): boolean {
   )
 }
 
-export async function GET(req: NextRequest) {
+async function getHandler(req: NextRequest) {
   const filePath = req.nextUrl.searchParams.get("path")
   if (!filePath) {
     return new Response("Missing path", { status: 400 })
@@ -72,3 +75,5 @@ export async function GET(req: NextRequest) {
     },
   })
 }
+
+export const GET = withLog(getHandler, "/api/tail")
