@@ -38,15 +38,47 @@ vi.mock("next/navigation", () => ({
 import { BuildRail } from "./build-rail"
 
 describe("BuildRail", () => {
-  it("Test 5: renders 6 tabs including new Skills tab", () => {
+  it("Test 8: renders 7 tabs including Skills and Schedules", () => {
     render(<BuildRail />)
     const rail = screen.getByTestId("build-rail")
-    // All 6 tab links
     const links = rail.querySelectorAll("a")
-    expect(links).toHaveLength(6)
+    expect(links).toHaveLength(7)
   })
 
-  it("Test 5b: Skills tab is present between Queue and Changes", () => {
+  it("Test 8b: tabs in locked order: Home·Agents·Workflows·Queue·Skills·Schedules·Changes", () => {
+    render(<BuildRail />)
+    const links = Array.from(
+      screen.getByTestId("build-rail").querySelectorAll("a")
+    )
+    const hrefs = links.map((l) => l.getAttribute("href"))
+    expect(hrefs).toEqual([
+      "/build",
+      "/build/agents",
+      "/build/workflows",
+      "/build/queue",
+      "/build/skills",
+      "/build/schedule",
+      "/build/changes",
+    ])
+  })
+
+  it("Test 8c: Schedules tab is active for /build/schedule path", () => {
+    mockPathname.mockReturnValue("/build/schedule")
+    render(<BuildRail />)
+
+    const scheduleLink = screen.getByTestId("build-rail-tab-schedule")
+    expect(scheduleLink).toHaveAttribute("data-active", "true")
+  })
+
+  it("Test 8d: Schedules tab is active for /build/schedule/new subpath", () => {
+    mockPathname.mockReturnValue("/build/schedule/new")
+    render(<BuildRail />)
+
+    const scheduleLink = screen.getByTestId("build-rail-tab-schedule")
+    expect(scheduleLink).toHaveAttribute("data-active", "true")
+  })
+
+  it("Test 5: Skills tab is still present between Queue and Schedules", () => {
     render(<BuildRail />)
     const links = Array.from(
       screen.getByTestId("build-rail").querySelectorAll("a")
@@ -54,22 +86,14 @@ describe("BuildRail", () => {
     const hrefs = links.map((l) => l.getAttribute("href"))
     const queueIdx = hrefs.indexOf("/build/queue")
     const skillsIdx = hrefs.indexOf("/build/skills")
-    const changesIdx = hrefs.indexOf("/build/changes")
+    const scheduleIdx = hrefs.indexOf("/build/schedule")
 
     expect(skillsIdx).toBeGreaterThan(queueIdx)
-    expect(skillsIdx).toBeLessThan(changesIdx)
+    expect(skillsIdx).toBeLessThan(scheduleIdx)
   })
 
   it("Test 5c: Skills tab is active for /build/skills path", () => {
     mockPathname.mockReturnValue("/build/skills")
-    render(<BuildRail />)
-
-    const skillsLink = screen.getByTestId("build-rail-tab-skills")
-    expect(skillsLink).toHaveAttribute("data-active", "true")
-  })
-
-  it("Test 5d: Skills tab is active for /build/skills/something subpath", () => {
-    mockPathname.mockReturnValue("/build/skills/my-skill")
     render(<BuildRail />)
 
     const skillsLink = screen.getByTestId("build-rail-tab-skills")
