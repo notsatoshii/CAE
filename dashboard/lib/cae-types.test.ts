@@ -51,6 +51,8 @@ describe("ScheduledTask", () => {
       buildplan: "tasks/morning-brief.md",
       enabled: true,
       lastRun: 0,
+      createdAt: 1714000000,
+      createdBy: "test@test.com",
     };
     expectTypeOf(task.id).toBeString();
     expectTypeOf(task.nl).toBeString();
@@ -59,6 +61,8 @@ describe("ScheduledTask", () => {
     expectTypeOf(task.buildplan).toBeString();
     expectTypeOf(task.enabled).toBeBoolean();
     expectTypeOf(task.lastRun).toBeNumber();
+    expectTypeOf(task.createdAt).toBeNumber();
+    expectTypeOf(task.createdBy).toBeString();
   });
 
   it("lastCompleted is optional", () => {
@@ -71,6 +75,8 @@ describe("ScheduledTask", () => {
       enabled: true,
       lastRun: 1700000000,
       lastCompleted: 1700000060,
+      createdAt: 1714000000,
+      createdBy: "test@test.com",
     };
     expectTypeOf(withCompletion.lastCompleted).toEqualTypeOf<
       number | undefined
