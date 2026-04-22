@@ -9,7 +9,11 @@ tsconfig.tsbuildinfo
 .env.local
 
 # CAE runtime state (regenerated per run; not code)
-.cae/
+# .cae/ has sub-exceptions: .cae/logs/.gitkeep must be tracked so the log dir exists
+.cae/**
+!.cae/logs/
+!.cae/logs/.gitkeep
+.cae/logs/*.jsonl
 .planning/phases/*/tasks/
 .planning/phases/*/CAE-SUMMARY.md
 .planning/review/
