@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v0.1
 milestone_name: milestone
 status: executing
-last_updated: "2026-04-22T16:20:41.182Z"
+last_updated: "2026-04-23T01:26:28.000Z"
 progress:
   total_phases: 12
   completed_phases: 6
   total_plans: 52
-  completed_plans: 43
-  percent: 83
+  completed_plans: 44
+  percent: 85
 ---
 
 # cae-dashboard — Project State
@@ -24,12 +24,14 @@ progress:
 
 ## Active Phase
 
-Phase 09 — Wave 3 complete (09-06 done). Wave 4 (09-07 /chat full-page split) is next.
+Phase 09 — Wave 4 complete (09-07 done). Wave 5 (09-08 verification + human UAT) is next.
 
-**Last session:** 2026-04-22T16:19:15Z — Stopped at: Completed 09-06-PLAN.md
+**Last session:** 2026-04-23T01:26:28.000Z — Stopped at: Completed 09-07-PLAN.md
 
 ## Key Decisions (Phase 09)
 
+- **09-07:** Top-nav icon order: Memory · Metrics · ChatPopOutIcon before separator, then Heartbeat · DevBadge · UserMenu.
+- **09-07:** ChatMirror rich renderers for Home + Changes; JSON fallback for Agents/Workflows/Queue/Metrics/Memory; Phase 12 deferred.
 - **09-06:** ConfirmActionDialog dev-mode bypass fires via useEffect (component renders null immediately; onAccept + undo toast fire async). cancel() closes dialog (plan said no-op; required for correct UX).
 - **09-06:** WorkflowForm / editor page has no Run-now button; list page is only run entry point.
 - **09-05:** Provider split outer session-gate + inner AuthedChatRailProvider (rules-of-hooks safe).
