@@ -10,8 +10,8 @@
  *   4. ArrowDown from a focused leaf moves focus to the next leaf.
  */
 
-import { describe, it, expect, vi } from "vitest";
-import { render, screen, within, fireEvent, act } from "@testing-library/react";
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { render, screen, within, fireEvent, act, waitFor } from "@testing-library/react";
 import { FileTree } from "./file-tree";
 import type { MemoryTreeNode } from "@/lib/cae-memory-sources";
 
@@ -21,17 +21,54 @@ vi.mock("@/lib/providers/dev-mode", () => ({
   useDevMode: () => ({ dev: false, toggle: () => {}, setDev: () => {} }),
 }));
 
-// Mock next/navigation: useRouter used by EmptyState CTA in the empty branch.
+// Mock next/navigation: useRouter used by the regenerate handler + router.refresh().
 const mockPush = vi.fn();
+const mockRefresh = vi.fn();
 vi.mock("next/navigation", () => ({
-  useRouter: () => ({ push: mockPush }),
+  useRouter: () => ({ push: mockPush, refresh: mockRefresh }),
 }));
 
+// Mock sonner toast so error paths don't blow up in jsdom.
+vi.mock("sonner", () => ({ toast: { error: vi.fn() } }));
+
 describe("FileTree", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   it("renders the empty state when nodes is an empty array", () => {
     render(<FileTree nodes={[]} selectedPath={null} onSelect={() => {}} />);
     const empty = screen.getByTestId("file-tree-empty");
     expect(empty.textContent?.length).toBeGreaterThan(0);
+  });
+
+  it("IN-01 regression: Regenerate CTA POSTs to /api/memory/regenerate, does NOT navigate", async () => {
+    // Before fix: onClick called router.push("/memory?view=graph").
+    // After fix: onClick fetches POST /api/memory/regenerate then router.refresh().
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
+      new Response(null, { status: 200 }),
+    );
+
+    render(<FileTree nodes={[]} selectedPath={null} onSelect={() => {}} />);
+
+    const btn = screen.getByRole("button", { name: /regenerate/i });
+    await act(async () => {
+      fireEvent.click(btn);
+    });
+
+    await waitFor(() => {
+      expect(fetchSpy).toHaveBeenCalledWith(
+        "/api/memory/regenerate",
+        expect.objectContaining({ method: "POST" }),
+      );
+    });
+
+    // Must NOT have navigated away — router.push must not be called.
+    expect(mockPush).not.toHaveBeenCalled();
+    // router.refresh() called to reload tree data.
+    expect(mockRefresh).toHaveBeenCalledTimes(1);
+
+    fetchSpy.mockRestore();
   });
 
   it("renders a two-level tree and fires onSelect(absPath) with the correct arg on leaf click", () => {

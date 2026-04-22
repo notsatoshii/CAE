@@ -39,6 +39,7 @@ import { labelFor } from "@/lib/copy/labels";
 import { useDevMode } from "@/lib/providers/dev-mode";
 import { EmptyState, EmptyStateActions } from "@/components/ui/empty-state";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 export interface FileTreeProps {
   nodes: MemoryTreeNode[];
@@ -71,6 +72,28 @@ export function FileTree({ nodes, selectedPath, onSelect }: FileTreeProps) {
   const { dev } = useDevMode();
   const labels = labelFor(dev);
   const router = useRouter();
+
+  // IN-01 fix: track regeneration pending state so the CTA disables while
+  // the POST is in-flight and shows the correct pending label.
+  const [regenerating, setRegenerating] = useState(false);
+
+  const handleRegenerate = useCallback(async () => {
+    if (regenerating) return;
+    setRegenerating(true);
+    try {
+      const res = await fetch("/api/memory/regenerate", { method: "POST" });
+      if (!res.ok) {
+        toast.error(labels.memoryLoadFailed);
+        return;
+      }
+      // Refresh the server component so the updated tree is fetched.
+      router.refresh();
+    } catch {
+      toast.error(labels.memoryLoadFailed);
+    } finally {
+      setRegenerating(false);
+    }
+  }, [regenerating, router, labels.memoryLoadFailed]);
 
   const [expanded, setExpanded] = useState<Set<string>>(() =>
     collectDefaultExpanded(nodes),
@@ -116,11 +139,16 @@ export function FileTree({ nodes, selectedPath, onSelect }: FileTreeProps) {
         body={labels.emptyMemoryBrowseBody}
         actions={
           <EmptyStateActions>
+            {/* IN-01 fix: POST to /api/memory/regenerate instead of navigating away. */}
             <Button
               variant="secondary"
-              onClick={() => router.push("/memory?view=graph")}
+              onClick={handleRegenerate}
+              disabled={regenerating}
+              aria-busy={regenerating}
             >
-              {labels.emptyMemoryBrowseCtaRegenerate}
+              {regenerating
+                ? labels.memoryBtnRegeneratePending
+                : labels.emptyMemoryBrowseCtaRegenerate}
             </Button>
           </EmptyStateActions>
         }
