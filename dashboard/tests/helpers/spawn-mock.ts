@@ -25,8 +25,8 @@ type CloseCallback = (code: number) => void;
 export interface MockChildProcess {
   stdout: AsyncIterable<Buffer>;
   stderr: AsyncIterable<Buffer>;
-  on(event: "close", cb: CloseCallback): this;
-  on(event: string, cb: (...args: unknown[]) => void): this;
+  // Single signature accepting the union — satisfies both "close" and generic string callers
+  on(event: string, cb: (code: number) => void): this;
   kill(): void;
 }
 
@@ -47,7 +47,7 @@ export function mockSpawn(opts: MockSpawnOpts = {}): MockChildProcess {
     stdout: toAsyncIterable(stdout),
     stderr: toAsyncIterable(stderr),
 
-    on(event: string, cb: (...args: unknown[]) => void): MockChildProcess {
+    on(event: string, cb: (code: number) => void): MockChildProcess {
       if (event === "close") {
         closeHandlers.push(cb as CloseCallback);
         // Fire on next microtask — after stdout/stderr are consumed
