@@ -22,6 +22,7 @@
  */
 
 import { useEffect, useRef, useState, useCallback } from "react";
+import { Panel } from "@/components/ui/panel";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -139,22 +140,17 @@ export function IncidentStream() {
   // Render
   // ---------------------------------------------------------------------------
 
-  return (
-    <section
-      className="flex flex-col gap-2"
-      aria-label="Incident stream — recent server warnings and errors"
-    >
-      <div className="flex items-baseline justify-between">
-        <h2 className="text-base font-semibold tracking-tight text-[color:var(--text)]">
-          Incident Stream
-        </h2>
-        <p className="text-xs text-[color:var(--text-dim)]">
-          {entries.length === 0
-            ? "Waiting for events…"
-            : `${entries.length} event${entries.length === 1 ? "" : "s"}`}
-        </p>
-      </div>
+  const subtitle = entries.length === 0
+    ? "Waiting for events…"
+    : `${entries.length} event${entries.length === 1 ? "" : "s"}`;
 
+  return (
+    <Panel
+      title="Incident Stream"
+      subtitle={subtitle}
+      testId="incident-stream-panel"
+      className="flex flex-col gap-2"
+    >
       {/* Empty state */}
       {entries.length === 0 && (
         <div
@@ -178,7 +174,7 @@ export function IncidentStream() {
           <p className="text-sm font-medium text-[color:var(--text)]">
             No incidents since {mountTime.toLocaleTimeString()}
           </p>
-          <p className="text-xs text-[color:var(--text-dim)]">Gateway healthy.</p>
+          <p className="text-xs text-[color:var(--text-muted)]">Gateway healthy.</p>
         </div>
       )}
 
@@ -208,7 +204,7 @@ export function IncidentStream() {
                   <span data-testid={sev.testId} className={sev.badgeClass}>
                     {sev.label}
                   </span>
-                  <span className="font-mono text-[11px] tabular-nums text-[color:var(--text-dim)]">
+                  <span className="font-mono text-[11px] tabular-nums text-[color:var(--text-muted)]">
                     {formatTime(entry.time)}
                   </span>
                   {entry.scope && (
@@ -234,6 +230,6 @@ export function IncidentStream() {
           })}
         </div>
       )}
-    </section>
+    </Panel>
   );
 }

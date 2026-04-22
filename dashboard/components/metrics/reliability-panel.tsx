@@ -35,6 +35,7 @@ import { HaltEventsLog } from "./halt-events-log";
 import { SentinelRejectTrend } from "./sentinel-reject-trend";
 import { ExplainTooltip } from "@/components/ui/explain-tooltip";
 import { GoldenSignalsSubtitle } from "./golden-signals-subtitles";
+import { Panel } from "@/components/ui/panel";
 import { EmptyState, EmptyStateActions } from "@/components/ui/empty-state";
 import { Button } from "@/components/ui/button";
 
@@ -48,57 +49,39 @@ export function ReliabilityPanel() {
 
   if (error && !data) {
     return (
-      <section
-        data-testid="reliability-panel-error"
-        aria-labelledby="reliability-heading"
-        className="rounded-lg border border-[color:var(--border)] bg-[color:var(--surface)] p-6"
+      <Panel
+        title={L.metricsWellHeading}
+        headingId="reliability-heading"
+        testId="reliability-panel-error"
       >
-        <h2
-          id="reliability-heading"
-          className="text-lg font-semibold text-[color:var(--text)]"
-        >
-          {L.metricsWellHeading}
-        </h2>
-        <p className="mt-2 text-sm text-[color:var(--text-muted)]">
+        <p className="text-sm text-[color:var(--text-muted)]">
           {L.metricsFailedToLoad}
         </p>
-      </section>
+      </Panel>
     );
   }
 
   // WR-02: show loading state while first fetch is in-flight, not EmptyState.
   if (loading && !data) {
     return (
-      <section
-        data-testid="reliability-panel-loading"
-        aria-labelledby="reliability-heading"
-        className="rounded-lg border border-[color:var(--border)] bg-[color:var(--surface)] p-6"
+      <Panel
+        title={L.metricsWellHeading}
+        headingId="reliability-heading"
+        testId="reliability-panel-loading"
       >
-        <h2
-          id="reliability-heading"
-          className="text-lg font-semibold text-[color:var(--text)]"
-        >
-          {L.metricsWellHeading}
-        </h2>
-        <p className="mt-4 text-sm text-[color:var(--text-muted)]">{L.metricsEmptyState}</p>
-      </section>
+        <p className="text-sm text-[color:var(--text-muted)]">{L.metricsEmptyState}</p>
+      </Panel>
     );
   }
 
   // Only show EmptyState when fetch has completed and genuinely returned no data.
   if (!loading && !data) {
     return (
-      <section
-        data-testid="reliability-panel-empty"
-        aria-labelledby="reliability-heading"
-        className="rounded-lg border border-[color:var(--border)] bg-[color:var(--surface)] p-6"
+      <Panel
+        title={L.metricsWellHeading}
+        headingId="reliability-heading"
+        testId="reliability-panel-empty"
       >
-        <h2
-          id="reliability-heading"
-          className="text-lg font-semibold text-[color:var(--text)]"
-        >
-          {L.metricsWellHeading}
-        </h2>
         <EmptyState
           icon={LineChart}
           heading={L.emptyMetricsPanelHeading}
@@ -111,11 +94,12 @@ export function ReliabilityPanel() {
             </EmptyStateActions>
           }
         />
-      </section>
+      </Panel>
     );
   }
 
-  const r = data.reliability;
+  // data is guaranteed non-null here — all null paths return early above.
+  const r = data!.reliability;
 
   // Sample-weighted overall rate across agents with n >= 5.
   const qualified = r.per_agent_7d.filter(
@@ -131,27 +115,22 @@ export function ReliabilityPanel() {
   const byAgent = new Map(r.per_agent_7d.map((p) => [p.agent, p]));
 
   return (
-    <section
-      data-testid="reliability-panel"
-      aria-labelledby="reliability-heading"
-      className="flex flex-col gap-6 rounded-lg border border-[color:var(--border)] bg-[color:var(--surface)] p-6"
+    <Panel
+      title={L.metricsWellHeading}
+      headingId="reliability-heading"
+      testId="reliability-panel"
+      className="flex flex-col gap-6"
     >
-      <header>
-        <h2
-          id="reliability-heading"
-          className="text-lg font-semibold text-[color:var(--text)]"
-        >
-          {L.metricsWellHeading}
-        </h2>
+      <div>
         <GoldenSignalsSubtitle panel="howwell" />
-        <p className="mt-1 flex items-center gap-1.5 text-sm text-[color:var(--text-muted)]">
+        <p className="flex items-center gap-1.5 text-sm text-[color:var(--text-muted)]">
           <span>{L.metricsWellLede(weightedRate)}</span>
           <ExplainTooltip
             text={L.metricsExplainSuccessRate}
             ariaLabel="Explain success rate"
           />
         </p>
-      </header>
+      </div>
 
       {/* Per-agent gauges — iterate AGENT_META so every agent shows even when
           the aggregator omits one (defensive; aggregator currently emits all 9). */}
@@ -202,6 +181,6 @@ export function ReliabilityPanel() {
         </h3>
         <SentinelRejectTrend data={r.sentinel_rejects_30d} />
       </div>
-    </section>
+    </Panel>
   );
 }

@@ -301,9 +301,14 @@ export function ChatPanel({ standalone = false }: { standalone?: boolean } = {})
             {t.chatFailedToLoad}
           </p>
         ) : messages.length === 0 ? (
-          <p className="text-sm text-[color:var(--text-muted,#8a8a8c)]">
-            {t.chatEmptyThread}
-          </p>
+          <div className="flex h-full flex-col items-center justify-center gap-2 text-center">
+            <p className="text-[15px] font-medium text-[color:var(--text-muted)]">
+              {t.chatEmptyThread}
+            </p>
+            <p className="text-[13px] text-[color:var(--text-muted)] opacity-70">
+              Type a message below to get started.
+            </p>
+          </div>
         ) : (
           messages.map((m, idx) => (
             <Message
@@ -350,7 +355,7 @@ export function ChatPanel({ standalone = false }: { standalone?: boolean } = {})
           placeholder={t.chatInputPlaceholder}
           rows={2}
           aria-label={t.chatInputPlaceholder}
-          className="flex-1 resize-none text-sm bg-transparent border border-[color:var(--border,#1f1f22)] rounded p-1 text-[color:var(--text,#e5e5e5)] placeholder:text-[color:var(--text-dim,#5a5a5c)] disabled:opacity-60"
+          className="flex-1 resize-none text-[15px] bg-transparent border border-[color:var(--border,#1f1f22)] rounded p-2 text-[color:var(--text,#e5e5e5)] placeholder:text-[color:var(--text-muted)] disabled:opacity-60"
         />
         <button
           type="submit"

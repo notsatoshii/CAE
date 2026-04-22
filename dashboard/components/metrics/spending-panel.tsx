@@ -39,6 +39,7 @@ import { TopExpensiveTasks } from "./top-expensive-tasks";
 import { EstDisclaimer } from "./est-disclaimer";
 import { ExplainTooltip } from "@/components/ui/explain-tooltip";
 import { GoldenSignalsSubtitle } from "./golden-signals-subtitles";
+import { Panel } from "@/components/ui/panel";
 import { EmptyState, EmptyStateActions } from "@/components/ui/empty-state";
 import { Button } from "@/components/ui/button";
 
@@ -56,57 +57,39 @@ export function SpendingPanel() {
 
   if (error && !data) {
     return (
-      <section
-        data-testid="spending-panel-error"
-        aria-labelledby="spending-heading"
-        className="rounded-lg border border-[color:var(--border)] bg-[color:var(--surface)] p-6"
+      <Panel
+        title={L.metricsSpendingHeading}
+        headingId="spending-heading"
+        testId="spending-panel-error"
       >
-        <h2
-          id="spending-heading"
-          className="text-lg font-semibold text-[color:var(--text)]"
-        >
-          {L.metricsSpendingHeading}
-        </h2>
-        <p className="mt-2 text-sm text-[color:var(--text-muted)]">
+        <p className="text-sm text-[color:var(--text-muted)]">
           {L.metricsFailedToLoad}
         </p>
-      </section>
+      </Panel>
     );
   }
 
   // WR-02: show loading state while first fetch is in-flight, not EmptyState.
   if (loading && !data) {
     return (
-      <section
-        data-testid="spending-panel-loading"
-        aria-labelledby="spending-heading"
-        className="rounded-lg border border-[color:var(--border)] bg-[color:var(--surface)] p-6"
+      <Panel
+        title={L.metricsSpendingHeading}
+        headingId="spending-heading"
+        testId="spending-panel-loading"
       >
-        <h2
-          id="spending-heading"
-          className="text-lg font-semibold text-[color:var(--text)]"
-        >
-          {L.metricsSpendingHeading}
-        </h2>
-        <p className="mt-4 text-sm text-[color:var(--text-muted)]">{L.metricsEmptyState}</p>
-      </section>
+        <p className="text-sm text-[color:var(--text-muted)]">{L.metricsEmptyState}</p>
+      </Panel>
     );
   }
 
   // Only show EmptyState when fetch has completed and genuinely returned no data.
   if (!loading && !data) {
     return (
-      <section
-        data-testid="spending-panel-empty"
-        aria-labelledby="spending-heading"
-        className="rounded-lg border border-[color:var(--border)] bg-[color:var(--surface)] p-6"
+      <Panel
+        title={L.metricsSpendingHeading}
+        headingId="spending-heading"
+        testId="spending-panel-empty"
       >
-        <h2
-          id="spending-heading"
-          className="text-lg font-semibold text-[color:var(--text)]"
-        >
-          {L.metricsSpendingHeading}
-        </h2>
         <EmptyState
           icon={LineChart}
           heading={L.emptyMetricsPanelHeading}
@@ -119,30 +102,22 @@ export function SpendingPanel() {
             </EmptyStateActions>
           }
         />
-      </section>
+      </Panel>
     );
   }
 
-  const s = data.spending;
+  // data is guaranteed non-null here — all null paths return early above.
+  const s = data!.spending;
 
   return (
-    <section
-      data-testid="spending-panel"
-      aria-labelledby="spending-heading"
-      className="flex flex-col gap-6 rounded-lg border border-[color:var(--border)] bg-[color:var(--surface)] p-6"
+    <Panel
+      title={L.metricsSpendingHeading}
+      headingId="spending-heading"
+      testId="spending-panel"
+      subtitle={<EstDisclaimer />}
+      className="flex flex-col gap-6"
     >
-      <header className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h2
-            id="spending-heading"
-            className="text-lg font-semibold text-[color:var(--text)]"
-          >
-            {L.metricsSpendingHeading}
-          </h2>
-          <GoldenSignalsSubtitle panel="spending" />
-        </div>
-        <EstDisclaimer />
-      </header>
+      <GoldenSignalsSubtitle panel="spending" />
 
       {/* Big-number row */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
@@ -193,7 +168,7 @@ export function SpendingPanel() {
         </h3>
         <TopExpensiveTasks data={s.top_expensive} />
       </div>
-    </section>
+    </Panel>
   );
 }
 

@@ -127,7 +127,7 @@ export function GoldenSignalsSubtitle({ panel }: Props) {
   return (
     <p
       data-testid={`golden-signals-subtitle-${panel}`}
-      className="text-[11px] font-mono text-[color:var(--text-dim)] mt-0.5 mb-2 select-none"
+      className="text-[12px] font-mono text-[color:var(--text-muted)] mt-0.5 mb-2 select-none"
       aria-label={`Golden Signals: ${line}`}
     >
       {line}

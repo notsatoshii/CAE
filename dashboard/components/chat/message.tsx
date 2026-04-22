@@ -45,36 +45,64 @@ export function Message({ role, content, agent, ts, streaming }: MessageProps) {
       data-testid={`chat-msg-${role}`}
       className={
         role === "user"
-          ? "py-2"
-          : "py-2 border-l-2 pl-3 border-[color:var(--accent-muted,#00d4ff20)]"
+          ? "flex justify-end py-1"
+          : "flex items-start gap-2 py-1"
       }
     >
-      <div className="text-xs font-mono text-[color:var(--text-dim,#5a5a5c)] mb-0.5 flex items-center gap-1">
-        {meta ? <span aria-hidden>{meta.emoji}</span> : null}
-        <span>{who}</span>
+      {/* Assistant avatar — outside the bubble, left side */}
+      {role === "assistant" && (
+        <div
+          aria-hidden
+          className="mt-1 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-[color:var(--border)] bg-[color:var(--surface)] text-[11px]"
+        >
+          {meta?.emoji ?? "🤖"}
+        </div>
+      )}
+
+      <div
+        className={
+          "flex max-w-[65ch] flex-col gap-0.5 " +
+          (role === "user" ? "items-end" : "items-start")
+        }
+      >
+        {/* Role label */}
+        <span className="px-1 text-[11px] font-mono text-[color:var(--text-muted)]">
+          {who}
+        </span>
+
+        {/* Bubble */}
+        <div
+          className={
+            "rounded-lg p-3 text-[15px] text-[color:var(--text)] break-words " +
+            (role === "user"
+              ? "bg-[color:var(--accent)]/10 border border-[color:var(--accent)]/20"
+              : "border border-[color:var(--border)] bg-[color:var(--bg-elev,var(--surface))]")
+          }
+        >
+          {role === "assistant" ? (
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
+          ) : (
+            content
+          )}
+          {streaming ? (
+            <span
+              className="inline-block w-1.5 h-4 bg-[color:var(--accent,#00d4ff)] align-middle ml-1 animate-pulse motion-reduce:animate-none"
+              aria-hidden
+            />
+          ) : null}
+        </div>
+
+        {/* Timestamp */}
         {ts ? (
           <time
             dateTime={ts}
-            className="ml-1 text-[color:var(--text-dim,#5a5a5c)]"
+            className="px-1 font-mono text-[11px] text-[color:var(--text-muted)]"
           >
             {new Date(ts).toLocaleTimeString([], {
               hour: "2-digit",
               minute: "2-digit",
             })}
           </time>
-        ) : null}
-      </div>
-      <div className="text-sm text-[color:var(--text,#e5e5e5)] whitespace-pre-wrap break-words">
-        {role === "assistant" ? (
-          <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
-        ) : (
-          content
-        )}
-        {streaming ? (
-          <span
-            className="inline-block w-1.5 h-4 bg-[color:var(--accent,#00d4ff)] align-middle ml-1 animate-pulse"
-            aria-hidden
-          />
         ) : null}
       </div>
     </div>

@@ -28,6 +28,7 @@ import { PerAgentWallTable } from "./per-agent-wall-table";
 import { TimeToMergeHistogram } from "./time-to-merge-histogram";
 import { QueueDepthDisplay } from "./queue-depth-display";
 import { ExplainTooltip } from "@/components/ui/explain-tooltip";
+import { Panel } from "@/components/ui/panel";
 import { EmptyState, EmptyStateActions } from "@/components/ui/empty-state";
 import { Button } from "@/components/ui/button";
 import { GoldenSignalsSubtitle } from "./golden-signals-subtitles";
@@ -40,57 +41,39 @@ export function SpeedPanel() {
 
   if (error && !data) {
     return (
-      <section
-        data-testid="speed-panel-error"
-        aria-labelledby="speed-heading"
-        className="rounded-lg border border-[color:var(--border)] bg-[color:var(--surface)] p-6"
+      <Panel
+        title={L.metricsFastHeading}
+        headingId="speed-heading"
+        testId="speed-panel-error"
       >
-        <h2
-          id="speed-heading"
-          className="text-lg font-semibold text-[color:var(--text)]"
-        >
-          {L.metricsFastHeading}
-        </h2>
-        <p className="mt-2 text-sm text-[color:var(--text-muted)]">
+        <p className="text-sm text-[color:var(--text-muted)]">
           {L.metricsFailedToLoad}
         </p>
-      </section>
+      </Panel>
     );
   }
 
   // WR-02: show loading state while first fetch is in-flight, not EmptyState.
   if (loading && !data) {
     return (
-      <section
-        data-testid="speed-panel-loading"
-        aria-labelledby="speed-heading"
-        className="rounded-lg border border-[color:var(--border)] bg-[color:var(--surface)] p-6"
+      <Panel
+        title={L.metricsFastHeading}
+        headingId="speed-heading"
+        testId="speed-panel-loading"
       >
-        <h2
-          id="speed-heading"
-          className="text-lg font-semibold text-[color:var(--text)]"
-        >
-          {L.metricsFastHeading}
-        </h2>
-        <p className="mt-4 text-sm text-[color:var(--text-muted)]">{L.metricsEmptyState}</p>
-      </section>
+        <p className="text-sm text-[color:var(--text-muted)]">{L.metricsEmptyState}</p>
+      </Panel>
     );
   }
 
   // Only show EmptyState when fetch has completed and genuinely returned no data.
   if (!loading && !data) {
     return (
-      <section
-        data-testid="speed-panel-empty"
-        aria-labelledby="speed-heading"
-        className="rounded-lg border border-[color:var(--border)] bg-[color:var(--surface)] p-6"
+      <Panel
+        title={L.metricsFastHeading}
+        headingId="speed-heading"
+        testId="speed-panel-empty"
       >
-        <h2
-          id="speed-heading"
-          className="text-lg font-semibold text-[color:var(--text)]"
-        >
-          {L.metricsFastHeading}
-        </h2>
         <EmptyState
           icon={LineChart}
           heading={L.emptyMetricsPanelHeading}
@@ -103,11 +86,12 @@ export function SpeedPanel() {
             </EmptyStateActions>
           }
         />
-      </section>
+      </Panel>
     );
   }
 
-  const sp = data.speed;
+  // data is guaranteed non-null here — all null paths return early above.
+  const sp = data!.speed;
 
   // Overall P50 across agents with n > 0, weighted by sample count.
   const qualified = sp.per_agent_wall.filter((p) => p.n > 0);
@@ -120,23 +104,18 @@ export function SpeedPanel() {
         );
 
   return (
-    <section
-      data-testid="speed-panel"
-      aria-labelledby="speed-heading"
-      className="flex flex-col gap-6 rounded-lg border border-[color:var(--border)] bg-[color:var(--surface)] p-6"
+    <Panel
+      title={L.metricsFastHeading}
+      headingId="speed-heading"
+      testId="speed-panel"
+      className="flex flex-col gap-6"
     >
-      <header>
-        <h2
-          id="speed-heading"
-          className="text-lg font-semibold text-[color:var(--text)]"
-        >
-          {L.metricsFastHeading}
-        </h2>
+      <div>
         <GoldenSignalsSubtitle panel="howfast" />
-        <p className="mt-1 text-sm text-[color:var(--text-muted)]">
+        <p className="text-sm text-[color:var(--text-muted)]">
           {L.metricsFastLede(overallP50)}
         </p>
-      </header>
+      </div>
 
       {/* Per-agent wall + queue depth — side-by-side on wide screens. */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
@@ -176,6 +155,6 @@ export function SpeedPanel() {
         </h3>
         <TimeToMergeHistogram bins={sp.time_to_merge_bins} />
       </div>
-    </section>
+    </Panel>
   );
 }
