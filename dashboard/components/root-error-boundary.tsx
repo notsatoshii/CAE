@@ -28,6 +28,7 @@
  */
 
 import { useEffect, Component, type ReactNode } from "react";
+import { clientLog } from "@/lib/client-log-bus";
 
 interface ClientErrorPayload {
   message?: string;
@@ -125,6 +126,11 @@ export class RootErrorBoundary extends Component<
       stack: error.stack,
       url: typeof location !== "undefined" ? location.href : undefined,
       userAgent: typeof navigator !== "undefined" ? navigator.userAgent : undefined,
+      componentStack: info.componentStack ?? undefined,
+    });
+    // Also push to client-log-bus so the DebugBreadcrumbPanel shows boundary errors
+    clientLog("error", "boundary", error.message, {
+      stack: error.stack,
       componentStack: info.componentStack ?? undefined,
     });
   }

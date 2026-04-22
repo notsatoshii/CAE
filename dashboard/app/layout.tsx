@@ -15,6 +15,7 @@ import { CommandPalette } from "@/components/palette/command-palette";
 import { ShortcutOverlay } from "@/components/ui/shortcut-overlay";
 import { ClientErrorBridge, RootErrorBoundary } from "@/components/root-error-boundary";
 import { AlertBanner } from "@/components/shell/alert-banner";
+import { DebugBreadcrumbPanel } from "@/components/shell/debug-breadcrumb-panel";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -58,6 +59,7 @@ export default async function RootLayout({
                       {session && <ChatRail />}
                       {session && <CommandPalette />}
                       {session && <ShortcutOverlay />}
+                      {session && <DebugBreadcrumbPanel />}
                       <Toaster />
                     </ShortcutOverlayProvider>
                   </CommandPaletteProvider>
