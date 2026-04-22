@@ -1,0 +1,12 @@
+{
+  "session_id": "00000000-0000-0000-0000-000000000001",
+  "tool_name": "Read",
+  "tool_input": {
+    "file_path": "/home/cae/ctrl-alt-elite/AGENTS.md",
+    "limit": 2000,
+    "offset": 0
+  },
+  "tool_response": {
+    "content": "# AGENTS.md — Team Knowledge Base\n..."
+  }
+}
