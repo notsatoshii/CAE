@@ -106,16 +106,19 @@ describe("renderer", () => {
     expect(calls[0]).toEqual([0, 0, 960, 720]);
   });
 
-  // Test 2: each station draws at least one fillRect AND one fillText
-  it("draws at least 11 fillRect calls (10 stations + 1 bg) and 10 fillText calls", () => {
+  // Test 2: each station draws at least one fill() AND one fillText
+  // Stations use diamond paths (moveTo/lineTo/closePath/fill), not fillRect
+  it("draws at least 10 fill() calls (10 station diamonds) and 10 fillText calls", () => {
     const ctx = mkFakeCtx();
     const scene = createScene();
     render(ctx, scene, baseViewport);
 
-    const fillRectCalls = (ctx.fillRect as ReturnType<typeof vi.fn>).mock.calls;
+    // Stations draw via path fill(); bg uses fillRect; both are valid draw calls
+    const fillCalls = (ctx.fill as ReturnType<typeof vi.fn>).mock.calls;
     const fillTextCalls = (ctx.fillText as ReturnType<typeof vi.fn>).mock.calls;
 
-    expect(fillRectCalls.length).toBeGreaterThanOrEqual(11);
+    // At least 10 fill() calls — one per station diamond
+    expect(fillCalls.length).toBeGreaterThanOrEqual(10);
     expect(fillTextCalls.length).toBeGreaterThanOrEqual(10);
   });
 
@@ -134,42 +137,27 @@ describe("renderer", () => {
 
   // Test 4: Z-sort by (tx + ty)
   it("draws stations z-sorted by (tx + ty) ascending — back stations before front", () => {
-    const ctx = mkFakeCtx();
-    const scene = createScene();
-
     // overlook (2,2) tx+ty=4 should render BEFORE shadow (10,14) tx+ty=24
-    render(ctx, scene, baseViewport);
-
-    // We verify by checking that fillRect calls happen — z-sort is internal
-    // We can't easily grab invocation order by position alone with mkFakeCtx
-    // so we verify the count is consistent (10 stations minimum)
-    const fillRectCalls = (ctx.fillRect as ReturnType<typeof vi.fn>).mock.calls;
-    // After bg fill, stations are drawn; we just assert the order produces >= 11 calls
-    expect(fillRectCalls.length).toBeGreaterThanOrEqual(11);
-
-    // More specific: render a partial scene with two "stations" at known positions
-    // and verify ordering by checking which fill colors appear in which order
-    // We trust implementation-level z-sort by using a scene where two stations
-    // with different statuses are at well-separated depths
-    const ctx2 = mkFakeCtx();
-    const fills2: string[] = [];
-    Object.defineProperty(ctx2, "fillStyle", {
-      set: (v: string) => { fills2.push(v); },
+    // Verify by checking which fill colors appear in which order
+    const ctx = mkFakeCtx();
+    const fills: string[] = [];
+    Object.defineProperty(ctx, "fillStyle", {
+      set: (v: string) => { fills.push(v); },
       get: () => "#000",
       configurable: true,
     });
 
-    const scene2 = createScene();
+    const scene = createScene();
     // overlook at (2,2) tx+ty=4 → drawn first (back)
-    scene2.stations.overlook.status = "active";  // accent #00d4ff
+    scene.stations.overlook.status = "active";  // accent #00d4ff
     // shadow at (10,14) tx+ty=24 → drawn last (front)
-    scene2.stations.shadow.status = "alarm";      // danger #ef4444
+    scene.stations.shadow.status = "alarm";      // danger #ef4444
 
-    render(ctx2, scene2, { ...baseViewport });
+    render(ctx, scene, { ...baseViewport });
 
     // accent should appear before danger in fillStyle sets
-    const accentIdx = fills2.indexOf("#00d4ff");
-    const dangerIdx = fills2.indexOf("#ef4444");
+    const accentIdx = fills.indexOf("#00d4ff");
+    const dangerIdx = fills.indexOf("#ef4444");
     expect(accentIdx).toBeGreaterThanOrEqual(0);
     expect(dangerIdx).toBeGreaterThanOrEqual(0);
     expect(accentIdx).toBeLessThan(dangerIdx);
@@ -291,29 +279,29 @@ describe("renderer", () => {
   });
 
   // Test 12: Viewport camera offset applies
-  it("different cx/cy produces different draw positions (translate or shifted fillRect)", () => {
+  // Stations are drawn via path (moveTo/lineTo) — camera offset shifts moveTo positions
+  it("different cx/cy produces different draw positions (moveTo coords shift with camera)", () => {
     const ctx1 = mkFakeCtx();
-    const rects1: number[][] = [];
-    (ctx1.fillRect as ReturnType<typeof vi.fn>).mockImplementation((...args: number[]) => {
-      rects1.push([...args]);
+    const moves1: number[][] = [];
+    (ctx1.moveTo as ReturnType<typeof vi.fn>).mockImplementation((x: number, y: number) => {
+      moves1.push([x, y]);
     });
     render(ctx1, createScene(), { ...baseViewport, cx: 0, cy: 0 });
 
     const ctx2 = mkFakeCtx();
-    const rects2: number[][] = [];
-    (ctx2.fillRect as ReturnType<typeof vi.fn>).mockImplementation((...args: number[]) => {
-      rects2.push([...args]);
+    const moves2: number[][] = [];
+    (ctx2.moveTo as ReturnType<typeof vi.fn>).mockImplementation((x: number, y: number) => {
+      moves2.push([x, y]);
     });
     render(ctx2, createScene(), { ...baseViewport, cx: 100, cy: 50 });
 
-    // Skip first call (bg fill at 0,0,w,h) — compare a station rect
-    // Rows 1+ should differ in x or y between the two camera offsets
-    expect(rects1.length).toBeGreaterThan(1);
-    expect(rects2.length).toBeGreaterThan(1);
-    // At least one non-bg rect should differ
-    const differ = rects1.slice(1).some((r, i) => {
-      const r2 = rects2[i + 1];
-      return r2 && (r[0] !== r2[0] || r[1] !== r2[1]);
+    // Both renders should have station moveTo calls
+    expect(moves1.length).toBeGreaterThan(0);
+    expect(moves2.length).toBeGreaterThan(0);
+    // At least one moveTo should differ between the two camera offsets
+    const differ = moves1.some((m, i) => {
+      const m2 = moves2[i];
+      return m2 && (m[0] !== m2[0] || m[1] !== m2[1]);
     });
     expect(differ).toBe(true);
   });
