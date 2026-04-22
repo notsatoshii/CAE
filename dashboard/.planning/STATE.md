@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v0.1
 milestone_name: milestone
 status: planning
-stopped_at: Completed 11-04-PLAN.md
-last_updated: "2026-04-23T03:32:00.000Z"
+stopped_at: Completed 11-05-PLAN.md
+last_updated: "2026-04-23T03:45:00.000Z"
 progress:
   total_phases: 14
   completed_phases: 8
   total_plans: 77
-  completed_plans: 54
-  percent: 70
+  completed_plans: 55
+  percent: 71
 ---
 
 # cae-dashboard — Project State
@@ -31,6 +31,14 @@ Plan 10-04 complete (Wave 1 closed). Next: plan 10-05 (API routes).
 
 **Last session:** 2026-04-22T18:13:29.887Z
 **Stopped at:** Completed 11-02-PLAN.md
+
+## Key Decisions (Phase 11 — Plan 05)
+
+- **11-05:** Chrome suppression uses route-scoped `<style dangerouslySetInnerHTML>` with static literal CSS — no user content interpolated; React mounts/unmounts with route (Q1 Option C). TopNav also gets aria-hidden on mount via FloorPopoutHost.
+- **11-05:** Escape-to-close only binds when window.opener != null — prevents closing a bookmarked /floor/popout tab opened directly (T-11-08 mitigation).
+- **11-05:** hasOpener detected via useEffect in FloorClient — SSR-safe; no new prop to FloorClientProps.
+- **11-05:** floorReturnToMain label added: FOUNDER "Back to main window", DEV "Return to main window".
+- **11-05:** Pop-out URL switched from /floor?popout=1&project=X to /floor/popout?project=X — cleaner routing, easier chrome scope, easier bookmarking.
 
 ## Key Decisions (Phase 11 — Plan 04)
 
