@@ -1,0 +1,40 @@
+{
+  "base_url": "http://localhost:3003",
+  "viewports": {
+    "mobile": "375x812",
+    "laptop": "1280x800",
+    "wide":   "1920x1080"
+  },
+  "modes": {
+    "founder": { "explainMode": "true",  "devMode": "false" },
+    "dev":     { "explainMode": "false", "devMode": "true"  }
+  },
+  "mode_viewport_matrix": {
+    "founder": ["mobile", "laptop", "wide"],
+    "dev":     ["laptop"]
+  },
+  "routes": [
+    { "path": "/",             "slug": "root",          "auth": false, "wait_ms": 500 },
+    { "path": "/signin",       "slug": "signin",        "auth": false, "wait_ms": 500 },
+    { "path": "/build",        "slug": "build-home",    "auth": true,  "wait_ms": 800 },
+    { "path": "/build/agents", "slug": "build-agents",  "auth": true,  "wait_ms": 800 },
+    { "path": "/build/changes","slug": "build-changes", "auth": true,  "wait_ms": 800 },
+    { "path": "/build/queue",  "slug": "build-queue",   "auth": true,  "wait_ms": 800 },
+    { "path": "/build/workflows",      "slug": "build-workflows",     "auth": true, "wait_ms": 800 },
+    { "path": "/build/workflows/new",  "slug": "build-workflows-new", "auth": true, "wait_selector": ".monaco-editor", "wait_ms": 2500 },
+    { "path": "/memory",       "slug": "memory-browse", "auth": true, "wait_ms": 1200 },
+    { "path": "/memory?tab=graph", "slug": "memory-graph", "auth": true, "wait_selector": ".react-flow g g", "wait_ms": 3000 },
+    { "path": "/metrics",      "slug": "metrics",       "auth": true, "wait_ms": 1200 },
+    { "path": "/plan",         "slug": "plan",          "auth": true, "wait_ms": 800 },
+    { "path": "/chat",         "slug": "chat",          "auth": true, "wait_ms": 1000 },
+    { "path": "/build/phase/1","slug": "build-phase-1", "auth": true, "wait_ms": 1000 },
+    { "path": "/build/phase/8","slug": "build-phase-8", "auth": true, "wait_ms": 1000 },
+    { "path": "/build/phase/99","slug": "build-phase-404", "auth": true, "wait_ms": 800 }
+  ],
+  "drawer_states": [
+    { "path": "/build?project=cae-dashboard",                                        "slug": "build-task-sheet",    "auth": true, "wait_ms": 1000 },
+    { "path": "/build/agents?agent=forge",                                           "slug": "agent-drawer-forge",  "auth": true, "wait_ms": 1000 },
+    { "path": "/build/agents?agent=scribe",                                          "slug": "agent-drawer-scribe", "auth": true, "wait_ms": 1000 },
+    { "path": "/memory?tab=browse",                                                  "slug": "memory-browse-tab",   "auth": true, "wait_ms": 1000 }
+  ]
+}

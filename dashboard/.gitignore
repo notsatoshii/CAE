@@ -17,3 +17,10 @@ tsconfig.tsbuildinfo
 .shift/state.json
 .shift/arch/
 .shift/research/
+
+# Phase 13 audit artifacts (large, regenerable)
+# shots/* ignores PNGs but allows .gitkeep (negation on dir/ won't unignore children)
+.planning/phases/13-ui-ux-review-polish-loop/shots/*
+!.planning/phases/13-ui-ux-review-polish-loop/shots/.gitkeep
+.planning/phases/13-ui-ux-review-polish-loop/scripts/storage-state.json
+.planning/phases/13-ui-ux-review-polish-loop/audit/working/
