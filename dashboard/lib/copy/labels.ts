@@ -309,6 +309,7 @@ export interface Labels {
   floorPause: string;
   floorLegend: string;
   floorReducedMotionNotice: string;
+  floorAuthDriftNotice: string;
   floorStationHub: string;
   floorStationForge: string;
   floorStationWatchtower: string;
@@ -628,6 +629,7 @@ const FOUNDER: Labels = {
   floorPause: "Pause animations",
   floorLegend: "What am I looking at?",
   floorReducedMotionNotice: "Calm mode on — no animations",
+  floorAuthDriftNotice: "Please sign in again in the main window",
   floorStationHub: "The conductor's desk",
   floorStationForge: "The builder's forge",
   floorStationWatchtower: "The checker's watchtower",
@@ -951,6 +953,7 @@ const DEV: Labels = {
   floorPause: "Pause",
   floorLegend: "Legend",
   floorReducedMotionNotice: "Reduced motion active — effects disabled",
+  floorAuthDriftNotice: "Session expired — re-auth in main window",
   floorStationHub: "Nexus hub",
   floorStationForge: "Forge",
   floorStationWatchtower: "Sentinel watchtower",
