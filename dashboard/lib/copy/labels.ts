@@ -253,6 +253,35 @@ export interface Labels {
   metricsExplainQueueDepth: string;
   metricsExplainTimeToMerge: string;
   metricsExplainRetryHeatmap: string;
+
+  // === Phase 8: Memory ===
+  memoryPageHeading: string;
+  memoryTabBrowse: string;
+  memoryTabGraph: string;
+  memorySearchPlaceholder: string;
+  memoryBtnRegenerate: string;
+  memoryBtnRegeneratePending: string;
+  memoryBtnRegenerateCooldown: (s: number) => string;
+  memoryBtnWhy: string;
+  memoryLabelBackLinks: string;
+  memoryLabelTimeline: string;
+  memoryNodeDrawerHeading: (id: string) => string;
+  memoryGraphFilterPhases: string;
+  memoryGraphFilterAgents: string;
+  memoryGraphFilterNotes: string;
+  memoryGraphFilterPrds: string;
+  memoryGraphNodeCapBanner: (shown: number, total: number) => string;
+  memoryWhyEmpty: string;
+  memoryWhyLiveTracePill: string;
+  memoryWhyHeuristicPill: string;
+  memoryEmptyBrowse: string;
+  memoryEmptyGraph: string;
+  memoryExplainGraph: string;
+  memoryExplainWhy: string;
+  memoryExplainSearch: string;
+  memoryExplainRegenerate: string;
+  memoryFileNotFound: string;
+  memoryLoadFailed: string;
 }
 
 const FOUNDER: Labels = {
@@ -468,6 +497,36 @@ const FOUNDER: Labels = {
   metricsExplainQueueDepth: "How many jobs are queued up right now, waiting to start.",
   metricsExplainTimeToMerge: "From 'start this' to 'shipped' — including any retries.",
   metricsExplainRetryHeatmap: "Darker squares = more retries at that weekday+hour. Helps spot rough patches.",
+
+  // === Phase 8: Memory ===
+  memoryPageHeading: "Memory",
+  memoryTabBrowse: "Browse",
+  memoryTabGraph: "Graph",
+  memorySearchPlaceholder: "Search everything CAE remembers…",
+  memoryBtnRegenerate: "Regenerate graph",
+  memoryBtnRegeneratePending: "Regenerating…",
+  memoryBtnRegenerateCooldown: (s) => "Ready in " + s + "s",
+  memoryBtnWhy: "Why?",
+  memoryLabelBackLinks: "Also mentioned in",
+  memoryLabelTimeline: "When this changed",
+  memoryNodeDrawerHeading: (id) => "About " + id,
+  memoryGraphFilterPhases: "Work in progress",
+  memoryGraphFilterAgents: "Agents",
+  memoryGraphFilterNotes: "Notes",
+  memoryGraphFilterPrds: "Product briefs",
+  memoryGraphNodeCapBanner: (shown, total) =>
+    "Showing " + shown + " of " + total + " — narrow the filter to see more",
+  memoryWhyEmpty: "No memory consulted for this task.",
+  memoryWhyLiveTracePill: "Live trace",
+  memoryWhyHeuristicPill: "Heuristic — no trace captured",
+  memoryEmptyBrowse: "Nothing to show yet.",
+  memoryEmptyGraph: "Graph not built yet. Click Regenerate to start.",
+  memoryExplainGraph: "Arrows show which notes mention which.",
+  memoryExplainWhy: "These are the memory entries CAE actually read during this task.",
+  memoryExplainSearch: "Full-text search across every memory file.",
+  memoryExplainRegenerate: "Rebuilds the knowledge graph from current memory files.",
+  memoryFileNotFound: "This file's gone.",
+  memoryLoadFailed: "Couldn't load that.",
 };
 
 const DEV: Labels = {
@@ -688,6 +747,36 @@ const DEV: Labels = {
   metricsExplainQueueDepth: "Current length of .cae/inbox across all projects.",
   metricsExplainTimeToMerge: "outbox DONE.md mtime - inbox creation time.",
   metricsExplainRetryHeatmap: "forge_end(success:false) + limit_exceeded(max_retries) bucketed by UTC DoW x hour, 7d.",
+
+  // === Phase 8: Memory ===
+  memoryPageHeading: "Memory",
+  memoryTabBrowse: "Browse",
+  memoryTabGraph: "Graph",
+  memorySearchPlaceholder: "rg-backed full-text search",
+  memoryBtnRegenerate: "regenerate graph.json (graphify --mode fast)",
+  memoryBtnRegeneratePending: "spawning graphify…",
+  memoryBtnRegenerateCooldown: (s) => "cooldown " + s + "s",
+  memoryBtnWhy: "Trace memory reads",
+  memoryLabelBackLinks: "Back-references",
+  memoryLabelTimeline: "git log --follow",
+  memoryNodeDrawerHeading: (id) => id,
+  memoryGraphFilterPhases: "Phases",
+  memoryGraphFilterAgents: "Agents",
+  memoryGraphFilterNotes: "Notes",
+  memoryGraphFilterPrds: "PRDs",
+  memoryGraphNodeCapBanner: (shown, total) =>
+    "node cap " + shown + "/" + total,
+  memoryWhyEmpty: "0 memory_consult events",
+  memoryWhyLiveTracePill: "Live trace (memory_consult events)",
+  memoryWhyHeuristicPill: "Heuristic — files_modified ∩ memory sources",
+  memoryEmptyBrowse: "tree empty",
+  memoryEmptyGraph: "no graph.json — regenerate",
+  memoryExplainGraph: "edges: graphify tree-sitter AST refs",
+  memoryExplainWhy: "PostToolUse Read hook events, grouped by task_id",
+  memoryExplainSearch: "ripgrep --smart-case --glob='*.md'",
+  memoryExplainRegenerate: "spawn graphify --mode fast --no-viz --update",
+  memoryFileNotFound: "404",
+  memoryLoadFailed: "fetch failed",
 };
 
 export function labelFor(dev: boolean): Labels {
