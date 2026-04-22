@@ -10,10 +10,23 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, cleanup } from "@testing-library/react";
+import React from "react";
 import FloorCanvas, { __test } from "./floor-canvas";
+import { DevModeProvider } from "@/lib/providers/dev-mode";
+import path from "node:path";
+import fs from "node:fs";
+
+/** Wrap component in required providers for testing */
+function renderCanvas(props: { cbPath: string; paused?: boolean }) {
+  return render(
+    <DevModeProvider>
+      <FloorCanvas {...props} />
+    </DevModeProvider>,
+  );
+}
 
 // ---------------------------------------------------------------------------
-// Fake Canvas context (same approach as renderer.test.ts)
+// Fake Canvas context
 // ---------------------------------------------------------------------------
 
 function mkFakeCtx() {
@@ -86,6 +99,16 @@ beforeEach(() => {
   FakeEventSource.instances = [];
   vi.stubGlobal("EventSource", FakeEventSource);
 
+  // Default ResizeObserver stub (jsdom lacks it)
+  vi.stubGlobal(
+    "ResizeObserver",
+    class {
+      observe() {}
+      disconnect() {}
+      unobserve() {}
+    },
+  );
+
   // Default matchMedia: reduced motion OFF
   vi.stubGlobal("matchMedia", (query: string) => ({
     matches: false,
@@ -107,8 +130,8 @@ afterEach(() => {
 });
 
 const tick = (ts = 16) => {
-  (globalThis as Record<string, unknown>)["__tickRAF"] &&
-    ((globalThis as Record<string, unknown>)["__tickRAF"] as (ts: number) => void)(ts);
+  const fn = (globalThis as Record<string, unknown>)["__tickRAF"];
+  if (typeof fn === "function") (fn as (ts: number) => void)(ts);
 };
 
 // ---------------------------------------------------------------------------
@@ -118,14 +141,14 @@ const tick = (ts = 16) => {
 describe("FloorCanvas", () => {
   // Test 1: mounts without throwing
   it("mounts without throwing; canvas element present", () => {
-    expect(() => render(<FloorCanvas cbPath="/tmp/x.jsonl" />)).not.toThrow();
+    expect(() => renderCanvas({ cbPath: "/tmp/x.jsonl" })).not.toThrow();
     const canvas = document.querySelector("canvas");
     expect(canvas).not.toBeNull();
   });
 
   // Test 2: opens SSE with encoded path on mount
   it("opens EventSource with encoded cbPath on mount", () => {
-    render(<FloorCanvas cbPath="/tmp/x.jsonl" />);
+    renderCanvas({ cbPath: "/tmp/x.jsonl" });
     expect(FakeEventSource.instances.length).toBe(1);
     expect(FakeEventSource.instances[0].url).toBe(
       "/api/tail?path=" + encodeURIComponent("/tmp/x.jsonl"),
@@ -134,7 +157,7 @@ describe("FloorCanvas", () => {
 
   // Test 3: closes SSE on unmount
   it("closes EventSource on unmount", () => {
-    const { unmount } = render(<FloorCanvas cbPath="/tmp/x.jsonl" />);
+    const { unmount } = renderCanvas({ cbPath: "/tmp/x.jsonl" });
     unmount();
     expect(FakeEventSource.instances[0].closed).toBe(true);
   });
@@ -148,24 +171,22 @@ describe("FloorCanvas", () => {
 
   // Test 5: oversize line dropped — no effect drawn
   it("drops SSE frames exceeding MAX_LINE_BYTES", () => {
-    render(<FloorCanvas cbPath="/tmp/x.jsonl" />);
+    renderCanvas({ cbPath: "/tmp/x.jsonl" });
     const es = FakeEventSource.instances[0];
 
-    // Emit a valid line first to set baseline
     const arcBefore = (fakeCtx.arc as ReturnType<typeof vi.fn>).mock.calls.length;
 
-    // Emit oversize data (5000 chars)
+    // Emit oversize data (5001 chars > 4096)
     es.emit("x".repeat(5001));
     tick(16);
 
-    // arc call count should not have increased (no fireworks effect)
     const arcAfter = (fakeCtx.arc as ReturnType<typeof vi.fn>).mock.calls.length;
     expect(arcAfter).toBe(arcBefore);
   });
 
   // Test 6: invalid JSON silently dropped
   it("silently drops invalid JSON SSE frames", () => {
-    render(<FloorCanvas cbPath="/tmp/x.jsonl" />);
+    renderCanvas({ cbPath: "/tmp/x.jsonl" });
     const es = FakeEventSource.instances[0];
 
     expect(() => {
@@ -176,7 +197,7 @@ describe("FloorCanvas", () => {
 
   // Test 7: unknown event silently dropped
   it("silently drops unknown event names", () => {
-    render(<FloorCanvas cbPath="/tmp/x.jsonl" />);
+    renderCanvas({ cbPath: "/tmp/x.jsonl" });
     const es = FakeEventSource.instances[0];
 
     expect(() => {
@@ -185,12 +206,13 @@ describe("FloorCanvas", () => {
     }).not.toThrow();
   });
 
-  // Test 8: queue cap drops oldest when overflowed
-  it("queue length stays <= QUEUE_CAP after overflow", () => {
-    render(<FloorCanvas cbPath="/tmp/x.jsonl" />);
+  // Test 8: queue cap — no crash on 600 events
+  it("handles 600 events without crashing (queue cap enforced)", () => {
+    renderCanvas({ cbPath: "/tmp/x.jsonl" });
     const es = FakeEventSource.instances[0];
 
-    // Emit 600 valid events (forge_slot_acquired is valid, no effect produced)
+    expect(__test.QUEUE_CAP).toBe(500);
+
     for (let i = 0; i < 600; i++) {
       es.emit(
         JSON.stringify({
@@ -201,24 +223,20 @@ describe("FloorCanvas", () => {
       );
     }
 
-    // The queue is capped — we verify by checking the cap constant
-    expect(__test.QUEUE_CAP).toBe(500);
-    // Since queue is internal, we verify no crash and cap constant is correct
     expect(() => tick(16)).not.toThrow();
   });
 
-  // Test 9: effects cap at EFFECTS_CAP (10)
-  it("effects cap constant is 10", () => {
+  // Test 9: effects cap constant
+  it("EFFECTS_CAP constant is 10", () => {
     expect(__test.EFFECTS_CAP).toBe(10);
   });
 
   // Test 10: paused prop — RAF loop skips render
-  it("paused=true freezes the loop (fillRect count stable after initial)", () => {
-    render(<FloorCanvas cbPath="/tmp/x.jsonl" paused={true} />);
+  it("paused=true: fillRect count does not grow after initial pause", () => {
+    renderCanvas({ cbPath: "/tmp/x.jsonl", paused: true });
 
     const countBefore = (fakeCtx.fillRect as ReturnType<typeof vi.fn>).mock.calls.length;
 
-    // Emit an event and tick — paused should skip draining + render
     FakeEventSource.instances[0].emit(
       JSON.stringify({ ts: "2026-04-23T00:00:00Z", event: "forge_begin", task_id: "x" }),
     );
@@ -226,29 +244,32 @@ describe("FloorCanvas", () => {
     tick(32);
 
     const countAfter = (fakeCtx.fillRect as ReturnType<typeof vi.fn>).mock.calls.length;
-    // fillRect count should not grow more than 1 (bg fill only on first frame if any)
     expect(countAfter).toBe(countBefore);
   });
 
   // Test 11: un-pausing resumes — fillRect grows
-  it("paused=false after paused=true resumes render", () => {
+  it("paused=false after paused=true: fillRect count grows after tick", () => {
     const { rerender } = render(
-      <FloorCanvas cbPath="/tmp/x.jsonl" paused={true} />,
+      <DevModeProvider>
+        <FloorCanvas cbPath="/tmp/x.jsonl" paused={true} />
+      </DevModeProvider>,
     );
 
     const countPaused = (fakeCtx.fillRect as ReturnType<typeof vi.fn>).mock.calls.length;
 
-    rerender(<FloorCanvas cbPath="/tmp/x.jsonl" paused={false} />);
+    rerender(
+      <DevModeProvider>
+        <FloorCanvas cbPath="/tmp/x.jsonl" paused={false} />
+      </DevModeProvider>,
+    );
     tick(16);
 
     const countResumed = (fakeCtx.fillRect as ReturnType<typeof vi.fn>).mock.calls.length;
-    // After unpausing and ticking, fillRect should be called (bg fill at minimum)
     expect(countResumed).toBeGreaterThanOrEqual(countPaused + 1);
   });
 
   // Test 12: ResizeObserver changes viewport
-  it("ResizeObserver callback updates internal state without throwing", () => {
-    // Mock ResizeObserver
+  it("ResizeObserver callback does not throw", () => {
     let observerCallback: ResizeObserverCallback | null = null;
     vi.stubGlobal(
       "ResizeObserver",
@@ -262,10 +283,9 @@ describe("FloorCanvas", () => {
       },
     );
 
-    const { container } = render(<FloorCanvas cbPath="/tmp/x.jsonl" />);
+    const { container } = renderCanvas({ cbPath: "/tmp/x.jsonl" });
     const canvas = container.querySelector("canvas");
 
-    // Simulate ResizeObserver callback
     if (observerCallback && canvas) {
       const entry = {
         contentRect: { width: 1200, height: 800 },
@@ -275,15 +295,15 @@ describe("FloorCanvas", () => {
     }
 
     tick(16);
-    // After resize + tick, fillRect should be called
-    expect((fakeCtx.fillRect as ReturnType<typeof vi.fn>).mock.calls.length).toBeGreaterThanOrEqual(1);
+    expect(
+      (fakeCtx.fillRect as ReturnType<typeof vi.fn>).mock.calls.length,
+    ).toBeGreaterThanOrEqual(1);
   });
 
-  // Test 13: Reduced motion — status updates applied, no fireworks arc
-  it("reduced motion: status updates applied; no fireworks arc calls", () => {
-    // Stub matchMedia to return reduced motion = true
+  // Test 13: Reduced motion — no fireworks arc calls
+  it("reduced motion: no fireworks arc calls on forge_end success=true", () => {
     vi.stubGlobal("matchMedia", (query: string) => ({
-      matches: query.includes("reduce") ? true : false,
+      matches: query.includes("reduce"),
       media: query,
       addEventListener: vi.fn(),
       removeEventListener: vi.fn(),
@@ -292,29 +312,27 @@ describe("FloorCanvas", () => {
       dispatchEvent: vi.fn(),
     }));
 
-    render(<FloorCanvas cbPath="/tmp/x.jsonl" />);
+    renderCanvas({ cbPath: "/tmp/x.jsonl" });
     const es = FakeEventSource.instances[0];
 
     const arcBefore = (fakeCtx.arc as ReturnType<typeof vi.fn>).mock.calls.length;
 
-    // forge_end success=true normally produces fireworks (arcs)
     es.emit(
       JSON.stringify({ ts: "2026-04-23T00:00:00Z", event: "forge_end", success: true }),
     );
     tick(16);
 
     const arcAfter = (fakeCtx.arc as ReturnType<typeof vi.fn>).mock.calls.length;
-    // With reduced motion, fireworks effect is suppressed — no new arc calls
     expect(arcAfter).toBe(arcBefore);
   });
 
-  // Test 14: no $ anywhere in source
-  it("source file contains zero $ characters (lint guard)", async () => {
-    const fs = await import("node:fs");
-    const src = fs.readFileSync(
-      new URL("./floor-canvas.tsx", import.meta.url).pathname,
-      "utf-8",
+  // Test 14: no $ in source file (lint guard)
+  it("source file contains zero $ characters", () => {
+    const srcPath = path.resolve(
+      __dirname,
+      "floor-canvas.tsx",
     );
+    const src = fs.readFileSync(srcPath, "utf-8");
     expect(src.includes("$")).toBe(false);
   });
 });
