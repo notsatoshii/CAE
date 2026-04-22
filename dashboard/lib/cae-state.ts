@@ -4,6 +4,9 @@ import { parse as parseYaml } from "yaml"
 import { CAE_ROOT, INBOX_ROOT, OUTBOX_ROOT } from "./cae-config"
 import type { CbState, InboxTask, OutboxTask, Phase, Project } from "./cae-types"
 
+// Phase 10 D-02: Scan this directory for Shift-managed projects.
+const SHIFT_PROJECTS_HOME = process.env.SHIFT_PROJECTS_HOME ?? "/home/cae"
+
 async function exists(p: string): Promise<boolean> {
   try {
     await stat(p)
@@ -80,12 +83,52 @@ export async function listProjects(): Promise<Project[]> {
     { name: "bridge-test-repo", path: "/tmp/bridge-test-repo" },
   ]
 
+  // 1. Scan SHIFT_PROJECTS_HOME for Shift-managed directories.
+  const shiftFound: Array<{ name: string; path: string }> = []
+  try {
+    const entries = await readdir(SHIFT_PROJECTS_HOME, { withFileTypes: true })
+    for (const e of entries) {
+      if (!e.isDirectory()) continue
+      const projPath = join(SHIFT_PROJECTS_HOME, e.name)
+      const stateFile = join(projPath, ".shift", "state.json")
+      if (await exists(stateFile)) {
+        shiftFound.push({ name: e.name, path: projPath })
+      }
+    }
+  } catch { /* SHIFT_PROJECTS_HOME missing or unreadable — skip quietly */ }
+
+  // 2. Union with the hard-coded candidates, deduping by absolute path.
+  const byPath = new Map<string, { name: string; path: string }>()
+  for (const c of [...candidates, ...shiftFound]) {
+    if (!byPath.has(c.path)) byPath.set(c.path, c)
+  }
+
+  // 3. Enrich each with Shift state (when present) and existence checks.
   const projects: Project[] = []
-  for (const c of candidates) {
+  for (const c of byPath.values()) {
     if (!(await exists(c.path))) continue
     const hasPlanning = await exists(join(c.path, ".planning"))
-    projects.push({ name: c.name, path: c.path, hasPlanning })
+    let shiftPhase: string | null = null
+    let shiftUpdated: string | null = null
+    try {
+      const raw = await readFile(join(c.path, ".shift", "state.json"), "utf8")
+      const state = JSON.parse(raw)
+      shiftPhase = typeof state?.phase === "string" ? state.phase : null
+      shiftUpdated = typeof state?.updated === "string" ? state.updated : null
+    } catch { /* not a Shift project or malformed — leave null */ }
+    projects.push({ name: c.name, path: c.path, hasPlanning, shiftPhase, shiftUpdated })
   }
+
+  // 4. Sort: Shift projects by shiftUpdated desc, non-Shift at the end.
+  projects.sort((a, b) => {
+    const au = a.shiftUpdated ?? ""
+    const bu = b.shiftUpdated ?? ""
+    if (au && bu) return bu.localeCompare(au)
+    if (au) return -1
+    if (bu) return 1
+    return a.name.localeCompare(b.name)
+  })
+
   return projects
 }
 
