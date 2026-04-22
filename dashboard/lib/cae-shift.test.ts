@@ -1,6 +1,6 @@
 // RED-phase scaffold for Phase 10 plan 01. Fails until lib/cae-shift.ts lands in wave 1.
 
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { readFileSync } from "fs";
 import { join } from "path";
 
@@ -9,7 +9,10 @@ import {
   readShiftState,
   buildAnswersFile,
   approveGate,
+  runShiftNew,
 } from "./cae-shift";
+
+vi.mock("child_process");
 
 const FIXTURE_DIR = join(
   process.cwd(),
@@ -114,5 +117,44 @@ describe("approveGate", () => {
     expect(history.length).toBe(historyLenBefore + 1);
     const last = history[history.length - 1];
     expect(last.outcome).toBe("dashboard");
+  });
+});
+
+describe("runShiftNew — log directory creation (WR-01)", () => {
+  it("includes mkdir -p <projectPath> before tee in the tmux inner command", async () => {
+    const { spawn } = await import("child_process");
+    const capturedArgs: string[][] = [];
+    vi.mocked(spawn).mockImplementation((_cmd: unknown, args: unknown) => {
+      capturedArgs.push(args as string[]);
+      return { unref: () => {} } as ReturnType<typeof spawn>;
+    });
+
+    await runShiftNew("my-project", "/tmp/answers-test.json");
+
+    expect(capturedArgs.length).toBe(1);
+    // tmux args: ["new-session", "-d", "-s", <sid>, <inner>] — inner is index 4
+    const inner = capturedArgs[0][4];
+    // mkdir -p must appear before tee so the log directory exists when tee opens the file
+    const mkdirPos = inner.indexOf("mkdir -p");
+    const teePos = inner.indexOf("tee");
+    expect(mkdirPos).toBeGreaterThanOrEqual(0);
+    expect(teePos).toBeGreaterThanOrEqual(0);
+    expect(mkdirPos).toBeLessThan(teePos);
+  });
+
+  it("mkdir -p targets the projectPath that contains the logFile", async () => {
+    const { spawn } = await import("child_process");
+    const capturedArgs: string[][] = [];
+    vi.mocked(spawn).mockImplementation((_cmd: unknown, args: unknown) => {
+      capturedArgs.push(args as string[]);
+      return { unref: () => {} } as ReturnType<typeof spawn>;
+    });
+
+    await runShiftNew("my-project2", "/tmp/answers-test2.json");
+
+    // tmux args: ["new-session", "-d", "-s", <sid>, <inner>] — inner is index 4
+    const inner = capturedArgs[0][4];
+    // mkdir -p must quote the projectPath containing "my-project2"
+    expect(inner).toMatch(/mkdir -p '[^']*my-project2'/);
   });
 });

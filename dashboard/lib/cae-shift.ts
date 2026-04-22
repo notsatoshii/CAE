@@ -163,6 +163,7 @@ export async function runShiftNew(
   const logFile = join(projectPath, ".shift-bootstrap.log");
 
   const inner =
+    `mkdir -p ${quote(projectPath)} && ` +
     `cd ${quote(SHIFT_PROJECTS_HOME)} && ` +
     `SHIFT_NONINTERACTIVE=1 SHIFT_ANSWERS=${quote(answersFile)} ` +
     `${SHIFT_BIN} new ${quote(name)} 2>&1 | tee ${quote(logFile)}`;
