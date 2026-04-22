@@ -76,7 +76,7 @@ export function AgentGrid({ agents, loadError }: AgentGridProps) {
             >
               {heading}
             </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {members.map((a) => (
                 <AgentCard key={a.name} agent={a} />
               ))}

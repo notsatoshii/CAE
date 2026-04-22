@@ -40,10 +40,10 @@ export default async function AgentsPage() {
   }
 
   return (
-    <main data-testid="agents-page" className="p-6 max-w-6xl">
-      <div className="mb-6">
+    <main data-testid="agents-page" className="p-8 max-w-6xl">
+      <div className="flex flex-col gap-1 mb-8">
         <AgentsPageHeading />
-        <p className="text-xs text-[color:var(--text-muted,#8a8a8c)] mt-1">
+        <p className="text-xs text-[color:var(--text-muted,#8a8a8c)]">
           9 agents · data refreshed every 30 seconds
         </p>
       </div>

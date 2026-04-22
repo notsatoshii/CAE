@@ -142,7 +142,7 @@ export function AgentDetailDrawer() {
         </SheetHeader>
 
         <div
-          className="px-4 pb-6 flex flex-col gap-6"
+          className="px-6 pb-8 flex flex-col gap-6"
           data-testid="agent-detail-body"
         >
           {loading && (

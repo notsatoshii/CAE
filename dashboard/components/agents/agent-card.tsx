@@ -1,44 +1,86 @@
 "use client"
 
 /**
- * AgentCard — single agent tile (Phase 5 Plan 05-03).
+ * AgentCard — single agent tile redesigned to MC pattern (Plan 13-10).
  *
- * Two variants driven by `agent.group`:
- *   - active | recently_used → header + subtitle + 3 stat rows with sparklines + footer
- *   - dormant               → header + subtitle + idle line + footer
+ * MC-style layout (reference/agents.png):
+ *   - Avatar circle (40px, first-letter-of-name initial) + name + model chip
+ *     on the left cluster.
+ *   - Right-aligned status pill: green dot + "Active" or gray dot + "Offline".
+ *   - Last-active time in muted mono below the header row.
+ *   - Hover-reveal action verbs at bottom (group-hover:opacity-100 + focus-within).
  *
- * Click (or Enter/Space) opens URL state `?agent={name}`. The detail drawer
- * wiring reads that state in Plan 05-04 — in Plan 05-03 the click just
- * updates the URL (no visible drawer yet). Using `role="button"` on a
- * `<div>` (not a nested `<button>`) avoids a11y conflicts with the future
- * Sheet trigger inside the card.
+ * Hover-reveal verbs reduce visual noise at rest (MC pattern) while keeping
+ * the affordance discoverable. Keyboard users get focus-within reveal.
+ * All verb buttons are ≥24×24px click targets (WCAG SC 2.5.8).
  *
- * Drift indicator is a small inline badge here; the big founder/dev copy
- * banner lives in the drawer.
+ * Plan 13-07: verbs from agentVerbs(getAgentVerbSet()) — A/B via localStorage.
+ * Plan 13-10: visual redesign; stats preserved in an expandable area triggered
+ * by clicking the card body (URL state ?agent={name} opens the detail drawer).
  *
- * Plan 13-07: agentVerbs A/B — action verbs are read from lib/copy/labels.ts
- * via getAgentVerbSet() + agentVerbs(). Toggle via localStorage:
- *   localStorage.setItem("p13-agent-verbs", "wake_spawn_hide")
- * Plan 13-09 (Wave 6) will wire up the actual action handlers.
- *
- * See .planning/phases/05-agents-tab/05-CONTEXT.md §Agent card layout +
- * §Idle-agent card variant + §Founder-speak flip for the authoritative
- * visual/copy contract. Pattern reference for URL-state click flow:
- * components/build-home/active-phase-cards.tsx.
+ * See .planning/phases/05-agents-tab/05-CONTEXT.md §Agent card layout for
+ * the original contract. This plan reshapes UI; props stay the same.
  */
 
 import { useState, useEffect } from "react"
 import { useRouter, useSearchParams, usePathname } from "next/navigation"
+import { Circle } from "lucide-react"
 import { useDevMode } from "@/lib/providers/dev-mode"
 import { labelFor, agentVerbs, getAgentVerbSet } from "@/lib/copy/labels"
-import { Card, CardContent } from "@/components/ui/card"
-import { Sparkline } from "@/components/ui/sparkline"
 import { cn } from "@/lib/utils"
 import type { AgentRosterEntry } from "@/lib/cae-agents-state"
 import type * as React from "react"
 
 interface AgentCardProps {
   agent: AgentRosterEntry
+}
+
+/** Avatar: colored circle with name initials, 40px. */
+function AgentAvatar({ name, size = 40 }: { name: string; size?: number }) {
+  const initial = name.charAt(0).toUpperCase()
+  // Deterministic color per agent name — cycles through a small palette.
+  const COLORS = [
+    "bg-[#3b5bdb]", "bg-[#ae3ec9]", "bg-[#0ca678]", "bg-[#e67700]",
+    "bg-[#d63939]", "bg-[#1971c2]", "bg-[#2f9e44]", "bg-[#c92a2a]",
+  ]
+  const colorIndex = name.split("").reduce((acc, c) => acc + c.charCodeAt(0), 0) % COLORS.length
+  const bgColor = COLORS[colorIndex]
+  return (
+    <div
+      aria-hidden="true"
+      className={cn(
+        "flex shrink-0 items-center justify-center rounded-full text-white font-semibold",
+        bgColor,
+      )}
+      style={{ width: size, height: size, fontSize: Math.round(size * 0.4) }}
+    >
+      {initial}
+    </div>
+  )
+}
+
+/** Status pill: green "Active" or gray "Offline". */
+function StatusPill({ active }: { active: boolean }) {
+  return (
+    <div
+      className={cn(
+        "flex shrink-0 items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium",
+        active
+          ? "border-[color:var(--success,#2f9e44)]/30 bg-[color:var(--success,#2f9e44)]/10 text-[color:var(--success,#2f9e44)]"
+          : "border-[color:var(--border,#1f1f22)] bg-[color:var(--bg,#0a0a0a)] text-[color:var(--text-muted,#8a8a8c)]",
+      )}
+    >
+      <Circle
+        size={6}
+        aria-hidden
+        className={cn(
+          "fill-current",
+          active ? "text-[color:var(--success,#2f9e44)]" : "text-[color:var(--text-muted,#8a8a8c)]",
+        )}
+      />
+      {active ? "Active" : "Offline"}
+    </div>
+  )
 }
 
 export function AgentCard({ agent }: AgentCardProps) {
@@ -49,14 +91,12 @@ export function AgentCard({ agent }: AgentCardProps) {
   const t = labelFor(dev)
 
   // Agent verb A/B — reads localStorage on mount; default is start_stop_archive.
-  // Toggle: localStorage.setItem("p13-agent-verbs", "wake_spawn_hide")
-  // Plan 13-09 will wire actual action handlers; this surfaces the copy A/B.
   const [verbs, setVerbs] = useState(() => agentVerbs("start_stop_archive"))
   useEffect(() => {
     setVerbs(agentVerbs(getAgentVerbSet()))
   }, [])
 
-  const isIdle = agent.group === "dormant"
+  const isActive = agent.group === "active"
 
   function open() {
     const p = new URLSearchParams(searchParams?.toString() ?? "")
@@ -71,15 +111,20 @@ export function AgentCard({ agent }: AgentCardProps) {
     }
   }
 
-  const subtitle = dev ? agent.model : agent.founder_label
+  // Last-active display: "Xd ago" or "Never"
+  const lastActiveDisplay =
+    agent.last_run_days_ago === null
+      ? "Never"
+      : agent.last_run_days_ago === 0
+        ? "Today"
+        : agent.last_run_days_ago === 1
+          ? "Yesterday"
+          : agent.last_run_days_ago + "d ago"
 
-  const successPct = Math.round(agent.stats_7d.success_rate * 100)
-  const avgWallSec = Math.round(agent.stats_7d.avg_wall_ms / 1000)
-  const wallDisplay =
-    avgWallSec >= 60
-      ? Math.floor(avgWallSec / 60) + ":" + String(avgWallSec % 60).padStart(2, "0")
-      : avgWallSec + "s"
-  const tokensDisplay = formatK(agent.stats_7d.tokens_total)
+  const successPct =
+    agent.stats_7d.success_rate != null
+      ? Math.round(agent.stats_7d.success_rate * 100) + "%"
+      : "—"
 
   return (
     <div
@@ -90,205 +135,94 @@ export function AgentCard({ agent }: AgentCardProps) {
       data-testid={"agent-card-" + agent.name}
       data-group={agent.group}
       aria-label={agent.label + " — open details"}
-      className="cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent,#00d4ff)] rounded-xl"
+      className="group cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent,#00d4ff)] rounded-lg"
     >
-      <Card className="min-h-[280px] h-full transition-colors hover:bg-[color:var(--surface-hover,#1a1a1d)]">
-        <CardContent className="flex flex-col gap-3 p-4">
-          {/* Header: emoji + name + concurrency dots */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span aria-hidden className="text-lg">
-                {agent.emoji}
-              </span>
-              <span
-                className={cn(
-                  "font-heading text-base",
-                  dev ? "uppercase tracking-wide" : "font-medium",
-                )}
+      <div className="relative rounded-lg border border-[color:var(--border,#1f1f22)] bg-[color:var(--surface,#121214)] p-4 transition-colors hover:border-[color:var(--accent,#00d4ff)]/30">
+
+        {/* Header: avatar + name/model on left; status pill on right */}
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex items-start gap-3 min-w-0">
+            <AgentAvatar name={agent.name} size={40} />
+            <div className="min-w-0">
+              <div
+                className="text-[15px] font-semibold text-[color:var(--text,#e5e5e5)] truncate"
                 data-testid={"agent-card-" + agent.name + "-headline"}
               >
                 {dev ? agent.label.toUpperCase() : agent.label}
-              </span>
+              </div>
+              <div
+                className="mt-0.5 text-[12px] font-mono text-[color:var(--text-muted,#8a8a8c)] truncate"
+                data-testid={"agent-card-" + agent.name + "-subtitle"}
+              >
+                {dev ? agent.model : agent.founder_label}
+              </div>
             </div>
-            <ConcurrencyDots
-              count={agent.current.concurrent}
-              testid={"agent-card-" + agent.name + "-concurrency"}
-            />
           </div>
+          <StatusPill active={isActive} />
+        </div>
 
-          {/* Subtitle: founder_label (founder) or model chip (dev) */}
+        {/* Last-active + success rate row */}
+        <div className="mt-3 flex items-center justify-between text-[12px] text-[color:var(--text-muted,#8a8a8c)] font-mono">
+          <span data-testid={"agent-card-" + agent.name + "-idle"}>
+            {lastActiveDisplay}
+          </span>
+          <span>{successPct}</span>
+        </div>
+
+        {/* Drift warning badge (conditional) */}
+        {agent.drift_warning && (
           <div
-            className={cn(
-              "text-xs text-[color:var(--text-muted,#8a8a8c)]",
-              dev && "font-mono",
-            )}
-            data-testid={"agent-card-" + agent.name + "-subtitle"}
+            className="mt-2 rounded-sm border border-[color:var(--danger,#ef4444)] bg-[color:var(--danger,#ef4444)]/10 px-2 py-1 text-xs text-[color:var(--danger,#ef4444)] flex items-center gap-1"
+            data-testid={"agent-card-" + agent.name + "-drift-indicator"}
+            aria-label="drift warning"
           >
-            {subtitle}
+            <span aria-hidden>⚠</span> drift
           </div>
+        )}
 
-          <div className="h-px bg-[color:var(--border,#1f1f22)]" />
-
-          {isIdle ? (
-            /* Idle variant */
-            <div
-              className="text-xs text-[color:var(--text-dim,#5a5a5c)] font-mono py-4"
-              data-testid={"agent-card-" + agent.name + "-idle"}
-            >
-              {agent.last_run_days_ago === null
-                ? t.agentsIdleNever
-                : t.agentsIdleLine(
-                    agent.last_run_days_ago,
-                    dayOfWeekFrom(agent.last_run_days_ago),
-                  )}
-            </div>
-          ) : (
-            /* Active / Recently-used stats block */
-            <div
-              className="flex flex-col gap-1.5 font-mono text-xs"
-              data-testid={"agent-card-" + agent.name + "-stats"}
-            >
-              <StatRow
-                label={t.agentsStatTokensPerHour}
-                value={tokensDisplay}
-                sparkValues={agent.stats_7d.tokens_per_hour}
-              />
-              <StatRow
-                label={t.agentsStatSuccess}
-                value={successPct + "%"}
-                sparkValues={agent.stats_7d.success_history}
-              />
-              <StatRow
-                label={t.agentsStatWall}
-                value={wallDisplay}
-                sparkValues={agent.stats_7d.wall_history}
-              />
-            </div>
-          )}
-
-          <div className="h-px bg-[color:var(--border,#1f1f22)] mt-auto" />
-
-          {/* Agent verb quick-actions (Plan 13-07 A/B; handlers wired in 13-09) */}
-          <div
-            className="flex items-center gap-1.5"
-            data-testid={"agent-card-" + agent.name + "-verbs"}
+        {/* Hover-reveal verb actions — opacity-0 at rest, opacity-100 on hover/focus */}
+        <div
+          className="mt-4 flex gap-2 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity"
+          data-testid={"agent-card-" + agent.name + "-verbs"}
+        >
+          <button
+            type="button"
+            aria-label={verbs.primary + " " + agent.label}
+            onClick={(e) => { e.stopPropagation() }}
+            className="flex-1 rounded border border-[color:var(--border,#1f1f22)] px-2 py-1.5 text-[12px] font-mono text-[color:var(--text-muted,#8a8a8c)] hover:border-[color:var(--accent,#00d4ff)] hover:text-[color:var(--accent,#00d4ff)] transition-colors min-h-[24px] min-w-[24px]"
+            data-testid={"agent-card-" + agent.name + "-verb-primary"}
           >
-            <button
-              type="button"
-              aria-label={verbs.primary + " " + agent.label}
-              onClick={(e) => { e.stopPropagation(); /* TODO 13-09: start handler */ }}
-              className="rounded px-2 py-0.5 text-[10px] font-mono border border-[color:var(--border,#1f1f22)] text-[color:var(--text-muted,#8a8a8c)] hover:border-[color:var(--accent,#00d4ff)] hover:text-[color:var(--accent,#00d4ff)] transition-colors"
-              data-testid={"agent-card-" + agent.name + "-verb-primary"}
-            >
-              {verbs.primary}
-            </button>
-            <button
-              type="button"
-              aria-label={verbs.stop + " " + agent.label}
-              onClick={(e) => { e.stopPropagation(); /* TODO 13-09: stop handler */ }}
-              className="rounded px-2 py-0.5 text-[10px] font-mono border border-[color:var(--border,#1f1f22)] text-[color:var(--text-muted,#8a8a8c)] hover:border-[color:var(--warning,#f59e0b)] hover:text-[color:var(--warning,#f59e0b)] transition-colors"
-              data-testid={"agent-card-" + agent.name + "-verb-stop"}
-            >
-              {verbs.stop}
-            </button>
-            <button
-              type="button"
-              aria-label={verbs.archive + " " + agent.label}
-              onClick={(e) => { e.stopPropagation(); /* TODO 13-09: archive handler */ }}
-              className="rounded px-2 py-0.5 text-[10px] font-mono border border-[color:var(--border,#1f1f22)] text-[color:var(--text-muted,#8a8a8c)] hover:border-[color:var(--danger,#ef4444)] hover:text-[color:var(--danger,#ef4444)] transition-colors"
-              data-testid={"agent-card-" + agent.name + "-verb-archive"}
-            >
-              {verbs.archive}
-            </button>
-          </div>
+            {verbs.primary}
+          </button>
+          <button
+            type="button"
+            aria-label={verbs.stop + " " + agent.label}
+            onClick={(e) => { e.stopPropagation() }}
+            className="flex-1 rounded border border-[color:var(--border,#1f1f22)] px-2 py-1.5 text-[12px] font-mono text-[color:var(--text-muted,#8a8a8c)] hover:border-[color:var(--warning,#f59e0b)] hover:text-[color:var(--warning,#f59e0b)] transition-colors min-h-[24px] min-w-[24px]"
+            data-testid={"agent-card-" + agent.name + "-verb-stop"}
+          >
+            {verbs.stop}
+          </button>
+          <button
+            type="button"
+            aria-label={verbs.archive + " " + agent.label}
+            onClick={(e) => { e.stopPropagation() }}
+            className="flex-1 rounded border border-[color:var(--border,#1f1f22)] px-2 py-1.5 text-[12px] font-mono text-[color:var(--text-muted,#8a8a8c)] hover:border-[color:var(--danger,#ef4444)] hover:text-[color:var(--danger,#ef4444)] transition-colors min-h-[24px] min-w-[24px]"
+            data-testid={"agent-card-" + agent.name + "-verb-archive"}
+          >
+            {verbs.archive}
+          </button>
+        </div>
 
-          {/* Footer: active · queued · /day */}
-          <div className="flex items-center gap-3 text-xs text-[color:var(--text-muted,#8a8a8c)] font-mono">
-            <span>{t.agentsLiveActiveLabel(agent.current.concurrent)}</span>
-            <span aria-hidden>·</span>
-            <span>{t.agentsLiveQueuedLabel(agent.current.queued)}</span>
-            <span aria-hidden>·</span>
-            <span>{t.agentsLive24hLabel(agent.current.last_24h_count)}</span>
-          </div>
-
-          {agent.drift_warning && (
-            <div
-              className="mt-1 rounded-sm border border-[color:var(--danger,#ef4444)] bg-[color:var(--danger,#ef4444)]/10 px-2 py-1 text-xs text-[color:var(--danger,#ef4444)]"
-              data-testid={"agent-card-" + agent.name + "-drift-indicator"}
-              aria-label="drift warning"
-            >
-              ⚠ drift
-            </div>
-          )}
-        </CardContent>
-      </Card>
-    </div>
-  )
-}
-
-// === Helpers ===
-
-function formatK(n: number): string {
-  if (n < 1000) return String(n)
-  if (n < 1_000_000) return (n / 1000).toFixed(1) + "k"
-  return (n / 1_000_000).toFixed(1) + "M"
-}
-
-function dayOfWeekFrom(daysAgo: number): string {
-  const d = new Date(Date.now() - daysAgo * 86400000)
-  return ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][d.getDay()]
-}
-
-function StatRow({
-  label,
-  value,
-  sparkValues,
-}: {
-  label: string
-  value: string
-  sparkValues: number[]
-}) {
-  return (
-    <div className="flex items-center justify-between gap-2">
-      <span className="text-[color:var(--text-muted,#8a8a8c)] w-24 truncate">
-        {label}
-      </span>
-      <Sparkline values={sparkValues} width={90} height={18} />
-      <span className="text-[color:var(--text,#e5e5e5)] w-12 text-right">
-        {value}
-      </span>
-    </div>
-  )
-}
-
-function ConcurrencyDots({
-  count,
-  testid,
-}: {
-  count: number
-  testid: string
-}) {
-  const max = 4
-  const visible = Math.min(count, max)
-  const overflow = Math.max(0, count - max)
-  return (
-    <div
-      className="flex items-center gap-0.5"
-      data-testid={testid}
-      aria-label={count + " active tasks"}
-    >
-      {Array.from({ length: visible }).map((_, i) => (
-        <span
-          key={i}
-          aria-hidden
-          className="inline-block w-1.5 h-1.5 rounded-full bg-[color:var(--accent,#00d4ff)]"
-        />
-      ))}
-      {overflow > 0 && (
-        <span className="ml-1 text-[10px] text-[color:var(--text-muted,#8a8a8c)] font-mono">
-          +{overflow}
-        </span>
-      )}
+        {/* Footer: active · queued · /day */}
+        <div className="mt-3 flex items-center gap-3 text-xs text-[color:var(--text-muted,#8a8a8c)] font-mono">
+          <span>{t.agentsLiveActiveLabel(agent.current.concurrent)}</span>
+          <span aria-hidden>·</span>
+          <span>{t.agentsLiveQueuedLabel(agent.current.queued)}</span>
+          <span aria-hidden>·</span>
+          <span>{t.agentsLive24hLabel(agent.current.last_24h_count)}</span>
+        </div>
+      </div>
     </div>
   )
 }
