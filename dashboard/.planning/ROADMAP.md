@@ -145,7 +145,7 @@ Plans:
 - [x] 06-03-PLAN.md — Widgets: StepGraph SVG + MonacoYamlEditor (dynamic import) + NlDraftTextarea (wave 2)
 - [x] 06-04-PLAN.md — /build/workflows list + new + [slug] edit pages with dev-mode-gated Monaco (wave 3)
 - [x] 06-05-PLAN.md — /build/queue 5-column KANBAN rewrite + New-job modal wrapping Phase 2 DelegateForm (wave 4)
-- [ ] 06-06-PLAN.md — Integration + VERIFICATION.md + human sign-off checkpoint (wave 5)
+- [x] 06-06-PLAN.md — Integration + VERIFICATION.md + human sign-off checkpoint (wave 5)
 
 ## Phase 7: Metrics (global top-bar icon → page)
 

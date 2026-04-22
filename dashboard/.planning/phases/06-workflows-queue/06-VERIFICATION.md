@@ -122,3 +122,15 @@ If UAT surfaces any discrepancy, the orchestrator will route to `/gsd-plan-phase
 ---
 *Phase: 06-workflows-queue*
 *Automated sweep completed: 2026-04-22T08:35:00Z*
+
+---
+
+## UAT sign-off (session 5 — deferred to browser)
+
+**Automated:** all 87 tests green, build+tsc clean, 25+ grep guards pass, dev-server live curls verified (see sections above).
+
+**Visual UAT (2 flows) DEFERRED** to Eric's in-browser confirmation:
+1. Workflow creation round-trip on `/build/workflows` (NL → StepGraph → Monaco flip → Save → Run → Delete)
+2. Queue KANBAN on `/build/queue` (5 cols founder↔dev flip → New job modal → card opens TaskDetailSheet)
+
+Phase 6 closed on automated verification; any visual regressions surfaced later will be filed as a follow-up gap-closure plan.
