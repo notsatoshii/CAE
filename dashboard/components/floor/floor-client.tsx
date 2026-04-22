@@ -6,18 +6,22 @@
  * Owns:
  *   - Dynamic import of FloorCanvas with { ssr: false } (D-18)
  *   - paused state + minimized state
+ *   - hasOpener state — SSR-safe detection of window.opener (Task 3, Plan 11-05)
  *   - metrics state (effectsCount, queueSize, authDrifted) from FloorCanvas onMetrics
  *   - FloorToolbar (hidden when popout + minimized)
  *   - FloorLegend as a floating aside when Explain mode is ON (P11-07)
+ *   - "Return to main window" button when popout=true AND window.opener != null (Plan 11-05)
  *
  * No dollar signs in this file (lint-no-dollar.sh guard).
  */
 
 import dynamic from "next/dynamic";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { FloorToolbar } from "./floor-toolbar";
 import { FloorLegend } from "./floor-legend";
 import { useExplainMode } from "@/lib/providers/explain-mode";
+import { useDevMode } from "@/lib/providers/dev-mode";
+import { labelFor } from "@/lib/copy/labels";
 
 // ---------------------------------------------------------------------------
 // Dynamic import — ssr: false (D-18, canvas APIs unavailable on server)
@@ -32,7 +36,7 @@ const FloorCanvas = dynamic(() => import("./floor-canvas"), { ssr: false });
 export interface FloorClientProps {
   cbPath: string | null;
   projectPath: string | null;
-  /** True when rendered in a pop-out window (page resolved ?popout=1). */
+  /** True when rendered in a pop-out window (FloorPopoutHost sets this). */
   popout: boolean;
 }
 
@@ -49,7 +53,23 @@ export default function FloorClient({ cbPath, projectPath, popout }: FloorClient
     authDrifted: false,
   });
 
+  // SSR-safe opener detection — set in useEffect so server render is unaffected
+  const [hasOpener, setHasOpener] = useState(false);
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setHasOpener(window.opener != null);
+    }
+  }, []);
+
   const { explain, toggle: toggleExplain } = useExplainMode();
+  const { dev } = useDevMode();
+  const L = labelFor(dev);
+
+  const returnToMain = () => {
+    if (typeof window === "undefined") return;
+    window.opener?.focus?.();
+    window.close();
+  };
 
   return (
     <div className="relative h-full w-full bg-[color:var(--bg)]">
@@ -67,6 +87,18 @@ export default function FloorClient({ cbPath, projectPath, popout }: FloorClient
           onToggleLegend={toggleExplain}
           metrics={metrics}
         />
+      )}
+
+      {/* Return-to-main-window affordance — only in pop-out mode when opener is present */}
+      {popout && hasOpener && !minimized && (
+        <button
+          type="button"
+          className="absolute top-2 left-2 rounded-md border border-[color:var(--border-subtle)] bg-[color:var(--surface)]/90 px-2 py-1 text-xs text-[color:var(--text-muted)] hover:text-[color:var(--text)] backdrop-blur"
+          onClick={returnToMain}
+          aria-label={L.floorReturnToMain}
+        >
+          {L.floorReturnToMain}
+        </button>
       )}
 
       {explain && (
