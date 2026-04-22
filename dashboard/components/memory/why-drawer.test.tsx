@@ -32,14 +32,15 @@ import {
 import { DevModeProvider } from "@/lib/providers/dev-mode";
 import { ExplainModeProvider } from "@/lib/providers/explain-mode";
 
-// Mock the heuristic module so tests don't depend on the real
-// isMemorySourcePath (which reads the project allowlist from disk).
-vi.mock("@/lib/cae-memory-whytrace", () => ({
-  getHeuristicWhyTrace: vi.fn(),
+// Mock the heuristic module so tests don't depend on the real D-10 pattern
+// set (moved in 08-07 Wave 5 from `cae-memory-whytrace` to the client-safe
+// `cae-memory-path-match` — see why-drawer.tsx import comment).
+vi.mock("@/lib/cae-memory-path-match", () => ({
+  getHeuristicWhyTraceClient: vi.fn(),
 }));
 
 import { WhyDrawer } from "./why-drawer";
-import { getHeuristicWhyTrace } from "@/lib/cae-memory-whytrace";
+import { getHeuristicWhyTraceClient as getHeuristicWhyTrace } from "@/lib/cae-memory-path-match";
 
 function renderDrawer(
   props: Partial<React.ComponentProps<typeof WhyDrawer>> = {},

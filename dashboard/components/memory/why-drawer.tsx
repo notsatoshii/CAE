@@ -33,10 +33,15 @@ import { X } from "lucide-react";
 import { labelFor } from "@/lib/copy/labels";
 import { useDevMode } from "@/lib/providers/dev-mode";
 import type { MemoryConsultResult } from "@/lib/cae-memory-consult";
+// 08-07 Wave 5 fix (Rule 3 — blocking build): `cae-memory-whytrace` imports
+// `cae-memory-sources` which pulls `node:fs/promises`, breaking the client
+// bundle when MemoryClient (Wave 5) mounts this drawer in a live route.
+// The pattern-match check is pure, so we use the client-safe extract that
+// lives alongside it (same D-10 regex set, no server-only imports).
 import {
-  getHeuristicWhyTrace,
+  getHeuristicWhyTraceClient as getHeuristicWhyTrace,
   type HeuristicWhyEntry,
-} from "@/lib/cae-memory-whytrace";
+} from "@/lib/cae-memory-path-match";
 
 export interface WhyDrawerProps {
   open: boolean;

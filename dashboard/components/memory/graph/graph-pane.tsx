@@ -31,7 +31,18 @@ function toggleSet<T>(set: Set<T>, value: T): Set<T> {
   return next;
 }
 
-export function GraphPane() {
+export interface GraphPaneProps {
+  /**
+   * Optional callback wired by Wave 5's MemoryClient. When present, the
+   * NodeDrawer (08-05) renders the "When this changed" button and pipes
+   * the clicked node's `source_file` into this callback, which in turn
+   * opens the shared <GitTimelineDrawer> mounted at MemoryClient level.
+   * When absent (e.g. isolated render in a test), the button hides.
+   */
+  onOpenGitTimeline?: (absPath: string) => void;
+}
+
+export function GraphPane({ onOpenGitTimeline }: GraphPaneProps = {}) {
   const { dev } = useDevMode();
   const L = labelFor(dev);
 
@@ -171,6 +182,7 @@ export function GraphPane() {
         node={activeNode}
         links={payload?.links ?? []}
         onClose={() => setActiveNode(null)}
+        onOpenGitTimeline={onOpenGitTimeline}
       />
     </div>
   );
