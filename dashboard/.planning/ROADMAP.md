@@ -251,6 +251,29 @@ Plans:
 - `prefers-reduced-motion` audit (shake + pulse respect)
 - Explain-mode copy QA pass
 
+## Phase 13: UI/UX review + polish loop (expanded scope)
+
+**Goal:** close the UX quality gap — data correctness + liveness + functionality completeness + logging, then Mission-Control-grade IA + 6 visual pillars.
+
+**What it includes:**
+- Data correctness: screenshot each panel, verify shown numbers against source-of-truth files. Flag P0 on mismatch. Uses `/usr/local/bin/screenshot-url` + Python verify harness.
+- Liveness: tab-visibility pause, `<LastUpdated>` primitive, `Liveness` health chip mirroring MC "Live · 28ms" pattern, SSE heartbeat.
+- Functionality completeness: clickwalk every route, expected-vs-actual per button/form.
+- Logging: pino structured JSON + AsyncLocalStorage correlation IDs + `withLog()` wrapper across routes + Incident Stream panel reusing tail-stream.
+- Mission Control IA adoptions: ambient clock + latency chip, persistent alert banner, Golden Signals copy on metrics, agent-verb A/B (Wake/Spawn/Hide).
+- WR-01 fix: SSE id stability (chat unread count always 0 regression — standalone plan).
+- Visual 6 pillars: hierarchy, density, consistency, motion, typography, color — with explicit score thresholds.
+
+## Phase 14: Orchestration depth — Skills Hub + cron + RBAC
+
+**Goal:** deepen CAE's orchestration surface — Skills marketplace, natural-language scheduling, role-based access.
+
+**What it includes:**
+- Skills Hub marketplace — ClawdHub + skills.sh browse/install inside the dashboard.
+- Natural-language cron scheduling ("every morning at 9am", "every weekday 7pm") → CronCreate-backed routines.
+- Role-based access — viewer/operator/admin roles gated via Google SSO.
+- Trust scoring for installed skills + secret detection + MCP call auditing surfaced in a Security panel.
+
 ## What we'll defer to v2 or later
 
 - Multi-user / teams / permissions

@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v0.1
 milestone_name: milestone
 status: planning
-stopped_at: Completed 11-01-PLAN.md
-last_updated: "2026-04-22T17:50:09.853Z"
+stopped_at: Completed 12-01-PLAN.md
+last_updated: "2026-04-22T17:59:38.985Z"
 progress:
-  total_phases: 12
+  total_phases: 14
   completed_phases: 8
-  total_plans: 62
-  completed_plans: 50
-  percent: 81
+  total_plans: 73
+  completed_plans: 51
+  percent: 70
 ---
 
 # cae-dashboard — Project State
@@ -29,8 +29,15 @@ progress:
 Phase 10 — Plan mode: Projects / PRDs / Roadmaps / UAT (`/plan/*` routes wrapping Shift).
 Plan 10-04 complete (Wave 1 closed). Next: plan 10-05 (API routes).
 
-**Last session:** 2026-04-22T17:50:09.846Z
-**Stopped at:** Completed 11-01-PLAN.md
+**Last session:** 2026-04-22T17:59:38.979Z
+**Stopped at:** Completed 12-01-PLAN.md
+
+## Key Decisions (Phase 12 — Plan 01)
+
+- **12-01:** pnpm used as lockfile manager (pnpm-lock.yaml is authoritative; not npm install).
+- **12-01:** vitest.config.ts include extended to `app/**/*.test.ts` — was missing non-JSX app unit tests.
+- **12-01:** KEYBINDINGS registry has 10 entries: 4 global, 1 sheets, 2 task, 3 palette.
+- **12-01:** MOT-02 (tw-animate-css reduced-motion) not verified headlessly; deferred to Plan 05 DevTools audit.
 
 ## Key Decisions (Phase 10 — Plan 04)
 
