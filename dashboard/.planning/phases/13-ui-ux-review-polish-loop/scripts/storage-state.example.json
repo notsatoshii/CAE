@@ -1,0 +1,24 @@
+{
+  "_comment": "Example shape of storage-state.json produced by authsetup.sh. The real file is gitignored (chmod 0600). Deferred: actual sign-in capture deferred to post-P14 consolidated UAT / real audit run. See 13-01-SUMMARY.md.",
+  "cookies": [
+    {
+      "name": "authjs.session-token",
+      "value": "<paste-token-here>",
+      "domain": "localhost",
+      "path": "/",
+      "expires": -1,
+      "httpOnly": true,
+      "secure": false,
+      "sameSite": "Lax"
+    }
+  ],
+  "origins": [
+    {
+      "origin": "http://localhost:3003",
+      "localStorage": [
+        { "name": "explainMode", "value": "true" },
+        { "name": "devMode",     "value": "false" }
+      ]
+    }
+  ]
+}
