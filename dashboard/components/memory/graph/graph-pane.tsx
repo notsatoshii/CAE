@@ -1,12 +1,12 @@
 "use client";
 
 /**
- * Phase 8 Wave 3 (MEM-05, MEM-07, D-05, D-17): Graph tab composition.
+ * Phase 8 Wave 3 (MEM-05..MEM-08, D-04..D-06, D-08, D-17): Graph tab.
  *
  * Fetches `/api/memory/graph` on mount, tracks the 4 NodeKind filters (all
  * on by default — D-04: commits excluded), renders the 500-node-cap
- * banner, the `<GraphCanvas>`, and the `<NodeDrawer>`. Filters + the
- * Regenerate button are wired in Task 2 (same plan, different task).
+ * banner (D-05), the `<GraphFilters>` chip row, the `<RegenerateButton>`
+ * (D-06 debounce), the `<GraphCanvas>`, and the `<NodeDrawer>` overlay.
  *
  * This file carries `"use client"` (D-08) because react-flow and the
  * event-driven drawer need the browser runtime.
@@ -19,8 +19,17 @@ import { labelFor } from "@/lib/copy/labels";
 import { ExplainTooltip } from "@/components/ui/explain-tooltip";
 import { GraphCanvas } from "./graph-canvas";
 import { NodeDrawer } from "./node-drawer";
+import { GraphFilters } from "./graph-filters";
+import { RegenerateButton } from "./regenerate-button";
 
 const ALL_KINDS: readonly NodeKind[] = ["phases", "agents", "notes", "PRDs"];
+
+function toggleSet<T>(set: Set<T>, value: T): Set<T> {
+  const next = new Set(set);
+  if (next.has(value)) next.delete(value);
+  else next.add(value);
+  return next;
+}
 
 export function GraphPane() {
   const { dev } = useDevMode();
@@ -29,7 +38,7 @@ export function GraphPane() {
   const [payload, setPayload] = useState<GraphPayload | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedKinds] = useState<Set<NodeKind>>(
+  const [selectedKinds, setSelectedKinds] = useState<Set<NodeKind>>(
     () => new Set(ALL_KINDS),
   );
   const [activeNode, setActiveNode] = useState<GraphNode | null>(null);
@@ -58,13 +67,21 @@ export function GraphPane() {
     void refetchGraph();
   }, [refetchGraph]);
 
-  const { filteredNodes, filteredLinks } = useMemo(() => {
+  const { filteredNodes, filteredLinks, kindCounts } = useMemo(() => {
+    const counts: Record<NodeKind, number> = {
+      phases: 0,
+      agents: 0,
+      notes: 0,
+      PRDs: 0,
+    };
     if (!payload) {
       return {
         filteredNodes: [] as GraphNode[],
         filteredLinks: [],
+        kindCounts: counts,
       };
     }
+    for (const n of payload.nodes) counts[n.kind] += 1;
     const keep = payload.nodes.filter((n) => selectedKinds.has(n.kind));
     const keepIds = new Set(keep.map((n) => n.id));
     const keepLinks = payload.links.filter(
@@ -73,8 +90,13 @@ export function GraphPane() {
     return {
       filteredNodes: keep,
       filteredLinks: keepLinks,
+      kindCounts: counts,
     };
   }, [payload, selectedKinds]);
+
+  const handleToggleKind = useCallback((k: NodeKind) => {
+    setSelectedKinds((prev) => toggleSet(prev, k));
+  }, []);
 
   const totalNodes = payload?.total_nodes ?? 0;
   const shownNodes = payload?.nodes.length ?? 0;
@@ -99,14 +121,23 @@ export function GraphPane() {
         </div>
       ) : null}
 
-      {/* Controls row — filters + regenerate wired by Task 2. */}
+      {/* Controls row — filters (D-04) + regenerate (D-06). */}
       <div
         className="flex flex-wrap items-center justify-between gap-3 border-b border-[color:var(--border)] px-3 py-2"
         data-testid="memory-graph-controls"
       >
         <div className="flex items-center gap-2">
+          <GraphFilters
+            selected={selectedKinds}
+            onToggle={handleToggleKind}
+            counts={kindCounts}
+          />
           <ExplainTooltip text={L.memoryExplainGraph} />
         </div>
+        <RegenerateButton
+          generatedAt={payload?.generated_at}
+          onRegenerated={refetchGraph}
+        />
       </div>
 
       {/* Body */}
