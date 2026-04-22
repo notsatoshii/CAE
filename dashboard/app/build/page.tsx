@@ -33,11 +33,13 @@ export default async function BuildPage({ searchParams }: BuildPageProps) {
         )}
       </div>
 
-      <RollupStrip />
-      <LiveOpsLine />
-      <ActivePhaseCards />
-      <NeedsYouList />
-      <RecentLedger />
+      <div className="flex flex-col gap-6">
+        <RollupStrip />
+        <LiveOpsLine />
+        <ActivePhaseCards />
+        <NeedsYouList />
+        <RecentLedger />
+      </div>
 
       <TaskDetailSheet />
     </main>

@@ -1,5 +1,6 @@
 "use client";
 
+import { Circle } from "lucide-react";
 import { useStatePoll } from "@/lib/hooks/use-state-poll";
 import { useDevMode } from "@/lib/providers/dev-mode";
 import { labelFor } from "@/lib/copy/labels";
@@ -18,13 +19,17 @@ export function LiveOpsLine() {
       data-testid="live-ops-line"
       className="mb-4 border-y border-[color:var(--border-subtle)] bg-[color:var(--surface)]/50 px-3 py-2 flex items-center gap-2 text-xs"
     >
-      <span className="text-[color:var(--text-muted)] uppercase tracking-wider">
+      {/* Status dot: green when active, dim when idle */}
+      <Circle
+        aria-hidden
+        size={6}
+        className={isIdle ? "fill-[color:var(--text-dim)] text-[color:var(--text-dim)] shrink-0" : "fill-[color:var(--success)] text-[color:var(--success)] shrink-0"}
+      />
+      <span className="text-[color:var(--text-muted)] uppercase tracking-wider shrink-0">
         {t.liveOpsSectionLabel}
       </span>
-      <span className="text-[color:var(--text-dim)]" aria-hidden="true">
-        ·
-      </span>
-      <span className="font-mono text-[color:var(--text)]">{display}</span>
+      <span className="text-[color:var(--text-dim)]" aria-hidden="true">·</span>
+      <span className="font-mono text-[color:var(--text)] truncate">{display}</span>
     </div>
   );
 }

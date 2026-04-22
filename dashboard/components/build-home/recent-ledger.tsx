@@ -1,5 +1,6 @@
 "use client";
 
+import { Clock } from "lucide-react";
 import { useStatePoll } from "@/lib/hooks/use-state-poll";
 import { useDevMode } from "@/lib/providers/dev-mode";
 import { labelFor } from "@/lib/copy/labels";
@@ -40,8 +41,9 @@ export function RecentLedger() {
           {t.recentHeading}
         </h2>
         <Card>
-          <CardContent className="py-6 text-sm text-[color:var(--text-muted)]">
-            {t.recentEmpty}
+          <CardContent className="py-6 flex items-center gap-2 text-sm text-[color:var(--text-muted)]">
+            <Clock size={16} className="shrink-0 text-[color:var(--text-muted)]" aria-hidden />
+            <span>{t.recentEmpty}</span>
           </CardContent>
         </Card>
       </section>

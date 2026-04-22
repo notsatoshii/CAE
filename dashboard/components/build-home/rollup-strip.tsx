@@ -1,15 +1,30 @@
 "use client";
 
+import {
+  Package,
+  Zap,
+  AlertTriangle,
+  CircleDollarSign,
+  PauseCircle,
+} from "lucide-react";
 import { useStatePoll } from "@/lib/hooks/use-state-poll";
 import { useDevMode } from "@/lib/providers/dev-mode";
 import { labelFor } from "@/lib/copy/labels";
-import { Card, CardContent } from "@/components/ui/card";
 import { LastUpdated } from "@/components/ui/last-updated";
 
 function formatTok(n: number): string {
   if (n < 1000) return String(n);
   if (n < 1_000_000) return (n / 1000).toFixed(1) + "k";
   return (n / 1_000_000).toFixed(2) + "M";
+}
+
+interface Slot {
+  key: string;
+  Icon: React.ComponentType<{ className?: string; size?: number; "aria-hidden"?: boolean }>;
+  value: string | number;
+  label: string;
+  /** amber dot iff true */
+  warning: boolean;
 }
 
 export function RollupStrip() {
@@ -24,73 +39,82 @@ export function RollupStrip() {
     blocked: 0,
     warnings: 0,
   };
-  const allZero =
-    rollup.shipped_today === 0 &&
-    rollup.tokens_today === 0 &&
-    rollup.in_flight === 0 &&
-    rollup.blocked === 0 &&
-    rollup.warnings === 0;
 
-  if (allZero) {
-    return (
-      <Card data-testid="rollup-strip" className="mb-6">
-        <CardContent className="py-4 text-sm text-[color:var(--text-muted)]">
-          {t.rollupEmptyState}
-        </CardContent>
-      </Card>
-    );
-  }
+  const slots: Slot[] = [
+    {
+      key: "shipped",
+      Icon: Package,
+      value: rollup.shipped_today,
+      label: t.rollupShippedLabel,
+      warning: false,
+    },
+    {
+      key: "in_flight",
+      Icon: Zap,
+      value: rollup.in_flight,
+      label: t.rollupInFlightLabel,
+      warning: false,
+    },
+    {
+      key: "warnings",
+      Icon: AlertTriangle,
+      value: rollup.warnings,
+      label: "warnings",
+      warning: rollup.warnings > 0,
+    },
+    {
+      key: "tokens",
+      Icon: CircleDollarSign,
+      value: formatTok(rollup.tokens_today),
+      label: t.rollupTokensLabel,
+      warning: false,
+    },
+    {
+      key: "blocked",
+      Icon: PauseCircle,
+      value: rollup.blocked,
+      label: t.rollupBlockedLabel,
+      warning: rollup.blocked > 0,
+    },
+  ];
 
   return (
-    <Card data-testid="rollup-strip" className="mb-6">
-      <CardContent className="py-4 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
-        <Slot value={rollup.shipped_today} label={t.rollupShippedLabel} />
-        <Divider />
-        <Slot value={formatTok(rollup.tokens_today)} label={t.rollupTokensLabel} />
-        <Divider />
-        <Slot value={rollup.in_flight} label={t.rollupInFlightLabel} />
-        <Divider />
-        <Slot value={rollup.blocked} label={t.rollupBlockedLabel} danger={rollup.blocked > 0} />
-        <Divider />
-        <Slot
-          value={t.rollupWarningsLabel + rollup.warnings}
-          label=""
-          warning={rollup.warnings > 0}
-        />
-        <span className="ml-auto">
-          <LastUpdated at={lastUpdated} threshold_ms={6000} />
-        </span>
-      </CardContent>
-    </Card>
-  );
-}
-
-function Slot({
-  value,
-  label,
-  danger,
-  warning,
-}: {
-  value: string | number;
-  label: string;
-  danger?: boolean;
-  warning?: boolean;
-}) {
-  const color = danger ? "var(--danger)" : warning ? "var(--warning)" : "var(--text)";
-  return (
-    <span className="inline-flex items-baseline gap-1">
-      <span className="font-mono text-sm tabular-nums" style={{ color }}>
-        {value}
-      </span>
-      {label && <span className="text-[color:var(--text-muted)]">{label}</span>}
-    </span>
-  );
-}
-
-function Divider() {
-  return (
-    <span className="text-[color:var(--text-dim)]" aria-hidden="true">
-      ·
-    </span>
+    <div data-testid="rollup-strip" className="mb-6">
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-5">
+        {slots.map((s) => (
+          <div
+            key={s.key}
+            data-testid={"rollup-slot-" + s.key}
+            className="relative rounded-lg border border-[color:var(--border-subtle)] bg-[color:var(--surface)] p-4"
+          >
+            <s.Icon
+              aria-hidden
+              size={16}
+              className="absolute right-3 top-3 text-[color:var(--text-muted)]"
+            />
+            <div className="text-[32px] font-semibold tabular-nums leading-none text-[color:var(--text)]">
+              {s.value}
+            </div>
+            <div className="mt-2 flex items-center gap-1.5">
+              <span
+                aria-hidden
+                className="inline-block size-1.5 rounded-full"
+                style={{
+                  backgroundColor: s.warning
+                    ? "var(--warning)"
+                    : "var(--text-dim)",
+                }}
+              />
+              <span className="text-[13px] text-[color:var(--text-muted)]">
+                {s.label}
+              </span>
+            </div>
+          </div>
+        ))}
+      </div>
+      <div className="mt-1.5 flex justify-end">
+        <LastUpdated at={lastUpdated} threshold_ms={6000} />
+      </div>
+    </div>
   );
 }
