@@ -191,13 +191,25 @@ Plans:
 **Goal:** Build mode `/build/changes` + persistent chat rail per UI-SPEC §10 + §12 + §Audience reframe.
 
 **What it includes:**
-- Changes: prose-default timeline grouped by project (SHAs/diffs only when Dev-mode on)
-- Right-rail chat: collapsed 48px icon column with unread dot, expanded 300px (Ctrl+T)
-- Per-agent voices (Nexus/Forge/Sentinel/Scout/Scribe/Phantom/Aegis/Arch/Herald)
-- `docs/VOICE.md` written before this phase ships — Nexus do/don't examples
-- Chat split-screen mode (`/chat` route)
-- Suggested actions based on current tab context
-- Nexus "always explain before doing" gate on token-spending actions
+- Changes: prose-default timeline grouped by project (SHAs/diffs only when Dev-mode on) via `git log --all --merges` aggregator + circuit-breakers.jsonl join
+- Right-rail chat: collapsed 48px icon column with unread dot, expanded 300px (click-toggle — Ctrl+T deferred to Phase 12 ⌘K palette since Chromium steals the binding)
+- Per-agent voices (Nexus/Forge/Sentinel/Scout/Scribe/Phantom/Aegis/Arch/Herald) via `claude --print --resume --append-system-prompt-file docs/voices/<agent>.md`; SSE stream back to client
+- `docs/VOICE.md` + 9 persona fragments shipped in Wave 0 with optional user sign-off
+- Chat `/chat` full-page 50/50 split route (left: Build-surface mirror picker; right: chat panel)
+- Suggested actions hardcoded per-route in `lib/chat-suggestions.ts` (3 chip buttons below input)
+- Nexus "always explain before doing" gate on token-spending actions: `ConfirmActionDialog` with token estimate + plain-English summary, gated at `tokens >= 1000`; Dev-mode bypasses with undo toast
+
+**Plans:** 8 plans
+
+Plans:
+- [ ] 09-01-PLAN.md — Wave 0: `docs/VOICE.md` + 9 persona fragments + voice-router + chat-suggestions + chat-cost-estimate libs with tests (wave 0)
+- [ ] 09-02-PLAN.md — Wave 1a: Changes aggregator (`lib/cae-changes-state.ts`) + `/api/changes` route + BOTH `changes.*` and `chat.*` label keys in `lib/copy/labels.ts` (wave 1, parallel with 09-03)
+- [ ] 09-03-PLAN.md — Wave 1b: Chat API routes (`/api/chat/{send,state,history/[sessionId],sessions}`) + `lib/cae-chat-state.ts` + `lib/chat-spawn.ts` (wave 1, parallel with 09-02)
+- [ ] 09-04-PLAN.md — Wave 2a: `/build/changes` page + `changes-client.tsx` + `components/changes/{project-group,day-group,change-row,dev-mode-detail}.tsx` (wave 2, parallel with 09-05)
+- [ ] 09-05-PLAN.md — Wave 2b: ChatRailProvider + `components/chat/{chat-rail,chat-panel,message,suggestions}.tsx` mounted in `app/layout.tsx` (wave 2, parallel with 09-04)
+- [ ] 09-06-PLAN.md — Wave 3: ConfirmActionDialog + useGatedAction hook + wiring into existing token-spending server actions (queue delegate, workflows Run-now) (wave 3)
+- [ ] 09-07-PLAN.md — Wave 4: `/chat` full-page split route + ChatMirror picker + top-nav pop-out icon (wave 4)
+- [ ] 09-08-PLAN.md — Wave 5: 09-VERIFICATION.md + human UAT checkpoint (wave 5, non-autonomous)
 
 ## Phase 10: Plan mode — Projects / PRDs / Roadmaps / UAT
 
