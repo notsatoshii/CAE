@@ -45,6 +45,12 @@ export function CommandPaletteProvider({ children }: { children: ReactNode }) {
       // palette.open uses "⌘" but Ctrl+K should also work on win/linux.
       // matchesKeydown checks ⌘ strictly; add a Ctrl+K fallback for cross-platform.
       // Note: "K" is the last chip in kb.keys — reuse it rather than hardcoding.
+      // IN-04 guard: if keys array is empty, skip the Ctrl+K fallback entirely
+      // instead of crashing with "cannot read property toLowerCase of undefined".
+      if (kb.keys.length === 0) {
+        console.error("[palette] palette.open has no keys defined — Ctrl+K fallback disabled");
+        return;
+      }
       const lastKey = kb.keys[kb.keys.length - 1].toLowerCase();
       const isCtrlK = e.ctrlKey && !e.metaKey && !e.shiftKey && !e.altKey && e.key.toLowerCase() === lastKey;
       if (!matchesKeydown(kb, e) && !isCtrlK) return;

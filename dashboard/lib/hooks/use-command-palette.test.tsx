@@ -1,8 +1,8 @@
 /**
- * use-command-palette.test.tsx — PAL-01, PAL-07
+ * use-command-palette.test.tsx — PAL-01, PAL-07, IN-04
  *
  * Tests keydown trigger, editable-target guard, toggle behavior,
- * provider requirement, and setOpen API.
+ * provider requirement, setOpen API, and empty-keys guard.
  */
 
 import { describe, it, expect, vi, afterEach } from "vitest";
@@ -80,4 +80,5 @@ describe("useCommandPalette", () => {
       renderHook(() => useCommandPalette());
     }).toThrow("useCommandPalette must be used within CommandPaletteProvider");
   });
+
 });
