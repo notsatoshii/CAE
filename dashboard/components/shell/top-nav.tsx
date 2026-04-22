@@ -8,6 +8,7 @@ import { MetricsIcon } from "./metrics-icon";
 import { ChatPopOutIcon } from "./chat-pop-out-icon";
 import { HeartbeatDot } from "./heartbeat-dot";
 import { DevBadge } from "./dev-badge";
+import { ShortcutHelpButton } from "@/components/ui/shortcut-overlay";
 
 interface TopNavProps {
   session: Session;
@@ -42,6 +43,7 @@ export function TopNav({ session }: TopNavProps) {
         <MemoryIcon />
         <MetricsIcon />
         <ChatPopOutIcon />
+        <ShortcutHelpButton />
         <span className="mx-1 h-4 w-px bg-[color:var(--border-subtle)]" aria-hidden="true" />
         <HeartbeatDot />
         <DevBadge />

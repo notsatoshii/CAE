@@ -63,6 +63,24 @@ vi.mock("./metrics-icon", () => ({
   MetricsIcon: () => <a href="/metrics" data-testid="metrics-icon" />,
 }));
 
+vi.mock("@/components/ui/shortcut-overlay", () => ({
+  ShortcutHelpButton: () => (
+    <button data-testid="shortcut-help-button" aria-label="Open keyboard shortcuts" />
+  ),
+  ShortcutOverlay: () => null,
+  KEYBINDINGS: [],
+}));
+
+vi.mock("@/lib/hooks/use-shortcut-overlay", () => ({
+  useShortcutOverlay: () => ({ open: false, setOpen: vi.fn(), toggle: vi.fn() }),
+  ShortcutOverlayProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+}));
+
+vi.mock("@/lib/hooks/use-command-palette", () => ({
+  useCommandPalette: () => ({ open: false, setOpen: vi.fn(), toggle: vi.fn() }),
+  CommandPaletteProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+}));
+
 import { TopNav } from "./top-nav";
 
 const mockSession: Session = {
@@ -83,6 +101,34 @@ describe("TopNav — FloorIcon mount", () => {
     const memoryIcon = screen.getByTestId("memory-icon");
     // DOCUMENT_POSITION_FOLLOWING = 4 (memory icon comes AFTER floor icon)
     const position = floorIcon.compareDocumentPosition(memoryIcon);
+    // eslint-disable-next-line no-bitwise
+    expect(position & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+});
+
+describe("TopNav — ShortcutHelpButton mount (Plan 12-04)", () => {
+  it("9. ShortcutHelpButton renders in top-nav", () => {
+    render(<TopNav session={mockSession} />);
+    const btn = screen.getByTestId("shortcut-help-button");
+    expect(btn).toBeTruthy();
+  });
+
+  it("10. ShortcutHelpButton appears after ChatPopOutIcon in DOM order", () => {
+    render(<TopNav session={mockSession} />);
+    const chatIcon = screen.getByTestId("chat-pop-out-icon");
+    const helpBtn = screen.getByTestId("shortcut-help-button");
+    // DOCUMENT_POSITION_FOLLOWING = 4 (helpBtn comes AFTER chatIcon)
+    const position = chatIcon.compareDocumentPosition(helpBtn);
+    // eslint-disable-next-line no-bitwise
+    expect(position & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it("11. ShortcutHelpButton appears before HeartbeatDot in DOM order", () => {
+    render(<TopNav session={mockSession} />);
+    const helpBtn = screen.getByTestId("shortcut-help-button");
+    const heartbeat = screen.getByTestId("heartbeat-dot");
+    // DOCUMENT_POSITION_FOLLOWING = 4 (heartbeat comes AFTER helpBtn)
+    const position = helpBtn.compareDocumentPosition(heartbeat);
     // eslint-disable-next-line no-bitwise
     expect(position & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });

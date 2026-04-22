@@ -9,6 +9,10 @@ import { StatePollProvider } from "@/lib/hooks/use-state-poll";
 import { ChatRailProvider } from "@/lib/providers/chat-rail";
 import { ChatRail } from "@/components/chat/chat-rail";
 import { Toaster } from "@/components/ui/sonner";
+import { CommandPaletteProvider } from "@/lib/hooks/use-command-palette";
+import { ShortcutOverlayProvider } from "@/lib/hooks/use-shortcut-overlay";
+import { CommandPalette } from "@/components/palette/command-palette";
+import { ShortcutOverlay } from "@/components/ui/shortcut-overlay";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -42,10 +46,16 @@ export default async function RootLayout({
           <DevModeProvider>
             <StatePollProvider>
               <ChatRailProvider session={session}>
-                {session && <TopNav session={session} />}
-                {children}
-                {session && <ChatRail />}
-                <Toaster />
+                <CommandPaletteProvider>
+                  <ShortcutOverlayProvider>
+                    {session && <TopNav session={session} />}
+                    {children}
+                    {session && <ChatRail />}
+                    {session && <CommandPalette />}
+                    {session && <ShortcutOverlay />}
+                    <Toaster />
+                  </ShortcutOverlayProvider>
+                </CommandPaletteProvider>
               </ChatRailProvider>
             </StatePollProvider>
           </DevModeProvider>
