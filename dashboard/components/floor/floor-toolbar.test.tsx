@@ -67,7 +67,7 @@ describe("FloorToolbar", () => {
     fireEvent.click(popOutBtn);
     expect(window.open).toHaveBeenCalledTimes(1);
     const [url, name, features] = (window.open as ReturnType<typeof vi.fn>).mock.calls[0] as [string, string, string];
-    expect(url).toMatch(/^\/floor\?popout=1&project=/);
+    expect(url).toMatch(/^\/floor\/popout\?project=/);
     expect(name).toBe("cae-live-floor");
     expect(features).toMatch(/width=960,height=720/);
   });
