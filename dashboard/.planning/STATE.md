@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v0.1
 milestone_name: milestone
 status: planning
-stopped_at: Completed 12-03-PLAN.md
-last_updated: "2026-04-22T19:14:00Z"
+stopped_at: Completed 12-04-PLAN.md
+last_updated: "2026-04-23T04:35:00Z"
 progress:
   total_phases: 14
   completed_phases: 9
   total_plans: 83
-  completed_plans: 57
-  percent: 69
+  completed_plans: 58
+  percent: 70
 ---
 
 # cae-dashboard — Project State
@@ -31,6 +31,15 @@ Plan 10-04 complete (Wave 1 closed). Next: plan 10-05 (API routes).
 
 **Last session:** 2026-04-22T19:14:00Z
 **Stopped at:** Completed 12-03-PLAN.md
+
+## Key Decisions (Phase 12 — Plan 04)
+
+- **12-04:** matchesKeydown uses kbRaw → kb non-undefined narrowing pattern to satisfy TypeScript closure analysis.
+- **12-04:** Ctrl+K fallback kept in use-command-palette — KEYBINDINGS uses ⌘ (mac) but win/linux users need Ctrl+K; fallback reads last chip from kb.keys not a hardcode.
+- **12-04:** Shift+/ fallback kept in use-shortcut-overlay — US keyboard fires / + Shift, not ? directly.
+- **12-04:** tw-animate-css@1.4.0 has zero built-in reduced-motion rules (confirmed); per-utility override block added to globals.css (MOT-02).
+- **12-04:** axe audit environment-blocked (Snap Chromium + ChromeDriver incompatibility); static A11Y analysis confident; deferred to Phase 13 with Playwright.
+- **12-04:** Human UAT checkpoint auto-approved per session-7 directive; items deferred to post-P14 consolidated UAT.
 
 ## Key Decisions (Phase 12 — Plan 03)
 
