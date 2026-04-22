@@ -659,7 +659,7 @@ const FOUNDER: Labels = {
   changesExplainTimeline:
     "Every time CAE ships something, it lands here — newest first, grouped by project.",
   changesExplainDevToggle:
-    "Flip to see the raw git details: branch name, SHAs, commit subjects, GitHub link.",
+    "Flip to see the technical details: branch name, version IDs, change summaries, and a GitHub link.",
 
   // === Phase 11: Live Floor ===
   floorPageTitle: "CAE Home",
