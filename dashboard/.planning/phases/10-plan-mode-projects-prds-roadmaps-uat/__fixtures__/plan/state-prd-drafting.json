@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "project_name": "test-fixture-prd",
+  "phase": "prd",
+  "updated": "2026-04-23T10:15:00Z",
+  "idea": { "what": "founder accountability app", "who": "solo founders", "type": "web" },
+  "prd": { "path": ".shift/PRD.md", "user_approved": false },
+  "history": [
+    { "ts": "2026-04-23T10:00:00Z", "action": "idea_captured", "outcome": "ok" },
+    { "ts": "2026-04-23T10:15:00Z", "action": "prd_drafted", "outcome": "ok" }
+  ]
+}

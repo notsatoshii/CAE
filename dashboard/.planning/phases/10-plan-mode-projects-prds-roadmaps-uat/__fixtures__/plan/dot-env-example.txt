@@ -1,0 +1,10 @@
+# Required
+DATABASE_URL=postgres://localhost/mydb
+NEXTAUTH_SECRET=change-me
+NEXTAUTH_URL=http://localhost:3000
+# Optional
+SENTRY_DSN=
+
+# Comment at end of file
+STRIPE_KEY=sk_test_xxx
+FOO=bar # inline comment

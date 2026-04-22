@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "project_name": "test-fixture-roadmap",
+  "phase": "roadmap",
+  "updated": "2026-04-23T10:30:00Z",
+  "idea": { "what": "founder accountability app", "who": "solo founders", "type": "web" },
+  "prd": { "path": ".shift/PRD.md", "user_approved": true },
+  "roadmap": { "path": ".shift/ROADMAP.md", "user_approved": false },
+  "history": [
+    { "ts": "2026-04-23T10:15:00Z", "action": "prd_drafted", "outcome": "ok" },
+    { "ts": "2026-04-23T10:20:00Z", "action": "prd_approved", "outcome": "dashboard" },
+    { "ts": "2026-04-23T10:30:00Z", "action": "roadmap_drafted", "outcome": "ok" }
+  ]
+}

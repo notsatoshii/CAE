@@ -1,0 +1,8 @@
+{
+  "schema_version": 1,
+  "project_name": "test-fixture-idea",
+  "phase": "idea",
+  "updated": "2026-04-23T10:00:00Z",
+  "idea": { "what": "founder accountability app", "who": "solo founders", "type": "web" },
+  "history": [{ "ts": "2026-04-23T10:00:00Z", "action": "idea_captured", "outcome": "ok" }]
+}

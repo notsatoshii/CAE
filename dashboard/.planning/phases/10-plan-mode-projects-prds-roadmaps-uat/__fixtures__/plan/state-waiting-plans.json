@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "project_name": "test-fixture-waiting",
+  "phase": "waiting_for_plans",
+  "updated": "2026-04-23T10:45:00Z",
+  "idea": { "what": "founder accountability app", "who": "solo founders", "type": "web" },
+  "prd": { "path": ".shift/PRD.md", "user_approved": true },
+  "roadmap": { "path": ".shift/ROADMAP.md", "user_approved": true },
+  "history": [
+    { "ts": "2026-04-23T10:30:00Z", "action": "roadmap_drafted", "outcome": "ok" },
+    { "ts": "2026-04-23T10:40:00Z", "action": "roadmap_approved", "outcome": "dashboard" },
+    { "ts": "2026-04-23T10:45:00Z", "action": "waiting_for_plans", "outcome": "v3.0 gap" }
+  ]
+}
