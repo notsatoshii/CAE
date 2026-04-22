@@ -1,5 +1,9 @@
 "use client"
 
+// Phase 9 Wave 3 (09-06): WorkflowForm / edit-workflow page has no Run-now button.
+// The only run entry point is the workflows-list page (WorkflowsListClient), which
+// is now gated via useGatedAction + ConfirmActionDialog.
+
 /**
  * WorkflowForm — unified create/edit form for workflows.
  *
