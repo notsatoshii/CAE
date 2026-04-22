@@ -61,7 +61,7 @@ export function FloorToolbar({
   function handlePopOut() {
     if (!projectPath) return;
     window.open(
-      "/floor?popout=1&project=" + encodeURIComponent(projectPath),
+      "/floor/popout?project=" + encodeURIComponent(projectPath),
       "cae-live-floor",
       "width=960,height=720"
     );
