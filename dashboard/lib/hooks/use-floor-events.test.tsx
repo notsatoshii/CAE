@@ -430,9 +430,9 @@ describe("useFloorEvents", () => {
     const cbPath = "/abs/.cae/metrics/circuit-breakers.jsonl";
 
     const { rerender } = renderHook(
-      ({ cbPath }: { cbPath: string | null }) =>
-        useFloorEvents({ cbPath, paused: false, sceneRef }),
-      { initialProps: { cbPath } },
+      (props: { cbPath: string | null }) =>
+        useFloorEvents({ cbPath: props.cbPath, paused: false, sceneRef }),
+      { initialProps: { cbPath: cbPath as string | null } },
     );
 
     // Trigger the initial probe
