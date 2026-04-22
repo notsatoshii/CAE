@@ -272,6 +272,12 @@ Plans:
 - WR-01 fix: SSE id stability (chat unread count always 0 regression — standalone plan).
 - Visual 6 pillars: hierarchy, density, consistency, motion, typography, color — with explicit score thresholds.
 
+**Progress:** 4 plans complete
+- [x] 13-01-PLAN.md — verify harness scaffold (Playwright + capture.sh + verify.py + routes.json)
+- [x] 13-02-PLAN.md — baseline capture (BASELINE.md + public-route screenshots + console baseline)
+- [x] 13-03-PLAN.md — data correctness audit (17-panel verify.py + VERIFY.md + UI-AUDIT-correctness.md + WR-01 confirmed)
+- [x] 13-04-PLAN.md — WR-01 fix (stable assistantMsgId per SSE stream + client promotion fix + 19 new tests)
+
 ## Phase 14: Orchestration depth — Skills Hub + cron + RBAC
 
 **Goal:** deepen CAE's orchestration surface — Skills marketplace, natural-language scheduling, role-based access.

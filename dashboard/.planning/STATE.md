@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v0.1
 milestone_name: milestone
 status: planning
-stopped_at: Completed 13-03-PLAN.md
-last_updated: "2026-04-22T20:05:14.601Z"
+stopped_at: Completed 13-04-PLAN.md
+last_updated: "2026-04-22T20:15:24Z"
 progress:
   total_phases: 14
   completed_phases: 10
   total_plans: 83
-  completed_plans: 61
-  percent: 73
+  completed_plans: 62
+  percent: 75
 ---
 
 # cae-dashboard — Project State
@@ -31,6 +31,13 @@ Plan 10-04 complete (Wave 1 closed). Next: plan 10-05 (API routes).
 
 **Last session:** 2026-04-22T20:05:14.592Z
 **Stopped at:** Completed 13-03-PLAN.md
+
+## Key Decisions (Phase 13 — Plan 04)
+
+- **13-04:** WR-01 fixed — generate `assistantMsgId` once at stream start; `assistant.begin` + `assistant.end` carry it; `assistant.delta` + `unread_tick` + `rate_limited` emit empty id so browser does not advance lastEventId cursor.
+- **13-04:** Client promotion narrowed to `assistant.end` only — prevents ephemeral delta UUIDs from overwriting `lastSeenMsgId` in localStorage.
+- **13-04:** `encodeSSE` extracted to `lib/sse.ts` — id contract documented with WR-01 rationale; testable independently of the route.
+- **13-04:** `userMsgId` (user message persistence) is a separate UUID from `assistantMsgId` — 2 `randomUUID()` calls in route.ts is correct; only assistant SSE id contract changed.
 
 ## Key Decisions (Phase 13 — Plan 03)
 
