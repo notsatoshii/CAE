@@ -133,7 +133,15 @@ tmux kill-session -t "$TMUX_SESSION" 2>/dev/null || true
 # - Write exit code to meta file atomically (tmp + mv) so the waiting loop can detect completion
 INNER_CMD="cd $(printf '%q' "$CWD") && claude $(printf '%q ' "${CLAUDE_ARGS[@]}") < $(printf '%q' "$TASK_FILE") > $(printf '%q' "$OUT_FILE") 2> $(printf '%q' "$ERR_FILE"); echo \"exit_code=\$?\" > $(printf '%q' "${META_FILE}.tmp") && mv $(printf '%q' "${META_FILE}.tmp") $(printf '%q' "${META_FILE}.done")"
 
-tmux new-session -d -s "$TMUX_SESSION" "$INNER_CMD"
+# Phase 8 Wave 6 (08-08 verification): when a pre-existing tmux server is
+# already running, `tmux new-session` hands the request to that server,
+# which spawns the pane from its own captive environment — NOT the
+# caller's. The `export CAE_TASK_ID` above therefore does not propagate
+# into the claude subprocess, and the memory-consult-hook sees task_id
+# as "unknown" instead of the real basename. Explicitly injecting the
+# var with `-e K=V` survives the server boundary regardless of whether
+# tmux reused a running server or started a fresh one.
+tmux new-session -d -e "CAE_TASK_ID=$CAE_TASK_ID" -s "$TMUX_SESSION" "$INNER_CMD"
 
 # ─── Wait for completion or timeout ─────────────────────────────────────
 DONE_MARKER="${META_FILE}.done"
