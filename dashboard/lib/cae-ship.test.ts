@@ -8,6 +8,7 @@ import {
   parseEnvExample,
   validateShipInput,
   ghAuthStatus,
+  writeEnvLocal,
 } from "./cae-ship";
 
 const FIXTURE_DIR = join(
@@ -92,5 +93,42 @@ describe("ghAuthStatus", () => {
 
     const result = await ghAuthStatus();
     expect(result.authed).toBe(false);
+  });
+});
+
+describe("writeEnvLocal — newline injection guard (WR-02)", () => {
+  const fakeProj = { path: "/tmp/wr02-test-" + Date.now(), name: "wr02-test", slug: "wr02-test", shiftPhase: "idea" as const, createdAt: "" };
+
+  it("rejects a value containing \\n (newline injection)", async () => {
+    await expect(
+      writeEnvLocal(fakeProj, { DATABASE_URL: "postgres://ok\nEVIL_KEY=injected" }),
+    ).rejects.toThrow("contains newline");
+  });
+
+  it("rejects a value containing \\r (carriage-return injection)", async () => {
+    await expect(
+      writeEnvLocal(fakeProj, { API_KEY: "value\rwith-cr" }),
+    ).rejects.toThrow("contains newline");
+  });
+
+  it("rejects an invalid key (lowercase letters)", async () => {
+    await expect(
+      writeEnvLocal(fakeProj, { bad_key: "value" }),
+    ).rejects.toThrow("invalid env key");
+  });
+
+  it("rejects a key with embedded newline (key injection)", async () => {
+    await expect(
+      writeEnvLocal(fakeProj, { "FOO\nEVIL=x": "value" }),
+    ).rejects.toThrow("invalid env key");
+  });
+
+  it("accepts valid uppercase keys and clean values without throwing", async () => {
+    // mkdir the fake project path so writeFile can succeed
+    const { mkdir } = await import("fs/promises");
+    await mkdir(fakeProj.path, { recursive: true });
+    await expect(
+      writeEnvLocal(fakeProj, { DATABASE_URL: "postgres://localhost/db", NEXTAUTH_SECRET: "abc123" }),
+    ).resolves.toMatch(/\.env\.local$/);
   });
 });

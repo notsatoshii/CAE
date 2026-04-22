@@ -83,8 +83,20 @@ export function ghAuthStatus(): Promise<{ authed: boolean; stderr?: string }> {
 /**
  * Write `<proj.path>/.env.local` with mode 0o600. Overwrites existing file.
  * Returns absolute path of the written file.
+ *
+ * Defence-in-depth (WR-02): validates all keys and values before writing so
+ * callers that skip validateShipInput cannot inject extra env-var lines via
+ * embedded newlines.
  */
 export async function writeEnvLocal(proj: Project, values: Record<string, string>): Promise<string> {
+  for (const [k, v] of Object.entries(values)) {
+    if (!/^[A-Z_][A-Z0-9_]*$/.test(k)) {
+      throw new Error(`invalid env key: ${JSON.stringify(k)}`)
+    }
+    if (/[\n\r]/.test(v)) {
+      throw new Error(`value for ${k} contains newline`)
+    }
+  }
   const file = join(proj.path, ".env.local")
   const body = Object.entries(values).map(([k, v]) => `${k}=${v}`).join("\n") + "\n"
   await writeFile(file, body, { encoding: "utf8", mode: 0o600 })
