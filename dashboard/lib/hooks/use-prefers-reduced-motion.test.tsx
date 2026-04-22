@@ -33,8 +33,10 @@ describe("usePrefersReducedMotion() — matchMedia-backed hook", () => {
   let listeners: ChangeListener[];
   let mm: {
     matches: boolean;
-    addEventListener: ReturnType<typeof vi.fn>;
-    removeEventListener: ReturnType<typeof vi.fn>;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    addEventListener: ReturnType<typeof vi.fn<any[], void>>;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    removeEventListener: ReturnType<typeof vi.fn<any[], void>>;
   };
 
   beforeEach(() => {
