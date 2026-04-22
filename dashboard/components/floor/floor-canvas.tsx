@@ -1,39 +1,41 @@
 "use client";
 
 /**
- * FloorCanvas — React client component that owns:
- * - A <canvas> element rendered at full container size
- * - A mutable Scene stored in useRef (D-05: never in React state)
- * - A single requestAnimationFrame loop: drain events → step(scene, dt) → render(ctx, scene, vp)
- * - An SSE subscription to /api/tail on the selected project's circuit-breakers.jsonl (D-04)
- * - Queue caps: QUEUE_CAP=500 (drop-oldest) and EFFECTS_CAP=10 (drop-oldest) (D-14)
- * - SSE line size cap: reject frames > MAX_LINE_BYTES=4096 (D-15)
- * - Paused gate: when props.paused, RAF loop skips drain + step + render (D-05)
- * - Reduced-motion gate: passes reducedMotion flag to mapEvent; effects suppressed (D-13)
+ * FloorCanvas — React client component (thinned after Plan 11-03 refactor).
+ *
+ * Owns:
+ * - <canvas> element at full container size
+ * - sceneRef (useRef<Scene>) — mutable, never React state (D-05)
+ * - RAF loop: step(scene, dt) + render(ctx, scene, vp) each tick
  * - ResizeObserver: recomputes viewport on canvas resize
+ *
+ * Delegates to useFloorEvents:
+ * - SSE subscription to /api/tail (D-04)
+ * - Queue caps: QUEUE_CAP=500, EFFECTS_CAP=10 (D-14)
+ * - SSE line size cap: MAX_LINE_BYTES=4096 (D-15)
+ * - Event parse + map + scene mutation
+ * - Paused queue (deferred drain)
+ * - Reduced-motion gate (D-13)
+ * - 30s /api/state auth-drift probe (T-11-05)
+ *
+ * cbPath widened from string to string | null — null = idle scene, no SSE.
  */
 
 import React, { useEffect, useRef, useState } from "react";
 import { createScene, type Scene } from "@/lib/floor/scene";
 import { step } from "@/lib/floor/state";
-import { parseEvent, mapEvent } from "@/lib/floor/event-adapter";
 import { render, type Viewport } from "@/lib/floor/renderer";
-import { usePrefersReducedMotion } from "@/lib/hooks/use-prefers-reduced-motion";
 import { useDevMode } from "@/lib/providers/dev-mode";
-import type { CbEvent } from "@/lib/cae-types";
+import { useFloorEvents, __test as hookTest } from "@/lib/hooks/use-floor-events";
 
 // ---------------------------------------------------------------------------
-// Constants (exported for test seams)
+// Re-export cap constants for backward compatibility with Plan 02 tests
 // ---------------------------------------------------------------------------
 
-export const QUEUE_CAP = 500;
-export const EFFECTS_CAP = 10;
-export const MAX_LINE_BYTES = 4096;
+export const QUEUE_CAP = hookTest.QUEUE_CAP;
+export const EFFECTS_CAP = hookTest.EFFECTS_CAP;
+export const MAX_LINE_BYTES = hookTest.MAX_LINE_BYTES;
 
-/**
- * Named export for testing — gives test access to cap constants without
- * importing internal implementation.
- */
 export const __test = {
   QUEUE_CAP,
   EFFECTS_CAP,
@@ -45,26 +47,32 @@ export const __test = {
 // ---------------------------------------------------------------------------
 
 export interface FloorCanvasProps {
-  /** Absolute path to a circuit-breakers.jsonl under an ALLOWED_ROOT. */
-  cbPath: string;
   /**
-   * When true: pause RAF loop — drainEvents, step(), and render() are skipped.
-   * Scene freezes on the last rendered frame.
+   * Absolute path to circuit-breakers.jsonl under an ALLOWED_ROOT.
+   * null = idle scene — no SSE opened (e.g. no project selected).
+   */
+  cbPath: string | null;
+  /**
+   * When true: pause RAF loop — step() and render() are skipped.
+   * Events are still queued by useFloorEvents and drained on unpause.
    */
   paused?: boolean;
+  /**
+   * Optional — parent (Plan 04) can opt-in to read live counters.
+   * Called each React render with the latest hook values.
+   */
+  onMetrics?: (m: { effectsCount: number; queueSize: number; authDrifted: boolean }) => void;
 }
 
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
 
-export default function FloorCanvas({ cbPath, paused = false }: FloorCanvasProps): React.JSX.Element {
+export default function FloorCanvas({ cbPath, paused = false, onMetrics }: FloorCanvasProps): React.JSX.Element {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const sceneRef = useRef<Scene>(createScene());
-  const queueRef = useRef<CbEvent[]>([]);
   const rafRef = useRef<number | null>(null);
 
-  const reducedMotion = usePrefersReducedMotion();
   const { dev } = useDevMode();
 
   // Viewport lives in state — only updated on resize (O(once per event), not per-frame)
@@ -81,8 +89,20 @@ export default function FloorCanvas({ cbPath, paused = false }: FloorCanvasProps
     setViewport((prev) => ({ ...prev, devLabels: dev }));
   }, [dev]);
 
+  // Delegate SSE + event handling to the hook
+  const { effectsCount, queueSize, authDrifted } = useFloorEvents({
+    cbPath,
+    paused,
+    sceneRef,
+  });
+
+  // Forward observable counters to parent (for toolbar / debug UI)
+  useEffect(() => {
+    onMetrics?.({ effectsCount, queueSize, authDrifted });
+  }, [effectsCount, queueSize, authDrifted, onMetrics]);
+
   // ---------------------------------------------------------------------------
-  // Effect 1: RAF loop — drain events → step → render
+  // RAF loop — step → render (canvas owns this; hook owns event application)
   // ---------------------------------------------------------------------------
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -100,23 +120,6 @@ export default function FloorCanvas({ cbPath, paused = false }: FloorCanvasProps
         const dt = Math.min((ts - lastTs) / 1000, 0.1);
         lastTs = ts;
 
-        // Drain queue: apply MappedEffects to scene
-        const pending = queueRef.current.splice(0);
-        for (const cbEvent of pending) {
-          const effects = mapEvent(cbEvent, { reducedMotion });
-          for (const mapped of effects) {
-            if (mapped.kind === "status") {
-              sceneRef.current.stations[mapped.station].status = mapped.status;
-            } else if (mapped.kind === "effect") {
-              sceneRef.current.effects.push(mapped.effect);
-              // Drop oldest when effects exceed cap
-              while (sceneRef.current.effects.length > EFFECTS_CAP) {
-                sceneRef.current.effects.shift();
-              }
-            }
-          }
-        }
-
         step(sceneRef.current, dt);
         render(safeCtx, sceneRef.current, viewport);
       }
@@ -132,37 +135,12 @@ export default function FloorCanvas({ cbPath, paused = false }: FloorCanvasProps
       cancelAnimationFrame(animId);
       rafRef.current = null;
     };
-    // Re-run when reducedMotion or paused flips, or viewport changes
+    // Re-run when paused or viewport changes
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [reducedMotion, paused, viewport]);
+  }, [paused, viewport]);
 
   // ---------------------------------------------------------------------------
-  // Effect 2: SSE subscription
-  // ---------------------------------------------------------------------------
-  useEffect(() => {
-    const es = new EventSource("/api/tail?path=" + encodeURIComponent(cbPath));
-
-    es.onmessage = (e: MessageEvent) => {
-      // D-15: reject frames > MAX_LINE_BYTES
-      if (typeof e.data === "string" && e.data.length > MAX_LINE_BYTES) return;
-
-      const parsed = parseEvent(e.data as string);
-      if (!parsed) return;
-
-      queueRef.current.push(parsed);
-      // D-14: drop oldest when queue exceeds cap
-      while (queueRef.current.length > QUEUE_CAP) {
-        queueRef.current.shift();
-      }
-    };
-
-    return () => {
-      es.close();
-    };
-  }, [cbPath]);
-
-  // ---------------------------------------------------------------------------
-  // Effect 3: ResizeObserver — recompute viewport on canvas resize
+  // ResizeObserver — recompute viewport on canvas resize
   // ---------------------------------------------------------------------------
   useEffect(() => {
     const canvas = canvasRef.current;
