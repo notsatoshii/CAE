@@ -302,6 +302,26 @@ export interface Labels {
   changesExplainTimeline: string;
   changesExplainDevToggle: string;
 
+  // === Phase 11: Live Floor ===
+  floorPageTitle: string;
+  floorPopOut: string;
+  floorMinimize: string;
+  floorPause: string;
+  floorLegend: string;
+  floorReducedMotionNotice: string;
+  floorStationHub: string;
+  floorStationForge: string;
+  floorStationWatchtower: string;
+  floorStationOverlook: string;
+  floorStationLibrary: string;
+  floorStationShadow: string;
+  floorStationArmory: string;
+  floorStationDrafting: string;
+  floorStationPulpit: string;
+  floorStationLoadingBay: string;
+  floorExplainHub: string;
+  floorExplainForge: string;
+
   // === Phase 9: Chat ===
   chatRailCollapsedAria: string;
   chatRailExpandAria: string;
@@ -600,6 +620,26 @@ const FOUNDER: Labels = {
     "Every time CAE ships something, it lands here — newest first, grouped by project.",
   changesExplainDevToggle:
     "Flip to see the raw git details: branch name, SHAs, commit subjects, GitHub link.",
+
+  // === Phase 11: Live Floor ===
+  floorPageTitle: "CAE Home",
+  floorPopOut: "Open in new window",
+  floorMinimize: "Hide",
+  floorPause: "Pause animations",
+  floorLegend: "What am I looking at?",
+  floorReducedMotionNotice: "Calm mode on — no animations",
+  floorStationHub: "The conductor's desk",
+  floorStationForge: "The builder's forge",
+  floorStationWatchtower: "The checker's watchtower",
+  floorStationOverlook: "The researcher's overlook",
+  floorStationLibrary: "The writer's library",
+  floorStationShadow: "The debugger's shadow realm",
+  floorStationArmory: "The guard's armory",
+  floorStationDrafting: "The designer's drafting table",
+  floorStationPulpit: "The announcer's pulpit",
+  floorStationLoadingBay: "Delegation crates",
+  floorExplainHub: "Nexus routes work to agents — merge fireworks appear here",
+  floorExplainForge: "Forge builds code — pulses while building; red X if Sentinel rejects",
 
   // === Phase 9: Chat ===
   chatRailCollapsedAria: "Open chat",
@@ -903,6 +943,26 @@ const DEV: Labels = {
     "git log --all --merges --since='30 days ago', deduped by sha, joined with forge_end events by task_id.",
   changesExplainDevToggle:
     "reveals branch + %H + %h + per-commit subjects + github URL",
+
+  // === Phase 11: Live Floor ===
+  floorPageTitle: "Live Floor",
+  floorPopOut: "Pop out",
+  floorMinimize: "Minimize",
+  floorPause: "Pause",
+  floorLegend: "Legend",
+  floorReducedMotionNotice: "Reduced motion active — effects disabled",
+  floorStationHub: "Nexus hub",
+  floorStationForge: "Forge",
+  floorStationWatchtower: "Sentinel watchtower",
+  floorStationOverlook: "Scout overlook",
+  floorStationLibrary: "Scribe library",
+  floorStationShadow: "Phantom shadow realm",
+  floorStationArmory: "Aegis armory",
+  floorStationDrafting: "Arch drafting table",
+  floorStationPulpit: "Herald pulpit",
+  floorStationLoadingBay: "Loading bay",
+  floorExplainHub: "Nexus routes work to agents — merge fireworks appear here",
+  floorExplainForge: "Forge builds code — pulses while building; red X if Sentinel rejects",
 
   // === Phase 9: Chat ===
   chatRailCollapsedAria: "toggle chat rail",
