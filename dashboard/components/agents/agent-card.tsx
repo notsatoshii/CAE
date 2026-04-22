@@ -16,15 +16,21 @@
  * Drift indicator is a small inline badge here; the big founder/dev copy
  * banner lives in the drawer.
  *
+ * Plan 13-07: agentVerbs A/B — action verbs are read from lib/copy/labels.ts
+ * via getAgentVerbSet() + agentVerbs(). Toggle via localStorage:
+ *   localStorage.setItem("p13-agent-verbs", "wake_spawn_hide")
+ * Plan 13-09 (Wave 6) will wire up the actual action handlers.
+ *
  * See .planning/phases/05-agents-tab/05-CONTEXT.md §Agent card layout +
  * §Idle-agent card variant + §Founder-speak flip for the authoritative
  * visual/copy contract. Pattern reference for URL-state click flow:
  * components/build-home/active-phase-cards.tsx.
  */
 
+import { useState, useEffect } from "react"
 import { useRouter, useSearchParams, usePathname } from "next/navigation"
 import { useDevMode } from "@/lib/providers/dev-mode"
-import { labelFor } from "@/lib/copy/labels"
+import { labelFor, agentVerbs, getAgentVerbSet } from "@/lib/copy/labels"
 import { Card, CardContent } from "@/components/ui/card"
 import { Sparkline } from "@/components/ui/sparkline"
 import { cn } from "@/lib/utils"
@@ -41,6 +47,14 @@ export function AgentCard({ agent }: AgentCardProps) {
   const searchParams = useSearchParams()
   const { dev } = useDevMode()
   const t = labelFor(dev)
+
+  // Agent verb A/B — reads localStorage on mount; default is start_stop_archive.
+  // Toggle: localStorage.setItem("p13-agent-verbs", "wake_spawn_hide")
+  // Plan 13-09 will wire actual action handlers; this surfaces the copy A/B.
+  const [verbs, setVerbs] = useState(() => agentVerbs("start_stop_archive"))
+  useEffect(() => {
+    setVerbs(agentVerbs(getAgentVerbSet()))
+  }, [])
 
   const isIdle = agent.group === "dormant"
 
@@ -153,6 +167,40 @@ export function AgentCard({ agent }: AgentCardProps) {
           )}
 
           <div className="h-px bg-[color:var(--border,#1f1f22)] mt-auto" />
+
+          {/* Agent verb quick-actions (Plan 13-07 A/B; handlers wired in 13-09) */}
+          <div
+            className="flex items-center gap-1.5"
+            data-testid={"agent-card-" + agent.name + "-verbs"}
+          >
+            <button
+              type="button"
+              aria-label={verbs.primary + " " + agent.label}
+              onClick={(e) => { e.stopPropagation(); /* TODO 13-09: start handler */ }}
+              className="rounded px-2 py-0.5 text-[10px] font-mono border border-[color:var(--border,#1f1f22)] text-[color:var(--text-muted,#8a8a8c)] hover:border-[color:var(--accent,#00d4ff)] hover:text-[color:var(--accent,#00d4ff)] transition-colors"
+              data-testid={"agent-card-" + agent.name + "-verb-primary"}
+            >
+              {verbs.primary}
+            </button>
+            <button
+              type="button"
+              aria-label={verbs.stop + " " + agent.label}
+              onClick={(e) => { e.stopPropagation(); /* TODO 13-09: stop handler */ }}
+              className="rounded px-2 py-0.5 text-[10px] font-mono border border-[color:var(--border,#1f1f22)] text-[color:var(--text-muted,#8a8a8c)] hover:border-[color:var(--warning,#f59e0b)] hover:text-[color:var(--warning,#f59e0b)] transition-colors"
+              data-testid={"agent-card-" + agent.name + "-verb-stop"}
+            >
+              {verbs.stop}
+            </button>
+            <button
+              type="button"
+              aria-label={verbs.archive + " " + agent.label}
+              onClick={(e) => { e.stopPropagation(); /* TODO 13-09: archive handler */ }}
+              className="rounded px-2 py-0.5 text-[10px] font-mono border border-[color:var(--border,#1f1f22)] text-[color:var(--text-muted,#8a8a8c)] hover:border-[color:var(--danger,#ef4444)] hover:text-[color:var(--danger,#ef4444)] transition-colors"
+              data-testid={"agent-card-" + agent.name + "-verb-archive"}
+            >
+              {verbs.archive}
+            </button>
+          </div>
 
           {/* Footer: active · queued · /day */}
           <div className="flex items-center gap-3 text-xs text-[color:var(--text-muted,#8a8a8c)] font-mono">

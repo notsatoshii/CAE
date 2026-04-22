@@ -30,6 +30,7 @@ import { QueueDepthDisplay } from "./queue-depth-display";
 import { ExplainTooltip } from "@/components/ui/explain-tooltip";
 import { EmptyState, EmptyStateActions } from "@/components/ui/empty-state";
 import { Button } from "@/components/ui/button";
+import { GoldenSignalsSubtitle } from "./golden-signals-subtitles";
 
 export function SpeedPanel() {
   const { data, error, loading } = useMetricsPoll();
@@ -131,6 +132,7 @@ export function SpeedPanel() {
         >
           {L.metricsFastHeading}
         </h2>
+        <GoldenSignalsSubtitle panel="howfast" />
         <p className="mt-1 text-sm text-[color:var(--text-muted)]">
           {L.metricsFastLede(overallP50)}
         </p>

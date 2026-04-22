@@ -34,6 +34,7 @@ import { RetryHeatmap } from "./retry-heatmap";
 import { HaltEventsLog } from "./halt-events-log";
 import { SentinelRejectTrend } from "./sentinel-reject-trend";
 import { ExplainTooltip } from "@/components/ui/explain-tooltip";
+import { GoldenSignalsSubtitle } from "./golden-signals-subtitles";
 import { EmptyState, EmptyStateActions } from "@/components/ui/empty-state";
 import { Button } from "@/components/ui/button";
 
@@ -142,6 +143,7 @@ export function ReliabilityPanel() {
         >
           {L.metricsWellHeading}
         </h2>
+        <GoldenSignalsSubtitle panel="howwell" />
         <p className="mt-1 flex items-center gap-1.5 text-sm text-[color:var(--text-muted)]">
           <span>{L.metricsWellLede(weightedRate)}</span>
           <ExplainTooltip

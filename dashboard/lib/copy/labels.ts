@@ -1122,3 +1122,53 @@ export function labelFor(dev: boolean): Labels {
 }
 
 export const LABELS = { FOUNDER, DEV };
+
+// =============================================================================
+// === Phase 13-07: Agent verb A/B (MC IA adoption §5 row 5) ===
+// =============================================================================
+
+/**
+ * Two verb sets for agent action buttons.
+ *
+ *   "start_stop_archive" (default) — neutral, familiar SaaS verbs
+ *   "wake_spawn_hide"  (MC-inspired) — agentive verbs (wake an agent,
+ *                                      spawn a task, hide from view)
+ *
+ * Toggle via localStorage key `p13-agent-verbs`. To activate MC verbs:
+ *   localStorage.setItem("p13-agent-verbs", "wake_spawn_hide")
+ * To revert:
+ *   localStorage.removeItem("p13-agent-verbs")
+ *
+ * Eric decides which set to adopt as the permanent default. Set will be
+ * promoted or removed in plan 13-09 (visual Wave 6).
+ */
+export type AgentVerbSet = "start_stop_archive" | "wake_spawn_hide";
+
+export interface AgentVerbs {
+  primary: string;
+  stop: string;
+  archive: string;
+}
+
+const VERB_SETS: Record<AgentVerbSet, AgentVerbs> = {
+  start_stop_archive: { primary: "Start", stop: "Stop",   archive: "Archive" },
+  wake_spawn_hide:    { primary: "Wake",  stop: "Hide",   archive: "Hide"    },
+};
+
+/** Returns the verb map for the given set (defaults to start_stop_archive). */
+export function agentVerbs(set: AgentVerbSet = "start_stop_archive"): AgentVerbs {
+  return VERB_SETS[set];
+}
+
+/**
+ * Reads the active AgentVerbSet from localStorage.
+ * Safe to call from SSR (returns default when window is undefined).
+ *
+ * localStorage key: "p13-agent-verbs"
+ * Valid values:     "wake_spawn_hide" | anything else → default
+ */
+export function getAgentVerbSet(): AgentVerbSet {
+  if (typeof window === "undefined") return "start_stop_archive";
+  const v = localStorage.getItem("p13-agent-verbs");
+  return v === "wake_spawn_hide" ? "wake_spawn_hide" : "start_stop_archive";
+}

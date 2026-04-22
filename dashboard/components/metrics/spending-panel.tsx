@@ -38,6 +38,7 @@ import { SpendingDailyLine } from "./spending-daily-line";
 import { TopExpensiveTasks } from "./top-expensive-tasks";
 import { EstDisclaimer } from "./est-disclaimer";
 import { ExplainTooltip } from "@/components/ui/explain-tooltip";
+import { GoldenSignalsSubtitle } from "./golden-signals-subtitles";
 import { EmptyState, EmptyStateActions } from "@/components/ui/empty-state";
 import { Button } from "@/components/ui/button";
 
@@ -131,12 +132,15 @@ export function SpendingPanel() {
       className="flex flex-col gap-6 rounded-lg border border-[color:var(--border)] bg-[color:var(--surface)] p-6"
     >
       <header className="flex flex-wrap items-center justify-between gap-4">
-        <h2
-          id="spending-heading"
-          className="text-lg font-semibold text-[color:var(--text)]"
-        >
-          {L.metricsSpendingHeading}
-        </h2>
+        <div>
+          <h2
+            id="spending-heading"
+            className="text-lg font-semibold text-[color:var(--text)]"
+          >
+            {L.metricsSpendingHeading}
+          </h2>
+          <GoldenSignalsSubtitle panel="spending" />
+        </div>
         <EstDisclaimer />
       </header>
 
