@@ -184,4 +184,37 @@ describe("staticCommandItems", () => {
       expect(item.label.length).toBeGreaterThan(0);
     }
   });
+
+  // IN-03 regression: toggle items must throw loudly, not silently no-op.
+  // Before the fix they called ctx.close() as the toggle callback, so
+  // "Toggle Explain Mode" would appear to work but only close the palette.
+  it("IN-03: running cmd:toggle-explain throws (not silent no-op)", () => {
+    const items = staticCommandItems(ctx);
+    const item = items.find((i) => i.id === "cmd:toggle-explain")!;
+    expect(item).toBeDefined();
+    expect(() => item.run()).toThrow(/staticCommandItems cannot execute toggle/);
+  });
+
+  it("IN-03: running cmd:toggle-dev throws (not silent no-op)", () => {
+    const items = staticCommandItems(ctx);
+    const item = items.find((i) => i.id === "cmd:toggle-dev")!;
+    expect(item).toBeDefined();
+    expect(() => item.run()).toThrow(/staticCommandItems cannot execute toggle/);
+  });
+
+  it("IN-03: running cmd:open-shortcuts throws (not silent no-op)", () => {
+    const items = staticCommandItems(ctx);
+    const item = items.find((i) => i.id === "cmd:open-shortcuts")!;
+    expect(item).toBeDefined();
+    expect(() => item.run()).toThrow(/staticCommandItems cannot execute toggle/);
+  });
+
+  it("IN-03: navigation items (e.g. cmd:goto-home) still run without throwing", () => {
+    // Navigation items must NOT be affected — only toggles throw.
+    const items = staticCommandItems(ctx);
+    const item = items.find((i) => i.id === "cmd:goto-home")!;
+    expect(item).toBeDefined();
+    expect(() => item.run()).not.toThrow();
+    expect(mockRouter.push).toHaveBeenCalledWith("/");
+  });
 });

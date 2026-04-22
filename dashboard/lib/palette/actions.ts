@@ -85,13 +85,24 @@ export function buildStaticCommands(
 
 /**
  * Exported as staticCommandItems for use in index-sources.ts and build-index.ts.
- * Uses a no-op context — toggles are not available in static mode.
- * Callers that need real toggles should use buildStaticCommands directly.
+ *
+ * IN-03 fix: toggle callbacks now throw instead of silently no-oping so
+ * any future caller that invokes a toggle command via this path gets an
+ * immediate loud error rather than a confusing silent close-palette behavior.
+ * Callers that need real toggles must use buildStaticCommands() directly
+ * with the actual provider callbacks.
  */
 export function staticCommandItems(ctx: PaletteSourceContext): PaletteItem[] {
+  const errorOnToggle = (name: string) => () => {
+    const msg =
+      `[palette] staticCommandItems cannot execute toggle '${name}' — ` +
+      "use buildStaticCommands() with real provider callbacks instead.";
+    console.warn(msg);
+    throw new Error(msg);
+  };
   return buildStaticCommands(ctx, {
-    toggleExplain: ctx.close,
-    toggleDev: ctx.close,
-    openShortcuts: ctx.close,
+    toggleExplain: errorOnToggle("toggleExplain"),
+    toggleDev: errorOnToggle("toggleDev"),
+    openShortcuts: errorOnToggle("openShortcuts"),
   });
 }
