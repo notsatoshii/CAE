@@ -171,10 +171,14 @@ export interface ScheduledTask {
   buildplan: string
   /** Whether the schedule is currently active */
   enabled: boolean
-  /** Unix epoch ms of last trigger. 0 = never triggered. */
+  /** Unix epoch seconds of last trigger. 0 = never triggered. */
   lastRun: number
-  /** Unix epoch ms of last successful completion. Undefined until first success. */
+  /** Unix epoch seconds of last successful completion. Undefined until first success. */
   lastCompleted?: number
+  /** Unix epoch seconds when this schedule was created. */
+  createdAt: number
+  /** Email of the user who created this schedule. */
+  createdBy: string
 }
 
 /**
