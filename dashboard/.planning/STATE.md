@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v0.1
 milestone_name: milestone
 status: planning
-stopped_at: Completed 13-05-PLAN.md
-last_updated: "2026-04-22T20:35:32Z"
+stopped_at: Completed 13-06-PLAN.md
+last_updated: "2026-04-22T20:54:00Z"
 progress:
   total_phases: 14
   completed_phases: 10
   total_plans: 83
-  completed_plans: 63
-  percent: 76
+  completed_plans: 64
+  percent: 77
 ---
 
 # cae-dashboard — Project State
@@ -31,6 +31,14 @@ Plan 10-04 complete (Wave 1 closed). Next: plan 10-05 (API routes).
 
 **Last session:** 2026-04-22T20:35:32Z
 **Stopped at:** Completed 13-05-PLAN.md
+
+## Key Decisions (Phase 13 — Plan 06)
+
+- **13-06:** useStatePoll uses clearInterval on hidden (full pause) — correct for 3s cadence; useMetricsPoll uses skip-if-hidden (correct for 30s cadence); different semantics intentional
+- **13-06:** ChatPanel uses lastMsgAt state on assistant.delta (not useSseHealth) — fetch() ReadableStream cannot be wrapped by EventSource hook
+- **13-06:** useSseHealth spawns own EventSource in tail-panel + sheet-live-log (2 connections per consumer) — deferred unification to 13-08
+- **13-06:** HeartbeatDot retains halted/degraded/up dot (system-state) + adds LastUpdated chip (data freshness) — two separate semantics coexist
+- **13-06:** LivenessChip RTT shows staleness (seconds since last poll), not true network round-trip latency
 
 ## Key Decisions (Phase 13 — Plan 05)
 
