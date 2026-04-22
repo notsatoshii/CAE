@@ -21,6 +21,18 @@ function formatTok(n: number): string {
   return (n / 1_000_000).toFixed(2) + "M";
 }
 
+// Internal helper — compact duration formatting for Phase 7 metrics ledes.
+// Used in metricsFastLede founder-speak branch.
+// e.g. 450 -> "450ms", 3400 -> "3.4s", 75000 -> "1.3m", 5400000 -> "1.5h"
+function formatDuration(ms: number): string {
+  if (ms < 1000) return ms + "ms";
+  const sec = ms / 1000;
+  if (sec < 60) return sec.toFixed(1) + "s";
+  const min = sec / 60;
+  if (min < 60) return min.toFixed(1) + "m";
+  return (min / 60).toFixed(1) + "h";
+}
+
 export interface Labels {
   // Page-level headings
   buildHomeHeading: (project: string) => string;
@@ -199,6 +211,48 @@ export interface Labels {
   queueKanbanNewJobModalTitle: string;
   queueCardAgentProjectLine: (project: string, relativeTime: string) => string;
   queueCardLivePulseLabel: string;
+
+  // === Phase 7: Metrics ===
+  metricsPageHeading: string;
+  metricsSpendingHeading: string;
+  metricsSpendingTodayLabel: string;
+  metricsSpendingMtdLabel: string;
+  metricsSpendingProjectedLabel: string;
+  metricsSpendingDisclaimer: string;
+  metricsSpendingByAgentHeading: string;
+  metricsSpendingDaily30dHeading: string;
+  metricsSpendingTopTasksHeading: string;
+  metricsSpendingTopTaskRow: (title: string, tokens: string, agent: string) => string;
+  metricsWellHeading: string;
+  metricsWellLede: (rate: number) => string;
+  metricsWellAgentGaugeLabel: (founder_label: string, pct: number) => string;
+  metricsWellAgentInsufficientSamples: string;
+  metricsWellRetryHeatmapHeading: string;
+  metricsWellHaltsHeading: string;
+  metricsWellHaltsEmpty: string;
+  metricsWellSentinelTrendHeading: string;
+  metricsFastHeading: string;
+  metricsFastLede: (p50ms: number) => string;
+  metricsFastPerAgentHeading: string;
+  metricsFastPerAgentColAgent: string;
+  metricsFastPerAgentColP50: string;
+  metricsFastPerAgentColP95: string;
+  metricsFastPerAgentColN: string;
+  metricsFastQueueDepthHeading: string;
+  metricsFastQueueDepthValue: (n: number) => string;
+  metricsFastTimeToMergeHeading: string;
+  metricsFastTimeToMergeBinLabel: (bin: string, count: number) => string;
+  metricsEmptyState: string;
+  metricsFailedToLoad: string;
+  // Explain-mode tooltip blurbs (D-11)
+  metricsExplainP50: string;
+  metricsExplainP95: string;
+  metricsExplainProjected: string;
+  metricsExplainTokens: string;
+  metricsExplainSuccessRate: string;
+  metricsExplainQueueDepth: string;
+  metricsExplainTimeToMerge: string;
+  metricsExplainRetryHeatmap: string;
 }
 
 const FOUNDER: Labels = {
@@ -373,6 +427,47 @@ const FOUNDER: Labels = {
   queueKanbanNewJobModalTitle: "Send a job to CAE",
   queueCardAgentProjectLine: (project, t) => project + " · " + t,
   queueCardLivePulseLabel: "running now",
+
+  // === Phase 7: Metrics ===
+  metricsPageHeading: "How CAE is doing",
+  metricsSpendingHeading: "Spending",
+  metricsSpendingTodayLabel: "Today",
+  metricsSpendingMtdLabel: "This month so far",
+  metricsSpendingProjectedLabel: "Month projected",
+  metricsSpendingDisclaimer: "Estimated from local logs. Subscription covers the bill.",
+  metricsSpendingByAgentHeading: "By agent (30d)",
+  metricsSpendingDaily30dHeading: "Daily (30d)",
+  metricsSpendingTopTasksHeading: "Most expensive jobs",
+  metricsSpendingTopTaskRow: (title, tokens, agent) => title + " — " + tokens + " tok · " + agent,
+  metricsWellHeading: "How well it's going",
+  metricsWellLede: (r) => "CAE is getting things right " + Math.round(r * 100) + "% of the time this week.",
+  metricsWellAgentGaugeLabel: (label, pct) => label + " — " + Math.round(pct * 100) + "%",
+  metricsWellAgentInsufficientSamples: "not enough jobs yet",
+  metricsWellRetryHeatmapHeading: "When retries happen",
+  metricsWellHaltsHeading: "When CAE paused itself",
+  metricsWellHaltsEmpty: "Nothing paused this month. Nice.",
+  metricsWellSentinelTrendHeading: "Times the checker pushed back",
+  metricsFastHeading: "How fast",
+  metricsFastLede: (p50) => "Most jobs finish in about " + formatDuration(p50) + ".",
+  metricsFastPerAgentHeading: "Per-agent speed",
+  metricsFastPerAgentColAgent: "Agent",
+  metricsFastPerAgentColP50: "typical",
+  metricsFastPerAgentColP95: "slow tail",
+  metricsFastPerAgentColN: "jobs",
+  metricsFastQueueDepthHeading: "Backlog right now",
+  metricsFastQueueDepthValue: (n) => n === 0 ? "nothing waiting" : n + " waiting",
+  metricsFastTimeToMergeHeading: "How long jobs take to ship",
+  metricsFastTimeToMergeBinLabel: (bin, count) => bin + " · " + count,
+  metricsEmptyState: "Pulling the numbers...",
+  metricsFailedToLoad: "Couldn't load the numbers. Try refreshing.",
+  metricsExplainP50: "Half the jobs finish faster than this, half slower. Rough middle.",
+  metricsExplainP95: "95% of jobs finish faster than this. The slow tail you actually notice.",
+  metricsExplainProjected: "If this month keeps going like it has, we'll land around this total.",
+  metricsExplainTokens: "Tokens are how we count language-model work. One token is roughly 3-4 letters.",
+  metricsExplainSuccessRate: "How often an agent's jobs end in a ship, not a retry or give-up.",
+  metricsExplainQueueDepth: "How many jobs are queued up right now, waiting to start.",
+  metricsExplainTimeToMerge: "From 'start this' to 'shipped' — including any retries.",
+  metricsExplainRetryHeatmap: "Darker squares = more retries at that weekday+hour. Helps spot rough patches.",
 };
 
 const DEV: Labels = {
@@ -552,6 +647,47 @@ const DEV: Labels = {
   queueKanbanNewJobModalTitle: "Delegate to CAE",
   queueCardAgentProjectLine: (project, t) => project + " · " + t,
   queueCardLivePulseLabel: "in-progress",
+
+  // === Phase 7: Metrics ===
+  metricsPageHeading: "Metrics",
+  metricsSpendingHeading: "Cost",
+  metricsSpendingTodayLabel: "Tokens today",
+  metricsSpendingMtdLabel: "MTD tokens",
+  metricsSpendingProjectedLabel: "Projected MTD",
+  metricsSpendingDisclaimer: "est. — from .cae/metrics/circuit-breakers.jsonl",
+  metricsSpendingByAgentHeading: "By agent (30d)",
+  metricsSpendingDaily30dHeading: "Daily tokens (30d)",
+  metricsSpendingTopTasksHeading: "Top 10 by tokens",
+  metricsSpendingTopTaskRow: (title, tokens, agent) => title + " · " + tokens + " tok · " + agent,
+  metricsWellHeading: "Reliability",
+  metricsWellLede: (r) => "7d success rate: " + (r * 100).toFixed(1) + "%",
+  metricsWellAgentGaugeLabel: (label, pct) => label.toLowerCase() + ": " + (pct * 100).toFixed(1) + "%",
+  metricsWellAgentInsufficientSamples: "n < 5",
+  metricsWellRetryHeatmapHeading: "Retry heatmap (DoW x hour)",
+  metricsWellHaltsHeading: "Halt events",
+  metricsWellHaltsEmpty: "no halts 30d",
+  metricsWellSentinelTrendHeading: "Sentinel reject trend (30d)",
+  metricsFastHeading: "Speed",
+  metricsFastLede: (p50) => "P50 wall: " + p50 + "ms",
+  metricsFastPerAgentHeading: "Per-agent wall",
+  metricsFastPerAgentColAgent: "agent",
+  metricsFastPerAgentColP50: "p50",
+  metricsFastPerAgentColP95: "p95",
+  metricsFastPerAgentColN: "n",
+  metricsFastQueueDepthHeading: "Queue depth",
+  metricsFastQueueDepthValue: (n) => n + " inbox",
+  metricsFastTimeToMergeHeading: "Time-to-merge distribution",
+  metricsFastTimeToMergeBinLabel: (bin, count) => bin + " (" + count + ")",
+  metricsEmptyState: "loading...",
+  metricsFailedToLoad: "/api/metrics failed",
+  metricsExplainP50: "50th percentile, linear interpolation over sorted samples.",
+  metricsExplainP95: "95th percentile, linear interpolation. Captures long-tail.",
+  metricsExplainProjected: "tokens_mtd * (daysInMonth / dayOfMonth).",
+  metricsExplainTokens: "Sum of input_tokens + output_tokens across token_usage events.",
+  metricsExplainSuccessRate: "forge_end events with success:true / all forge_end events, 7d window.",
+  metricsExplainQueueDepth: "Current length of .cae/inbox across all projects.",
+  metricsExplainTimeToMerge: "outbox DONE.md mtime - inbox creation time.",
+  metricsExplainRetryHeatmap: "forge_end(success:false) + limit_exceeded(max_retries) bucketed by UTC DoW x hour, 7d.",
 };
 
 export function labelFor(dev: boolean): Labels {
