@@ -13,6 +13,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { GitBranch } from "lucide-react";
 import type { GraphNode, GraphPayload, NodeKind } from "@/lib/cae-graph-state";
 import { useDevMode } from "@/lib/providers/dev-mode";
 import { labelFor } from "@/lib/copy/labels";
@@ -21,6 +22,7 @@ import { GraphCanvas } from "./graph-canvas";
 import { NodeDrawer } from "./node-drawer";
 import { GraphFilters } from "./graph-filters";
 import { RegenerateButton } from "./regenerate-button";
+import { EmptyState, EmptyStateActions } from "@/components/ui/empty-state";
 
 const ALL_KINDS: readonly NodeKind[] = ["phases", "agents", "notes", "PRDs"];
 
@@ -162,11 +164,20 @@ export function GraphPane({ onOpenGitTimeline }: GraphPaneProps = {}) {
             {error}
           </div>
         ) : isEmpty ? (
-          <div className="flex h-full flex-col items-center justify-center gap-2 text-center text-xs text-[color:var(--text-muted)]">
-            <p>{L.memoryEmptyGraph}</p>
-            <p className="text-[10px] text-[color:var(--text-dim)]">
-              ↑ {L.memoryBtnRegenerate}
-            </p>
+          <div className="flex h-full items-center justify-center p-8">
+            <EmptyState
+              icon={GitBranch}
+              heading={L.emptyMemoryGraphHeading}
+              body={L.emptyMemoryGraphBody}
+              actions={
+                <EmptyStateActions>
+                  <RegenerateButton
+                    generatedAt={payload?.generated_at}
+                    onRegenerated={refetchGraph}
+                  />
+                </EmptyStateActions>
+              }
+            />
           </div>
         ) : (
           <GraphCanvas

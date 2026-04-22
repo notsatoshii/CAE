@@ -88,7 +88,7 @@ export function WorkflowsListClient({
   if (workflows.length === 0) {
     return (
       <EmptyState
-        data-testid="workflows-empty"
+        testId="workflows-empty"
         icon={BookMarked}
         heading={t.emptyWorkflowsHeading}
         body={t.workflowsListEmpty}

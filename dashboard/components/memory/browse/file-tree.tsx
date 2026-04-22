@@ -32,10 +32,13 @@
  */
 
 import { useCallback, useMemo, useRef, useState } from "react";
-import { ChevronDown, ChevronRight } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { ChevronDown, ChevronRight, FolderOpen } from "lucide-react";
 import type { MemoryTreeNode } from "@/lib/cae-memory-sources";
 import { labelFor } from "@/lib/copy/labels";
 import { useDevMode } from "@/lib/providers/dev-mode";
+import { EmptyState, EmptyStateActions } from "@/components/ui/empty-state";
+import { Button } from "@/components/ui/button";
 
 export interface FileTreeProps {
   nodes: MemoryTreeNode[];
@@ -67,6 +70,7 @@ function collectDefaultExpanded(
 export function FileTree({ nodes, selectedPath, onSelect }: FileTreeProps) {
   const { dev } = useDevMode();
   const labels = labelFor(dev);
+  const router = useRouter();
 
   const [expanded, setExpanded] = useState<Set<string>>(() =>
     collectDefaultExpanded(nodes),
@@ -105,12 +109,22 @@ export function FileTree({ nodes, selectedPath, onSelect }: FileTreeProps) {
 
   if (nodes.length === 0) {
     return (
-      <div
-        className="px-3 py-4 text-xs text-[color:var(--text-muted)]"
-        data-testid="file-tree-empty"
-      >
-        {labels.memoryEmptyBrowse}
-      </div>
+      <EmptyState
+        testId="file-tree-empty"
+        icon={FolderOpen}
+        heading={labels.emptyMemoryBrowseHeading}
+        body={labels.emptyMemoryBrowseBody}
+        actions={
+          <EmptyStateActions>
+            <Button
+              variant="secondary"
+              onClick={() => router.push("/memory?view=graph")}
+            >
+              {labels.emptyMemoryBrowseCtaRegenerate}
+            </Button>
+          </EmptyStateActions>
+        }
+      />
     );
   }
 

@@ -21,6 +21,12 @@ vi.mock("@/lib/providers/dev-mode", () => ({
   useDevMode: () => ({ dev: false, toggle: () => {}, setDev: () => {} }),
 }));
 
+// Mock next/navigation: useRouter used by EmptyState CTA in the empty branch.
+const mockPush = vi.fn();
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ push: mockPush }),
+}));
+
 describe("FileTree", () => {
   it("renders the empty state when nodes is an empty array", () => {
     render(<FileTree nodes={[]} selectedPath={null} onSelect={() => {}} />);

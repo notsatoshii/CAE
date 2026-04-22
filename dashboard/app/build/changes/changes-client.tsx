@@ -111,7 +111,7 @@ export function ChangesClient() {
           <ExplainTooltip text={L.changesExplainTimeline} />
         </h1>
         <EmptyState
-          data-testid="changes-empty"
+          testId="changes-empty"
           icon={Filter}
           heading={L.emptyChangesHeading}
           body={L.emptyChangesBody}

@@ -84,7 +84,7 @@ export function QueueKanbanClient({ initialState }: Props) {
   if (totalTasks === 0 && !error) {
     return (
       <EmptyState
-        data-testid="queue-kanban-empty"
+        testId="queue-kanban-empty"
         icon={Inbox}
         heading={t.emptyQueueHeading}
         body={t.emptyQueueBody}

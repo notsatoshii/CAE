@@ -49,7 +49,7 @@ export default async function AgentsPage() {
       </div>
       {agents.length === 0 && !loadError ? (
         <EmptyState
-          data-testid="agents-page-empty"
+          testId="agents-page-empty"
           icon={Cpu}
           heading={labelFor(false).emptyAgentsHeading}
           body={labelFor(false).emptyAgentsBody}
