@@ -2,14 +2,14 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Home, Users, Zap, Inbox, ScrollText } from "lucide-react"
+import { Home, Users, Zap, Inbox, ScrollText, Puzzle } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 /**
  * BuildRail — 48px icon-only left-rail for all `/build/*` pages.
  *
- * Per UI-SPEC.md §2 (Build mode 5 tabs) + §13 (20px icon size).
- * Tab order is LOCKED: Home · Agents · Workflows · Queue · Changes.
+ * Per UI-SPEC.md §2 (Build mode 6 tabs) + §13 (20px icon size).
+ * Tab order is LOCKED: Home · Agents · Workflows · Queue · Skills · Changes.
  *
  * Active-tab detection rule (STRICT):
  *   - "/build" is only active when pathname === "/build" (not sub-routes).
@@ -21,6 +21,7 @@ const TABS = [
   { href: "/build/agents", icon: Users, label: "Agents", testid: "build-rail-tab-agents" },
   { href: "/build/workflows", icon: Zap, label: "Workflows", testid: "build-rail-tab-workflows" },
   { href: "/build/queue", icon: Inbox, label: "Queue", testid: "build-rail-tab-queue" },
+  { href: "/build/skills", icon: Puzzle, label: "Skills", testid: "build-rail-tab-skills" },
   { href: "/build/changes", icon: ScrollText, label: "Changes", testid: "build-rail-tab-changes" },
 ] as const
 
