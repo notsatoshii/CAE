@@ -13,9 +13,12 @@
  *   async function getHandler(req: Request) { ... }
  *   export const GET = withLog(getHandler, "/api/state");
  *
+ * Works with both `Request` (Web API) and `NextRequest` (Next.js) — the
+ * wrapper only calls `.headers.get()`, `.method`, and `.url` which are
+ * present on both types.
+ *
  * SSE routes (text/event-stream responses) are detected and get a different
- * "req.end.stream-open" log entry — the actual stream lifecycle is not tracked
- * here (stream closes after the handler returns the Response object).
+ * "req.end.stream-open" log entry.
  */
 
 import { randomUUID } from "crypto";
@@ -23,17 +26,21 @@ import { log, reqCtx } from "@/lib/log";
 
 const l = log("http");
 
-type AnyHandler = (req: Request, ...rest: unknown[]) => Promise<Response>;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type AnyHandler = (...args: any[]) => Promise<Response>;
 
 /**
  * Wraps an App Router handler with structured logging + correlation ID middleware.
  *
- * @param handler - Async function (req: Request, ...rest) => Promise<Response>
+ * @param handler - Async function (req, ...rest) => Promise<Response>
  * @param route   - Route label for log context, e.g. "/api/state"
  * @returns The same function signature, wrapped
  */
 export function withLog<T extends AnyHandler>(handler: T, route: string): T {
-  return (async (req: Request, ...rest: unknown[]) => {
+  return (async (...args: unknown[]) => {
+    // First arg is always the request object (Request or NextRequest)
+    const req = args[0] as { headers: { get(name: string): string | null }; method: string; url: string };
+
     // Accept incoming correlation ID or generate a fresh one
     const reqId = req.headers.get("x-correlation-id") ?? randomUUID();
 
@@ -43,7 +50,7 @@ export function withLog<T extends AnyHandler>(handler: T, route: string): T {
       l.info({ method: req.method, url: req.url, reqId }, "req.begin");
 
       try {
-        const res = await handler(req, ...rest);
+        const res = await handler(...args);
         const ms = Date.now() - start;
 
         const isStream = res.headers.get("content-type")?.includes("text/event-stream");

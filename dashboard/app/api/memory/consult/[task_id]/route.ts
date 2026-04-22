@@ -53,8 +53,4 @@ async function getHandler(
   }
 }
 
-type TaskCtx = { params: Promise<{ task_id: string }> };
-export const GET = withLog(
-  getHandler as (req: Request, ctx: TaskCtx) => Promise<Response>,
-  "/api/memory/consult",
-);
+export const GET = withLog(getHandler, "/api/memory/consult");

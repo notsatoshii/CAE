@@ -61,8 +61,4 @@ async function getHandler(
   }
 }
 
-type PathCtx = { params: Promise<{ path: string[] }> };
-export const GET = withLog(
-  getHandler as (req: Request, ctx: PathCtx) => Promise<Response>,
-  "/api/memory/file",
-);
+export const GET = withLog(getHandler, "/api/memory/file");

@@ -13,6 +13,7 @@ import { CommandPaletteProvider } from "@/lib/hooks/use-command-palette";
 import { ShortcutOverlayProvider } from "@/lib/hooks/use-shortcut-overlay";
 import { CommandPalette } from "@/components/palette/command-palette";
 import { ShortcutOverlay } from "@/components/ui/shortcut-overlay";
+import { ClientErrorBridge, RootErrorBoundary } from "@/components/root-error-boundary";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -42,24 +43,27 @@ export default async function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         suppressHydrationWarning
       >
-        <ExplainModeProvider>
-          <DevModeProvider>
-            <StatePollProvider>
-              <ChatRailProvider session={session}>
-                <CommandPaletteProvider>
-                  <ShortcutOverlayProvider>
-                    {session && <TopNav session={session} />}
-                    {children}
-                    {session && <ChatRail />}
-                    {session && <CommandPalette />}
-                    {session && <ShortcutOverlay />}
-                    <Toaster />
-                  </ShortcutOverlayProvider>
-                </CommandPaletteProvider>
-              </ChatRailProvider>
-            </StatePollProvider>
-          </DevModeProvider>
-        </ExplainModeProvider>
+        <RootErrorBoundary>
+          <ClientErrorBridge />
+          <ExplainModeProvider>
+            <DevModeProvider>
+              <StatePollProvider>
+                <ChatRailProvider session={session}>
+                  <CommandPaletteProvider>
+                    <ShortcutOverlayProvider>
+                      {session && <TopNav session={session} />}
+                      {children}
+                      {session && <ChatRail />}
+                      {session && <CommandPalette />}
+                      {session && <ShortcutOverlay />}
+                      <Toaster />
+                    </ShortcutOverlayProvider>
+                  </CommandPaletteProvider>
+                </ChatRailProvider>
+              </StatePollProvider>
+            </DevModeProvider>
+          </ExplainModeProvider>
+        </RootErrorBoundary>
       </body>
     </html>
   );
