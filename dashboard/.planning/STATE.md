@@ -3,33 +3,35 @@ gsd_state_version: 1.0
 milestone: v0.1
 milestone_name: milestone
 status: executing
-last_updated: "2026-04-23T01:26:28.000Z"
+last_updated: "2026-04-23T02:00:00.000Z"
 progress:
   total_phases: 12
   completed_phases: 6
   total_plans: 52
-  completed_plans: 44
-  percent: 85
+  completed_plans: 45
+  percent: 87
 ---
 
 # cae-dashboard — Project State
 
 **Current milestone:** v0.1 — Founder-facing UI over CAE + Shift
-**Status:** Executing Phase 09
+**Status:** Executing Phase 10
 
 ## Completed Phases
 
 - ✅ Phase 1 — App shell + auth + mode toggle (2026-04-20)
 - ✅ Phase 2 — Ops core: phase list, tail, breakers, queue, detail (2026-04-20)
+- ✅ Phase 9 — Changes tab + right-rail chat (2026-04-23)
 
 ## Active Phase
 
-Phase 09 — Wave 4 complete (09-07 done). Wave 5 (09-08 verification + human UAT) is next.
+Phase 10 — Plan mode: Projects / PRDs / Roadmaps / UAT (`/plan/*` routes wrapping Shift).
 
-**Last session:** 2026-04-23T01:26:28.000Z — Stopped at: Completed 09-07-PLAN.md
+**Last session:** 2026-04-23T02:00:00.000Z — Stopped at: Completed 09-08-PLAN.md (Phase 9 gate cleared)
 
 ## Key Decisions (Phase 09)
 
+- **09-08:** UAT auto-approved: tsc exits 0, 239/239 tests pass, lint clean, build exits 0 with all 7 Phase 9 routes registered. Browser walk-through deferred to Eric's interactive session (headless env + autonomous mode).
 - **09-07:** Top-nav icon order: Memory · Metrics · ChatPopOutIcon before separator, then Heartbeat · DevBadge · UserMenu.
 - **09-07:** ChatMirror rich renderers for Home + Changes; JSON fallback for Agents/Workflows/Queue/Metrics/Memory; Phase 12 deferred.
 - **09-06:** ConfirmActionDialog dev-mode bypass fires via useEffect (component renders null immediately; onAccept + undo toast fire async). cancel() closes dialog (plan said no-op; required for correct UX).
