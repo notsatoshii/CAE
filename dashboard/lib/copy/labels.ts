@@ -282,6 +282,57 @@ export interface Labels {
   memoryExplainRegenerate: string;
   memoryFileNotFound: string;
   memoryLoadFailed: string;
+
+  // === Phase 9: Changes tab ===
+  changesPageHeading: string;
+  changesPageLede: (countToday: number) => string;
+  changesEmpty: string;
+  changesFailedToLoad: string;
+  changesProjectHeader: (projectName: string, count: number) => string;
+  changesDayToday: string;
+  changesDayYesterday: string;
+  changesDayWeek: (dayName: string) => string;
+  changesDevToggleLabel: string;
+  changesDevBranchLabel: (branch: string) => string;
+  changesDevShaLabel: (shaShort: string) => string;
+  changesDevAgentLabel: (agent: string, model: string | null) => string;
+  changesDevTokensLabel: (tokens: number) => string;
+  changesDevGithubLabel: string;
+  changesDevCommitsHeading: (n: number) => string;
+  changesExplainTimeline: string;
+  changesExplainDevToggle: string;
+
+  // === Phase 9: Chat ===
+  chatRailCollapsedAria: string;
+  chatRailExpandAria: string;
+  chatRailCollapseAria: string;
+  chatRailExpandedTitle: string;
+  chatInputPlaceholder: string;
+  chatSendButton: string;
+  chatSendButtonPending: string;
+  chatSuggestionsHeading: string;
+  chatNewConversationButton: string;
+  chatEmptyThread: string;
+  chatThinking: string;
+  chatRateLimited: (seconds: number) => string;
+  chatUnreadAria: (n: number) => string;
+  chatFailedToLoad: string;
+  chatSessionListHeading: string;
+  chatSessionListEmpty: string;
+  chatSessionListItem: (agentLabel: string, preview: string, relTime: string) => string;
+  chatMessageUserRole: string;
+  chatMessageAgentRole: (founder: string, agent: string) => string;
+  chatGateDialogTitle: string;
+  chatGateDialogSummaryLabel: string;
+  chatGateDialogCostLabel: (tokens: number) => string;
+  chatGateDialogDiffLabel: string;
+  chatGateDialogAccept: string;
+  chatGateDialogCancel: string;
+  chatGateInstantToast: (summary: string) => string;
+  chatGateUndoToast: string;
+  chatExplainRail: string;
+  chatExplainSuggestions: string;
+  chatExplainGate: string;
 }
 
 const FOUNDER: Labels = {
@@ -527,6 +578,60 @@ const FOUNDER: Labels = {
   memoryExplainRegenerate: "Rebuilds the knowledge graph from current memory files.",
   memoryFileNotFound: "This file's gone.",
   memoryLoadFailed: "Couldn't load that.",
+
+  // === Phase 9: Changes tab ===
+  changesPageHeading: "What shipped",
+  changesPageLede: (n) =>
+    n === 0 ? "Nothing's shipped today — yet." : n + " change" + (n === 1 ? "" : "s") + " today.",
+  changesEmpty: "Nothing's shipped in the last 30 days.",
+  changesFailedToLoad: "Couldn't load the timeline. Try refreshing.",
+  changesProjectHeader: (name, n) => name + " · " + n + " shipped",
+  changesDayToday: "Today",
+  changesDayYesterday: "Yesterday",
+  changesDayWeek: (day) => day,
+  changesDevToggleLabel: "technical",
+  changesDevBranchLabel: (b) => "branch: " + b,
+  changesDevShaLabel: (s) => "sha: " + s,
+  changesDevAgentLabel: (a, m) => (m ? a + " (" + m + ")" : a),
+  changesDevTokensLabel: (t) => t + " tok",
+  changesDevGithubLabel: "view on GitHub",
+  changesDevCommitsHeading: (n) => n + " commit" + (n === 1 ? "" : "s"),
+  changesExplainTimeline:
+    "Every time CAE ships something, it lands here — newest first, grouped by project.",
+  changesExplainDevToggle:
+    "Flip to see the raw git details: branch name, SHAs, commit subjects, GitHub link.",
+
+  // === Phase 9: Chat ===
+  chatRailCollapsedAria: "Open chat",
+  chatRailExpandAria: "Expand chat",
+  chatRailCollapseAria: "Collapse chat",
+  chatRailExpandedTitle: "Chat with CAE",
+  chatInputPlaceholder: "Ask CAE anything…",
+  chatSendButton: "Send",
+  chatSendButtonPending: "Sending…",
+  chatSuggestionsHeading: "Try:",
+  chatNewConversationButton: "New conversation",
+  chatEmptyThread: "Hey. What's broken.",
+  chatThinking: "CAE is thinking…",
+  chatRateLimited: (s) => "CAE is rate-limited for " + s + "s — standby.",
+  chatUnreadAria: (n) => n + " unread message" + (n === 1 ? "" : "s"),
+  chatFailedToLoad: "Couldn't reach CAE. Try refreshing.",
+  chatSessionListHeading: "Past conversations",
+  chatSessionListEmpty: "No past conversations yet.",
+  chatSessionListItem: (a, p, t) => a + " · " + p + " · " + t,
+  chatMessageUserRole: "You",
+  chatMessageAgentRole: (f, _a) => f,
+  chatGateDialogTitle: "Run this?",
+  chatGateDialogSummaryLabel: "What will happen",
+  chatGateDialogCostLabel: (t) => "~" + t + " tok",
+  chatGateDialogDiffLabel: "Preview",
+  chatGateDialogAccept: "Go",
+  chatGateDialogCancel: "Cancel",
+  chatGateInstantToast: (s) => "Running: " + s,
+  chatGateUndoToast: "Undo",
+  chatExplainRail: "Chat stays with you across tabs. Click the edge to expand.",
+  chatExplainSuggestions: "Quick questions CAE can answer about this tab.",
+  chatExplainGate: "Before CAE spends tokens on something big, it'll ask you first.",
 };
 
 const DEV: Labels = {
@@ -777,6 +882,59 @@ const DEV: Labels = {
   memoryExplainRegenerate: "spawn graphify --mode fast --no-viz --update",
   memoryFileNotFound: "404",
   memoryLoadFailed: "fetch failed",
+
+  // === Phase 9: Changes tab ===
+  changesPageHeading: "Changes",
+  changesPageLede: (n) => n + " merge" + (n === 1 ? "" : "s") + " today",
+  changesEmpty: "no merges in 30d window",
+  changesFailedToLoad: "/api/changes failed",
+  changesProjectHeader: (name, n) => name + " (" + n + ")",
+  changesDayToday: "Today",
+  changesDayYesterday: "Yesterday",
+  changesDayWeek: (day) => day,
+  changesDevToggleLabel: "[+] technical",
+  changesDevBranchLabel: (b) => b,
+  changesDevShaLabel: (s) => s,
+  changesDevAgentLabel: (a, m) => (m ? a + "/" + m : a),
+  changesDevTokensLabel: (t) => t + "t",
+  changesDevGithubLabel: "gh",
+  changesDevCommitsHeading: (n) => n + " commits",
+  changesExplainTimeline:
+    "git log --all --merges --since='30 days ago', deduped by sha, joined with forge_end events by task_id.",
+  changesExplainDevToggle:
+    "reveals branch + %H + %h + per-commit subjects + github URL",
+
+  // === Phase 9: Chat ===
+  chatRailCollapsedAria: "toggle chat rail",
+  chatRailExpandAria: "expand",
+  chatRailCollapseAria: "collapse",
+  chatRailExpandedTitle: "chat",
+  chatInputPlaceholder: "message (Enter = send, Shift+Enter = newline)…",
+  chatSendButton: "send",
+  chatSendButtonPending: "…",
+  chatSuggestionsHeading: "suggestions:",
+  chatNewConversationButton: "new session",
+  chatEmptyThread: "(empty)",
+  chatThinking: "streaming…",
+  chatRateLimited: (s) => "rate-limited " + s + "s",
+  chatUnreadAria: (n) => n + " unread",
+  chatFailedToLoad: "/api/chat failed",
+  chatSessionListHeading: "sessions",
+  chatSessionListEmpty: "no sessions",
+  chatSessionListItem: (a, p, t) => a + "/" + p + "/" + t,
+  chatMessageUserRole: "user",
+  chatMessageAgentRole: (_f, a) => a,
+  chatGateDialogTitle: "Confirm action",
+  chatGateDialogSummaryLabel: "action",
+  chatGateDialogCostLabel: (t) => "~" + t + "t",
+  chatGateDialogDiffLabel: "diff",
+  chatGateDialogAccept: "exec",
+  chatGateDialogCancel: "abort",
+  chatGateInstantToast: (s) => "exec: " + s,
+  chatGateUndoToast: "undo",
+  chatExplainRail: "Persistent 48→300px rail; SSE-driven unread counter.",
+  chatExplainSuggestions: "lib/chat-suggestions.ts lookup keyed by pathname.",
+  chatExplainGate: "lib/chat-cost-estimate.ts shouldGate() when estimate>=1000.",
 };
 
 export function labelFor(dev: boolean): Labels {
