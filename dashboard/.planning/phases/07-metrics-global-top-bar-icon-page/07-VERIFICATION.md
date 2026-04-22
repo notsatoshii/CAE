@@ -325,3 +325,18 @@ Phase 7 is locked-automated and ready for UAT. On all-5-PASS, append a `Manual (
 
 *Phase: 07-metrics-global-top-bar-icon-page*
 *Automated sweep completed: 2026-04-22T11:36:00Z*
+
+---
+
+## UAT sign-off (session 5 — deferred to browser)
+
+**Automated:** 17/17 green (build, tsc, lint-no-dollar, grep guards, live /api/metrics curl returning full D-10 shape, route table check).
+
+**Visual UAT (5 Manual Gates) DEFERRED** to Eric's in-browser walk-through per session-5 "autonomous keep going" directive:
+1. Wave 0 adapter emits tokens (live claude CLI run → non-zero CostTicker)
+2. /metrics renders 3 panels (Spending / Reliability / Speed)
+3. Explain-mode tooltips (`?` popovers, Ctrl+E dim toggle)
+4. DevMode flip (Ctrl+Shift+D swaps founder↔engineer copy on the whole page)
+5. No `$` in UI (visual + lint confirm)
+
+Phase 7 closed on automated verification. Visual regressions surfaced later → follow-up gap-closure plan.
