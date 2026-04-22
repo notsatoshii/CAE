@@ -282,7 +282,7 @@ Plans:
 - Role-based access — viewer/operator/admin roles gated via Google SSO.
 - Trust scoring for installed skills + secret detection + MCP call auditing surfaced in a Security panel.
 
-**Plans:** 5/5 plans complete
+**Plans:** 4/4 plans complete
 
 Plans:
 - [ ] 14-01-PLAN.md — Wave 0 scaffold: deps + gitleaks + fixtures + types + labels + audit-hook + skill-install wrapper (wave 0)
