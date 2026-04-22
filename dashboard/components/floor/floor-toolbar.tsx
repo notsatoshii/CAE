@@ -60,6 +60,14 @@ export function FloorToolbar({
 
   function handlePopOut() {
     if (!projectPath) return;
+    // Trade-off: intentionally omitting "noopener,noreferrer" so that the pop-out window
+    // retains window.opener. This is required for two features:
+    //   1. floor-client.tsx returnToMain() — focuses the opener tab and closes the pop-out.
+    //   2. floor-popout-host.tsx Escape handler — calls window.close() which only works
+    //      when the window was opened via window.open (not affected by opener).
+    // Risk is low: /floor/popout is same-origin, session-authenticated, and must never
+    // navigate cross-origin or load third-party scripts. If that constraint changes,
+    // replace opener reliance with BroadcastChannel (see WR-02 in 11-REVIEW.md).
     window.open(
       "/floor/popout?project=" + encodeURIComponent(projectPath),
       "cae-live-floor",
