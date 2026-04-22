@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useRef, useState } from "react";
+import type { Rollup, PhaseSummary, RecentEvent, NeedsYouItem } from "@/lib/cae-home-state";
 
 export interface StateResponse {
   breakers: {
@@ -17,6 +18,12 @@ export interface StateResponse {
     compaction: unknown[];
     approvals: unknown[];
   };
+  // Phase 4 extension (route.ts exposes home.phases as home_phases to avoid shadowing the existing `phases` key)
+  rollup: Rollup;
+  home_phases: PhaseSummary[];
+  events_recent: RecentEvent[];
+  needs_you: NeedsYouItem[];
+  live_ops_line: string;
 }
 
 interface StatePollValue {
