@@ -11,5 +11,14 @@ export default auth((req) => {
 });
 
 export const config = {
-  matcher: ["/plan/:path*", "/build/:path*", "/memory", "/metrics", "/floor", "/floor/:path*"],
+  matcher: [
+    "/plan/:path*",
+    "/build/:path*",
+    "/memory",
+    "/metrics",
+    "/floor",
+    "/floor/:path*",
+    "/api/tail",   // CR-03: SSE stream carries project telemetry — must be auth-gated
+    "/api/state",  // CR-03: dashboard snapshot carries circuit-breakers, tokens, inbox/outbox
+  ],
 };
