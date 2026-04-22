@@ -4,6 +4,7 @@ import { UserMenu } from "./user-menu";
 import { CostTicker } from "./cost-ticker";
 import { MemoryIcon } from "./memory-icon";
 import { MetricsIcon } from "./metrics-icon";
+import { ChatPopOutIcon } from "./chat-pop-out-icon";
 import { HeartbeatDot } from "./heartbeat-dot";
 import { DevBadge } from "./dev-badge";
 
@@ -34,10 +35,11 @@ export function TopNav({ session }: TopNavProps) {
         <CostTicker />
       </div>
 
-      {/* Right cluster: memory, metrics, heartbeat, dev badge, user menu */}
+      {/* Right cluster: memory, metrics, chat pop-out, heartbeat, dev badge, user menu */}
       <div className="flex items-center gap-2">
         <MemoryIcon />
         <MetricsIcon />
+        <ChatPopOutIcon />
         <span className="mx-1 h-4 w-px bg-[color:var(--border-subtle)]" aria-hidden="true" />
         <HeartbeatDot />
         <DevBadge />
