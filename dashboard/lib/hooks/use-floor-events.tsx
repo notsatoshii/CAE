@@ -33,6 +33,17 @@ export const EFFECTS_CAP = 10;
 export const MAX_LINE_BYTES = 4096;
 export const AUTH_POLL_MS = 30_000;
 
+/**
+ * WR-03: suffix used by resolveCbPath to build circuit-breaker paths.
+ * Strip with endsWith check (not bare .replace) to avoid mutating mid-string matches.
+ */
+const CB_SUFFIX = "/.cae/metrics/circuit-breakers.jsonl";
+
+/** Strip CB_SUFFIX from the end of cbPath to recover the project root. */
+function cbPathToProject(cbPath: string): string {
+  return cbPath.endsWith(CB_SUFFIX) ? cbPath.slice(0, -CB_SUFFIX.length) : cbPath;
+}
+
 /** Test seam — allows tests to assert exact constant values. */
 export const __test = {
   QUEUE_CAP,
@@ -158,7 +169,7 @@ export function useFloorEvents(opts: UseFloorEventsOpts): UseFloorEventsResult {
       console.warn("[useFloorEvents] SSE error — readyState:", es.readyState);
       if (es.readyState === EventSource.CLOSED) {
         // Closed (not just reconnecting): check if it's an auth failure
-        const projectPath = opts.cbPath!.replace("/.cae/metrics/circuit-breakers.jsonl", "");
+        const projectPath = cbPathToProject(opts.cbPath!);
         void fetch("/api/state?project=" + encodeURIComponent(projectPath))
           .then((r) => { if (r.status === 401) setAuthDrifted(true); })
           .catch(() => { /* network loss — do not set authDrifted */ });
@@ -180,8 +191,7 @@ export function useFloorEvents(opts: UseFloorEventsOpts): UseFloorEventsResult {
 
     const probe = async () => {
       try {
-        // Strip the /.cae/metrics/circuit-breakers.jsonl suffix to get the project path
-        const projectPath = cbPath.replace("/.cae/metrics/circuit-breakers.jsonl", "");
+        const projectPath = cbPathToProject(cbPath); // WR-03: suffix-anchored strip
         const res = await fetch("/api/state?project=" + encodeURIComponent(projectPath));
         if (cancelled) return;
         if (res.status === 401) {
