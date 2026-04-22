@@ -2,6 +2,7 @@ import type { Session } from "next-auth";
 import { ModeToggle } from "./mode-toggle";
 import { UserMenu } from "./user-menu";
 import { CostTicker } from "./cost-ticker";
+import { FloorIcon } from "./floor-icon";
 import { MemoryIcon } from "./memory-icon";
 import { MetricsIcon } from "./metrics-icon";
 import { ChatPopOutIcon } from "./chat-pop-out-icon";
@@ -35,8 +36,9 @@ export function TopNav({ session }: TopNavProps) {
         <CostTicker />
       </div>
 
-      {/* Right cluster: memory, metrics, chat pop-out, heartbeat, dev badge, user menu */}
+      {/* Right cluster: floor, memory, metrics, chat pop-out, heartbeat, dev badge, user menu */}
       <div className="flex items-center gap-2">
+        <FloorIcon />
         <MemoryIcon />
         <MetricsIcon />
         <ChatPopOutIcon />

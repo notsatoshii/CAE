@@ -93,7 +93,11 @@ describe("FloorIcon", () => {
 
   it("6. no dollar signs in source file", async () => {
     const { readFileSync } = await import("fs");
-    const src = readFileSync(new URL("./floor-icon.tsx", import.meta.url).pathname, "utf8");
+    const { resolve } = await import("path");
+    const src = readFileSync(
+      resolve("/home/cae/ctrl-alt-elite/dashboard/components/shell/floor-icon.tsx"),
+      "utf8"
+    );
     expect(src).not.toContain("$");
   });
 });
