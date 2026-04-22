@@ -152,6 +152,19 @@ export function useFloorEvents(opts: UseFloorEventsOpts): UseFloorEventsResult {
       queueMicrotask(drain);
     };
 
+    // WR-01: surface SSE errors — browser doesn't expose the HTTP status, so probe
+    // /api/state to distinguish auth failure (401) from transient network loss.
+    es.onerror = () => {
+      console.warn("[useFloorEvents] SSE error — readyState:", es.readyState);
+      if (es.readyState === EventSource.CLOSED) {
+        // Closed (not just reconnecting): check if it's an auth failure
+        const projectPath = opts.cbPath!.replace("/.cae/metrics/circuit-breakers.jsonl", "");
+        void fetch("/api/state?project=" + encodeURIComponent(projectPath))
+          .then((r) => { if (r.status === 401) setAuthDrifted(true); })
+          .catch(() => { /* network loss — do not set authDrifted */ });
+      }
+    };
+
     return () => {
       es.close();
     };

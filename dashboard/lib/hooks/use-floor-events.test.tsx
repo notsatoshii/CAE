@@ -486,4 +486,39 @@ describe("useFloorEvents", () => {
     const fetchCountAfterNull = (fetch as ReturnType<typeof vi.fn>).mock.calls.length;
     expect(fetchCountAfterNull).toBe(fetchCountAfterProbe);
   });
+
+  // Test 18: onerror handler probes /api/state on CLOSED state (WR-01)
+  it("18. SSE onerror with CLOSED readyState probes /api/state for auth check (WR-01)", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => new Response("", { status: 401 })),
+    );
+
+    const cbPath = "/abs/.cae/metrics/circuit-breakers.jsonl";
+
+    const { result } = renderHook(() =>
+      useFloorEvents({ cbPath, paused: false, sceneRef: setupRef() }),
+    );
+
+    // Drain immediate probe first
+    await act(async () => { await Promise.resolve(); });
+    // Reset fetch mock so we can isolate the onerror-triggered probe
+    (fetch as ReturnType<typeof vi.fn>).mockClear();
+
+    // Simulate EventSource closing with an error (readyState 2 = CLOSED)
+    const es = FakeEventSource.instances[0];
+    Object.defineProperty(es, "readyState", { value: EventSource.CLOSED, writable: true });
+
+    await act(async () => {
+      es.onerror?.(new Event("error"));
+      await Promise.resolve();
+    });
+
+    // onerror must have triggered a fetch to /api/state
+    const calls = (fetch as ReturnType<typeof vi.fn>).mock.calls;
+    expect(calls.length).toBeGreaterThan(0);
+    expect(calls[0][0] as string).toMatch(/\/api\/state/);
+    // 401 from fetch → authDrifted becomes true
+    expect(result.current.authDrifted).toBe(true);
+  });
 });
