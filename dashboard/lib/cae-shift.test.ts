@@ -54,8 +54,8 @@ describe("readShiftState", () => {
     expect(state).not.toBeNull();
   });
 
-  it("returns null when .shift/state.json missing", () => {
-    const state = readShiftState("/nonexistent/path/that/has/no/shift");
+  it("returns null when .shift/state.json missing", async () => {
+    const state = await readShiftState("/nonexistent/path/that/has/no/shift");
     expect(state).toBeNull();
   });
 });
@@ -110,8 +110,9 @@ describe("approveGate", () => {
     const historyLenBefore = state.history.length;
 
     const updated = await approveGate(state, "prd");
-    expect(updated.history.length).toBe(historyLenBefore + 1);
-    const last = updated.history[updated.history.length - 1];
+    const history = updated.history!;
+    expect(history.length).toBe(historyLenBefore + 1);
+    const last = history[history.length - 1];
     expect(last.outcome).toBe("dashboard");
   });
 });
