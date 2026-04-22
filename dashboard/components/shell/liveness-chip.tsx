@@ -37,7 +37,7 @@ function worst(a: FreshnessState, b: FreshnessState): FreshnessState {
 
 export function LivenessChip() {
   const { lastUpdated } = useStatePoll();
-  const tail = useSseHealth("/api/tail");
+  const tail = useSseHealth("/api/incidents");
 
   // State-poll: 3s interval → threshold 6000ms (2 missed polls = stale)
   const stateFreshness = classify(lastUpdated, 6_000);

@@ -25,10 +25,15 @@ type SseHealthState = {
 export function useSseHealth(path: string): SseHealthState {
   const [state, setState] = useState<SseHealthState>({
     lastMessageAt: null,
-    status: "connecting",
+    // If no path supplied, start closed immediately rather than attempting a
+    // malformed EventSource URL.
+    status: path ? "connecting" : "closed",
   });
 
   useEffect(() => {
+    // Guard: skip if path is empty (e.g. SheetLiveLog with no file selected).
+    if (!path) return;
+
     const es = new EventSource(path);
 
     es.onopen = () => setState((s) => ({ ...s, status: "open" }));
