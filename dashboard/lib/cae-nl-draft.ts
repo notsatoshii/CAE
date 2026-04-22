@@ -20,10 +20,14 @@
  *   3. Steps: split input on sentence terminators OR the word "then", then
  *      for each fragment emit the first matching step type (agent | gate |
  *      action). Empty fragments are skipped. Order is preserved.
+ *
+ * Imports: pure-schema module (`./cae-workflows-schema`) so this file stays
+ * client-bundle safe. It is consumed by both `cae-workflows.ts` (server) and
+ * the NlDraftTextarea widget (client) — see Plan 06-04 deviation Rule 3.
  */
 
-import { validateWorkflow, slugifyName } from "./cae-workflows";
-import type { WorkflowSpec, WorkflowStep, WorkflowTrigger } from "./cae-workflows";
+import { validateWorkflow, slugifyName } from "./cae-workflows-schema";
+import type { WorkflowSpec, WorkflowStep, WorkflowTrigger } from "./cae-workflows-schema";
 
 const AGENT_NAMES = [
   "forge",

@@ -15,6 +15,11 @@
  *   `workflowsNlCouldNotParseNote` warning — the spec is still emitted so
  *   the page can decide whether to render it, clear the editor, etc.
  * - data-testids are contract with Plan 06-04 + VERIFICATION pass.
+ *
+ * Pure-schema imports: `validateWorkflow` + types come from
+ * `@/lib/cae-workflows-schema` (not `@/lib/cae-workflows`) so the fs/promises
+ * imports on the disk-I/O side of the domain layer do not leak into the
+ * client bundle. See Plan 06-04 deviation Rule 3 for context.
  */
 
 import { useState, useTransition } from "react"
@@ -24,8 +29,8 @@ import { Label } from "@/components/ui/label"
 import { useDevMode } from "@/lib/providers/dev-mode"
 import { labelFor } from "@/lib/copy/labels"
 import { heuristicDraft } from "@/lib/cae-nl-draft"
-import { validateWorkflow } from "@/lib/cae-workflows"
-import type { WorkflowSpec } from "@/lib/cae-workflows"
+import { validateWorkflow } from "@/lib/cae-workflows-schema"
+import type { WorkflowSpec } from "@/lib/cae-workflows-schema"
 
 export interface NlDraftTextareaProps {
   onDraft: (spec: WorkflowSpec) => void

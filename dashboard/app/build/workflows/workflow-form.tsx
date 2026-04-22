@@ -19,6 +19,12 @@
  * Save routes by `mode`: POST /api/workflows (create) or
  * PUT /api/workflows/{slug} (edit). Delete (edit-only) DELETEs the
  * workflow after a window.confirm gate.
+ *
+ * Pure-schema imports: `parseWorkflow`, `serializeWorkflow`,
+ * `validateWorkflow` come from `@/lib/cae-workflows-schema` (not
+ * `@/lib/cae-workflows`) so the fs/promises imports on the disk-I/O
+ * side of the domain layer do not leak into the client bundle. See
+ * Plan 06-04 deviation Rule 3 for context.
  */
 
 import { useState, useTransition } from "react"
@@ -36,12 +42,12 @@ import {
   parseWorkflow,
   serializeWorkflow,
   validateWorkflow,
-} from "@/lib/cae-workflows"
+} from "@/lib/cae-workflows-schema"
 import type {
   WorkflowSpec,
   WorkflowRecord,
   ValidationError,
-} from "@/lib/cae-workflows"
+} from "@/lib/cae-workflows-schema"
 
 export interface WorkflowFormProps {
   mode: "create" | "edit"
