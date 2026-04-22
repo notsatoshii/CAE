@@ -9,7 +9,17 @@
  *
  * See .planning/phases/03-design-system-foundation/03-CONTEXT.md
  * §Founder-speak copy pass for the authoritative translation table.
+ * Phase 4 additions (rollup / active phase cards / live-ops / needs-you /
+ * recent ledger / task detail sheet) extend the interface below.
  */
+
+// Internal helper — compact token counts for phase card display.
+// e.g. 842 -> "842", 3450 -> "3.4k", 1234567 -> "1.23M"
+function formatTok(n: number): string {
+  if (n < 1000) return String(n);
+  if (n < 1_000_000) return (n / 1000).toFixed(1) + "k";
+  return (n / 1_000_000).toFixed(2) + "M";
+}
 
 export interface Labels {
   // Page-level headings
@@ -60,6 +70,66 @@ export interface Labels {
   attemptSuffix: (n: number) => string;
   viewOutputButton: string;
   noTasksEmpty: (phaseDir: string) => string;
+
+  // === Phase 4: Rollup strip ===
+  rollupShippedLabel: string;
+  rollupTokensLabel: string;
+  rollupInFlightLabel: string;
+  rollupBlockedLabel: string;
+  rollupWarningsLabel: string;
+  rollupEmptyState: string;
+
+  // === Phase 4: Active phase cards ===
+  activePhasesHeading: string;
+  activePhasesEmpty: string;
+  phaseCardEtaLabel: (minutes: number) => string;
+  phaseCardWaveLabel: (current: number, total: number) => string;
+  phaseCardProgressLabel: (pct: number) => string;
+  phaseCardTokensLabel: (tokens: number) => string;
+  phaseCardTitle: (projectName: string, phaseNumber: number) => string;
+
+  // === Phase 4: Live Ops one-liner ===
+  liveOpsIdle: string;
+  liveOpsSectionLabel: string;
+
+  // === Phase 4: Needs-you ===
+  needsYouHeading: string;
+  needsYouEmpty: string;
+  needsYouBlockedLabel: (rejectCount: number) => string;
+  needsYouDangerousLabel: string;
+  needsYouPlanReviewLabel: string;
+  needsYouReviewAction: string;
+  needsYouApproveAction: string;
+  needsYouDenyAction: string;
+  needsYouOpenAction: string;
+
+  // === Phase 4: Recent ledger ===
+  recentHeading: string;
+  recentEmpty: string;
+  recentShippedPrefix: (agentDisplay: string) => string;
+  recentAbortedPrefix: (agentDisplay: string) => string;
+
+  // === Phase 4: Task detail sheet ===
+  sheetCloseLabel: string;
+  sheetPauseLabel: string;
+  sheetAbortLabel: string;
+  sheetSectionSummary: string;
+  sheetSectionLog: string;
+  sheetSectionChanges: string;
+  sheetSectionMemory: string;
+  sheetSectionComments: string;
+  sheetCommentsStub: string;
+  sheetSectionActions: string;
+  sheetActionApprove: string;
+  sheetActionDeny: string;
+  sheetActionRetry: string;
+  sheetActionAbandon: string;
+  sheetActionReassign: string;
+  sheetActionEditPlan: string;
+  sheetMemoryStub: string;
+  sheetLogTruncatedNote: string;
+  sheetLogPauseScroll: string;
+  sheetLogResumeScroll: string;
 }
 
 const FOUNDER: Labels = {
@@ -104,6 +174,66 @@ const FOUNDER: Labels = {
   attemptSuffix: (n) => `${n}× try`,
   viewOutputButton: "See what's happening",
   noTasksEmpty: (phaseDir) => `No jobs yet. Check the plan files in ${phaseDir}`,
+
+  // === Phase 4: Rollup strip ===
+  rollupShippedLabel: "shipped",
+  rollupTokensLabel: "tok",
+  rollupInFlightLabel: "in-flight",
+  rollupBlockedLabel: "blocked",
+  rollupWarningsLabel: "⚠",
+  rollupEmptyState: "No activity today.",
+
+  // === Phase 4: Active phase cards ===
+  activePhasesHeading: "Active phases",
+  activePhasesEmpty: "No active work right now. Go to Plan mode to start a project.",
+  phaseCardEtaLabel: (m) => "~" + m + " min left",
+  phaseCardWaveLabel: (cur, tot) => "step " + cur + " of " + tot,
+  phaseCardProgressLabel: (pct) => pct + "% done",
+  phaseCardTokensLabel: (tok) => formatTok(tok) + " tok this phase",
+  phaseCardTitle: (projectName, _phaseNumber) => "Building " + projectName,
+
+  // === Phase 4: Live Ops one-liner ===
+  liveOpsIdle: "Nothing running right now.",
+  liveOpsSectionLabel: "Live Ops",
+
+  // === Phase 4: Needs-you ===
+  needsYouHeading: "Needs you",
+  needsYouEmpty: "All caught up ✓",
+  needsYouBlockedLabel: (n) => "Sentinel rejected " + n + "×",
+  needsYouDangerousLabel: "dangerous action needs approval",
+  needsYouPlanReviewLabel: "Next steps ready for review",
+  needsYouReviewAction: "Review",
+  needsYouApproveAction: "Approve",
+  needsYouDenyAction: "Deny",
+  needsYouOpenAction: "Open plan",
+
+  // === Phase 4: Recent ledger ===
+  recentHeading: "Recent",
+  recentEmpty: "Nothing shipped yet today.",
+  recentShippedPrefix: (agent) => "Built with " + agent,
+  recentAbortedPrefix: (agent) => "couldn't finish — " + agent + " flagged it",
+
+  // === Phase 4: Task detail sheet ===
+  sheetCloseLabel: "Close",
+  sheetPauseLabel: "Pause this",
+  sheetAbortLabel: "Stop this job",
+  sheetSectionSummary: "What this does",
+  sheetSectionLog: "Live activity",
+  sheetSectionChanges: "What changed",
+  sheetSectionMemory: "What CAE looked at",
+  sheetSectionComments: "Comments",
+  sheetCommentsStub: "Comments ship with chat in Phase 9",
+  sheetSectionActions: "Actions",
+  sheetActionApprove: "Approve",
+  sheetActionDeny: "Deny",
+  sheetActionRetry: "Try again",
+  sheetActionAbandon: "Abandon",
+  sheetActionReassign: "Hand to another agent",
+  sheetActionEditPlan: "Edit plan",
+  sheetMemoryStub: "ships in Phase 8",
+  sheetLogTruncatedNote: "…earlier lines truncated",
+  sheetLogPauseScroll: "Pause scroll",
+  sheetLogResumeScroll: "Resume scroll",
 };
 
 const DEV: Labels = {
@@ -148,6 +278,66 @@ const DEV: Labels = {
   attemptSuffix: (n) => `${n}× attempt`,
   viewOutputButton: "View output",
   noTasksEmpty: (phaseDir) => `No tasks found. Check plan files in ${phaseDir}`,
+
+  // === Phase 4: Rollup strip ===
+  rollupShippedLabel: "shipped",
+  rollupTokensLabel: "tok",
+  rollupInFlightLabel: "in-flight",
+  rollupBlockedLabel: "blocked",
+  rollupWarningsLabel: "⚠",
+  rollupEmptyState: "No events today.",
+
+  // === Phase 4: Active phase cards ===
+  activePhasesHeading: "Active phases",
+  activePhasesEmpty: "No in-flight phases.",
+  phaseCardEtaLabel: (m) => "ETA ~" + m + "m",
+  phaseCardWaveLabel: (cur, tot) => "wave " + cur + "/" + tot,
+  phaseCardProgressLabel: (pct) => pct + "%",
+  phaseCardTokensLabel: (tok) => formatTok(tok) + " tok",
+  phaseCardTitle: (projectName, phaseNumber) => projectName + " · phase " + phaseNumber,
+
+  // === Phase 4: Live Ops one-liner ===
+  liveOpsIdle: "Idle.",
+  liveOpsSectionLabel: "Live Ops",
+
+  // === Phase 4: Needs-you ===
+  needsYouHeading: "Needs you",
+  needsYouEmpty: "No pending items.",
+  needsYouBlockedLabel: (n) => "Sentinel rejected " + n + "× — review",
+  needsYouDangerousLabel: "dangerous action pending",
+  needsYouPlanReviewLabel: "ROADMAP ready for review",
+  needsYouReviewAction: "Review",
+  needsYouApproveAction: "Approve",
+  needsYouDenyAction: "Deny",
+  needsYouOpenAction: "Open plan",
+
+  // === Phase 4: Recent ledger ===
+  recentHeading: "Recent (last 20)",
+  recentEmpty: "No events logged.",
+  recentShippedPrefix: (agent) => agent,
+  recentAbortedPrefix: (agent) => "aborted — " + agent + " rejected",
+
+  // === Phase 4: Task detail sheet ===
+  sheetCloseLabel: "Close",
+  sheetPauseLabel: "Pause",
+  sheetAbortLabel: "Abort",
+  sheetSectionSummary: "Summary",
+  sheetSectionLog: "Live log",
+  sheetSectionChanges: "Changes",
+  sheetSectionMemory: "Memory referenced",
+  sheetSectionComments: "Comments",
+  sheetCommentsStub: "Comments — Phase 9",
+  sheetSectionActions: "Actions",
+  sheetActionApprove: "Approve",
+  sheetActionDeny: "Deny",
+  sheetActionRetry: "Retry",
+  sheetActionAbandon: "Abandon",
+  sheetActionReassign: "Reassign",
+  sheetActionEditPlan: "Edit plan",
+  sheetMemoryStub: "ships in Phase 8",
+  sheetLogTruncatedNote: "…earlier lines truncated (500-line cap)",
+  sheetLogPauseScroll: "Pause",
+  sheetLogResumeScroll: "Resume",
 };
 
 export function labelFor(dev: boolean): Labels {
