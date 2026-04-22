@@ -60,8 +60,21 @@ export function QueueCard({ card }: { card: QueueCardData }) {
           openSheet()
         }
       }}
-      className="rounded-md border border-[color:var(--border,#1f1f22)] bg-[color:var(--surface,#121214)] p-3 text-left text-xs hover:border-[color:var(--accent,#00d4ff)] focus:border-[color:var(--accent,#00d4ff)] focus:outline-none cursor-pointer min-h-[80px] flex flex-col gap-1 relative"
+      className="rounded-md border border-[color:var(--border,#1f1f22)] bg-[color:var(--surface,#121214)] p-3 text-left text-xs hover:border-[color:var(--accent,#00d4ff)] focus:border-[color:var(--accent,#00d4ff)] focus:outline-none cursor-pointer min-h-[80px] flex flex-col gap-1 relative overflow-hidden"
     >
+      {/* Left-border status accent — status color here only, not on whole card */}
+      <span
+        aria-hidden
+        className={
+          card.status === "in_progress"
+            ? "absolute left-0 top-0 bottom-0 w-0.5 bg-[color:var(--accent,#00d4ff)]"
+            : card.status === "stuck"
+              ? "absolute left-0 top-0 bottom-0 w-0.5 bg-[color:var(--danger,#ef4444)]"
+              : card.status === "shipped"
+                ? "absolute left-0 top-0 bottom-0 w-0.5 bg-[color:var(--success,#2f9e44)]"
+                : "hidden"
+        }
+      />
       <header className="flex items-start gap-2">
         <span aria-hidden className="text-sm shrink-0">
           {meta.emoji}

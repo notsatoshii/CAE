@@ -103,51 +103,57 @@ export function QueueKanbanClient({ initialState }: Props) {
   }
 
   return (
-    <div
-      data-testid="queue-kanban"
-      className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-3"
-    >
-      {COLUMNS.map((col) => {
-        const cards = state.columns[col.key]
-        const colLabel = t[col.labelKey] as string
-        return (
-          <section
-            key={col.key}
-            data-testid={"queue-column-" + col.key}
-            className="flex flex-col gap-2 rounded-md border border-[color:var(--border,#1f1f22)] bg-[color:var(--surface,#121214)] p-3 min-h-[200px]"
+    // overflow-x-auto enables mobile horizontal scroll across 5 columns
+    <div className="overflow-x-auto">
+      <div
+        data-testid="queue-kanban"
+        className="flex gap-3 min-w-max lg:grid lg:grid-cols-5 lg:min-w-0"
+      >
+        {COLUMNS.map((col) => {
+          const cards = state.columns[col.key]
+          const colLabel = t[col.labelKey] as string
+          return (
+            // Each column: min-w-64 (256px) so mobile scroll works cleanly
+            <section
+              key={col.key}
+              data-testid={"queue-column-" + col.key}
+              className="flex min-w-64 flex-col gap-2 rounded-lg border border-[color:var(--border,#1f1f22)] bg-[color:var(--surface,#121214)] p-3 min-h-[200px]"
+            >
+              <header className="flex items-center justify-between">
+                <h3 className="text-[13px] font-semibold tracking-wide uppercase text-[color:var(--text-muted,#8a8a8c)]">
+                  {colLabel}
+                </h3>
+                {/* Count chip: rounded-full pill, font-mono, same across all columns */}
+                <span
+                  data-testid={"queue-column-count-" + col.key}
+                  className="rounded-full bg-[color:var(--surface-hover,#1a1a1d)] px-2 py-0.5 text-[11px] font-mono text-[color:var(--text-muted,#8a8a8c)]"
+                >
+                  {cards.length}
+                </span>
+              </header>
+              {cards.length === 0 ? (
+                // Consistent empty state pattern across all 5 columns
+                <div
+                  data-testid={"queue-column-empty-" + col.key}
+                  className="flex flex-1 items-center justify-center py-4 text-[12px] text-[color:var(--text-muted,#8a8a8c)]"
+                >
+                  No items
+                </div>
+              ) : (
+                cards.map((card) => <QueueCard key={card.taskId} card={card} />)
+              )}
+            </section>
+          )
+        })}
+        {error && (
+          <div
+            data-testid="queue-error"
+            className="col-span-full text-xs text-[color:var(--danger,#ef4444)]"
           >
-            <header className="flex items-center justify-between">
-              <h2 className="text-xs font-semibold uppercase tracking-wide text-[color:var(--text-muted,#8a8a8c)]">
-                {colLabel}
-              </h2>
-              <span
-                data-testid={"queue-column-count-" + col.key}
-                className="text-[10px] text-[color:var(--text-muted,#8a8a8c)]"
-              >
-                {t.queueKanbanColCount(cards.length)}
-              </span>
-            </header>
-            {cards.length === 0 ? (
-              <div
-                data-testid={"queue-column-empty-" + col.key}
-                className="text-xs text-[color:var(--text-muted,#8a8a8c)] italic"
-              >
-                {t.queueKanbanEmptyColumn}
-              </div>
-            ) : (
-              cards.map((card) => <QueueCard key={card.taskId} card={card} />)
-            )}
-          </section>
-        )
-      })}
-      {error && (
-        <div
-          data-testid="queue-error"
-          className="col-span-full text-xs text-red-300"
-        >
-          Queue refresh failed: {error.message}
-        </div>
-      )}
+            Queue refresh failed: {error.message}
+          </div>
+        )}
+      </div>
     </div>
   )
 }

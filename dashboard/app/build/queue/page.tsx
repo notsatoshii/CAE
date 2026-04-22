@@ -29,8 +29,8 @@ export default async function QueuePage() {
   const t = labelFor(false)
   return (
     <main data-testid="queue-page" className="p-8 max-w-7xl">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-medium">{t.queueHeading}</h1>
+      <div className="flex items-center justify-between mb-8">
+        <h1 className="text-[20px] font-semibold">{t.queueHeading}</h1>
         <NewJobModal />
       </div>
       <QueueKanbanClient initialState={initialState} />
