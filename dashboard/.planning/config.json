@@ -31,5 +31,6 @@
     "gsd-verifier": "claude-opus-4-6",
     "gsd-debugger": "claude-sonnet-4-6"
   },
-  "resolve_model_ids": true
+  "resolve_model_ids": true,
+  "context_window": 1000000
 }
