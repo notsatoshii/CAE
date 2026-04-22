@@ -95,12 +95,12 @@ Plans:
 **Plans:** 6 plans
 
 Plans:
-- [ ] 04-01-PLAN.md — /api/state extension + home-state aggregator + useStatePoll type extension (wave 1)
-- [ ] 04-02-PLAN.md — agent-meta.ts + labels.ts Phase 4 copy extension (wave 1)
-- [ ] 04-03-PLAN.md — Rollup strip + Live Ops line + Active phase cards + Agent avatars (wave 2)
-- [ ] 04-04-PLAN.md — Needs-you list + Recent ledger (wave 2)
-- [ ] 04-05-PLAN.md — Task detail sheet + SSE live log + keyboard shortcuts (wave 3)
-- [ ] 04-06-PLAN.md — Integration: mount widgets on /build + delete superseded Phase 2 widgets + a11y pass (wave 4)
+- [x] 04-01-PLAN.md — /api/state extension + home-state aggregator + useStatePoll type extension (wave 1)
+- [x] 04-02-PLAN.md — agent-meta.ts + labels.ts Phase 4 copy extension (wave 1)
+- [x] 04-03-PLAN.md — Rollup strip + Live Ops line + Active phase cards + Agent avatars (wave 2)
+- [x] 04-04-PLAN.md — Needs-you list + Recent ledger (wave 2)
+- [x] 04-05-PLAN.md — Task detail sheet + SSE live log + keyboard shortcuts (wave 3)
+- [x] 04-06-PLAN.md — Integration: mount widgets on /build + delete superseded Phase 2 widgets + a11y pass (wave 4)
 
 ## Phase 5: Agents tab
 
