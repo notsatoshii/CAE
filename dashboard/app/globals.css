@@ -1,4 +1,8 @@
 @import "tailwindcss";
+/* Phase 8 Wave 0 (D-08): React-Flow v12 styles. Must sit after @import "tailwindcss"
+ * per the Tailwind-v4 compatibility pattern documented at
+ * reactflow.dev/whats-new/2025-10-28. Component files MUST NOT re-import this CSS. */
+@import "@xyflow/react/dist/style.css";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
