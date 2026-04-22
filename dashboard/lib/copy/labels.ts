@@ -322,6 +322,7 @@ export interface Labels {
   floorStationLoadingBay: string;
   floorExplainHub: string;
   floorExplainForge: string;
+  floorReturnToMain: string;
 
   // === Phase 9: Chat ===
   chatRailCollapsedAria: string;
@@ -642,6 +643,7 @@ const FOUNDER: Labels = {
   floorStationLoadingBay: "Delegation crates",
   floorExplainHub: "Nexus routes work to agents — merge fireworks appear here",
   floorExplainForge: "Forge builds code — pulses while building; red X if Sentinel rejects",
+  floorReturnToMain: "Back to main window",
 
   // === Phase 9: Chat ===
   chatRailCollapsedAria: "Open chat",
@@ -966,6 +968,7 @@ const DEV: Labels = {
   floorStationLoadingBay: "Loading bay",
   floorExplainHub: "Nexus routes work to agents — merge fireworks appear here",
   floorExplainForge: "Forge builds code — pulses while building; red X if Sentinel rejects",
+  floorReturnToMain: "Return to main window",
 
   // === Phase 9: Chat ===
   chatRailCollapsedAria: "toggle chat rail",

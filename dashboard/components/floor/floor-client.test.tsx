@@ -230,4 +230,45 @@ describe("FloorClient", () => {
     );
     expect(src).not.toContain("$");
   });
+
+  it("11. Return-to-main button visible when popout=true AND window.opener set", async () => {
+    Object.defineProperty(window, "opener", {
+      configurable: true,
+      writable: true,
+      value: { focus: vi.fn() },
+    });
+    window.close = vi.fn();
+
+    await act(async () => {
+      render(<FloorClient cbPath="/tmp/x.jsonl" projectPath="/tmp" popout={true} />);
+    });
+
+    const btn = screen.getByRole("button", { name: /return to main|back to main|main window/i });
+    expect(btn).toBeTruthy();
+
+    // Click: should call opener.focus and window.close
+    await act(async () => {
+      btn.click();
+    });
+    expect((window.opener as { focus: ReturnType<typeof vi.fn> }).focus).toHaveBeenCalledTimes(1);
+    expect(window.close).toHaveBeenCalledTimes(1);
+
+    // Cleanup
+    Object.defineProperty(window, "opener", { configurable: true, writable: true, value: null });
+  });
+
+  it("12. Return-to-main button hidden when popout=true AND opener=null", async () => {
+    Object.defineProperty(window, "opener", {
+      configurable: true,
+      writable: true,
+      value: null,
+    });
+
+    await act(async () => {
+      render(<FloorClient cbPath="/tmp/x.jsonl" projectPath="/tmp" popout={true} />);
+    });
+
+    const btn = screen.queryByRole("button", { name: /return to main|back to main|main window/i });
+    expect(btn).toBeNull();
+  });
 });
