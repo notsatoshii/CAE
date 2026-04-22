@@ -6,6 +6,8 @@ import { TopNav } from "@/components/shell/top-nav";
 import { ExplainModeProvider } from "@/lib/providers/explain-mode";
 import { DevModeProvider } from "@/lib/providers/dev-mode";
 import { StatePollProvider } from "@/lib/hooks/use-state-poll";
+import { ChatRailProvider } from "@/lib/providers/chat-rail";
+import { ChatRail } from "@/components/chat/chat-rail";
 import { Toaster } from "@/components/ui/sonner";
 
 const geistSans = Geist({
@@ -39,9 +41,12 @@ export default async function RootLayout({
         <ExplainModeProvider>
           <DevModeProvider>
             <StatePollProvider>
-              {session && <TopNav session={session} />}
-              {children}
-              <Toaster />
+              <ChatRailProvider session={session}>
+                {session && <TopNav session={session} />}
+                {children}
+                {session && <ChatRail />}
+                <Toaster />
+              </ChatRailProvider>
             </StatePollProvider>
           </DevModeProvider>
         </ExplainModeProvider>
