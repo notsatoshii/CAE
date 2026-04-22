@@ -272,11 +272,15 @@ Plans:
 - WR-01 fix: SSE id stability (chat unread count always 0 regression — standalone plan).
 - Visual 6 pillars: hierarchy, density, consistency, motion, typography, color — with explicit score thresholds.
 
-**Progress:** 4 plans complete
+**Progress:** 8 plans complete
 - [x] 13-01-PLAN.md — verify harness scaffold (Playwright + capture.sh + verify.py + routes.json)
 - [x] 13-02-PLAN.md — baseline capture (BASELINE.md + public-route screenshots + console baseline)
 - [x] 13-03-PLAN.md — data correctness audit (17-panel verify.py + VERIFY.md + UI-AUDIT-correctness.md + WR-01 confirmed)
 - [x] 13-04-PLAN.md — WR-01 fix (stable assistantMsgId per SSE stream + client promotion fix + 19 new tests)
+- [x] 13-05-PLAN.md — pino structured logging rollout (withLog HOF + 22 routes + 35 console.* conversions + client error bridge + JSONL file sink)
+- [x] 13-06-PLAN.md — liveness audit fixes (tab-visibility pause + LastUpdated chip + LivenessChip RTT + HeartbeatDot + SSE health hooks)
+- [x] 13-07-PLAN.md — MC IA adoptions (ambient clock + alert banner + Golden Signals subtitles + agent verb A/B)
+- [x] 13-08-PLAN.md — Incident Stream SSE panel + DebugBreadcrumbPanel + client log bus (Wave 5, 36 new tests)
 
 ## Phase 14: Orchestration depth — Skills Hub + cron + RBAC
 

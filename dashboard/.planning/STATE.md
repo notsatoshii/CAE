@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v0.1
 milestone_name: milestone
 status: planning
-stopped_at: Completed 13-07-PLAN.md — MC IA adoptions (ambient clock, alert banner, Golden Signals, agent verbs A/B)
-last_updated: "2026-04-22T21:11:30.722Z"
+stopped_at: Completed 13-08-PLAN.md — Incident Stream SSE panel + DebugBreadcrumbPanel + client log bus
+last_updated: "2026-04-23T06:25:00.000Z"
 progress:
   total_phases: 14
   completed_phases: 10
   total_plans: 83
-  completed_plans: 65
-  percent: 78
+  completed_plans: 66
+  percent: 79
 ---
 
 # cae-dashboard — Project State
@@ -31,6 +31,14 @@ Plan 10-04 complete (Wave 1 closed). Next: plan 10-05 (API routes).
 
 **Last session:** 2026-04-22T21:11:30.715Z
 **Stopped at:** Completed 13-07-PLAN.md — MC IA adoptions (ambient clock, alert banner, Golden Signals, agent verbs A/B)
+
+## Key Decisions (Phase 13 — Plan 08)
+
+- **13-08:** stat+poll (500ms) instead of fs.watch — reliable on Linux, no ENOENT crash when file missing, simpler to unit-test with tmp files
+- **13-08:** AbortController coordinates req.signal + stream.cancel() + tailJsonl signal — single close() path, no resource leaks
+- **13-08:** IncidentStream mounted in 2-col grid row with SpendingPanel; Reliability+Speed in second row (metrics-client.tsx restructured)
+- **13-08:** DebugBreadcrumbPanel uses hooks before dev-mode gate — React rules require all hooks to run before any conditional return
+- **13-08:** subscribe() in client-log-bus is synchronous callback (not CustomEvent) for reliable test assertions; CustomEvent path also maintained for DOM consumers
 
 ## Key Decisions (Phase 13 — Plan 06)
 
