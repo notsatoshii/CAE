@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v0.1
 milestone_name: milestone
 status: planning
-stopped_at: Completed 11-02-PLAN.md
-last_updated: "2026-04-22T18:13:29.894Z"
+stopped_at: Completed 11-03-PLAN.md
+last_updated: "2026-04-23T03:25:00.000Z"
 progress:
   total_phases: 14
   completed_phases: 8
   total_plans: 77
-  completed_plans: 52
-  percent: 68
+  completed_plans: 53
+  percent: 69
 ---
 
 # cae-dashboard — Project State
@@ -31,6 +31,13 @@ Plan 10-04 complete (Wave 1 closed). Next: plan 10-05 (API routes).
 
 **Last session:** 2026-04-22T18:13:29.887Z
 **Stopped at:** Completed 11-02-PLAN.md
+
+## Key Decisions (Phase 11 — Plan 03)
+
+- **11-03:** queueMicrotask (not RAF) for drain cadence — decouples event application from render; caps hold even during pop-out detach.
+- **11-03:** reducedMotionRef + pausedRef pattern — capture latest flag values without restarting the SSE useEffect on each flip.
+- **11-03:** cbPath widened to string | null — null = idle scene, no SSE; consistent with resolveCbPath null-return contract.
+- **11-03:** canvas re-exports QUEUE_CAP/EFFECTS_CAP/MAX_LINE_BYTES from hookTest for Plan 02 test backward compatibility.
 
 ## Key Decisions (Phase 11 — Plan 02)
 

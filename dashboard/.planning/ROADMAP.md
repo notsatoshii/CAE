@@ -239,6 +239,8 @@ Plans:
 - Event animations (merge fireworks, reject X, Phantom walk, alarm flash)
 - Pop-out to separate window for second-monitor use
 
+**Progress:** 11-01 ✅ (wave-0 pure libs) | 11-02 ✅ (canvas render component) | 11-03 ✅ (useFloorEvents hook + cb-path + canvas refactor) | 11-04 pending | 11-05 pending
+
 ## Phase 12: Command palette + polish + empty states
 
 **Goal:** ⌘K palette + empty-state copy + final polish pass.
