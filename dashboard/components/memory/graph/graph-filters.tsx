@@ -74,7 +74,7 @@ export function GraphFilters({
             }
           >
             {labelMap[kind]}
-            <span className="ml-1 text-[10px] text-[color:var(--text-dim)]">
+            <span className="ml-1 text-[10px] text-[color:var(--text-muted)]">
               ({count})
             </span>
           </button>

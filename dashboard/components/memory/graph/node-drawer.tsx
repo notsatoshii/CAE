@@ -164,7 +164,7 @@ export function NodeDrawer({
             {L.memoryLabelBackLinks} ({backLinks.length})
           </h3>
           {backLinks.length === 0 ? (
-            <p className="text-xs text-[color:var(--text-dim)]">—</p>
+            <p className="text-xs text-[color:var(--text-muted)]">—</p>
           ) : (
             <ul className="space-y-1" data-testid="node-drawer-backlinks">
               {backLinks.map((l, idx) => (
@@ -175,7 +175,7 @@ export function NodeDrawer({
                     title={l.source}
                   >
                     {basename(l.source)}
-                    <span className="ml-2 text-[color:var(--text-dim)]">
+                    <span className="ml-2 text-[color:var(--text-muted)]">
                       {l.relation}
                     </span>
                   </button>
@@ -191,7 +191,7 @@ export function NodeDrawer({
             References ({forwardRefs.length})
           </h3>
           {forwardRefs.length === 0 ? (
-            <p className="text-xs text-[color:var(--text-dim)]">—</p>
+            <p className="text-xs text-[color:var(--text-muted)]">—</p>
           ) : (
             <ul className="space-y-1" data-testid="node-drawer-forwardrefs">
               {forwardRefs.map((l, idx) => (
@@ -202,7 +202,7 @@ export function NodeDrawer({
                     title={l.target}
                   >
                     {basename(l.target)}
-                    <span className="ml-2 text-[color:var(--text-dim)]">
+                    <span className="ml-2 text-[color:var(--text-muted)]">
                       {l.relation}
                     </span>
                   </button>

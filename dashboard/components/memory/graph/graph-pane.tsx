@@ -156,8 +156,19 @@ export function GraphPane({ onOpenGitTimeline }: GraphPaneProps = {}) {
       {/* Body */}
       <div className="relative flex-1">
         {loading ? (
-          <div className="flex h-full items-center justify-center text-xs text-[color:var(--text-muted)]">
-            {L.metricsEmptyState}
+          <div
+            className="flex h-full flex-col items-center justify-center gap-3"
+            data-testid="memory-graph-loading"
+            aria-busy="true"
+            aria-label="Loading memory graph"
+          >
+            {/* Skeleton shimmer — visually distinct from empty state */}
+            <div className="flex flex-col items-center gap-2">
+              <div className="h-4 w-32 animate-pulse rounded bg-[color:var(--border)] motion-reduce:animate-none" />
+              <div className="h-3 w-48 animate-pulse rounded bg-[color:var(--border)] motion-reduce:animate-none" />
+              <div className="h-3 w-40 animate-pulse rounded bg-[color:var(--border)] motion-reduce:animate-none" />
+            </div>
+            <p className="text-xs text-[color:var(--text-muted)]">{L.metricsEmptyState}</p>
           </div>
         ) : error ? (
           <div className="flex h-full items-center justify-center text-xs text-[color:var(--danger)]">

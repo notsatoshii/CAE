@@ -206,7 +206,7 @@ function TreeNode({
   leafOrder,
   focusLeaf,
 }: TreeNodeProps) {
-  const indentPx = 8 + depth * 12;
+  const indentPx = 8 + depth * 16;
 
   if (node.kind === "file") {
     const isSelected = node.absPath != null && node.absPath === selectedPath;
@@ -287,7 +287,7 @@ function TreeNode({
         <Chevron className="size-3 shrink-0" aria-hidden="true" />
         <span className="truncate">{node.label}</span>
         {childCount > 0 && (
-          <span className="ml-auto pr-1 text-[10px] text-[color:var(--text-muted)]">
+          <span className="ml-auto shrink-0 pr-1 font-mono text-[10px] tabular-nums text-[color:var(--text-muted)]">
             {childCount}
           </span>
         )}

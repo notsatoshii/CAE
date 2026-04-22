@@ -185,14 +185,14 @@ export function WhyDrawer({
       <div
         ref={drawerRef}
         tabIndex={-1}
-        className="absolute right-0 top-0 flex h-full w-full max-w-md translate-x-0 flex-col overflow-y-auto border-l border-[color:var(--border)] bg-[color:var(--surface)] p-4 shadow-xl transition-transform duration-200 focus:outline-none"
+        className="absolute right-0 top-0 flex h-full w-full max-w-md translate-x-0 flex-col overflow-y-auto border-l border-[color:var(--border)] bg-[color:var(--surface)] p-6 shadow-xl transition-transform duration-200 focus:outline-none"
       >
         {/* Header */}
         <div className="mb-3 flex items-start justify-between gap-3">
           <div className="flex min-w-0 flex-1 items-center gap-2">
             <h2
               id={headingId}
-              className="truncate text-sm font-medium text-[color:var(--text)]"
+              className="truncate text-[15px] font-semibold text-[color:var(--text)]"
               title={title}
             >
               {title}
@@ -311,7 +311,7 @@ function LiveTraceList({
               <div className="truncate font-mono text-[10px] text-[color:var(--text-muted)]">
                 {e.source_path}
               </div>
-              <div className="mt-0.5 text-[10px] text-[color:var(--text-dim)]">
+              <div className="mt-0.5 font-mono text-[10px] text-[color:var(--text-muted)]">
                 {formatTs(e.ts)}
               </div>
             </button>
@@ -361,7 +361,7 @@ function HeuristicList({
                 {e.source_path}
               </div>
               {dev && (
-                <div className="mt-0.5 text-[10px] text-[color:var(--text-dim)]">
+                <div className="mt-0.5 font-mono text-[10px] text-[color:var(--text-muted)]">
                   basis: {e.basis}
                 </div>
               )}
@@ -370,7 +370,7 @@ function HeuristicList({
         ))}
       </ul>
       {dev && (
-        <p className="mt-3 text-[10px] italic text-[color:var(--text-dim)]">
+        <p className="mt-3 text-[10px] italic text-[color:var(--text-muted)]">
           Install the PostToolUse hook to capture real traces (docs/memory-hook.md).
         </p>
       )}
