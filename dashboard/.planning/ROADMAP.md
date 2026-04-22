@@ -202,11 +202,11 @@ Plans:
 **Plans:** 8 plans
 
 Plans:
-- [ ] 09-01-PLAN.md — Wave 0: `docs/VOICE.md` + 9 persona fragments + voice-router + chat-suggestions + chat-cost-estimate libs with tests (wave 0)
-- [ ] 09-02-PLAN.md — Wave 1a: Changes aggregator (`lib/cae-changes-state.ts`) + `/api/changes` route + BOTH `changes.*` and `chat.*` label keys in `lib/copy/labels.ts` (wave 1, parallel with 09-03)
-- [ ] 09-03-PLAN.md — Wave 1b: Chat API routes (`/api/chat/{send,state,history/[sessionId],sessions}`) + `lib/cae-chat-state.ts` + `lib/chat-spawn.ts` (wave 1, parallel with 09-02)
-- [ ] 09-04-PLAN.md — Wave 2a: `/build/changes` page + `changes-client.tsx` + `components/changes/{project-group,day-group,change-row,dev-mode-detail}.tsx` (wave 2, parallel with 09-05)
-- [ ] 09-05-PLAN.md — Wave 2b: ChatRailProvider + `components/chat/{chat-rail,chat-panel,message,suggestions}.tsx` mounted in `app/layout.tsx` (wave 2, parallel with 09-04)
+- [x] 09-01-PLAN.md — Wave 0: `docs/VOICE.md` + 9 persona fragments + voice-router + chat-suggestions + chat-cost-estimate libs with tests (wave 0)
+- [x] 09-02-PLAN.md — Wave 1a: Changes aggregator (`lib/cae-changes-state.ts`) + `/api/changes` route + BOTH `changes.*` and `chat.*` label keys in `lib/copy/labels.ts` (wave 1, parallel with 09-03)
+- [x] 09-03-PLAN.md — Wave 1b: Chat API routes (`/api/chat/{send,state,history/[sessionId],sessions}`) + `lib/cae-chat-state.ts` + `lib/chat-spawn.ts` (wave 1, parallel with 09-02)
+- [x] 09-04-PLAN.md — Wave 2a: `/build/changes` page + `changes-client.tsx` + `components/changes/{project-group,day-group,change-row,dev-mode-detail}.tsx` (wave 2, parallel with 09-05)
+- [x] 09-05-PLAN.md — Wave 2b: ChatRailProvider + `components/chat/{chat-rail,chat-panel,message,suggestions}.tsx` mounted in `app/layout.tsx` (wave 2, parallel with 09-04)
 - [ ] 09-06-PLAN.md — Wave 3: ConfirmActionDialog + useGatedAction hook + wiring into existing token-spending server actions (queue delegate, workflows Run-now) (wave 3)
 - [ ] 09-07-PLAN.md — Wave 4: `/chat` full-page split route + ChatMirror picker + top-nav pop-out icon (wave 4)
 - [ ] 09-08-PLAN.md — Wave 5: 09-VERIFICATION.md + human UAT checkpoint (wave 5, non-autonomous)
