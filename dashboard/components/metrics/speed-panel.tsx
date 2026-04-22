@@ -25,7 +25,7 @@ import { useDevMode } from "@/lib/providers/dev-mode";
 import { PerAgentWallTable } from "./per-agent-wall-table";
 import { TimeToMergeHistogram } from "./time-to-merge-histogram";
 import { QueueDepthDisplay } from "./queue-depth-display";
-import { ExplainTooltip } from "./explain-tooltip";
+import { ExplainTooltip } from "@/components/ui/explain-tooltip";
 
 export function SpeedPanel() {
   const { data, error } = useMetricsPoll();

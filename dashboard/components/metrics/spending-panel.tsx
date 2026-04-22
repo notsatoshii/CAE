@@ -35,7 +35,7 @@ import { AgentStackedBar } from "./agent-stacked-bar";
 import { SpendingDailyLine } from "./spending-daily-line";
 import { TopExpensiveTasks } from "./top-expensive-tasks";
 import { EstDisclaimer } from "./est-disclaimer";
-import { ExplainTooltip } from "./explain-tooltip";
+import { ExplainTooltip } from "@/components/ui/explain-tooltip";
 
 function formatTokens(n: number): string {
   if (n < 1000) return String(n);

@@ -31,7 +31,7 @@ import { SuccessGauge } from "./success-gauge";
 import { RetryHeatmap } from "./retry-heatmap";
 import { HaltEventsLog } from "./halt-events-log";
 import { SentinelRejectTrend } from "./sentinel-reject-trend";
-import { ExplainTooltip } from "./explain-tooltip";
+import { ExplainTooltip } from "@/components/ui/explain-tooltip";
 
 const MIN_SAMPLES_FOR_LEDE = 5;
 

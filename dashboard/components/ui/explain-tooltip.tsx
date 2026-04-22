@@ -15,6 +15,8 @@
  * - Popup carries `role="tooltip"` for a11y.
  * - base-ui does NOT support `asChild` (AGENTS.md gotcha) — we use
  *   className on the Popover.Trigger directly.
+ *
+ * (D-15): relocated to components/ui/ in Phase 8 Wave 0 for cross-phase reuse.
  */
 
 import { Popover } from "@base-ui/react/popover";
