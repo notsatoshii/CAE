@@ -6,12 +6,13 @@ import { useDevMode } from "@/lib/providers/dev-mode";
 import { labelFor } from "@/lib/copy/labels";
 import { Card, CardContent } from "@/components/ui/card";
 import { AgentAvatars } from "./agent-avatars";
+import { LastUpdated } from "@/components/ui/last-updated";
 
 // Each card below emits: data-testid="phase-card-{phaseNumber}"
 // (computed form is `data-testid={"phase-card-" + p.phaseNumber}` — acceptance grep anchor above.)
 
 export function ActivePhaseCards() {
-  const { data } = useStatePoll();
+  const { data, lastUpdated } = useStatePoll();
   const { dev } = useDevMode();
   const t = labelFor(dev);
   const router = useRouter();
@@ -47,9 +48,12 @@ export function ActivePhaseCards() {
 
   return (
     <section data-testid="active-phase-cards" className="mb-6">
-      <h2 className="text-sm font-semibold uppercase tracking-wide text-[color:var(--text-muted)] mb-3">
-        {t.activePhasesHeading} ({phases.length})
-      </h2>
+      <div className="flex items-center justify-between mb-3">
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-[color:var(--text-muted)]">
+          {t.activePhasesHeading} ({phases.length})
+        </h2>
+        <LastUpdated at={lastUpdated} threshold_ms={6000} />
+      </div>
       <div className="flex flex-col gap-3">
         {phases.map((p) => {
           const running = p.agents_active.some((a) => a.concurrent > 0);

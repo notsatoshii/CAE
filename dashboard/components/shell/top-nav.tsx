@@ -7,6 +7,7 @@ import { MemoryIcon } from "./memory-icon";
 import { MetricsIcon } from "./metrics-icon";
 import { ChatPopOutIcon } from "./chat-pop-out-icon";
 import { HeartbeatDot } from "./heartbeat-dot";
+import { LivenessChip } from "./liveness-chip";
 import { DevBadge } from "./dev-badge";
 import { ShortcutHelpButton } from "@/components/ui/shortcut-overlay";
 
@@ -37,7 +38,7 @@ export function TopNav({ session }: TopNavProps) {
         <CostTicker />
       </div>
 
-      {/* Right cluster: floor, memory, metrics, chat pop-out, heartbeat, dev badge, user menu */}
+      {/* Right cluster: floor, memory, metrics, chat pop-out, heartbeat, liveness chip, dev badge, user menu */}
       <div className="flex items-center gap-2">
         <FloorIcon />
         <MemoryIcon />
@@ -46,6 +47,7 @@ export function TopNav({ session }: TopNavProps) {
         <ShortcutHelpButton />
         <span className="mx-1 h-4 w-px bg-[color:var(--border-subtle)]" aria-hidden="true" />
         <HeartbeatDot />
+        <LivenessChip />
         <DevBadge />
         <span className="mx-1 h-4 w-px bg-[color:var(--border-subtle)]" aria-hidden="true" />
         <UserMenu session={session} />

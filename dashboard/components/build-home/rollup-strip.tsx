@@ -4,6 +4,7 @@ import { useStatePoll } from "@/lib/hooks/use-state-poll";
 import { useDevMode } from "@/lib/providers/dev-mode";
 import { labelFor } from "@/lib/copy/labels";
 import { Card, CardContent } from "@/components/ui/card";
+import { LastUpdated } from "@/components/ui/last-updated";
 
 function formatTok(n: number): string {
   if (n < 1000) return String(n);
@@ -12,7 +13,7 @@ function formatTok(n: number): string {
 }
 
 export function RollupStrip() {
-  const { data } = useStatePoll();
+  const { data, lastUpdated } = useStatePoll();
   const { dev } = useDevMode();
   const t = labelFor(dev);
 
@@ -56,6 +57,9 @@ export function RollupStrip() {
           label=""
           warning={rollup.warnings > 0}
         />
+        <span className="ml-auto">
+          <LastUpdated at={lastUpdated} threshold_ms={6000} />
+        </span>
       </CardContent>
     </Card>
   );

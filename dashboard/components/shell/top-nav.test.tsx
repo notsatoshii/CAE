@@ -51,6 +51,10 @@ vi.mock("./heartbeat-dot", () => ({
   HeartbeatDot: () => <div data-testid="heartbeat-dot" />,
 }));
 
+vi.mock("./liveness-chip", () => ({
+  LivenessChip: () => <div data-testid="liveness-chip" />,
+}));
+
 vi.mock("./dev-badge", () => ({
   DevBadge: () => <div data-testid="dev-badge" />,
 }));

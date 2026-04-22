@@ -1,12 +1,13 @@
 "use client";
 
 import { useStatePoll } from "@/lib/hooks/use-state-poll";
+import { LastUpdated } from "@/components/ui/last-updated";
 import { cn } from "@/lib/utils";
 
 type Status = "up" | "degraded" | "halt";
 
 export function HeartbeatDot() {
-  const { data, error } = useStatePoll();
+  const { data, error, lastUpdated } = useStatePoll();
 
   let status: Status = "up";
   if (error) status = "degraded";
@@ -33,7 +34,8 @@ export function HeartbeatDot() {
         className={cn("inline-block size-2 rounded-full", status === "up" && "animate-pulse")}
         style={{ backgroundColor: color }}
       />
-      <span className="font-mono">{status === "up" ? "live" : status}</span>
+      {/* Replace hardcoded "live" text with an honest freshness timestamp */}
+      <LastUpdated at={lastUpdated} threshold_ms={6000} />
     </span>
   );
 }

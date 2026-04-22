@@ -27,6 +27,7 @@ import { useDevMode } from "@/lib/providers/dev-mode";
 import { labelFor } from "@/lib/copy/labels";
 import { Message } from "./message";
 import { Suggestions } from "./suggestions";
+import { LastUpdated } from "@/components/ui/last-updated";
 import type { AgentName } from "@/lib/copy/agent-meta";
 
 interface ChatMessageUI {
@@ -59,6 +60,8 @@ export function ChatPanel({ standalone = false }: { standalone?: boolean } = {})
   const [rateLimitUntil, setRateLimitUntil] = useState<number>(0);
   const [currentAgent, setCurrentAgent] = useState<AgentName>("nexus");
   const [initError, setInitError] = useState<string | null>(null);
+  // SSE health: tracks when the last delta was received from /api/chat/send stream
+  const [lastMsgAt, setLastMsgAt] = useState<number | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const scrollRef = useRef<HTMLDivElement | null>(null);
 
@@ -228,6 +231,8 @@ export function ChatPanel({ standalone = false }: { standalone?: boolean } = {})
                   { ...last, content: last.content + deltaText },
                 ];
               });
+              // Track last SSE frame time for the health indicator
+              setLastMsgAt(Date.now());
               // D-09: bump the rail's unread counter on every delta, with
               // auto-expand (debounced 500ms) if the user didn't just close.
               rail.bumpUnread({ autoExpand: true });
@@ -281,6 +286,12 @@ export function ChatPanel({ standalone = false }: { standalone?: boolean } = {})
           : "flex flex-col h-full"
       }
     >
+      {/* SSE stream health — shows when last delta was received */}
+      {lastMsgAt !== null && (
+        <div className="flex justify-end px-3 py-1 border-b border-[color:var(--border,#1f1f22)]">
+          <LastUpdated at={lastMsgAt} threshold_ms={30000} />
+        </div>
+      )}
       <div
         ref={scrollRef}
         className="flex-1 overflow-y-auto px-3 py-2 space-y-1"

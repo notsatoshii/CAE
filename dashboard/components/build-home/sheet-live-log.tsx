@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useDevMode } from "@/lib/providers/dev-mode";
 import { labelFor } from "@/lib/copy/labels";
+import { useSseHealth } from "@/lib/hooks/use-sse-health";
+import { LastUpdated } from "@/components/ui/last-updated";
 
 const MAX_LINES = 500;
 
@@ -19,6 +21,10 @@ export function SheetLiveLog({ path }: Props) {
   const [totalReceived, setTotalReceived] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [paused, setPaused] = useState(false);
+
+  // SSE health — tracks connection status + last message timestamp
+  const sseUrl = path ? "/api/tail?path=" + encodeURIComponent(path) : "";
+  const { lastMessageAt, status: sseStatus } = useSseHealth(sseUrl);
 
   const bottomRef = useRef<HTMLDivElement>(null);
   const pausedRef = useRef(paused);
@@ -74,10 +80,25 @@ export function SheetLiveLog({ path }: Props) {
       data-testid="sheet-live-log"
       className="flex flex-col border border-[color:var(--border-subtle)] rounded-md overflow-hidden"
     >
-      <div className="flex items-center justify-between px-3 py-1.5 border-b border-[color:var(--border-subtle)] bg-[color:var(--surface)]">
-        <span className="font-mono text-xs text-[color:var(--text-muted)] truncate flex-1 mr-2">
+      <div className="flex items-center justify-between px-3 py-1.5 border-b border-[color:var(--border-subtle)] bg-[color:var(--surface)] gap-2">
+        <span className="font-mono text-xs text-[color:var(--text-muted)] truncate flex-1">
           {path}
         </span>
+        {/* SSE health indicators */}
+        <span
+          className="inline-block size-1.5 rounded-full shrink-0"
+          style={{
+            backgroundColor:
+              sseStatus === "open"
+                ? "var(--success)"
+                : sseStatus === "connecting"
+                  ? "var(--warning)"
+                  : "var(--danger)",
+          }}
+          aria-label={`Stream: ${sseStatus}`}
+          title={`Stream: ${sseStatus}`}
+        />
+        <LastUpdated at={lastMessageAt} threshold_ms={30000} />
         <button
           type="button"
           data-testid="sheet-log-pause-button"

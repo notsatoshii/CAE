@@ -1,6 +1,7 @@
 "use client";
 
 import { useStatePoll } from "@/lib/hooks/use-state-poll";
+import { LastUpdated } from "@/components/ui/last-updated";
 
 function formatTokens(n: number): string {
   if (n < 1000) return String(n);
@@ -11,7 +12,7 @@ function formatTokens(n: number): string {
 const TOOLTIP = "Token usage from local logs. OAuth subscription — not billed per call.";
 
 export function CostTicker() {
-  const { data } = useStatePoll();
+  const { data, lastUpdated } = useStatePoll();
 
   if (!data) {
     return (
@@ -22,6 +23,7 @@ export function CostTicker() {
       >
         <span>— tok today</span>
         <span className="uppercase text-[10px] tracking-wider opacity-70">est.</span>
+        <LastUpdated at={lastUpdated} threshold_ms={6000} />
       </span>
     );
   }
@@ -40,6 +42,7 @@ export function CostTicker() {
     >
       <span>{formatTokens(totalTokens)} tok today</span>
       <span className="uppercase text-[10px] tracking-wider text-[color:var(--text-muted)]">est.</span>
+      <LastUpdated at={lastUpdated} threshold_ms={6000} />
     </span>
   );
 }

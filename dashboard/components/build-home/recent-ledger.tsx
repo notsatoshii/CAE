@@ -5,6 +5,7 @@ import { useDevMode } from "@/lib/providers/dev-mode";
 import { labelFor } from "@/lib/copy/labels";
 import { agentMetaFor } from "@/lib/copy/agent-meta";
 import { Card, CardContent } from "@/components/ui/card";
+import { LastUpdated } from "@/components/ui/last-updated";
 import type { RecentEvent } from "@/lib/cae-home-state";
 
 function formatTok(n: number): string {
@@ -26,7 +27,7 @@ function formatTime(iso: string): string {
 }
 
 export function RecentLedger() {
-  const { data } = useStatePoll();
+  const { data, lastUpdated } = useStatePoll();
   const { dev } = useDevMode();
   const t = labelFor(dev);
 
@@ -49,9 +50,12 @@ export function RecentLedger() {
 
   return (
     <section data-testid="recent-ledger" className="mb-6">
-      <h2 className="text-sm font-semibold uppercase tracking-wide text-[color:var(--text-muted)] mb-3">
-        {t.recentHeading}
-      </h2>
+      <div className="flex items-center justify-between mb-3">
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-[color:var(--text-muted)]">
+          {t.recentHeading}
+        </h2>
+        <LastUpdated at={lastUpdated} threshold_ms={6000} />
+      </div>
       <Card>
         <CardContent className="py-2 px-3">
           <ul className="divide-y divide-[color:var(--border-subtle)] font-mono text-xs">
