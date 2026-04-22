@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v0.1
 milestone_name: milestone
 status: planning
-stopped_at: Completed 11-03-PLAN.md
-last_updated: "2026-04-23T03:25:00.000Z"
+stopped_at: Completed 11-04-PLAN.md
+last_updated: "2026-04-23T03:32:00.000Z"
 progress:
   total_phases: 14
   completed_phases: 8
   total_plans: 77
-  completed_plans: 53
-  percent: 69
+  completed_plans: 54
+  percent: 70
 ---
 
 # cae-dashboard — Project State
@@ -31,6 +31,14 @@ Plan 10-04 complete (Wave 1 closed). Next: plan 10-05 (API routes).
 
 **Last session:** 2026-04-22T18:13:29.887Z
 **Stopped at:** Completed 11-02-PLAN.md
+
+## Key Decisions (Phase 11 — Plan 04)
+
+- **11-04:** FloorIcon mirrors ChatPopOutIcon exactly — same className, ExplainTooltip wrap, labelFor; only icon (Gamepad2) and href (/floor) differ.
+- **11-04:** floorAuthDriftNotice added to labels.ts (FOUNDER: "Please sign in again in main window"; DEV: "Session expired — re-auth in main window").
+- **11-04:** FloorToolbar legend toggle wires to global useExplainMode().toggle — legend state is shared Explain mode, not a local boolean.
+- **11-04:** Project resolution: explicit ?project= > most-recent Shift (shiftUpdated sort desc) > first project > null (idle scene).
+- **11-04:** lint-guard tests use absolute paths instead of import.meta.url — jsdom URL resolution strips the filesystem prefix.
 
 ## Key Decisions (Phase 11 — Plan 03)
 
