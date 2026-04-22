@@ -253,6 +253,12 @@ Plans:
 - `prefers-reduced-motion` audit (shake + pulse respect)
 - Explain-mode copy QA pass
 
+**Progress:**
+- [x] Plan 12-01: Wave 0 prereqs (fuzzysort, axe-cli, KEYBINDINGS, motion CSS, audit scripts)
+- [x] Plan 12-02: Palette pure libs + CommandPalette + ShortcutOverlay (49 tests)
+- [ ] Plan 12-03: Empty-state library
+- [ ] Plan 12-04: Polish + mount (layout wiring)
+
 ## Phase 13: UI/UX review + polish loop (expanded scope)
 
 **Goal:** close the UX quality gap — data correctness + liveness + functionality completeness + logging, then Mission-Control-grade IA + 6 visual pillars.

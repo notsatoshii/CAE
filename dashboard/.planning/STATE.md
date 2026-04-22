@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v0.1
 milestone_name: milestone
 status: planning
-stopped_at: Completed 11-02-PLAN.md
-last_updated: "2026-04-22T18:49:24.336Z"
+stopped_at: Completed 12-02-PLAN.md
+last_updated: "2026-04-22T18:58:18Z"
 progress:
   total_phases: 14
   completed_phases: 9
   total_plans: 83
-  completed_plans: 55
-  percent: 66
+  completed_plans: 56
+  percent: 67
 ---
 
 # cae-dashboard — Project State
@@ -61,6 +61,14 @@ Plan 10-04 complete (Wave 1 closed). Next: plan 10-05 (API routes).
 - **11-02:** safeCtx alias required inside RAF closure — TypeScript cannot narrow getContext() result past closure boundary.
 - **11-02:** ResizeObserver stubbed globally in beforeEach (jsdom lacks it); vi.stubGlobal pattern established for canvas component tests.
 - **11-02:** Dollar sign in JSDoc comment caught by lint-guard test — removed from comment text; lesson: never write "$ in this file" in source comments.
+
+## Key Decisions (Phase 12 — Plan 02)
+
+- **12-02:** PALETTE_GROUP_ORDER = [projects, tasks, agents, workflows, memory, commands] — frozen D-07 contract; Plan 12-04 imports this constant for nav wiring.
+- **12-02:** Provider hierarchy for Wave 3 mount: `<CommandPaletteProvider><ShortcutOverlayProvider>` (peer-safe, order doesn't matter).
+- **12-02:** Combobox inside Dialog (no Portal/Popup) — Dialog already provides modal + focus-trap; Combobox renders List inline inside DialogContent.
+- **12-02:** document.activeElement added alongside e.target in editable-target guards — required for jsdom KeyboardEvent dispatch compatibility.
+- **12-02:** openShortcuts toggle in buildPaletteIndex wired to close() as placeholder — Plan 12-04 replaces with real ShortcutOverlay toggle when co-mounted.
 
 ## Key Decisions (Phase 12 — Plan 01)
 
