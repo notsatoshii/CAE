@@ -25,11 +25,16 @@
 #
 # Side-effect files (written when invoker's cwd is a CAE project i.e.
 # `<cwd>/.cae/metrics/` already exists):
-#   <cwd>/.cae/metrics/circuit-breakers.jsonl
+#   <cwd>/.cae/metrics/circuit-breakers.jsonl   (Phase 7 Wave 0)
 #     Appended with a `token_usage` event per successful run, when claude
 #     was invoked with `--output-format json` (added automatically unless the
 #     caller already specified a format) and the usage envelope parses.
 #     Logging failure is swallowed — never breaks the caller.
+#   <cwd>/.cae/metrics/memory-consult.jsonl     (Phase 8 Wave 1, D-03)
+#     Appended with one `memory_consult` event per `Read` tool call into a
+#     CAE memory source, by the Claude Code PostToolUse hook at
+#     /home/cae/ctrl-alt-elite/tools/memory-consult-hook.sh. The adapter
+#     exports CAE_TASK_ID before tmux spawn so hook rows group by task.
 
 set -uo pipefail
 
@@ -68,6 +73,19 @@ done
 [[ ! -f "$TASK_FILE" ]] && die "task file not found: $TASK_FILE"
 [[ -n "$AGENT" && -n "$SYSTEM_PROMPT_FILE" ]] && die "--agent and --system-prompt-file are mutually exclusive"
 [[ -z "$AGENT" && -z "$SYSTEM_PROMPT_FILE" ]] && die "must specify --agent or --system-prompt-file"
+
+# Phase 8 Wave 1 (D-03): compute+set CAE_TASK_ID in the env so the Claude Code
+# PostToolUse hook at /home/cae/ctrl-alt-elite/tools/memory-consult-hook.sh
+# (registered in /home/cae/ctrl-alt-elite/.claude/settings.json) can group
+# Read-tool events by task. Same TASK_ID computation as the post-run
+# token_usage block further down; lifted early so the env is set BEFORE the
+# tmux subprocess — and therefore the spawned claude + the hook — inherit
+# it. The late TASK_ID assignment in the token_usage block now reuses this
+# same value so both emit paths (token_usage writes + hook-captured
+# memory_consult rows) share a single identifier for Wave-5 Why-drawer
+# correlation.
+CAE_TASK_ID=$(basename "$TASK_FILE" | sed -E 's/\.(txt|md)$//')
+export CAE_TASK_ID
 
 command -v claude >/dev/null 2>&1 || die "claude CLI not on PATH"
 command -v tmux >/dev/null 2>&1 || die "tmux not installed"
@@ -210,9 +228,10 @@ if [[ "$EXIT_CODE" -eq 0 && -s "$OUT_FILE" ]]; then
 
     # Only write if at least one count is > 0 (otherwise the event would be noise).
     if [[ "$INPUT_TOKENS" -gt 0 || "$OUTPUT_TOKENS" -gt 0 ]]; then
-      # task_id from task file basename (strip .txt/.md). Arbitrary strings OK —
-      # aggregator tolerates non-CAE-pattern ids.
-      TASK_ID=$(basename "$TASK_FILE" | sed -E 's/\.(txt|md)$//')
+      # Phase 8 Wave 1 (D-03): reuse the CAE_TASK_ID exported earlier for the
+      # memory-consult hook so token_usage rows + memory_consult rows share
+      # a single identifier. Keeps wave-5 Why-drawer correlation tight.
+      TASK_ID="$CAE_TASK_ID"
 
       # agent label mirrors INVOCATION_DESC: wrap:X → X; direct:* → "direct"; fallback forge.
       if [[ "$INVOCATION_DESC" == wrap:* ]]; then
