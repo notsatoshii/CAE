@@ -19,6 +19,8 @@
  * queue-depth card (QueueDepth), and time-to-merge heading (TimeToMerge).
  */
 
+import { useRouter } from "next/navigation";
+import { LineChart } from "lucide-react";
 import { useMetricsPoll } from "@/lib/hooks/use-metrics-poll";
 import { labelFor } from "@/lib/copy/labels";
 import { useDevMode } from "@/lib/providers/dev-mode";
@@ -26,11 +28,14 @@ import { PerAgentWallTable } from "./per-agent-wall-table";
 import { TimeToMergeHistogram } from "./time-to-merge-histogram";
 import { QueueDepthDisplay } from "./queue-depth-display";
 import { ExplainTooltip } from "@/components/ui/explain-tooltip";
+import { EmptyState, EmptyStateActions } from "@/components/ui/empty-state";
+import { Button } from "@/components/ui/button";
 
 export function SpeedPanel() {
   const { data, error } = useMetricsPoll();
   const { dev } = useDevMode();
   const L = labelFor(dev);
+  const router = useRouter();
 
   if (error && !data) {
     return (
@@ -65,9 +70,18 @@ export function SpeedPanel() {
         >
           {L.metricsFastHeading}
         </h2>
-        <p className="mt-2 text-sm text-[color:var(--text-muted)]">
-          {L.metricsEmptyState}
-        </p>
+        <EmptyState
+          icon={LineChart}
+          heading={L.emptyMetricsPanelHeading}
+          body={L.emptyMetricsPanelBody}
+          actions={
+            <EmptyStateActions>
+              <Button variant="secondary" onClick={() => router.push("/chat")}>
+                {L.emptyMetricsPanelCtaTest}
+              </Button>
+            </EmptyStateActions>
+          }
+        />
       </section>
     );
   }

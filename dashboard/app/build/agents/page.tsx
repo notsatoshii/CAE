@@ -14,10 +14,15 @@ export const dynamic = "force-dynamic"
  * card updates `?agent={name}` URL state but nothing visible changes.
  */
 
+import { Cpu } from "lucide-react"
 import { getAgentsRoster } from "@/lib/cae-agents-state"
 import { AgentGrid } from "@/components/agents/agent-grid"
 import { AgentsPageHeading } from "@/components/agents/agents-page-heading"
 import { AgentDetailDrawer } from "@/components/agents/agent-detail-drawer"
+import { EmptyState, EmptyStateActions } from "@/components/ui/empty-state"
+import { Button } from "@/components/ui/button"
+import Link from "next/link"
+import { labelFor } from "@/lib/copy/labels"
 
 export const metadata = {
   title: "Agents — CAE",
@@ -43,12 +48,19 @@ export default async function AgentsPage() {
         </p>
       </div>
       {agents.length === 0 && !loadError ? (
-        <div
+        <EmptyState
           data-testid="agents-page-empty"
-          className="rounded-lg border border-[color:var(--border,#1f1f22)] bg-[color:var(--surface,#121214)] p-8 text-sm text-[color:var(--text-muted,#8a8a8c)]"
-        >
-          No agent activity yet. Once CAE runs a task, stats start flowing in.
-        </div>
+          icon={Cpu}
+          heading={labelFor(false).emptyAgentsHeading}
+          body={labelFor(false).emptyAgentsBody}
+          actions={
+            <EmptyStateActions>
+              <Link href="/chat">
+                <Button variant="secondary">{labelFor(false).emptyAgentsCtaJob}</Button>
+              </Link>
+            </EmptyStateActions>
+          }
+        />
       ) : (
         <AgentGrid agents={agents} loadError={loadError} />
       )}

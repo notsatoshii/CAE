@@ -13,10 +13,14 @@
  */
 
 import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
+import { Inbox } from "lucide-react"
 import { useDevMode } from "@/lib/providers/dev-mode"
 import { labelFor } from "@/lib/copy/labels"
 import type { QueueState, QueueCardStatus } from "@/lib/cae-queue-state"
 import { QueueCard } from "./queue-card"
+import { EmptyState, EmptyStateActions } from "@/components/ui/empty-state"
+import { Button } from "@/components/ui/button"
 
 // Column testids are enumerated verbatim below so grep-based automated
 // verifiers (e.g. `grep -q 'queue-column-waiting'`) match against source
@@ -41,6 +45,7 @@ interface Props {
 export function QueueKanbanClient({ initialState }: Props) {
   const { dev } = useDevMode()
   const t = labelFor(dev)
+  const router = useRouter()
   const [state, setState] = useState<QueueState>(initialState)
   const [error, setError] = useState<Error | null>(null)
 
@@ -69,6 +74,33 @@ export function QueueKanbanClient({ initialState }: Props) {
       window.clearInterval(id)
     }
   }, [])
+
+  // Show page-level EmptyState when ALL 5 columns are empty (no tasks at all).
+  const totalTasks = COLUMNS.reduce(
+    (sum, col) => sum + state.columns[col.key].length,
+    0,
+  )
+
+  if (totalTasks === 0 && !error) {
+    return (
+      <EmptyState
+        data-testid="queue-kanban-empty"
+        icon={Inbox}
+        heading={t.emptyQueueHeading}
+        body={t.emptyQueueBody}
+        actions={
+          <EmptyStateActions>
+            <Button variant="secondary" onClick={() => router.push("/chat")}>
+              {t.emptyQueueCtaJob}
+            </Button>
+            <Button variant="secondary" onClick={() => router.push("/build/workflows")}>
+              {t.emptyQueueCtaWorkflows}
+            </Button>
+          </EmptyStateActions>
+        }
+      />
+    )
+  }
 
   return (
     <div

@@ -25,12 +25,15 @@
  */
 
 import { useEffect, useState } from "react";
+import { Filter } from "lucide-react";
 import { Accordion } from "@base-ui/react/accordion";
 import { useDevMode } from "@/lib/providers/dev-mode";
 import { labelFor } from "@/lib/copy/labels";
 import { ExplainTooltip } from "@/components/ui/explain-tooltip";
 import { ProjectGroup } from "@/components/changes/project-group";
 import type { ProjectGroup as ProjectGroupData } from "@/lib/cae-changes-state";
+import { EmptyState, EmptyStateActions } from "@/components/ui/empty-state";
+import { Button } from "@/components/ui/button";
 
 interface ChangesResponse {
   projects: ProjectGroupData[];
@@ -103,16 +106,26 @@ export function ChangesClient() {
   if (data.projects.length === 0) {
     return (
       <div>
-        <h1 className="mb-2 flex items-center gap-2 text-2xl font-medium text-[color:var(--text,#e5e5e5)]">
+        <h1 className="mb-4 flex items-center gap-2 text-2xl font-medium text-[color:var(--text,#e5e5e5)]">
           {L.changesPageHeading}
           <ExplainTooltip text={L.changesExplainTimeline} />
         </h1>
-        <p
+        <EmptyState
           data-testid="changes-empty"
-          className="text-sm text-[color:var(--text-muted,#8a8a8c)]"
-        >
-          {L.changesEmpty}
-        </p>
+          icon={Filter}
+          heading={L.emptyChangesHeading}
+          body={L.emptyChangesBody}
+          actions={
+            <EmptyStateActions>
+              <Button
+                variant="secondary"
+                onClick={() => window.location.reload()}
+              >
+                {L.emptyChangesCtaClear}
+              </Button>
+            </EmptyStateActions>
+          }
+        />
       </div>
     );
   }

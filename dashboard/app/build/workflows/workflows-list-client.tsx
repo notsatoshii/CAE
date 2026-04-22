@@ -16,7 +16,9 @@
  */
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import Link from "next/link"
+import { BookMarked } from "lucide-react"
 import { toast } from "sonner"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -24,6 +26,7 @@ import { useDevMode } from "@/lib/providers/dev-mode"
 import { labelFor } from "@/lib/copy/labels"
 import { useGatedAction } from "@/lib/chat-gated-actions"
 import { ConfirmActionDialog } from "@/components/chat/confirm-action-dialog"
+import { EmptyState, EmptyStateActions } from "@/components/ui/empty-state"
 import type { WorkflowRecord } from "@/lib/cae-workflows"
 
 function relativeTime(ms: number): string {
@@ -41,6 +44,7 @@ export function WorkflowsListClient({
 }) {
   const { dev } = useDevMode()
   const t = labelFor(dev)
+  const router = useRouter()
   const [workflows] = useState(initialWorkflows)
   const [runningSlug, setRunningSlug] = useState<string | null>(null)
   const [pendingRun, setPendingRun] = useState<{ slug: string; name: string } | null>(null)
@@ -83,11 +87,19 @@ export function WorkflowsListClient({
 
   if (workflows.length === 0) {
     return (
-      <Card data-testid="workflows-empty">
-        <CardContent className="py-10 text-center text-sm text-[color:var(--text-muted,#8a8a8c)]">
-          {t.workflowsListEmpty}
-        </CardContent>
-      </Card>
+      <EmptyState
+        data-testid="workflows-empty"
+        icon={BookMarked}
+        heading={t.emptyWorkflowsHeading}
+        body={t.workflowsListEmpty}
+        actions={
+          <EmptyStateActions>
+            <Button variant="secondary" onClick={() => router.push("/build/workflows/new")}>
+              {t.emptyWorkflowsCtaRecipe}
+            </Button>
+          </EmptyStateActions>
+        }
+      />
     )
   }
 

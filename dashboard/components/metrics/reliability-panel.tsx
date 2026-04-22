@@ -23,6 +23,8 @@
  * retry-heatmap h3.
  */
 
+import { useRouter } from "next/navigation";
+import { LineChart } from "lucide-react";
 import { useMetricsPoll } from "@/lib/hooks/use-metrics-poll";
 import { labelFor } from "@/lib/copy/labels";
 import { useDevMode } from "@/lib/providers/dev-mode";
@@ -32,6 +34,8 @@ import { RetryHeatmap } from "./retry-heatmap";
 import { HaltEventsLog } from "./halt-events-log";
 import { SentinelRejectTrend } from "./sentinel-reject-trend";
 import { ExplainTooltip } from "@/components/ui/explain-tooltip";
+import { EmptyState, EmptyStateActions } from "@/components/ui/empty-state";
+import { Button } from "@/components/ui/button";
 
 const MIN_SAMPLES_FOR_LEDE = 5;
 
@@ -39,6 +43,7 @@ export function ReliabilityPanel() {
   const { data, error } = useMetricsPoll();
   const { dev } = useDevMode();
   const L = labelFor(dev);
+  const router = useRouter();
 
   if (error && !data) {
     return (
@@ -73,9 +78,18 @@ export function ReliabilityPanel() {
         >
           {L.metricsWellHeading}
         </h2>
-        <p className="mt-2 text-sm text-[color:var(--text-muted)]">
-          {L.metricsEmptyState}
-        </p>
+        <EmptyState
+          icon={LineChart}
+          heading={L.emptyMetricsPanelHeading}
+          body={L.emptyMetricsPanelBody}
+          actions={
+            <EmptyStateActions>
+              <Button variant="secondary" onClick={() => router.push("/chat")}>
+                {L.emptyMetricsPanelCtaTest}
+              </Button>
+            </EmptyStateActions>
+          }
+        />
       </section>
     );
   }
