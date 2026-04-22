@@ -132,10 +132,19 @@ export interface CatalogSkill {
   name: string
   /** GitHub user or org that owns the skill */
   owner: string
-  /** Where this skill comes from */
+  /** Where this skill comes from (primary source) */
   source: "skills.sh" | "clawhub" | "local"
+  /**
+   * After dedup-merge: all origins the skill was seen in.
+   * Undefined for single-source skills.
+   */
+  sources?: Array<"skills.sh" | "clawhub" | "local">
   /** Human-readable one-liner for the skill list */
   description: string
+  /** Install count from skills.sh (if available) */
+  installs?: number
+  /** Star count from ClawHub (if available) */
+  stars?: number
   /** Full command to install this skill, e.g. "npx skills add vercel-labs/agent-skills" */
   installCmd: string
   /** URL to the skill's detail page on its source registry */
