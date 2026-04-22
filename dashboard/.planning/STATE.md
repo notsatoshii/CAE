@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v0.1
 milestone_name: milestone
 status: planning
-stopped_at: Completed 13-04-PLAN.md
-last_updated: "2026-04-22T20:15:24Z"
+stopped_at: Completed 13-05-PLAN.md
+last_updated: "2026-04-22T20:35:32Z"
 progress:
   total_phases: 14
   completed_phases: 10
   total_plans: 83
-  completed_plans: 62
-  percent: 75
+  completed_plans: 63
+  percent: 76
 ---
 
 # cae-dashboard — Project State
@@ -29,8 +29,16 @@ progress:
 Phase 10 — Plan mode: Projects / PRDs / Roadmaps / UAT (`/plan/*` routes wrapping Shift).
 Plan 10-04 complete (Wave 1 closed). Next: plan 10-05 (API routes).
 
-**Last session:** 2026-04-22T20:05:14.592Z
-**Stopped at:** Completed 13-03-PLAN.md
+**Last session:** 2026-04-22T20:35:32Z
+**Stopped at:** Completed 13-05-PLAN.md
+
+## Key Decisions (Phase 13 — Plan 05)
+
+- **13-05:** withLog uses `...args:any[]` generic to accept both Request and NextRequest without type casts
+- **13-05:** NextAuth route (/api/auth/[...nextauth]) excluded from withLog — NextAuth-provided, not our handler
+- **13-05:** Client-side console.* survivors (12 calls in hooks/components) deferred to plan 13-08 client breadcrumb panel
+- **13-05:** pino redact covers authorization/cookie/session-token/password at multiple nesting depths
+- **13-05:** SSE routes (chat/send, tail) emit req.end.stream-open not req.end — avoids false timing for streaming responses
 
 ## Key Decisions (Phase 13 — Plan 04)
 
