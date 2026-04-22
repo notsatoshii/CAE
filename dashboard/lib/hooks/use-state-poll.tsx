@@ -29,6 +29,8 @@ export interface StateResponse {
 interface StatePollValue {
   data: StateResponse | null;
   error: Error | null;
+  /** Unix-ms timestamp of the last successful fetch, or null if no fetch has completed yet. */
+  lastUpdated: number | null;
 }
 
 const StatePollContext = createContext<StatePollValue | null>(null);
@@ -46,6 +48,7 @@ export function StatePollProvider({
 }: StatePollProviderProps) {
   const [data, setData] = useState<StateResponse | null>(null);
   const [error, setError] = useState<Error | null>(null);
+  const [lastUpdated, setLastUpdated] = useState<number | null>(null);
   const mounted = useRef(true);
 
   useEffect(() => {
@@ -57,12 +60,13 @@ export function StatePollProvider({
         const res = await fetch(url);
         if (!mounted.current) return;
         if (!res.ok) {
-          setError(new Error(`/api/state returned ${res.status}`));
+          setError(new Error(`/api/state ${res.status}`));
           return;
         }
         const json = (await res.json()) as StateResponse;
         if (!mounted.current) return;
         setData(json);
+        setLastUpdated(Date.now());
         setError(null);
       } catch (err) {
         if (!mounted.current) return;
@@ -71,15 +75,27 @@ export function StatePollProvider({
     }
 
     poll();
-    const id = window.setInterval(poll, intervalMs);
+    let id = window.setInterval(poll, intervalMs);
+
+    const onVisibility = () => {
+      if (document.hidden) {
+        window.clearInterval(id);
+      } else {
+        poll();
+        id = window.setInterval(poll, intervalMs);
+      }
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+
     return () => {
       mounted.current = false;
       window.clearInterval(id);
+      document.removeEventListener("visibilitychange", onVisibility);
     };
   }, [projectPath, intervalMs]);
 
   return (
-    <StatePollContext.Provider value={{ data, error }}>
+    <StatePollContext.Provider value={{ data, error, lastUpdated }}>
       {children}
     </StatePollContext.Provider>
   );
