@@ -18,6 +18,8 @@ import type { MetricsState } from "@/lib/cae-metrics-state";
 interface MetricsPollValue {
   data: MetricsState | null;
   error: Error | null;
+  /** True from mount until the first successful fetch completes. */
+  loading: boolean;
 }
 
 const MetricsPollContext = createContext<MetricsPollValue | null>(null);
@@ -33,6 +35,9 @@ export function MetricsPollProvider({
 }: MetricsPollProviderProps) {
   const [data, setData] = useState<MetricsState | null>(null);
   const [error, setError] = useState<Error | null>(null);
+  // WR-02: track whether the first fetch has resolved so panels can distinguish
+  // "loading" from "genuinely empty". Starts true, cleared after first poll attempt.
+  const [loading, setLoading] = useState(true);
   const mounted = useRef(true);
 
   useEffect(() => {
@@ -70,6 +75,9 @@ export function MetricsPollProvider({
       } catch (err) {
         if (!mounted.current) return;
         setError(err instanceof Error ? err : new Error(String(err)));
+      } finally {
+        // Clear loading after first attempt regardless of success/error.
+        if (mounted.current) setLoading(false);
       }
     }
 
@@ -92,7 +100,7 @@ export function MetricsPollProvider({
   }, [intervalMs]);
 
   return (
-    <MetricsPollContext.Provider value={{ data, error }}>
+    <MetricsPollContext.Provider value={{ data, error, loading }}>
       {children}
     </MetricsPollContext.Provider>
   );

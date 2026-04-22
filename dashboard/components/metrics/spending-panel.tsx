@@ -48,7 +48,7 @@ function formatTokens(n: number): string {
 }
 
 export function SpendingPanel() {
-  const { data, error } = useMetricsPoll();
+  const { data, error, loading } = useMetricsPoll();
   const { dev } = useDevMode();
   const L = labelFor(dev);
   const router = useRouter();
@@ -73,10 +73,30 @@ export function SpendingPanel() {
     );
   }
 
-  if (!data) {
+  // WR-02: show loading state while first fetch is in-flight, not EmptyState.
+  if (loading && !data) {
     return (
       <section
         data-testid="spending-panel-loading"
+        aria-labelledby="spending-heading"
+        className="rounded-lg border border-[color:var(--border)] bg-[color:var(--surface)] p-6"
+      >
+        <h2
+          id="spending-heading"
+          className="text-lg font-semibold text-[color:var(--text)]"
+        >
+          {L.metricsSpendingHeading}
+        </h2>
+        <p className="mt-4 text-sm text-[color:var(--text-muted)]">{L.metricsEmptyState}</p>
+      </section>
+    );
+  }
+
+  // Only show EmptyState when fetch has completed and genuinely returned no data.
+  if (!loading && !data) {
+    return (
+      <section
+        data-testid="spending-panel-empty"
         aria-labelledby="spending-heading"
         className="rounded-lg border border-[color:var(--border)] bg-[color:var(--surface)] p-6"
       >

@@ -40,7 +40,7 @@ import { Button } from "@/components/ui/button";
 const MIN_SAMPLES_FOR_LEDE = 5;
 
 export function ReliabilityPanel() {
-  const { data, error } = useMetricsPoll();
+  const { data, error, loading } = useMetricsPoll();
   const { dev } = useDevMode();
   const L = labelFor(dev);
   const router = useRouter();
@@ -65,10 +65,30 @@ export function ReliabilityPanel() {
     );
   }
 
-  if (!data) {
+  // WR-02: show loading state while first fetch is in-flight, not EmptyState.
+  if (loading && !data) {
     return (
       <section
         data-testid="reliability-panel-loading"
+        aria-labelledby="reliability-heading"
+        className="rounded-lg border border-[color:var(--border)] bg-[color:var(--surface)] p-6"
+      >
+        <h2
+          id="reliability-heading"
+          className="text-lg font-semibold text-[color:var(--text)]"
+        >
+          {L.metricsWellHeading}
+        </h2>
+        <p className="mt-4 text-sm text-[color:var(--text-muted)]">{L.metricsEmptyState}</p>
+      </section>
+    );
+  }
+
+  // Only show EmptyState when fetch has completed and genuinely returned no data.
+  if (!loading && !data) {
+    return (
+      <section
+        data-testid="reliability-panel-empty"
         aria-labelledby="reliability-heading"
         className="rounded-lg border border-[color:var(--border)] bg-[color:var(--surface)] p-6"
       >
