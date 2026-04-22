@@ -197,7 +197,14 @@ export function ChatPanel({ standalone = false }: { standalone?: boolean } = {})
             if (id && rail.lastSeenMsgId && id === rail.lastSeenMsgId) {
               continue;
             }
-            if (id) rail.setLastSeenMsgId(id);
+            // WR-01 fix (plan 13-04): only promote lastSeenMsgId on frames
+            // with a non-empty id. Delta and tick frames carry id="" (no `id:`
+            // line in the SSE frame) so `id` is null here — we must not
+            // promote those ephemeral frames. Only assistant.begin and
+            // assistant.end carry the stable assistantMsgId. We promote on
+            // assistant.end so the cursor lands after the full message is
+            // written, matching what readTranscriptAfter() sees in the jsonl.
+            if (id && event === "assistant.end") rail.setLastSeenMsgId(id);
             let obj: Record<string, unknown> = {};
             if (data) {
               try {

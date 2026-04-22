@@ -7,12 +7,18 @@
  * and re-frames each text delta as an SSE `assistant.delta` event. On stream
  * close, persists the full assistant message and emits `assistant.end`.
  *
- * SSE frame schema (09-CONTEXT D-17 — every frame carries `id: <uuid>`):
- *   event: assistant.begin  data: {sessionId, agent, model}
- *   event: assistant.delta  data: {delta: "text"}
- *   event: assistant.end    data: {final: "...", tokens: {in, out}}
- *   event: unread_tick      data: {unread: 1}    // when on_route != /chat
- *   event: rate_limited     data: {retry_after_sec: 30}
+ * SSE frame schema (WR-01 fix, plan 13-04 — stable id contract):
+ *   event: assistant.begin  id: <assistantMsgId>  data: {sessionId, agent, model}
+ *   event: assistant.delta  id: (empty)            data: {delta: "text"}
+ *   event: unread_tick      id: (empty)            data: {unread: 1}   // when on_route != /chat
+ *   event: assistant.end    id: <assistantMsgId>  data: {msg_id, final, tokens}
+ *   event: rate_limited     id: (empty)            data: {retry_after_sec: 30}
+ *
+ * id contract: non-empty id iff the frame corresponds to a persisted message
+ * id the client can promote to lastSeenMsgId. Ephemeral frames (deltas, ticks)
+ * carry id="" so the browser does not advance its internal lastEventId cursor.
+ * See lib/sse.ts for the encodeSSE contract and WR-01 rationale.
+ * See app/api/chat/send/route.test.ts for the contract tests.
  *
  * Security: auth() on every request (T-09-03-01). sessionId regex-validated
  * before any fs/subprocess call (T-09-03-02, gotcha #3). Message length cap
@@ -38,6 +44,7 @@ import {
   setSessionMeta,
   ValidationError,
 } from "@/lib/cae-chat-state";
+import { encodeSSE } from "@/lib/sse";
 import { pickPersona, modelForAgent } from "@/lib/voice-router";
 import { spawnClaudeChat } from "@/lib/chat-spawn";
 import type { AgentName } from "@/lib/copy/agent-meta";
@@ -51,12 +58,6 @@ const MAX_MESSAGE_LEN = 4000;
 const OVERRIDE_RE =
   /^@(nexus|forge|sentinel|scout|scribe|phantom|aegis|arch|herald)\b/i;
 
-function encodeSSE(id: string, event: string, data: unknown): string {
-  // Per SSE spec: each frame is `id:…\nevent:…\ndata:…\n\n`.
-  // The blank line terminator is what causes the browser EventSource to
-  // dispatch the event.
-  return `id: ${id}\nevent: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
-}
 
 export async function POST(req: NextRequest) {
   const session = await auth();
@@ -162,10 +163,15 @@ export async function POST(req: NextRequest) {
   const enc = new TextEncoder();
   const stream = new ReadableStream<Uint8Array>({
     async start(sc) {
-      const beginId = randomUUID();
+      // WR-01 fix (plan 13-04): ONE id for the entire assistant response,
+      // generated upfront and reused on both assistant.begin and assistant.end.
+      // Delta and tick frames carry id="" so the browser does not advance its
+      // internal lastEventId on ephemeral frames. See lib/sse.ts for contract.
+      const assistantMsgId = randomUUID();
+
       sc.enqueue(
         enc.encode(
-          encodeSSE(beginId, "assistant.begin", {
+          encodeSSE(assistantMsgId, "assistant.begin", {
             sessionId: sid,
             agent,
             model,
@@ -208,18 +214,20 @@ export async function POST(req: NextRequest) {
                 delta && typeof delta.text === "string" ? delta.text : "";
               if (text) {
                 finalText += text;
+                // Ephemeral frame — id="" so client does not promote lastSeenMsgId.
                 sc.enqueue(
                   enc.encode(
-                    encodeSSE(randomUUID(), "assistant.delta", {
+                    encodeSSE("", "assistant.delta", {
                       delta: text,
                     }),
                   ),
                 );
                 // Unread tick when user is not on /chat (D-09).
+                // Also ephemeral — id="".
                 if (onRoute !== "/chat") {
                   sc.enqueue(
                     enc.encode(
-                      encodeSSE(randomUUID(), "unread_tick", { unread: 1 }),
+                      encodeSSE("", "unread_tick", { unread: 1 }),
                     ),
                   );
                 }
@@ -257,9 +265,10 @@ export async function POST(req: NextRequest) {
 
       const code = await handle.wait();
       if (rateLimited || code !== 0) {
+        // Rate-limited frame is also ephemeral — no persisted id.
         sc.enqueue(
           enc.encode(
-            encodeSSE(randomUUID(), "rate_limited", {
+            encodeSSE("", "rate_limited", {
               retry_after_sec: 30,
             }),
           ),
@@ -268,9 +277,9 @@ export async function POST(req: NextRequest) {
         return;
       }
 
-      // Persist the assistant turn with the same id that is emitted as the
-      // SSE frame id so clients can dedupe on reconnect (D-17).
-      const assistantMsgId = randomUUID();
+      // Persist the assistant turn using assistantMsgId — the SAME id already
+      // emitted on assistant.begin. This ensures readTranscriptAfter(sid, id)
+      // finds the persisted record when the client sends lastSeenMsgId back.
       await appendMessage(sid, {
         id: assistantMsgId,
         ts: new Date().toISOString(),
@@ -280,9 +289,12 @@ export async function POST(req: NextRequest) {
         tokens: { in: inTokens, out: outTokens },
       });
 
+      // assistant.end carries the stable id again so the client's D-17 de-dupe
+      // and lastSeenMsgId promotion land on the same persisted record.
       sc.enqueue(
         enc.encode(
           encodeSSE(assistantMsgId, "assistant.end", {
+            msg_id: assistantMsgId,
             final: finalText,
             tokens: { in: inTokens, out: outTokens },
           }),
