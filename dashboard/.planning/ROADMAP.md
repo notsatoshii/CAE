@@ -188,6 +188,8 @@ Plans:
 
 ## Phase 9: Changes tab + right-rail chat
 
+**Status:** ✅ shipped (2026-04-23, session 5) — 8/8 plans complete
+
 **Goal:** Build mode `/build/changes` + persistent chat rail per UI-SPEC §10 + §12 + §Audience reframe.
 
 **What it includes:**
@@ -199,7 +201,7 @@ Plans:
 - Suggested actions hardcoded per-route in `lib/chat-suggestions.ts` (3 chip buttons below input)
 - Nexus "always explain before doing" gate on token-spending actions: `ConfirmActionDialog` with token estimate + plain-English summary, gated at `tokens >= 1000`; Dev-mode bypasses with undo toast
 
-**Plans:** 7/8 plans executed
+**Plans:** 8/8 plans executed
 
 Plans:
 - [x] 09-01-PLAN.md — Wave 0: `docs/VOICE.md` + 9 persona fragments + voice-router + chat-suggestions + chat-cost-estimate libs with tests (wave 0)
@@ -209,7 +211,7 @@ Plans:
 - [x] 09-05-PLAN.md — Wave 2b: ChatRailProvider + `components/chat/{chat-rail,chat-panel,message,suggestions}.tsx` mounted in `app/layout.tsx` (wave 2, parallel with 09-04)
 - [x] 09-06-PLAN.md — Wave 3: ConfirmActionDialog + useGatedAction hook + wiring into existing token-spending server actions (queue delegate, workflows Run-now) (wave 3)
 - [x] 09-07-PLAN.md — Wave 4: `/chat` full-page split route + ChatMirror picker + top-nav pop-out icon (wave 4)
-- [x] 09-08-PLAN.md — Wave 5: 09-VERIFICATION.md + human UAT checkpoint (wave 5, non-autonomous)
+- [x] 09-08-PLAN.md — Wave 5: 09-VERIFICATION.md + UAT auto-approved (239/239 tests, tsc, lint, build all green; browser UAT deferred) (wave 5)
 
 ## Phase 10: Plan mode — Projects / PRDs / Roadmaps / UAT
 
