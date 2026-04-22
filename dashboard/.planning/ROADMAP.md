@@ -159,16 +159,32 @@ Plans:
 
 ## Phase 8: Memory (global top-bar icon → page) + Graphify
 
-**Goal:** `/memory` — browse + graph per UI-SPEC §9 + §S4.5.
+**Goal:** `/memory` — browse + graph per UI-SPEC §9 + §S4.5 with a REAL event-based "Why?" trace (via Claude Code PostToolUse hook on Read tool), heuristic fallback for legacy tasks.
 
 **What it includes:**
-- Browse: file tree (AGENTS.md, KNOWLEDGE/, agents/cae-*.md, .planning/*/plan.md); markdown render; full-text search (ripgrep-backed)
-- "Why?" button on Build events → traces memory entries consulted
-- Memory git-log timeline with diff-between-dates
-- Graph view: safishamsi/graphify CLI → `.cae/graph.json` → native react-flow render
-- Filter UI by node type (phases/agents/notes/PRDs/commits)
-- Click node → drawer with content + back-links
-- Manual "Regenerate graph" button + optional cron
+- Browse: file tree (AGENTS.md, KNOWLEDGE/, .claude/agents/, agents/cae-*.md, .planning/phases/*/*.md); markdown render via react-markdown + remark-gfm; full-text search (ripgrep-backed)
+- "Why?" button on Build events → REAL memory-consult trace via PostToolUse hook writing to `.cae/metrics/memory-consult.jsonl`; heuristic fallback (`files_modified ∩ memory_sources`) for pre-hook tasks, explicitly labelled distinctly
+- Memory git-log timeline (per-file) with diff-between-dates
+- Graph view: safishamsi/graphify CLI (`--mode fast --no-viz`) → `.cae/graph.json` at CAE_ROOT → native @xyflow/react + @dagrejs/dagre render (no iframe)
+- Filter UI by node type — 4 chips (phases/agents/notes/PRDs); commits OFF in v1
+- Click node → drawer with content + back-links + open-timeline
+- Manual "Regenerate graph" button — 60s client debounce + server 429 cooldown; cron deferred
+- 500-node cap with "showing N of M" banner
+- New `components/ui/explain-tooltip.tsx` as shared primitive (moved from components/metrics/)
+- Vitest wired for the first time (was planned in Phase 6, installed here)
+- Cross-subtree: `adapters/claude-code.sh` exports `CAE_TASK_ID`; `~/.claude/settings.json` gets PostToolUse hook registration; new `tools/memory-consult-hook.sh`
+
+**Plans:** 8 plans
+
+Plans:
+- [x] 08-01-PLAN.md — Wave 0 prereqs: graphify install + npm deps (@xyflow/react@12.10.2, @dagrejs/dagre@3.0.0, react-markdown@10.1.0, remark-gfm@4.0.1) + Vitest + RF css in globals.css + ExplainTooltip relocation + .cae/ gitignore + fixture graphify run (wave 0)
+- [x] 08-02-PLAN.md — Wave 1 Why?-real plumbing: memory-consult-hook.sh + settings.json PostToolUse registration + adapter CAE_TASK_ID export + lib/cae-memory-consult.ts aggregator + /api/memory/consult/[task_id] (wave 1)
+- [x] 08-03-PLAN.md — Wave 2 server modules (sources/search/git/graph/whytrace) + 7 API routes + memory.* labels (wave 2)
+- [x] 08-04-PLAN.md — Wave 3 Browse tab: FileTree + MarkdownView + SearchBar + SearchResults (wave 3, parallel with 08-05)
+- [x] 08-05-PLAN.md — Wave 3 Graph tab: GraphCanvas + dagre layout + 4-chip filters + NodeDrawer + RegenerateButton (wave 3, parallel with 08-04)
+- [x] 08-06-PLAN.md — Wave 4 WhyDrawer (real trace + heuristic fallback) + GitTimelineDrawer + DiffView (wave 4)
+- [x] 08-07-PLAN.md — Wave 5 /memory/page.tsx server shell + MemoryClient (Tabs + mounted drawers + deep-link query params) (wave 5)
+- [x] 08-08-PLAN.md — Wave 6 08-VERIFICATION.md + verify-memory-hook.sh + human UAT (wave 6, non-autonomous)
 
 ## Phase 9: Changes tab + right-rail chat
 

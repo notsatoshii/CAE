@@ -292,3 +292,28 @@ None discovered during automated sweep. The 4 auto-fixed deviations above were a
 *Phase: 08-memory-global-top-bar-icon-page-graphify*
 *Plans covered: 08-01 through 08-07*
 *Verifier: Claude executor (automated) + Eric (human UAT, deferred)*
+
+---
+
+## UAT sign-off (session 5 — deferred to browser)
+
+**Automated:** all green. 76/76 vitest cases, build+tsc clean, verify-memory-hook.sh live end-to-end PASS, all 8 new /api/memory/* routes registered + auth-gated.
+
+**Real bug fixed during verification:** `tmux new-session -e CAE_TASK_ID=...` injection — without this, every Forge task would have logged `task_id=unknown` (silent "Live trace" regression). Documented in 08-08-SUMMARY.md.
+
+**Visual UAT (13 gates) DEFERRED** to Eric's in-browser walk-through per session-5 directive:
+1. /memory loads under auth
+2. Browse tab file tree grouping
+3. Markdown render with GFM
+4. Search <300ms, highlighted matches, empty state
+5. Graph tab renders or empty+regenerate CTA
+6. NodeDrawer backlinks + forward-refs
+7. Exactly 4 filter chips (no commits chip — D-04)
+8. Regenerate 60s cooldown + 429 handling
+9. Live-trace end-to-end (LOAD-BEARING on tmux fix)
+10. Heuristic pill fallback
+11. Git timeline drawer + 2-commit diff
+12. Deep links: ?view ?path ?task ?timeline
+13. Esc closes drawers + Ctrl+Shift+D flips + Ctrl+E toggles explain
+
+Phase 8 closed on automated. Visual regressions → /gsd-plan-phase 08 --gaps.
