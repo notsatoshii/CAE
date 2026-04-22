@@ -58,9 +58,15 @@ const REDACT_PATHS = [
   "*.cookie",
   "*.session-token",
   "*.password",
+  "*.token",
+  "*.apiKey",
+  "*.api_key",
   "*.headers.authorization",
   "*.headers.cookie",
-  "*.authjs\\.session-token",
+  // Bracket notation required for literal-dot key "authjs.session-token"
+  // (pino treats "." as a segment separator; escape sequences are unreliable).
+  '*["authjs.session-token"]',
+  '*.headers["authjs.session-token"]',
   "*.*.authorization",
   "*.*.cookie",
 ];

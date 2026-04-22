@@ -75,6 +75,14 @@ describe("log(scope)", () => {
     const headers = obj.headers as Record<string, unknown>;
     expect(headers.cookie).toBe("[redacted]");
   });
+
+  it("redacts nested authjs.session-token key with literal dot in name", async () => {
+    const { log } = await import("@/lib/log");
+    log("test.redact").info({ cookies: { "authjs.session-token": "abc" } }, "authjs-token-log");
+    const obj = lastLine();
+    const cookies = obj.cookies as Record<string, unknown>;
+    expect(cookies["authjs.session-token"]).toBe("[redacted]");
+  });
 });
 
 describe("reqCtx AsyncLocalStorage mixin", () => {
