@@ -22,32 +22,73 @@
 
 import { useDevMode } from "@/lib/providers/dev-mode";
 import { labelFor } from "@/lib/copy/labels";
-import { relativeTime } from "@/lib/cae-changes-state";
 import { ChangeRow } from "./change-row";
 import type { ChangeEvent } from "@/lib/cae-changes-state";
 
-type Bucket = "today" | "yesterday" | "week" | "older";
+/**
+ * NOTE — we intentionally avoid importing runtime helpers from
+ * `@/lib/cae-changes-state`: that module imports `child_process`, which
+ * Turbopack cannot bundle for a Client Component. Only `import type` is
+ * safe here (types are erased at compile time). Bucket math below is a
+ * tiny, client-safe re-implementation matching the 09-02 bucket contract
+ * (same UTC-day / yesterday / 2-6 day weekday / ≥7 day M/D).
+ */
 
-function bucketFromRelTime(rt: string): Bucket {
+type Bucket =
+  | { kind: "today" }
+  | { kind: "yesterday" }
+  | { kind: "week"; key: string }
+  | { kind: "older"; key: string };
+
+const WEEKDAYS = [
+  "Sunday",
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+] as const;
+
+function bucketForTs(isoTs: string, now: Date): Bucket {
+  const tsMs = Date.parse(isoTs);
+  if (!Number.isFinite(tsMs)) return { kind: "older", key: "—" };
+  const ts = new Date(tsMs);
+
+  const sameUtcDay =
+    ts.getUTCFullYear() === now.getUTCFullYear() &&
+    ts.getUTCMonth() === now.getUTCMonth() &&
+    ts.getUTCDate() === now.getUTCDate();
+  if (sameUtcDay) return { kind: "today" };
+
+  const yesterday = new Date(
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - 1),
+  );
   if (
-    rt === "just now" ||
-    rt === "this morning" ||
-    rt === "this afternoon" ||
-    rt === "this evening"
+    ts.getUTCFullYear() === yesterday.getUTCFullYear() &&
+    ts.getUTCMonth() === yesterday.getUTCMonth() &&
+    ts.getUTCDate() === yesterday.getUTCDate()
   ) {
-    return "today";
+    return { kind: "yesterday" };
   }
-  if (rt === "yesterday") return "yesterday";
-  // Weekday names are alphabetic-only ("Sunday", "Monday", ...). M/D forms
-  // contain a digit, so detect by whether the string has any digits.
-  if (/\d/.test(rt)) return "older";
-  return "week";
+
+  const dayDeltaMs =
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()) -
+    Date.UTC(ts.getUTCFullYear(), ts.getUTCMonth(), ts.getUTCDate());
+  const dayDelta = Math.round(dayDeltaMs / 86_400_000);
+
+  if (dayDelta >= 2 && dayDelta <= 6) {
+    return { kind: "week", key: WEEKDAYS[ts.getUTCDay()] };
+  }
+
+  return { kind: "older", key: `${ts.getUTCMonth() + 1}/${ts.getUTCDate()}` };
 }
 
 export function DayGroup({ events }: { events: ChangeEvent[] }) {
   const { dev } = useDevMode();
   const L = labelFor(dev);
 
+  const now = new Date();
   const today: ChangeEvent[] = [];
   const yesterday: ChangeEvent[] = [];
   // Ordered maps preserve first-appearance order of weekday/date keys.
@@ -55,20 +96,19 @@ export function DayGroup({ events }: { events: ChangeEvent[] }) {
   const older = new Map<string, ChangeEvent[]>();
 
   for (const e of events) {
-    const rt = relativeTime(e.ts);
-    const b = bucketFromRelTime(rt);
-    if (b === "today") {
+    const b = bucketForTs(e.ts, now);
+    if (b.kind === "today") {
       today.push(e);
-    } else if (b === "yesterday") {
+    } else if (b.kind === "yesterday") {
       yesterday.push(e);
-    } else if (b === "week") {
-      const arr = thisWeek.get(rt);
+    } else if (b.kind === "week") {
+      const arr = thisWeek.get(b.key);
       if (arr) arr.push(e);
-      else thisWeek.set(rt, [e]);
+      else thisWeek.set(b.key, [e]);
     } else {
-      const arr = older.get(rt);
+      const arr = older.get(b.key);
       if (arr) arr.push(e);
-      else older.set(rt, [e]);
+      else older.set(b.key, [e]);
     }
   }
 

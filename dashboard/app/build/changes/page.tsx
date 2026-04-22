@@ -1,25 +1,32 @@
-export const metadata = {
-  title: "Changes — Coming in Phase 9",
-}
+import { redirect } from "next/navigation";
+import { auth } from "@/auth";
+import { ChangesClient } from "./changes-client";
 
 /**
- * /build/changes — Phase 9 stub.
+ * /build/changes — Phase 9 (plan 09-04, CHG-01, D-12).
  *
- * Rendered inside BuildLayout, so the left-rail is automatically on the left.
- * Pure server component — no data, no "use client".
+ * Replaces the Phase 8 stub. Server shell: auth-gates, then mounts the
+ * <ChangesClient /> island which fetches /api/changes (frozen by 09-02) and
+ * renders a prose-default, project-grouped accordion timeline.
+ *
+ * Pattern mirrors /memory/page.tsx — auth redirect + tiny server shell +
+ * client-island data fetch.
  */
-export default function ChangesStubPage() {
+
+export const metadata = {
+  title: "Changes — CAE",
+};
+
+export default async function ChangesPage() {
+  const session = await auth();
+  if (!session) redirect("/signin?from=/build/changes");
+
   return (
-    <main data-testid="changes-stub" className="p-10 max-w-2xl">
-      <h1 className="text-2xl font-medium text-foreground mb-2">
-        Changes
-      </h1>
-      <p className="text-[color:var(--text-muted,#8a8a8c)] text-sm mb-6">
-        Coming in Phase 9 — a plain-English timeline of everything CAE shipped, grouped by project.
-      </p>
-      <div className="rounded-lg border border-[color:var(--border,#1f1f22)] bg-[color:var(--surface,#121214)] p-6 text-sm text-[color:var(--text-muted,#8a8a8c)]">
-        Nothing here yet. The rail on the left still works — jump to Home or Agents.
-      </div>
+    <main
+      data-testid="changes-page"
+      className="mx-auto max-w-5xl p-8"
+    >
+      <ChangesClient />
     </main>
-  )
+  );
 }
