@@ -36,8 +36,8 @@ export default function SignInPage() {
           <GitHubSignInButton />
         </div>
 
-        {/* Footer */}
-        <p className="text-[11px] text-[color:var(--text-muted)] opacity-60">
+        {/* Footer — subdued branding, text-muted without opacity to maintain WCAG AA */}
+        <p className="text-[11px] text-[color:var(--text-muted)]">
           © {year} Ctrl+Alt+Elite
         </p>
       </div>
