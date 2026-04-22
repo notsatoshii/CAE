@@ -33,6 +33,13 @@ vi.mock("@/lib/providers/dev-mode", () => ({
   useDevMode: () => ({ dev: false, toggle: vi.fn(), setDev: vi.fn() }),
 }));
 
+// Mock ShortcutOverlay provider — CommandPalette calls useShortcutOverlay() to
+// wire the "Open Keyboard Shortcuts" command now that both providers co-mount.
+vi.mock("@/lib/hooks/use-shortcut-overlay", () => ({
+  useShortcutOverlay: () => ({ open: false, setOpen: vi.fn(), toggle: vi.fn() }),
+  ShortcutOverlayProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+}));
+
 function makeItem(id: string, group: PaletteGroupKey, label: string): PaletteItem {
   return { id, group, label, hint: "", run: vi.fn() };
 }

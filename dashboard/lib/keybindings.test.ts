@@ -1,5 +1,27 @@
 import { describe, expect, it } from "vitest";
-import { KEYBINDINGS, keybindingById, keybindingsByArea } from "./keybindings";
+import { KEYBINDINGS, keybindingById, keybindingsByArea, matchesKeydown, type Keybinding } from "./keybindings";
+
+function makeKb(overrides: Partial<Keybinding>): Keybinding {
+  return {
+    id: "test.key",
+    keys: ["E"],
+    area: "global",
+    founderLabel: "Test",
+    devLabel: "test",
+    ...overrides,
+  };
+}
+
+function makeEvent(overrides: Partial<KeyboardEvent>): KeyboardEvent {
+  return {
+    key: "e",
+    ctrlKey: false,
+    metaKey: false,
+    shiftKey: false,
+    altKey: false,
+    ...overrides,
+  } as KeyboardEvent;
+}
 
 describe("KEYBINDINGS registry", () => {
   it("is non-empty", () => {
@@ -45,5 +67,63 @@ describe("KEYBINDINGS registry", () => {
     const g = keybindingsByArea("global");
     expect(g.length).toBeGreaterThan(0);
     for (const k of g) expect(k.area).toBe("global");
+  });
+});
+
+describe("matchesKeydown", () => {
+  it("matches Ctrl+E", () => {
+    const kb = makeKb({ keys: ["Ctrl", "E"] });
+    expect(matchesKeydown(kb, makeEvent({ key: "e", ctrlKey: true }))).toBe(true);
+    expect(matchesKeydown(kb, makeEvent({ key: "E", ctrlKey: true }))).toBe(true);
+  });
+
+  it("rejects Ctrl+E when ctrl is missing", () => {
+    const kb = makeKb({ keys: ["Ctrl", "E"] });
+    expect(matchesKeydown(kb, makeEvent({ key: "e", ctrlKey: false }))).toBe(false);
+  });
+
+  it("rejects Ctrl+E when wrong key", () => {
+    const kb = makeKb({ keys: ["Ctrl", "E"] });
+    expect(matchesKeydown(kb, makeEvent({ key: "k", ctrlKey: true }))).toBe(false);
+  });
+
+  it("matches ⌘Shift+D", () => {
+    const kb = makeKb({ keys: ["⌘", "Shift", "D"] });
+    expect(matchesKeydown(kb, makeEvent({ key: "d", metaKey: true, shiftKey: true }))).toBe(true);
+  });
+
+  it("rejects ⌘Shift+D when modifier bitmap differs (missing Shift)", () => {
+    const kb = makeKb({ keys: ["⌘", "Shift", "D"] });
+    expect(matchesKeydown(kb, makeEvent({ key: "d", metaKey: true, shiftKey: false }))).toBe(false);
+  });
+
+  it("matches single-key ? (no modifiers)", () => {
+    const kb = makeKb({ keys: ["?"] });
+    expect(matchesKeydown(kb, makeEvent({ key: "?" }))).toBe(true);
+  });
+
+  it("rejects ? when a modifier is pressed", () => {
+    const kb = makeKb({ keys: ["?"] });
+    expect(matchesKeydown(kb, makeEvent({ key: "?", ctrlKey: true }))).toBe(false);
+  });
+
+  it("matches Esc (normalises 'Escape' browser key to 'esc')", () => {
+    const kb = makeKb({ keys: ["Esc"] });
+    expect(matchesKeydown(kb, makeEvent({ key: "Escape" }))).toBe(true);
+  });
+
+  it("returns false for empty keys array", () => {
+    const kb = makeKb({ keys: [] });
+    expect(matchesKeydown(kb, makeEvent({ key: "e" }))).toBe(false);
+  });
+
+  it("matches Ctrl+. (task.pause)", () => {
+    const kb = keybindingById("task.pause")!;
+    expect(matchesKeydown(kb, makeEvent({ key: ".", ctrlKey: true }))).toBe(true);
+  });
+
+  it("matches Ctrl+Shift+. (task.abort)", () => {
+    const kb = keybindingById("task.abort")!;
+    expect(matchesKeydown(kb, makeEvent({ key: ".", ctrlKey: true, shiftKey: true }))).toBe(true);
   });
 });

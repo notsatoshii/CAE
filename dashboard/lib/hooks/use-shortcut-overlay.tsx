@@ -8,7 +8,7 @@ import {
   useState,
 } from "react";
 import type { ReactNode } from "react";
-import { keybindingById } from "@/lib/keybindings";
+import { keybindingById, matchesKeydown } from "@/lib/keybindings";
 
 export interface ShortcutOverlayValue {
   readonly open: boolean;
@@ -31,21 +31,23 @@ export function ShortcutOverlayProvider({ children }: { children: ReactNode }) {
   const toggle = useCallback(() => setOpen((v) => !v), []);
 
   useEffect(() => {
-    // Sanity: registry entry exists
-    if (!keybindingById("shortcuts.open")) {
+    const kbRaw = keybindingById("shortcuts.open");
+    if (!kbRaw) {
       console.error("[shortcuts] KEYBINDINGS missing 'shortcuts.open' entry");
+      return;
     }
+    // Narrow to non-undefined so TS is happy inside the closure.
+    const kb = kbRaw;
 
     function onKeyDown(e: KeyboardEvent) {
-      // "?" fires as key="?" directly, or as key="/" with shiftKey (US layout)
-      const isQuestion =
-        e.key === "?" || (e.key === "/" && e.shiftKey === true);
-      if (!isQuestion) return;
-      // Guard: no modifier combos except Shift (which produces ?)
-      if (e.ctrlKey || e.metaKey || e.altKey) return;
       // Guard: don't intercept when typing in an input
       if (isEditableTarget(e.target) || isEditableTarget(document.activeElement))
         return;
+      // "?" fires as key="?" directly (matchesKeydown handles this), or as
+      // key="/" with shiftKey on US keyboard layout — keep the layout fallback.
+      const isShiftSlash =
+        e.key === "/" && e.shiftKey && !e.ctrlKey && !e.metaKey && !e.altKey;
+      if (!matchesKeydown(kb, e) && !isShiftSlash) return;
       e.preventDefault();
       setOpen((v) => !v);
     }

@@ -106,3 +106,30 @@ export function keybindingById(id: string): Keybinding | undefined {
 export function keybindingsByArea(area: Keybinding["area"]): readonly Keybinding[] {
   return KEYBINDINGS.filter((k) => k.area === area);
 }
+
+/**
+ * Returns true when a KeyboardEvent matches the given Keybinding.
+ *
+ * Convention for kb.keys:
+ *   - Modifier chips: "Ctrl", "⌘", "Shift", "Alt"
+ *   - Key chip (last element): the printable key, e.g. "E", "K", ".", "?", "Esc"
+ *
+ * Modifiers that are NOT listed in kb.keys are expected to be false on the event.
+ * If the registry entry is missing a key chip (empty keys array), returns false
+ * so callers never crash on a malformed entry.
+ */
+export function matchesKeydown(kb: Keybinding, e: KeyboardEvent): boolean {
+  if (kb.keys.length === 0) return false;
+
+  const expectedKey = kb.keys[kb.keys.length - 1].toLowerCase();
+  // Normalise: browser fires "Escape" for the Esc key
+  const eventKey = e.key === "Escape" ? "esc" : e.key.toLowerCase();
+  if (eventKey !== expectedKey) return false;
+
+  if (Boolean(e.ctrlKey) !== kb.keys.includes("Ctrl")) return false;
+  if (Boolean(e.metaKey) !== kb.keys.includes("⌘")) return false;
+  if (Boolean(e.shiftKey) !== kb.keys.includes("Shift")) return false;
+  if (Boolean(e.altKey) !== kb.keys.includes("Alt")) return false;
+
+  return true;
+}

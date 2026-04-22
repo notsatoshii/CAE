@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
+import { keybindingById, matchesKeydown } from "@/lib/keybindings";
 
 type ExplainModeContextValue = {
   explain: boolean;
@@ -36,12 +37,13 @@ export function ExplainModeProvider({ children }: { children: React.ReactNode })
   const setExplain = useCallback((v: boolean) => setExplainState(v), []);
   const toggle = useCallback(() => setExplainState((prev) => !prev), []);
 
-  // Ctrl+E global toggle.
+  // Ctrl+E global toggle — key spec driven by KEYBINDINGS registry (SHO-01).
   useEffect(() => {
+    const kb = keybindingById("explain.toggle");
+    if (!kb) return; // defensive: registry hole = no-op, don't crash
     function onKeyDown(e: KeyboardEvent) {
-      if (!(e.ctrlKey && !e.metaKey && !e.shiftKey && !e.altKey)) return;
-      if (e.key.toLowerCase() !== "e") return;
       if (isEditableTarget(e.target)) return;
+      if (!matchesKeydown(kb!, e)) return;
       e.preventDefault();
       setExplainState((prev) => !prev);
     }

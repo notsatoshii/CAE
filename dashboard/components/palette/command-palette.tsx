@@ -8,6 +8,7 @@ import {
   DialogContent,
 } from "@/components/ui/dialog";
 import { useCommandPalette } from "@/lib/hooks/use-command-palette";
+import { useShortcutOverlay } from "@/lib/hooks/use-shortcut-overlay";
 import { buildPaletteIndex } from "@/lib/palette/build-index";
 import { rankPaletteItems } from "@/lib/palette/fuzzy-rank";
 import { PALETTE_GROUP_ORDER } from "@/lib/palette/types";
@@ -27,6 +28,7 @@ const GROUP_LABEL: Record<PaletteGroupKey, string> = {
 
 export function CommandPalette(): React.JSX.Element | null {
   const { open, setOpen } = useCommandPalette();
+  const { setOpen: setShortcutsOpen } = useShortcutOverlay();
   const router = useRouter();
   const { toggle: toggleExplain } = useExplainMode();
   const { toggle: toggleDev } = useDevMode();
@@ -34,6 +36,10 @@ export function CommandPalette(): React.JSX.Element | null {
   const [query, setQuery] = useState("");
 
   const close = useCallback(() => setOpen(false), [setOpen]);
+  const openShortcuts = useCallback(() => {
+    close();
+    setShortcutsOpen(true);
+  }, [close, setShortcutsOpen]);
 
   // Rebuild index on open
   useEffect(() => {
@@ -48,11 +54,11 @@ export function CommandPalette(): React.JSX.Element | null {
     const toggles = {
       toggleExplain,
       toggleDev,
-      openShortcuts: close, // placeholder — overlay provider wires this at mount
+      openShortcuts,
     };
 
     buildPaletteIndex(ctx, toggles).then(setItems).catch(() => setItems([]));
-  }, [open, router, close, toggleExplain, toggleDev]);
+  }, [open, router, close, toggleExplain, toggleDev, openShortcuts]);
 
   const filteredItems = rankPaletteItems(query, items ?? []);
 

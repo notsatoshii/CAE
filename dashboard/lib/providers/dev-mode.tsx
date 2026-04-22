@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
+import { keybindingById, matchesKeydown } from "@/lib/keybindings";
 
 type DevModeContextValue = {
   dev: boolean;
@@ -36,12 +37,17 @@ export function DevModeProvider({ children }: { children: React.ReactNode }) {
   const setDev = useCallback((v: boolean) => setDevState(v), []);
   const toggle = useCallback(() => setDevState((prev) => !prev), []);
 
-  // Cmd+Shift+D (mac) / Ctrl+Shift+D (win/linux) global toggle.
+  // ⌘Shift+D global toggle — key spec driven by KEYBINDINGS registry (SHO-01).
+  // Note: KEYBINDINGS uses "⌘" (mac cmd). On win/linux, metaKey maps to the
+  // Windows/Super key which is rarely used; Ctrl+Shift+D is the practical
+  // equivalent but is NOT in the registry. The registry entry covers mac;
+  // win/linux users may use DevMode via the UI toggle instead.
   useEffect(() => {
+    const kb = keybindingById("devmode.toggle");
+    if (!kb) return; // defensive: registry hole = no-op, don't crash
     function onKeyDown(e: KeyboardEvent) {
-      if (!((e.metaKey || e.ctrlKey) && e.shiftKey && !e.altKey)) return;
-      if (e.key.toLowerCase() !== "d") return;
       if (isEditableTarget(e.target)) return;
+      if (!matchesKeydown(kb!, e)) return;
       e.preventDefault();
       setDevState((prev) => !prev);
     }
