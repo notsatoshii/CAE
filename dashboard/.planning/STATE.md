@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v0.1
 milestone_name: milestone
 status: planning
-stopped_at: Completed 12-03-PLAN.md
-last_updated: "2026-04-22T19:40:42.914Z"
+stopped_at: Completed 13-01-PLAN.md
+last_updated: "2026-04-22T19:49:22.015Z"
 progress:
   total_phases: 14
   completed_phases: 10
   total_plans: 83
-  completed_plans: 58
-  percent: 70
+  completed_plans: 59
+  percent: 71
 ---
 
 # cae-dashboard — Project State
@@ -29,8 +29,16 @@ progress:
 Phase 10 — Plan mode: Projects / PRDs / Roadmaps / UAT (`/plan/*` routes wrapping Shift).
 Plan 10-04 complete (Wave 1 closed). Next: plan 10-05 (API routes).
 
-**Last session:** 2026-04-22T19:14:00Z
-**Stopped at:** Completed 12-03-PLAN.md
+**Last session:** 2026-04-22T19:49:22.010Z
+**Stopped at:** Completed 13-01-PLAN.md
+
+## Key Decisions (Phase 13 — Plan 01)
+
+- **13-01:** gitignore uses `shots/*` + `!shots/.gitkeep` negation — `shots/` (dir pattern) cannot unignore children in git.
+- **13-01:** capture.sh gracefully skips auth routes when storage-state.json absent; public routes still capture.
+- **13-01:** verify.py exits 2 (fatal/no-auth) vs 1 (data mismatch) vs 0 (clean) — CI-gate friendly.
+- **13-01:** storage-state.json sign-in deferred to post-P14 consolidated UAT per session-7 directive.
+- **13-01:** base_url hardcoded to :3003 in routes.json; :3002 (Eric's dev server) never touched.
 
 ## Key Decisions (Phase 12 — Plan 04)
 
