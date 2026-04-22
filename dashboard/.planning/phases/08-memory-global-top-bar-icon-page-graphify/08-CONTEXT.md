@@ -35,8 +35,17 @@ Ship `/memory` as a single page with two tabs (Browse / Graph), a per-file git t
 ### D-01 — Graph file location: `{CAE_ROOT}/.cae/graph.json` (single global)
 One file, at `/home/cae/ctrl-alt-elite/.cae/graph.json`. Matches the existing `.cae/metrics/*.jsonl` convention. Gitignored at the CAE root (Wave 0 adds `.cae/` to `/home/cae/ctrl-alt-elite/.gitignore`; the dashboard-local `.gitignore` already excludes `.cae/`). Server code uses `CAE_ROOT` from `lib/cae-config.ts` as the source of truth.
 
-### D-02 — Graphify install: `pip install graphifyy`; run with `--mode fast --no-viz`
-Wave 0 documents the install. The dashboard spawns graphify via `execFile("graphify", [".", "--mode", "fast", "--no-viz", "--update"], { cwd: CAE_ROOT, timeout: 120_000 })`. `--mode fast` is AST-only (zero Claude-key requirement + zero token cost); we deliberately give up semantic edges in v1 to keep regen free and deterministic. `--no-viz` skips the HTML viz graphify defaults to emitting. After graphify exits, server code reads `{CAE_ROOT}/graphify-out/graph.json` and moves it atomically to `{CAE_ROOT}/.cae/graph.json`.
+### D-02 — Graph generator: custom memory-graph walker (graphify REMOVED)
+**Updated 2026-04-22 after Wave 0 live-run discovery.** Graphify 0.4.29 only parses code files via tree-sitter AST and emits "No code files found" on markdown-only input. The memory graph this phase needs is across markdown memory sources (AGENTS.md, KNOWLEDGE/*.md, `.claude/agents/*.md`, `agents/cae-*.md`, `.planning/phases/*/*.md`) — graphify cannot serve this purpose.
+
+**Replacement:** `lib/cae-memory-graph.ts` — pure-TS walker module in the dashboard, ~200 LOC.
+- Reads memory-source paths via existing `lib/cae-memory-sources.ts` (Wave 2).
+- For each file: extracts h1/h2 heading → node `label`; extracts markdown links `[text](./path)` + Claude-style `@path/to/file.md` refs → edges.
+- Emits `{ nodes: GraphNode[], links: GraphLink[], generated_at: string, source_path: string, total_nodes: number, truncated: boolean }` — same shape react-flow consumes, with `links[]` as the edge key (keeps networkx parity for future graphify swap-back if ever desired).
+- `regenerateGraph()` is now a pure-TS function call (no subprocess, no timeout, no 429 backpressure needed — runs in <1s for 500 nodes). We keep the 60s cooldown for UX smoothness but it's no longer a hard cost concern.
+- `{CAE_ROOT}/.cae/graph.json` is still written (same path, same shape) so downstream components don't change.
+- `graphifyy` pip install is kept (no harm) but NOT invoked from the dashboard.
+- Wave 0 fixture at `.planning/phases/08-memory-global-top-bar-icon-page-graphify/fixtures/graphify-smoke/graph.sample.json` (144 nodes / 273 links from `dashboard/lib`) is retained as a SCHEMA reference only, not a functional fixture; Wave 2 will generate its own memory-source fixture.
 
 ### D-03 — "Why?" = REAL via Claude Code PostToolUse hook (UPGRADED)
 Previously scoped as heuristic-only. Upgraded by user on 2026-04-22: real ground-truth trace is the MVP, heuristic is fallback only.
