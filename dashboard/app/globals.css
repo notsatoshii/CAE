@@ -199,3 +199,14 @@ body {
     animation: none !important;
   }
 }
+
+/* Phase 12 (MOT-01): Tailwind animate-* utilities aren't motion-safe by default.
+   Global safety net so every current and future call-site inherits reduced-motion. */
+@media (prefers-reduced-motion: reduce) {
+  .animate-pulse,
+  .animate-spin,
+  .animate-ping,
+  .animate-bounce {
+    animation: none !important;
+  }
+}
