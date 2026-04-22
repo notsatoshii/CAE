@@ -1,5 +1,6 @@
 export const dynamic = "force-dynamic"
 
+import { auth } from "@/auth"
 import { getQueueState } from "@/lib/cae-queue-state"
 import { log } from "@/lib/log"
 import { withLog } from "@/lib/with-log"
@@ -7,6 +8,8 @@ import { withLog } from "@/lib/with-log"
 const l = log("api.queue")
 
 async function getHandler() {
+  const session = await auth()
+  if (!session) return new Response("Unauthorized", { status: 401 })
   try {
     const state = await getQueueState()
     return Response.json(state)

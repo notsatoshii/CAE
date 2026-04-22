@@ -15,7 +15,7 @@
  *         → <IncidentStream/> panel
  *
  * Security (T-13-08-01):
- *   - Protected by Next.js middleware (/api/* requires auth session)
+ *   - Requires authenticated session (await auth() at top of handler)
  *   - pino.redact (plan 13-05) removes auth/session/password before writing to file
  *   - No user query params; no path traversal risk
  *
@@ -23,12 +23,15 @@
  */
 
 import path from "node:path";
+import { auth } from "@/auth";
 import { tailJsonl, filterLevel } from "@/lib/incidents-stream";
 import { withLog } from "@/lib/with-log";
 
 export const runtime = "nodejs";
 
 async function handler(req: Request) {
+  const session = await auth();
+  if (!session) return new Response("Unauthorized", { status: 401 });
   const logFile = path.resolve(process.cwd(), ".cae/logs/dashboard.log.jsonl");
   const enc = new TextEncoder();
 

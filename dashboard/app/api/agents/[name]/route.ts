@@ -1,5 +1,6 @@
 export const dynamic = "force-dynamic"
 
+import { auth } from "@/auth"
 import { getAgentDetail } from "@/lib/cae-agents-state"
 import { log } from "@/lib/log"
 import { withLog } from "@/lib/with-log"
@@ -10,6 +11,8 @@ async function getHandler(
   _req: Request,
   context: { params: Promise<{ name: string }> },
 ) {
+  const session = await auth()
+  if (!session) return new Response("Unauthorized", { status: 401 })
   const { name } = await context.params
   try {
     const detail = await getAgentDetail(name.toLowerCase())

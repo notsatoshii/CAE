@@ -1,5 +1,6 @@
 export const dynamic = "force-dynamic"
 
+import { auth } from "@/auth"
 import { getMetricsState } from "@/lib/cae-metrics-state"
 import { log } from "@/lib/log"
 import { withLog } from "@/lib/with-log"
@@ -12,9 +13,11 @@ const l = log("api.metrics")
  * Delegates to `getMetricsState()` which walks `.cae/metrics/*.jsonl` across
  * all projects (D-03). 500-path returns the FULL MetricsState shape with
  * zeros + a top-level `error` field so the UI never has to branch between
- * error and success shapes. Middleware handles auth (Phase 3 pattern).
+ * error and success shapes.
  */
 async function getHandler() {
+  const session = await auth()
+  if (!session) return new Response("Unauthorized", { status: 401 })
   try {
     const state = await getMetricsState()
     return Response.json(state)

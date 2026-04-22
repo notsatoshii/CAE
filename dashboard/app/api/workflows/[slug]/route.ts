@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic"
 
 import { NextRequest } from "next/server"
 import { unlink } from "fs/promises"
+import { auth } from "@/auth"
 import { getWorkflow, parseWorkflow, writeWorkflow } from "@/lib/cae-workflows"
 import { withLog } from "@/lib/with-log"
 
@@ -9,6 +10,8 @@ async function getHandler(
   _req: NextRequest,
   ctx: { params: Promise<{ slug: string }> },
 ) {
+  const session = await auth()
+  if (!session) return new Response("Unauthorized", { status: 401 })
   const { slug } = await ctx.params
   const workflow = await getWorkflow(slug)
   if (!workflow) return Response.json({ error: "not found" }, { status: 404 })
@@ -19,6 +22,8 @@ async function putHandler(
   req: NextRequest,
   ctx: { params: Promise<{ slug: string }> },
 ) {
+  const session = await auth()
+  if (!session) return new Response("Unauthorized", { status: 401 })
   const { slug } = await ctx.params
   const existing = await getWorkflow(slug)
   if (!existing) return Response.json({ error: "not found" }, { status: 404 })
@@ -40,6 +45,8 @@ async function deleteHandler(
   _req: NextRequest,
   ctx: { params: Promise<{ slug: string }> },
 ) {
+  const session = await auth()
+  if (!session) return new Response("Unauthorized", { status: 401 })
   const { slug } = await ctx.params
   const existing = await getWorkflow(slug)
   if (!existing) return Response.json({ error: "not found" }, { status: 404 })
