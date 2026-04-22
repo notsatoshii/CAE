@@ -2,7 +2,10 @@ import { NextRequest, NextResponse } from "next/server"
 import path from "node:path"
 import { readTasks, writeTask } from "@/lib/cae-schedule-store"
 import { parseSchedule } from "@/lib/cae-schedule-parse"
+import { auth } from "@/auth"
+import { requireRole } from "@/lib/cae-rbac"
 import type { ScheduledTask } from "@/lib/cae-types"
+import type { Role } from "@/lib/cae-types"
 
 export const runtime = "nodejs"
 
@@ -43,9 +46,17 @@ function generateId(nl: string): string {
  * Body: { nl: string; timezone?: string; buildplan: string }
  * Creates a new scheduled task and writes it to the registry.
  *
- * Security: validates buildplan is an absolute path under CAE_ROOT (T-14-03-01).
+ * Security:
+ *   - operator role required (T-14-04 defense-in-depth)
+ *   - buildplan is an absolute path under CAE_ROOT (T-14-03-01)
  */
 export async function POST(req: NextRequest) {
+  // Defense-in-depth: re-check role in handler (STRIDE T-14-04-03)
+  const session = await auth()
+  if (!requireRole(session?.user?.role as Role | undefined, "operator")) {
+    return NextResponse.json({ error: "forbidden", required: "operator" }, { status: 403 })
+  }
+
   let body: { nl?: string; timezone?: string; buildplan?: string }
   try {
     body = await req.json()
@@ -93,7 +104,7 @@ export async function POST(req: NextRequest) {
     enabled: true,
     lastRun: 0,
     createdAt: Math.floor(Date.now() / 1000),
-    createdBy: "unknown", // TODO(14-04): populate from session.user.email after RBAC
+    createdBy: session?.user?.email ?? "unknown",
   }
 
   try {

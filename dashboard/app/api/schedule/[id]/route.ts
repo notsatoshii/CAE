@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server"
 import { toggleTask, deleteTask } from "@/lib/cae-schedule-store"
+import { auth } from "@/auth"
+import { requireRole } from "@/lib/cae-rbac"
+import type { Role } from "@/lib/cae-types"
 
 export const runtime = "nodejs"
 
@@ -10,11 +13,19 @@ const ID_RE = /^[a-z0-9-]+$/
  * PATCH /api/schedule/[id]
  * Body: { enabled: boolean }
  * Toggles the enabled flag of a scheduled task.
+ *
+ * Security: operator role required (T-14-04 defense-in-depth)
  */
 export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  // Defense-in-depth: re-check role in handler (STRIDE T-14-04-03)
+  const session = await auth()
+  if (!requireRole(session?.user?.role as Role | undefined, "operator")) {
+    return NextResponse.json({ error: "forbidden", required: "operator" }, { status: 403 })
+  }
+
   const { id } = await params
 
   if (!ID_RE.test(id)) {
@@ -43,11 +54,19 @@ export async function PATCH(
 /**
  * DELETE /api/schedule/[id]
  * Removes a scheduled task from the registry.
+ *
+ * Security: operator role required (T-14-04 defense-in-depth)
  */
 export async function DELETE(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  // Defense-in-depth: re-check role in handler (STRIDE T-14-04-03)
+  const session = await auth()
+  if (!requireRole(session?.user?.role as Role | undefined, "operator")) {
+    return NextResponse.json({ error: "forbidden", required: "operator" }, { status: 403 })
+  }
+
   const { id } = await params
 
   if (!ID_RE.test(id)) {

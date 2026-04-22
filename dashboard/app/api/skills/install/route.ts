@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server"
 import { installSkill } from "@/lib/cae-skills-install"
+import { auth } from "@/auth"
+import { requireRole } from "@/lib/cae-rbac"
+import type { Role } from "@/lib/cae-types"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
@@ -17,10 +20,16 @@ export const dynamic = "force-dynamic"
  *   - repo validated by installSkill() against allowlist regex (T-14-02-01)
  *   - spawn uses argv array, never shell:true
  *   - invalid repo → 400 before any child process is started
- *
- * TODO(14-04): Add operator role gate via NextAuth middleware.
+ *   - operator role required (T-14-04 defense-in-depth; middleware is first line)
  */
 export async function POST(req: NextRequest) {
+  // Defense-in-depth: re-check role in handler (middleware may be bypassed by
+  // URL encoding tricks — STRIDE T-14-04-03).
+  const session = await auth()
+  if (!requireRole(session?.user?.role as Role | undefined, "operator")) {
+    return NextResponse.json({ error: "forbidden", required: "operator" }, { status: 403 })
+  }
+
   let body: { repo?: unknown }
   try {
     body = await req.json()

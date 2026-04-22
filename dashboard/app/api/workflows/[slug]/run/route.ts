@@ -6,10 +6,12 @@ import { spawn } from "child_process"
 import { join } from "path"
 import { randomUUID } from "crypto"
 import { auth } from "@/auth"
+import { requireRole } from "@/lib/cae-rbac"
 import { INBOX_ROOT } from "@/lib/cae-config"
 import { getWorkflow } from "@/lib/cae-workflows"
 import type { WorkflowStep } from "@/lib/cae-workflows"
 import { withLog } from "@/lib/with-log"
+import type { Role } from "@/lib/cae-types"
 
 function firstAgentStep(
   steps: WorkflowStep[],
@@ -55,6 +57,11 @@ async function postHandler(
 ) {
   const session = await auth()
   if (!session) return Response.json({ error: "unauthorized" }, { status: 401 })
+
+  // Defense-in-depth: re-check role in handler (STRIDE T-14-04-03)
+  if (!requireRole(session.user?.role as Role | undefined, "operator")) {
+    return Response.json({ error: "forbidden", required: "operator" }, { status: 403 })
+  }
 
   const { slug } = await ctx.params
   const workflow = await getWorkflow(slug)
