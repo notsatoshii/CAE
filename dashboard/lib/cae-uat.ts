@@ -202,7 +202,9 @@ export async function loadUatState(
             status: prior.status,
             note: prior.note,
             ts: prior.ts,
-            orphaned: prior.orphaned,
+            // orphaned intentionally omitted — the bullet is live in the current ROADMAP.
+            // If it was previously orphaned (removed then re-added verbatim), the re-match
+            // here means it's live again; spreading prior.orphaned would falsely keep it dead.
           };
         }
         return p;

@@ -99,4 +99,56 @@ describe("loadUatState / patchUatState", () => {
     // get flagged with orphaned: true. Test the shape is correct.
     expect(Array.isArray(state.items)).toBe(true);
   });
+
+  it("clears orphaned flag when a previously-orphaned bullet is re-added to ROADMAP (WR-03)", async () => {
+    const { mkdir, writeFile, readFile } = await import("fs/promises");
+    const { join } = await import("path");
+
+    const projectRoot = "/tmp/uat-test-reorphan-" + Date.now();
+    const roadmapDir = join(projectRoot, ".planning");
+    const uatDir = join(projectRoot, ".planning", "uat");
+
+    await mkdir(roadmapDir, { recursive: true });
+    await mkdir(uatDir, { recursive: true });
+
+    // Step 1: ROADMAP has bullet "Deploy to production"
+    const roadmapWith = [
+      "## Phase 1: Launch",
+      "",
+      "Definition of done:",
+      "- Deploy to production",
+      "",
+    ].join("\n");
+    await writeFile(join(roadmapDir, "ROADMAP.md"), roadmapWith, "utf8");
+
+    // First load — creates state with the bullet as pending (not orphaned)
+    const state1 = await loadUatState(projectRoot, 1);
+    expect(state1.items).toHaveLength(1);
+    expect(state1.items[0].orphaned).toBeUndefined();
+    const bulletId = state1.items[0].id;
+
+    // Step 2: bullet removed from ROADMAP — item becomes orphaned in saved state
+    const roadmapWithout = [
+      "## Phase 1: Launch",
+      "",
+      "Definition of done:",
+      "- Some other criterion",
+      "",
+    ].join("\n");
+    await writeFile(join(roadmapDir, "ROADMAP.md"), roadmapWithout, "utf8");
+
+    const state2 = await loadUatState(projectRoot, 1);
+    const orphanedItem = state2.items.find((it) => it.id === bulletId);
+    expect(orphanedItem).toBeDefined();
+    expect(orphanedItem!.orphaned).toBe(true);
+
+    // Step 3: bullet re-added verbatim — orphaned flag must be cleared
+    await writeFile(join(roadmapDir, "ROADMAP.md"), roadmapWith, "utf8");
+
+    const state3 = await loadUatState(projectRoot, 1);
+    const reliveBullet = state3.items.find((it) => it.id === bulletId);
+    expect(reliveBullet).toBeDefined();
+    // The fix: orphaned must NOT be true when the bullet is back in the ROADMAP
+    expect(reliveBullet!.orphaned).toBeUndefined();
+  });
 });
