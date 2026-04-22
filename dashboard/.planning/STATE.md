@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v0.1
 milestone_name: milestone
 status: planning
-stopped_at: Completed 12-01-PLAN.md
-last_updated: "2026-04-22T17:59:38.985Z"
+stopped_at: Completed 11-02-PLAN.md
+last_updated: "2026-04-22T18:13:29.894Z"
 progress:
   total_phases: 14
   completed_phases: 8
-  total_plans: 73
-  completed_plans: 51
-  percent: 70
+  total_plans: 77
+  completed_plans: 52
+  percent: 68
 ---
 
 # cae-dashboard — Project State
@@ -29,8 +29,15 @@ progress:
 Phase 10 — Plan mode: Projects / PRDs / Roadmaps / UAT (`/plan/*` routes wrapping Shift).
 Plan 10-04 complete (Wave 1 closed). Next: plan 10-05 (API routes).
 
-**Last session:** 2026-04-22T17:59:38.979Z
-**Stopped at:** Completed 12-01-PLAN.md
+**Last session:** 2026-04-22T18:13:29.887Z
+**Stopped at:** Completed 11-02-PLAN.md
+
+## Key Decisions (Phase 11 — Plan 02)
+
+- **11-02:** Stations drawn via diamond paths (moveTo/lineTo/fill) not fillRect; renderer tests count fill() calls not fillRect().
+- **11-02:** safeCtx alias required inside RAF closure — TypeScript cannot narrow getContext() result past closure boundary.
+- **11-02:** ResizeObserver stubbed globally in beforeEach (jsdom lacks it); vi.stubGlobal pattern established for canvas component tests.
+- **11-02:** Dollar sign in JSDoc comment caught by lint-guard test — removed from comment text; lesson: never write "$ in this file" in source comments.
 
 ## Key Decisions (Phase 12 — Plan 01)
 
