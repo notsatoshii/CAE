@@ -7,6 +7,11 @@
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
+// Mock auth to return a valid session (tests cover route logic, not auth)
+vi.mock("@/auth", () => ({
+  auth: vi.fn(async () => ({ user: { name: "test" } })),
+}));
+
 // Mock the incidents-stream module before importing route
 vi.mock("@/lib/incidents-stream", () => ({
   tailJsonl: vi.fn(),
