@@ -5,7 +5,7 @@ import { useStatePoll } from "@/lib/hooks/use-state-poll";
 import { useDevMode } from "@/lib/providers/dev-mode";
 import { labelFor } from "@/lib/copy/labels";
 import { agentMetaFor } from "@/lib/copy/agent-meta";
-import { Card, CardContent } from "@/components/ui/card";
+import { Panel } from "@/components/ui/panel";
 import { LastUpdated } from "@/components/ui/last-updated";
 import type { RecentEvent } from "@/lib/cae-home-state";
 
@@ -36,38 +36,34 @@ export function RecentLedger() {
 
   if (events.length === 0) {
     return (
-      <section data-testid="recent-ledger" className="mb-6">
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-[color:var(--text-muted)] mb-3">
-          {t.recentHeading}
-        </h2>
-        <Card>
-          <CardContent className="py-6 flex items-center gap-2 text-sm text-[color:var(--text-muted)]">
-            <Clock size={16} className="shrink-0 text-[color:var(--text-muted)]" aria-hidden />
-            <span>{t.recentEmpty}</span>
-          </CardContent>
-        </Card>
-      </section>
+      <Panel
+        title={t.recentHeading}
+        headingId="recent-ledger-heading"
+        testId="recent-ledger"
+        className="mb-6"
+      >
+        <div className="flex items-center gap-2 text-sm text-[color:var(--text-muted)]">
+          <Clock size={16} className="shrink-0 text-[color:var(--text-muted)]" aria-hidden />
+          <span>{t.recentEmpty}</span>
+        </div>
+      </Panel>
     );
   }
 
   return (
-    <section data-testid="recent-ledger" className="mb-6">
-      <div className="flex items-center justify-between mb-3">
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-[color:var(--text-muted)]">
-          {t.recentHeading}
-        </h2>
-        <LastUpdated at={lastUpdated} threshold_ms={6000} />
-      </div>
-      <Card>
-        <CardContent className="py-2 px-3">
-          <ul className="divide-y divide-[color:var(--border-subtle)] font-mono text-xs">
-            {events.map((ev, i) => (
-              <RecentRow key={i} event={ev} index={i} t={t} dev={dev} />
-            ))}
-          </ul>
-        </CardContent>
-      </Card>
-    </section>
+    <Panel
+      title={t.recentHeading}
+      headingId="recent-ledger-heading"
+      testId="recent-ledger"
+      className="mb-6"
+      subtitle={<LastUpdated at={lastUpdated} threshold_ms={6000} />}
+    >
+      <ul className="divide-y divide-[color:var(--border-subtle)] font-mono text-xs">
+        {events.map((ev, i) => (
+          <RecentRow key={i} event={ev} index={i} t={t} dev={dev} />
+        ))}
+      </ul>
+    </Panel>
   );
 }
 
