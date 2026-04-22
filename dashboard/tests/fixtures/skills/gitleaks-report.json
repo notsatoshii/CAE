@@ -1,0 +1,42 @@
+[
+  {
+    "RuleID": "aws-access-token",
+    "Description": "AWS Access Token",
+    "StartLine": 12,
+    "EndLine": 12,
+    "StartColumn": 5,
+    "EndColumn": 24,
+    "Match": "AKIA...REDACTED",
+    "Secret": "REDACTED",
+    "File": "/home/cae/.claude/skills/example/helper.py",
+    "SymlinkFile": "",
+    "Commit": "",
+    "Entropy": 3.84,
+    "Author": "",
+    "Email": "",
+    "Date": "2026-04-23T00:00:00Z",
+    "Message": "",
+    "Tags": [],
+    "Fingerprint": "example/helper.py:aws-access-token:12"
+  },
+  {
+    "RuleID": "openai-api-key",
+    "Description": "OpenAI API Key",
+    "StartLine": 40,
+    "EndLine": 40,
+    "StartColumn": 8,
+    "EndColumn": 60,
+    "Match": "sk-proj-REDACTED",
+    "Secret": "REDACTED",
+    "File": "/home/cae/.claude/skills/example/SKILL.md",
+    "SymlinkFile": "",
+    "Commit": "",
+    "Entropy": 4.12,
+    "Author": "",
+    "Email": "",
+    "Date": "2026-04-23T00:00:00Z",
+    "Message": "",
+    "Tags": [],
+    "Fingerprint": "example/SKILL.md:openai-api-key:40"
+  }
+]

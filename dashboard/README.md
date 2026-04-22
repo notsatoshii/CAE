@@ -132,6 +132,36 @@ Phase-by-phase plans, completion status, and task-level DoD live in [.planning/R
 
 **Can I ship my own workflow?** Yes — either draft one in natural language on `/build/workflows/new` (founder mode) or author the YAML directly with dev-mode on (`Ctrl+Shift+D`). Schema lives in `lib/cae-workflows-schema.ts`; files land at `$CAE_ROOT/.cae/workflows/*.yml`. Run-now posts to `POST /api/workflows/[slug]/run` which spawns a detached tmux session.
 
+## Phase 14 dev setup
+
+Phase 14 adds Skills Hub, NL cron scheduling, RBAC, and a Security panel.
+
+### 1. Install gitleaks
+
+```bash
+bash scripts/install-gitleaks.sh
+```
+
+The script is idempotent — it skips the download if `gitleaks` is already on `$PATH`.
+It pins version 8.18.4. Override with `GITLEAKS_VERSION=X.Y.Z bash scripts/install-gitleaks.sh`.
+
+### 2. scheduled_tasks.json
+
+A mutable runtime registry lives at the repo root (`/home/cae/ctrl-alt-elite/scheduled_tasks.json`).
+It is created empty on first run and is gitignored (state file, not source).
+The NL cron UI writes to it; the cron watcher reads from it.
+
+### 3. Env vars (coming in Plan 14-04)
+
+Google OAuth credentials for the RBAC sign-in flow will be documented in Plan 14-04.
+Placeholders to set when that plan ships:
+
+```bash
+# .env.local (Plan 14-04)
+# AUTH_GOOGLE_ID=...
+# AUTH_GOOGLE_SECRET=...
+```
+
 ## License
 
 Private / unpublished. Part of the Ctrl+Alt+Elite repo at `notsatoshii/CAE`.

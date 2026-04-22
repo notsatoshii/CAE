@@ -18,6 +18,8 @@ export default defineConfig({
       "components/**/*.test.tsx",
       "app/**/*.test.ts",
       "app/**/*.test.tsx",
+      "tests/**/*.test.ts",
+      "tests/**/*.test.tsx",
     ],
   },
   resolve: {

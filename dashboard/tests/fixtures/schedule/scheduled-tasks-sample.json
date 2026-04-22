@@ -1,0 +1,30 @@
+[
+  {
+    "id": "morning-brief",
+    "nl": "every morning at 9am",
+    "cron": "0 9 * * *",
+    "timezone": "America/New_York",
+    "buildplan": "tasks/morning-brief.md",
+    "enabled": true,
+    "lastRun": 0
+  },
+  {
+    "id": "weekday-pulse",
+    "nl": "every weekday at 7pm",
+    "cron": "0 19 * * 1-5",
+    "timezone": "America/New_York",
+    "buildplan": "tasks/pulse.md",
+    "enabled": true,
+    "lastRun": 1700000000,
+    "lastCompleted": 1700000120
+  },
+  {
+    "id": "hourly-health",
+    "nl": "every hour",
+    "cron": "0 * * * *",
+    "timezone": "UTC",
+    "buildplan": "tasks/health.md",
+    "enabled": false,
+    "lastRun": 0
+  }
+]
