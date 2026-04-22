@@ -1,0 +1,54 @@
+```json
+{
+  "agents_md_additions": [
+    {
+      "section": "Gotchas",
+      "entry": "base-ui components (Tabs, DropdownMenu, etc.) don't support `asChild` prop — not polymorphic like Radix. Use `Link` + `cn(buttonVariants(...))` or className directly. (phase 2, p2-plA-t1-e81f6c)",
+      "attribution": "phase 2, p2-plA-t1-e81f6c"
+    },
+    {
+      "section": "Gotchas",
+      "entry": "Circuit-breaker state accumulates all 200-entry tail without time-window — `recentFailures`/`recentPhantomEscalations` unbounded. Add date-based filter. (phase 2, p2-plA-t1-b12bb5)",
+      "attribution": "phase 2, p2-plA-t1-b12bb5"
+    },
+    {
+      "section": "Gotchas",
+      "entry": "CAE phase/task logs in `.cae/logs/` must be in `ALLOWED_ROOTS` for SSE tail routing. Initial plan omitted it. (phase 2, p2-plA-t1-f69079)",
+      "attribution": "phase 2, p2-plA-t1-f69079"
+    },
+    {
+      "section": "Library/API Notes",
+      "entry": "DONE.md is YAML frontmatter only (strip `---` prefix, parse with yaml). No markdown body. (phase 2, p2-plA-t1-b12bb5)",
+      "attribution": "phase 2, p2-plA-t1-b12bb5"
+    },
+    {
+      "section": "Patterns That Work",
+      "entry": "Task status: branch pattern `forge/p{N}-pl{letter}-t{id}-*` + git log merges + circuit-breakers.jsonl events = reliable pending/running/merged/failed inference. (phase 2, p2-plA-t1-ee7545)",
+      "attribution": "phase 2, p2-plA-t1-ee7545"
+    },
+    {
+      "section": "Patterns That Work",
+      "entry": "Poll 3s (breakers) + 5s (phases) on shared `/api/state` endpoint — low overhead, responsive. (phase 2, p2-plA-t1-ebf915)",
+      "attribution": "phase 2, p2-plA-t1-ebf915"
+    },
+    {
+      "section": "Patterns That Work",
+      "entry": "SSE + EventSource live log tail via ?tail= URL param. Close navigates back param-less. TailSheet wired into phase detail. (phase 2, p2-plA-t1-f69079)",
+      "attribution": "phase 2, p2-plA-t1-f69079"
+    }
+  ],
+  "knowledge_topic_updates": [
+    {
+      "topic": "base-ui-react-gaps",
+      "content": "## base-ui Polymorphism Limits\n\n**asChild not supported.** Unlike Radix, base-ui components are not polymorphic. `asChild` prop ignored; component can't delegate render.\n\n**Affected components:** Tabs, DropdownMenu, Avatar, others.\n\n**Workaround:** Use semantic HTML + className styling. Example:\n```tsx\n// Don't use asChild\n<DropdownMenuTrigger asChild>\n  <Button>Menu</Button>\n</DropdownMenuTrigger>\n\n// Instead:\n<DropdownMenuTrigger className={cn(buttonVariants())}>Menu</DropdownMenuTrigger>\n// OR\nconst TriggerButton = () => <Link href=\"/\" className={cn(buttonVariants())}>Menu</Link>;\n```\n\n**shadcn compatibility:** `npx shadcn add` generates base-ui components. Check docs before assuming Radix API.\n",
+      "tags": ["base-ui", "shadcn", "react", "polymorphism"]
+    },
+    {
+      "topic": "cae-disk-state",
+      "content": "## CAE State Reader File Formats\n\n**DONE.md** (outbox tasks) — YAML frontmatter only, no body:\n```yaml\nstatus: completed | queued | pending\nsummary: human description\nbranch: git-branch-name\ncommits: N\n```\nParse with `yaml.parse(content.split('---')[1])`.\n\n**Inbox/Outbox structure:** Task dirs scanned recursively from `INBOX_ROOT` / `OUTBOX_ROOT` env vars.\n- Inbox: `BUILDPLAN.md` required, `META.yaml` optional\n- Outbox: `DONE.md` required (frontmatter only)\n\n**Metrics location:** `.cae/metrics/circuit-breakers.jsonl` — append-only, one JSON event per line.\n\n**Logs location:** `.cae/logs/p{N}-{taskKey}.log` — include in SSE `ALLOWED_ROOTS` for tailing.\n\n**Type gaps:** InboxTask lacks `hasMetaYaml` field; OutboxTask type has `processed?` but not rendered. Extend types to match actual format.",
+      "tags": ["cae", "state-management", "file-io"]
+    }
+  ],
+  "stale_entries_to_remove": []
+}
+```
