@@ -68,7 +68,10 @@ export const KEYBINDINGS: readonly Keybinding[] = [
   },
   {
     id: "task.abort",
-    keys: ["Ctrl", "Shift", "."],
+    // WR-01 fix: On US/UK keyboards Shift+. produces e.key === ">" not ".".
+    // Register ">" so real KeyboardEvents from browsers are matched correctly.
+    // The shortcut overlay renders ">" which is what the user actually presses.
+    keys: ["Ctrl", "Shift", ">"],
     area: "task",
     founderLabel: "Stop this job",
     devLabel: "Abort running task",

@@ -122,8 +122,16 @@ describe("matchesKeydown", () => {
     expect(matchesKeydown(kb, makeEvent({ key: ".", ctrlKey: true }))).toBe(true);
   });
 
-  it("matches Ctrl+Shift+. (task.abort)", () => {
+  it("does NOT match Ctrl+Shift+. with key='.' (wrong — real browsers emit '>')", () => {
+    // After WR-01 fix, registry uses ">" so "." must no longer match.
     const kb = keybindingById("task.abort")!;
-    expect(matchesKeydown(kb, makeEvent({ key: ".", ctrlKey: true, shiftKey: true }))).toBe(true);
+    expect(matchesKeydown(kb, makeEvent({ key: ".", ctrlKey: true, shiftKey: true }))).toBe(false);
+  });
+
+  it("matches Ctrl+Shift+. as typed on US QWERTY real keyboard (e.key === '>')", () => {
+    // On real US/UK keyboards Shift+. produces e.key === ">" not ".".
+    // The registry must register ">" so real browser events are caught.
+    const kb = keybindingById("task.abort")!;
+    expect(matchesKeydown(kb, makeEvent({ key: ">", ctrlKey: true, shiftKey: true }))).toBe(true);
   });
 });
