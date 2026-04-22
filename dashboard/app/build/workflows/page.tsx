@@ -1,25 +1,44 @@
-export const metadata = {
-  title: "Workflows — Coming in Phase 6",
-}
+export const dynamic = "force-dynamic"
 
 /**
- * /build/workflows — Phase 6 stub.
+ * /build/workflows — workflow list (Phase 6 Plan 06-04).
  *
- * Rendered inside BuildLayout, so the left-rail is automatically on the left.
- * Pure server component — no data, no "use client".
+ * Server component. Calls `listWorkflows()` directly — no self-HTTP
+ * hop through /api/workflows. The API route still exists for client-
+ * side revalidation (Phase 6 widget consumers) but a direct library
+ * call here avoids an auth round-trip and is strictly faster.
+ *
+ * Replaces the Phase 5 stub. Interactive "Run now" buttons and the
+ * client-side dev-mode flip live in `./workflows-list-client.tsx`.
  */
-export default function WorkflowsStubPage() {
+
+import Link from "next/link"
+import { listWorkflows } from "@/lib/cae-workflows"
+import { labelFor } from "@/lib/copy/labels"
+import { WorkflowsListClient } from "./workflows-list-client"
+
+export const metadata = { title: "Workflows" }
+
+export default async function WorkflowsPage() {
+  const workflows = await listWorkflows()
+  workflows.sort((a, b) => b.mtime - a.mtime)
+  // Server-render founder copy for the heading; interactive bits live
+  // in the client component which flips copy on dev-mode.
+  const t = labelFor(false)
+
   return (
-    <main data-testid="workflows-stub" className="p-10 max-w-2xl">
-      <h1 className="text-2xl font-medium text-foreground mb-2">
-        Workflows
-      </h1>
-      <p className="text-[color:var(--text-muted,#8a8a8c)] text-sm mb-6">
-        Coming in Phase 6 — chat-drafted routines with a visual step preview and a YAML editor under Advanced.
-      </p>
-      <div className="rounded-lg border border-[color:var(--border,#1f1f22)] bg-[color:var(--surface,#121214)] p-6 text-sm text-[color:var(--text-muted,#8a8a8c)]">
-        Nothing here yet. The rail on the left still works — jump to Home or Agents.
+    <main data-testid="workflows-page" className="p-8 max-w-4xl">
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-medium">{t.workflowsPageHeading}</h1>
+        <Link
+          href="/build/workflows/new"
+          data-testid="workflows-create-button"
+          className="inline-flex h-9 items-center px-4 rounded-md text-sm font-medium bg-[color:var(--accent,#00d4ff)] text-black hover:opacity-90"
+        >
+          {t.workflowsCreateButton}
+        </Link>
       </div>
+      <WorkflowsListClient initialWorkflows={workflows} />
     </main>
   )
 }
