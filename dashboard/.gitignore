@@ -28,3 +28,12 @@ tsconfig.tsbuildinfo
 !.planning/phases/13-ui-ux-review-polish-loop/shots/.gitkeep
 .planning/phases/13-ui-ux-review-polish-loop/scripts/storage-state.json
 .planning/phases/13-ui-ux-review-polish-loop/audit/working/
+
+# Phase 14 runtime state (append-only logs + mutable registry, not source)
+# Note: scheduled_tasks.json lives at REPO ROOT (/home/cae/ctrl-alt-elite/), not here.
+# It is gitignored by the root .gitignore.
+# The .cae/metrics/ directory needs to exist in fresh clones.
+# .cae/** above blocks the whole dir; add exceptions using the same pattern as .cae/logs/.
+!.cae/metrics/
+!.cae/metrics/.gitkeep
+.cae/metrics/*.jsonl

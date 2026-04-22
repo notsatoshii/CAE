@@ -8,3 +8,10 @@ dashboard/.env.local
 
 # CAE runtime state (metrics jsonl, graph.json — regenerated per run)
 .cae/
+# Allow dashboard metrics dir .gitkeep so the directory exists in fresh clones
+!dashboard/.cae/
+!dashboard/.cae/metrics/
+!dashboard/.cae/metrics/.gitkeep
+
+# Phase 14: scheduled_tasks.json is a mutable runtime registry, not source
+scheduled_tasks.json

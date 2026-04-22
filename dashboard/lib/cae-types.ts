@@ -118,3 +118,101 @@ export const CB_EVENT_KINDS = [
   "token_usage",           // NEW — emitted by adapters/claude-code.sh after Wave 0
 ] as const
 export type CbEventKind = typeof CB_EVENT_KINDS[number]
+
+// ============================================================
+// Phase 14: Skills Hub + NL Cron + RBAC + Security types
+// ============================================================
+
+/**
+ * A skill from the catalog — either sourced from skills.sh, clawhub, or installed locally.
+ * Used by the Skills Hub (Plan 14-02) and the trust-score engine (Plan 14-05).
+ */
+export interface CatalogSkill {
+  /** Short machine-readable slug, e.g. "vercel-labs/agent-skills" */
+  name: string
+  /** GitHub user or org that owns the skill */
+  owner: string
+  /** Where this skill comes from */
+  source: "skills.sh" | "clawhub" | "local"
+  /** Human-readable one-liner for the skill list */
+  description: string
+  /** Full command to install this skill, e.g. "npx skills add vercel-labs/agent-skills" */
+  installCmd: string
+  /** URL to the skill's detail page on its source registry */
+  detailUrl: string
+  /** Whether the skill is currently installed in ~/.claude/skills/ */
+  installed: boolean
+}
+
+/**
+ * A scheduled task entry stored in scheduled_tasks.json.
+ * The NL cron system (Plan 14-03) parses natural-language descriptions
+ * into cron expressions and writes entries in this shape.
+ */
+export interface ScheduledTask {
+  /** Unique slug for this schedule, e.g. "morning-brief" */
+  id: string
+  /** Human-written description used to derive cron — the source of truth for display */
+  nl: string
+  /** POSIX cron expression, 5-field, derived from nl by chrono-node + cron-parser */
+  cron: string
+  /** IANA timezone string, e.g. "America/New_York". Defaults to "UTC". */
+  timezone: string
+  /** Path to the buildplan that runs on each tick, relative to repo root */
+  buildplan: string
+  /** Whether the schedule is currently active */
+  enabled: boolean
+  /** Unix epoch ms of last trigger. 0 = never triggered. */
+  lastRun: number
+  /** Unix epoch ms of last successful completion. Undefined until first success. */
+  lastCompleted?: number
+}
+
+/**
+ * Three-level RBAC role controlling what a user can do in the dashboard.
+ * - viewer: read-only; can see all panels but cannot run or change anything.
+ * - operator: can run jobs, approve/deny actions, trigger workflows.
+ * - admin: full access, including changing settings and RBAC assignments.
+ */
+export type Role = "viewer" | "operator" | "admin"
+
+/**
+ * A single tool-call audit entry written to .cae/metrics/tool-calls.jsonl
+ * by tools/audit-hook.sh on every PostToolUse event.
+ */
+export interface AuditEntry {
+  /** ISO8601 UTC timestamp, e.g. "2026-04-23T10:00:00Z" */
+  ts: string
+  /** CAE task ID that owned the tool call, e.g. "t-abc123" */
+  task: string
+  /** Name of the Claude tool that fired, e.g. "Bash", "Write", "Edit" */
+  tool: string
+  /** Working directory at the time of the call */
+  cwd: string
+}
+
+/**
+ * A single factor that contributes to a skill's trust score.
+ * Weights must sum to 1.0 across all factors for a given skill.
+ */
+export interface TrustFactor {
+  /** Machine-readable identifier for this factor, e.g. "no-secret-leak", "tool-scope" */
+  id: string
+  /** Whether this factor passed its check */
+  passed: boolean
+  /** 0-1 weight in the total score calculation. All weights across factors sum to 1. */
+  weight: number
+  /** Human-readable explanation of why this passed or failed */
+  reason: string
+}
+
+/**
+ * Composite trust score for a skill, computed by the trust-score engine (Plan 14-05).
+ * total = sum(factor.weight * (factor.passed ? 1 : 0)) * 100, rounded to integer.
+ */
+export interface TrustScore {
+  /** 0-100 integer trust score */
+  total: number
+  /** Individual factors that make up the total */
+  factors: TrustFactor[]
+}

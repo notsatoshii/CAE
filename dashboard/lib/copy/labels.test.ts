@@ -1,5 +1,6 @@
 /**
  * labels.test.ts — Tests for agentVerbs + getAgentVerbSet (Plan 13-07, Task 3)
+ *                  + Phase 14 label namespace tests (Plan 14-01, Task 1)
  *
  * Tests:
  * 1. agentVerbs("start_stop_archive") returns Start/Stop/Archive
@@ -7,11 +8,18 @@
  * 3. agentVerbs() with no args defaults to start_stop_archive
  * 4. getAgentVerbSet() returns default when localStorage is empty
  * 5. getAgentVerbSet() returns "wake_spawn_hide" when localStorage key is set
- * 6. getAgentVerbSet() returns default for any unrecognized localStorage value
+ * 6. getAgentVerbSet() returns default for any unrecognised localStorage value
+ * Phase 14:
+ * 7. FOUNDER.skills has ≥3 non-empty keys
+ * 8. FOUNDER.schedule has ≥3 non-empty keys
+ * 9. FOUNDER.permissions has ≥3 non-empty keys
+ * 10. FOUNDER.security has ≥3 non-empty keys
+ * 11. DEV.skills has ≥3 non-empty keys (parity check)
+ * 12. Founder-speak: no raw cron expressions or role acronyms in FOUNDER keys
  */
 
 import { describe, it, expect, beforeEach } from "vitest";
-import { agentVerbs, getAgentVerbSet } from "./labels";
+import { agentVerbs, getAgentVerbSet, LABELS } from "./labels";
 
 // localStorage stub
 let store: Record<string, string> = {};
@@ -65,5 +73,63 @@ describe("getAgentVerbSet()", () => {
   it("6. returns 'start_stop_archive' for any unrecognised value", () => {
     store["p13-agent-verbs"] = "some_random_value";
     expect(getAgentVerbSet()).toBe("start_stop_archive");
+  });
+});
+
+// ============================================================
+// Phase 14 Wave 0 — label namespace tests
+// ============================================================
+
+describe("labels phase 14 — FOUNDER namespaces", () => {
+  const F = LABELS.FOUNDER;
+
+  it("7. FOUNDER.skills has ≥3 non-empty string keys", () => {
+    const entries = Object.entries(F.skills).filter(
+      ([, v]) => typeof v === "string" && v.trim().length > 0
+    );
+    expect(entries.length).toBeGreaterThanOrEqual(3);
+  });
+
+  it("8. FOUNDER.schedule has ≥3 non-empty string keys", () => {
+    const entries = Object.entries(F.schedule).filter(
+      ([, v]) => typeof v === "string" && v.trim().length > 0
+    );
+    expect(entries.length).toBeGreaterThanOrEqual(3);
+  });
+
+  it("9. FOUNDER.permissions has ≥3 non-empty string keys", () => {
+    const entries = Object.entries(F.permissions).filter(
+      ([, v]) => typeof v === "string" && v.trim().length > 0
+    );
+    expect(entries.length).toBeGreaterThanOrEqual(3);
+  });
+
+  it("10. FOUNDER.security has ≥3 non-empty string keys", () => {
+    const entries = Object.entries(F.security).filter(
+      ([, v]) => typeof v === "string" && v.trim().length > 0
+    );
+    expect(entries.length).toBeGreaterThanOrEqual(3);
+  });
+
+  it("11. DEV.skills parity — ≥3 non-empty string keys", () => {
+    const entries = Object.entries(LABELS.DEV.skills).filter(
+      ([, v]) => typeof v === "string" && v.trim().length > 0
+    );
+    expect(entries.length).toBeGreaterThanOrEqual(3);
+  });
+
+  it("12. FOUNDER-speak: no raw cron expressions in skills/schedule/permissions/security", () => {
+    // Raw cron = 5-field pattern like "0 9 * * *" — founder-speak must not expose this
+    const cronPattern = /\d+ \d+ \* \* \*/;
+    const allValues = [
+      ...Object.values(F.skills),
+      ...Object.values(F.schedule),
+      ...Object.values(F.permissions),
+      ...Object.values(F.security),
+    ].filter((v): v is string => typeof v === "string");
+
+    for (const val of allValues) {
+      expect(val).not.toMatch(cronPattern);
+    }
   });
 });

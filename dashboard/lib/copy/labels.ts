@@ -393,6 +393,55 @@ export interface Labels {
   chatExplainRail: string;
   chatExplainSuggestions: string;
   chatExplainGate: string;
+
+  // === Phase 14: Skills Hub ===
+  skills: {
+    tab: string;
+    catalogTitle: string;
+    installedTitle: string;
+    installBtn: string;
+    installingMsg: string;
+    installedMsg: string;
+    detailTitle: string;
+    trustLabel: string;
+    sourceLabel: string;
+    explainTrust: string;
+  };
+
+  // === Phase 14: NL Schedules ===
+  schedule: {
+    tab: string;
+    newBtn: string;
+    nlPlaceholder: string;
+    cronPreview: string;
+    nextRun: string;
+    enabled: string;
+    disabled: string;
+    createBtn: string;
+    explainCron: string;
+  };
+
+  // === Phase 14: RBAC Permissions ===
+  permissions: {
+    tab: string;
+    viewer: string;
+    operator: string;
+    admin: string;
+    roleLabel: string;
+    explainRoles: string;
+  };
+
+  // === Phase 14: Security panel ===
+  security: {
+    tab: string;
+    trustTab: string;
+    secretsTab: string;
+    auditTab: string;
+    scanBtn: string;
+    lastScan: string;
+    overrideBtn: string;
+    explainSecurity: string;
+  };
 }
 
 const FOUNDER: Labels = {
@@ -752,6 +801,58 @@ const FOUNDER: Labels = {
   chatExplainRail: "Chat stays with you across tabs. Click the edge to expand.",
   chatExplainSuggestions: "Quick questions CAE can answer about this tab.",
   chatExplainGate: "Before CAE spends tokens on something big, it'll ask you first.",
+
+  // === Phase 14: Skills Hub ===
+  skills: {
+    tab: "Skills",
+    catalogTitle: "Find new skills",
+    installedTitle: "Installed",
+    installBtn: "Install",
+    installingMsg: "Installing…",
+    installedMsg: "Installed",
+    detailTitle: "About this skill",
+    trustLabel: "Trust",
+    sourceLabel: "From",
+    explainTrust:
+      "How safe this is — a score based on who wrote it, whether it leaks secrets, and what tools it uses.",
+  },
+
+  // === Phase 14: NL Schedules ===
+  schedule: {
+    tab: "Schedules",
+    newBtn: "New schedule",
+    nlPlaceholder: "Describe when — e.g. every morning at 9am",
+    cronPreview: "This runs:",
+    nextRun: "Next run",
+    enabled: "On",
+    disabled: "Off",
+    createBtn: "Save schedule",
+    explainCron:
+      "CAE reads this and runs the task automatically — no cron syntax needed.",
+  },
+
+  // === Phase 14: RBAC Permissions ===
+  permissions: {
+    tab: "Permissions",
+    viewer: "Can see",
+    operator: "Can run",
+    admin: "Can change settings",
+    roleLabel: "What they can do",
+    explainRoles: "Three levels: viewer reads, operator runs, admin edits.",
+  },
+
+  // === Phase 14: Security panel ===
+  security: {
+    tab: "Security",
+    trustTab: "Skill trust",
+    secretsTab: "Secret scan",
+    auditTab: "Tool audit",
+    scanBtn: "Rescan",
+    lastScan: "Last scan",
+    overrideBtn: "Mark as trusted",
+    explainSecurity:
+      "We scan every installed skill for leaked keys and risky tool use.",
+  },
 };
 
 const DEV: Labels = {
@@ -1115,6 +1216,59 @@ const DEV: Labels = {
   chatExplainRail: "Persistent 48→300px rail; SSE-driven unread counter.",
   chatExplainSuggestions: "lib/chat-suggestions.ts lookup keyed by pathname.",
   chatExplainGate: "lib/chat-cost-estimate.ts shouldGate() when estimate>=1000.",
+
+  // === Phase 14: Skills Hub — DEV ===
+  skills: {
+    tab: "Skills",
+    catalogTitle: "Skill catalog",
+    installedTitle: "Installed skills",
+    installBtn: "Install",
+    installingMsg: "Installing…",
+    installedMsg: "Installed",
+    detailTitle: "Skill detail",
+    trustLabel: "Trust score",
+    sourceLabel: "Source",
+    explainTrust:
+      "0-100 composite: no-secret-leak (40%), allowed-tools scope (30%), owner reputation (20%), disable-model-invocation (10%).",
+  },
+
+  // === Phase 14: NL Schedules — DEV ===
+  schedule: {
+    tab: "Schedules",
+    newBtn: "New schedule",
+    nlPlaceholder: "Natural language — e.g. every day at 9am America/New_York",
+    cronPreview: "cron:",
+    nextRun: "Next",
+    enabled: "enabled",
+    disabled: "disabled",
+    createBtn: "Save",
+    explainCron:
+      "chrono-node parses nl → cron-parser validates → stored in scheduled_tasks.json at repo root.",
+  },
+
+  // === Phase 14: RBAC Permissions — DEV ===
+  permissions: {
+    tab: "Permissions",
+    viewer: "viewer (GET only)",
+    operator: "operator (run + approve)",
+    admin: "admin (full)",
+    roleLabel: "role",
+    explainRoles:
+      "viewer: read-only. operator: can run jobs + approve/deny. admin: full access including settings.",
+  },
+
+  // === Phase 14: Security panel — DEV ===
+  security: {
+    tab: "Security",
+    trustTab: "Trust scores",
+    secretsTab: "Gitleaks report",
+    auditTab: "tool-calls.jsonl",
+    scanBtn: "gitleaks detect",
+    lastScan: "last scan",
+    overrideBtn: "Override",
+    explainSecurity:
+      "gitleaks detect --source ~/.claude/skills --report-format json; parsed by cae-security-panel.ts.",
+  },
 };
 
 export function labelFor(dev: boolean): Labels {
