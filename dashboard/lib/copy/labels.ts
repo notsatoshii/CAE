@@ -163,6 +163,42 @@ export interface Labels {
   agentsDrawerRecentStatusOk: string;
   agentsDrawerRecentStatusFail: string;
   agentsListFailedToLoad: string;
+
+  // === Phase 6: Workflows + Queue ===
+  workflowsPageHeading: string;
+  workflowsListEmpty: string;
+  workflowsCreateButton: string;
+  workflowsListRowLastRun: (relativeTime: string) => string;
+  workflowsListRowNeverRun: string;
+  workflowsListRowRunButton: string;
+  workflowsListRowStepCount: (n: number) => string;
+  workflowsNewPageHeading: string;
+  workflowsEditPageHeading: (name: string) => string;
+  workflowsNlTextareaPlaceholder: string;
+  workflowsNlTextareaLabel: string;
+  workflowsDraftBtn: string;
+  workflowsDraftBtnPending: string;
+  workflowsSaveBtn: string;
+  workflowsSaveBtnPending: string;
+  workflowsRunBtn: string;
+  workflowsRunBtnPending: string;
+  workflowsAdvancedYamlHeading: string;
+  workflowsStepGraphHeading: string;
+  workflowsValidationErrorHeading: string;
+  workflowsNlCouldNotParseNote: string;
+  workflowsDeleteBtn: string;
+  workflowsDeleteConfirm: (name: string) => string;
+  queueKanbanColWaiting: string;
+  queueKanbanColInProgress: string;
+  queueKanbanColDoubleCheck: string;
+  queueKanbanColStuck: string;
+  queueKanbanColShipped: string;
+  queueKanbanColCount: (n: number) => string;
+  queueKanbanEmptyColumn: string;
+  queueKanbanNewJobButton: string;
+  queueKanbanNewJobModalTitle: string;
+  queueCardAgentProjectLine: (project: string, relativeTime: string) => string;
+  queueCardLivePulseLabel: string;
 }
 
 const FOUNDER: Labels = {
@@ -301,6 +337,42 @@ const FOUNDER: Labels = {
   agentsDrawerRecentStatusOk: "shipped",
   agentsDrawerRecentStatusFail: "stuck",
   agentsListFailedToLoad: "Couldn't load the team. Try refreshing.",
+
+  // === Phase 6: Workflows + Queue ===
+  workflowsPageHeading: "Recipes",
+  workflowsListEmpty: "No recipes yet. Describe what you want to automate and CAE will draft it.",
+  workflowsCreateButton: "New recipe",
+  workflowsListRowLastRun: (t) => "ran " + t,
+  workflowsListRowNeverRun: "never run",
+  workflowsListRowRunButton: "Run now",
+  workflowsListRowStepCount: (n) => n === 1 ? "1 step" : n + " steps",
+  workflowsNewPageHeading: "New recipe",
+  workflowsEditPageHeading: (name) => "Recipe: " + name,
+  workflowsNlTextareaPlaceholder: "Describe what you want this recipe to do. Example: Every Monday, Forge updates our dependencies, Sentinel reviews, I approve, then push.",
+  workflowsNlTextareaLabel: "What should this recipe do?",
+  workflowsDraftBtn: "Draft it",
+  workflowsDraftBtnPending: "Drafting…",
+  workflowsSaveBtn: "Save recipe",
+  workflowsSaveBtnPending: "Saving…",
+  workflowsRunBtn: "Run now",
+  workflowsRunBtnPending: "Starting…",
+  workflowsAdvancedYamlHeading: "Advanced: YAML",
+  workflowsStepGraphHeading: "Here's the recipe",
+  workflowsValidationErrorHeading: "Hmm, something's off",
+  workflowsNlCouldNotParseNote: "Couldn't parse fully — please refine the description.",
+  workflowsDeleteBtn: "Delete recipe",
+  workflowsDeleteConfirm: (name) => "Delete the '" + name + "' recipe? This can't be undone.",
+  queueKanbanColWaiting: "Waiting",
+  queueKanbanColInProgress: "Working on it",
+  queueKanbanColDoubleCheck: "Double-checking",
+  queueKanbanColStuck: "Stuck",
+  queueKanbanColShipped: "Shipped",
+  queueKanbanColCount: (n) => "(" + n + ")",
+  queueKanbanEmptyColumn: "—",
+  queueKanbanNewJobButton: "New job",
+  queueKanbanNewJobModalTitle: "Send a job to CAE",
+  queueCardAgentProjectLine: (project, t) => project + " · " + t,
+  queueCardLivePulseLabel: "running now",
 };
 
 const DEV: Labels = {
@@ -444,6 +516,42 @@ const DEV: Labels = {
   agentsDrawerRecentStatusOk: "ok",
   agentsDrawerRecentStatusFail: "fail",
   agentsListFailedToLoad: "/api/agents failed",
+
+  // === Phase 6: Workflows + Queue ===
+  workflowsPageHeading: "Workflows",
+  workflowsListEmpty: "No workflows defined. Create one to begin.",
+  workflowsCreateButton: "New workflow",
+  workflowsListRowLastRun: (t) => "last run " + t,
+  workflowsListRowNeverRun: "not run",
+  workflowsListRowRunButton: "Run",
+  workflowsListRowStepCount: (n) => n + " step" + (n === 1 ? "" : "s"),
+  workflowsNewPageHeading: "New workflow",
+  workflowsEditPageHeading: (name) => "Edit: " + name,
+  workflowsNlTextareaPlaceholder: "Natural-language description. Parsed by heuristic → YAML stub.",
+  workflowsNlTextareaLabel: "Description",
+  workflowsDraftBtn: "Draft YAML",
+  workflowsDraftBtnPending: "Parsing…",
+  workflowsSaveBtn: "Save",
+  workflowsSaveBtnPending: "Saving…",
+  workflowsRunBtn: "Run now",
+  workflowsRunBtnPending: "Spawning…",
+  workflowsAdvancedYamlHeading: "YAML",
+  workflowsStepGraphHeading: "Step graph",
+  workflowsValidationErrorHeading: "Validation errors",
+  workflowsNlCouldNotParseNote: "Heuristic incomplete — refine input or edit YAML directly.",
+  workflowsDeleteBtn: "Delete",
+  workflowsDeleteConfirm: (name) => "Delete workflow '" + name + "'?",
+  queueKanbanColWaiting: "Planned",
+  queueKanbanColInProgress: "Building",
+  queueKanbanColDoubleCheck: "Reviewing",
+  queueKanbanColStuck: "Blocked",
+  queueKanbanColShipped: "Merged",
+  queueKanbanColCount: (n) => "(" + n + ")",
+  queueKanbanEmptyColumn: "empty",
+  queueKanbanNewJobButton: "Delegate",
+  queueKanbanNewJobModalTitle: "Delegate to CAE",
+  queueCardAgentProjectLine: (project, t) => project + " · " + t,
+  queueCardLivePulseLabel: "in-progress",
 };
 
 export function labelFor(dev: boolean): Labels {
