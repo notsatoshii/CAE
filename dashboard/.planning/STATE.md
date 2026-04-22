@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v0.1
 milestone_name: milestone
 status: planning
-stopped_at: Completed 13-11-PLAN.md (Wave 6c memory/metrics/chat/plan/signin polish)
-last_updated: "2026-04-23T07:06:00Z"
+stopped_at: Completed 13-12-PLAN.md — Phase 13 D-08 gate PASS, phase ships
+last_updated: "2026-04-22T22:34:23.711Z"
 progress:
   total_phases: 14
-  completed_phases: 10
+  completed_phases: 11
   total_plans: 83
-  completed_plans: 69
-  percent: 83
+  completed_plans: 70
+  percent: 84
 ---
 
 # cae-dashboard — Project State
@@ -29,8 +29,16 @@ progress:
 Phase 10 — Plan mode: Projects / PRDs / Roadmaps / UAT (`/plan/*` routes wrapping Shift).
 Plan 10-04 complete (Wave 1 closed). Next: plan 10-05 (API routes).
 
-**Last session:** 2026-04-22T21:52:18.286Z
-**Stopped at:** Completed 13-10-PLAN.md (Wave 6b agents/queue/changes/workflows polish)
+**Last session:** 2026-04-23T07:35:00Z
+**Stopped at:** Completed 13-12-PLAN.md — Phase 13 D-08 gate PASS, phase ships
+
+## Key Decisions (Phase 13 — Plan 12)
+
+- **13-12:** D-08 gate PASS — 100% P0 resolved+partial (22/22), 100% ALL resolved+partial (43/43), 0 regressed, 0 WCAG AA violations
+- **13-12:** Auth-deferred partials (F-corr-02/03/04) classified as partial not still_broken — session-7 policy is explicit, no code failure; D-08 math uses resolved+partial = 100%
+- **13-12:** WF-01 auto-fixed — copyright footer opacity-60 removed (text-muted alone gives ~5.9:1 contrast); fix required rebuild + server restart (stale binary was serving old markup)
+- **13-12:** UAT auto-approved per session-7 directive; post-P14 consolidated UAT recommended for auth-route live walkthrough
+- **13-12:** 35 delta pairs — 8 screenshot pairs (laptop/mobile/wide × founder/dev for root+signin) + 27 code-evidence pairs for auth-gated routes
 
 ## Key Decisions (Phase 13 — Plan 11)
 
