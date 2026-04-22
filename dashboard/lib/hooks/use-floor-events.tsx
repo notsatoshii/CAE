@@ -70,10 +70,9 @@ export interface UseFloorEventsResult {
   effectsCount: number;
   /** Count of pending events in queue (not yet applied). */
   queueSize: number;
-  /** Epoch ms of the most recently-applied event, or null if none yet. */
-  lastEventTs: number | null;
   /** True when /api/state returned 401 on the drift probe; toolbar shows re-auth banner. */
   authDrifted: boolean;
+  // WR-04: lastEventTs removed — was set but never consumed; use a ref if needed later.
 }
 
 // ---------------------------------------------------------------------------
@@ -105,7 +104,6 @@ export function useFloorEvents(opts: UseFloorEventsOpts): UseFloorEventsResult {
   // Observable state counters
   const [effectsCount, setEffectsCount] = useState(0);
   const [queueSize, setQueueSize] = useState(0);
-  const [lastEventTs, setLastEventTs] = useState<number | null>(null);
   const [authDrifted, setAuthDrifted] = useState(false);
 
   // Drain queue into scene (apply MappedEffects, enforce caps)
@@ -125,7 +123,6 @@ export function useFloorEvents(opts: UseFloorEventsOpts): UseFloorEventsResult {
           }
         }
       }
-      setLastEventTs(Date.now());
     }
     setEffectsCount(sceneRefRef.current.current.effects.length);
     setQueueSize(queueRef.current.length);
@@ -214,5 +211,5 @@ export function useFloorEvents(opts: UseFloorEventsOpts): UseFloorEventsResult {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [opts.cbPath]);
 
-  return { effectsCount, queueSize, lastEventTs, authDrifted };
+  return { effectsCount, queueSize, authDrifted };
 }
