@@ -1,11 +1,14 @@
 export const dynamic = "force-dynamic"
 
-import { listPhases, listProjects } from "@/lib/cae-state"
+import { listProjects } from "@/lib/cae-state"
 import { BuildHomeHeading } from "@/components/shell/build-home-heading"
 import { ProjectSelector } from "./project-selector"
-import { BreakersPanel } from "./breakers-panel"
-import { PhasesList } from "./phases-list"
-import { MetricsTabs } from "./metrics-tabs"
+import { RollupStrip } from "@/components/build-home/rollup-strip"
+import { LiveOpsLine } from "@/components/build-home/live-ops-line"
+import { ActivePhaseCards } from "@/components/build-home/active-phase-cards"
+import { NeedsYouList } from "@/components/build-home/needs-you-list"
+import { RecentLedger } from "@/components/build-home/recent-ledger"
+import { TaskDetailSheet } from "@/components/build-home/task-detail-sheet"
 
 interface BuildPageProps {
   searchParams: Promise<{ project?: string }>
@@ -19,23 +22,24 @@ export default async function BuildPage({ searchParams }: BuildPageProps) {
     (projectParam ? allProjects.find((p) => p.path === projectParam) : undefined) ??
     allProjects[0]
 
-  const phases = selected ? await listPhases(selected.path) : []
   const projectName = selected?.name ?? "no project"
 
   return (
-    <main className="p-8 max-w-5xl">
-      <div className="flex items-center gap-3 mb-2">
+    <main data-testid="build-home" className="p-6 max-w-6xl">
+      <div className="flex items-center gap-3 mb-4">
         <BuildHomeHeading projectName={projectName} />
         {allProjects.length > 0 && selected && (
           <ProjectSelector projects={allProjects} selected={selected} />
         )}
       </div>
-      <p className="text-sm text-muted-foreground mb-6">
-        Live phase execution status for this project. Refreshes every 5 seconds.
-      </p>
-      <BreakersPanel projectPath={selected?.path ?? ""} />
-      <PhasesList phases={phases} projectPath={selected?.path ?? ""} />
-      <MetricsTabs projectPath={selected?.path ?? ""} />
+
+      <RollupStrip />
+      <LiveOpsLine />
+      <ActivePhaseCards />
+      <NeedsYouList />
+      <RecentLedger />
+
+      <TaskDetailSheet />
     </main>
   )
 }

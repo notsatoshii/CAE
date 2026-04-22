@@ -5,6 +5,7 @@ import { basename, join } from "path"
 import { listPhases, listProjects, tailJsonl, listOutbox } from "./cae-state"
 import { getPhaseDetail, type TaskStatus } from "./cae-phase-detail"
 import { OUTBOX_ROOT } from "./cae-config"
+import { agentMetaFor } from "./copy/agent-meta"
 import type { Project } from "./cae-types"
 
 const execAsync = promisify(exec)
@@ -74,18 +75,10 @@ const STATUS_RUNNING: TaskStatus = "running"
 const STATUS_MERGED: TaskStatus = "merged"
 const STATUS_FAILED: TaskStatus = "failed"
 
-// === Inline founder-label map (Plan 04-02 centralizes; duplicate is intentional to break parallel-wave dep) ===
-const FOUNDER_LABEL: Record<string, string> = {
-  forge: "the builder",
-  sentinel: "the checker",
-  scout: "the researcher",
-  scribe: "the memory-keeper",
-  phantom: "the debugger",
-  aegis: "the guard",
-  arch: "the architect",
-  herald: "the herald",
-  nexus: "the conductor",
-}
+// === Founder-label source of truth: lib/copy/agent-meta.ts (Plan 04-06 consolidation) ===
+// The previously-inline FOUNDER_LABEL map was removed in Plan 04-06 after Plan 04-02's
+// agent-meta.ts shipped in wave 1. Lookups now go through agentMetaFor(name).founder_label
+// which returns the raw name for unknown agents (equivalent to the prior `?? agent.name`).
 
 // === 1-second result cache to survive 3s polling without FS thrash ===
 let CACHE: { ts: number; value: HomeState } | null = null
@@ -589,7 +582,7 @@ function composeLiveOpsLine(activeAgents: AgentActive[], taskLabels: Map<string,
   if (activeAgents.length === 0) return "Idle right now."
 
   const labelFor = (name: string): string =>
-    FOUNDER_LABEL[name] ?? name
+    agentMetaFor(name).founder_label
 
   const lines: string[] = []
   const shown = activeAgents.slice(0, 3)

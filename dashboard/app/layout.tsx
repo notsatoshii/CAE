@@ -5,6 +5,7 @@ import { auth } from "@/auth";
 import { TopNav } from "@/components/shell/top-nav";
 import { ExplainModeProvider } from "@/lib/providers/explain-mode";
 import { DevModeProvider } from "@/lib/providers/dev-mode";
+import { StatePollProvider } from "@/lib/hooks/use-state-poll";
 import { Toaster } from "@/components/ui/sonner";
 
 const geistSans = Geist({
@@ -36,9 +37,11 @@ export default async function RootLayout({
       >
         <ExplainModeProvider>
           <DevModeProvider>
-            {session && <TopNav session={session} />}
-            {children}
-            <Toaster />
+            <StatePollProvider>
+              {session && <TopNav session={session} />}
+              {children}
+              <Toaster />
+            </StatePollProvider>
           </DevModeProvider>
         </ExplainModeProvider>
       </body>
