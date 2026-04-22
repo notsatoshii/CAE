@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v0.1
 milestone_name: milestone
 status: executing
-last_updated: "2026-04-22T17:23:18.942Z"
+last_updated: "2026-04-23T02:28:00.000Z"
 progress:
   total_phases: 12
   completed_phases: 7
   total_plans: 58
-  completed_plans: 48
-  percent: 83
+  completed_plans: 52
+  percent: 90
 ---
 
 # cae-dashboard — Project State
@@ -26,8 +26,17 @@ progress:
 ## Active Phase
 
 Phase 10 — Plan mode: Projects / PRDs / Roadmaps / UAT (`/plan/*` routes wrapping Shift).
+Plan 10-04 complete (Wave 1 closed). Next: plan 10-05 (API routes).
 
-**Last session:** 2026-04-22T17:23:18.936Z
+**Last session:** 2026-04-23T02:28:00.000Z
+**Stopped at:** Completed 10-04-PLAN.md
+
+## Key Decisions (Phase 10 — Plan 04)
+
+- **10-04:** mostRecentSlug computed by max(shiftUpdated) scan rather than array[0] — test mock does not pre-sort, so getPlanHomeState must be order-independent.
+- **10-04:** parseEnvExample returns string[] (key names only) matching test scaffold; validateShipInput whitelist accepts string[] | EnvExampleKey[] for dual calling convention.
+- **10-04:** ghAuthStatus uses callback-based execFile (no promisify, no options arg) so vi.mock("child_process") intercepts at 3-arg position matching test mock.
+- **10-04:** SHIFT_PROJECTS_HOME scan unions with hard-coded candidates (not replaces); dedup by absolute path — one project never appears twice.
 
 ## Key Decisions (Phase 09)
 
