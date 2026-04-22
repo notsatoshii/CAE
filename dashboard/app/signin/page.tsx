@@ -1,5 +1,14 @@
 import { GitHubSignInButton } from "./github-sign-in-button";
+import { GoogleSignInButton } from "./google-sign-in-button";
 
+/**
+ * Sign-in page — Phase 14 Plan 04: shows BOTH GitHub and Google providers.
+ *
+ * GitHub: dev-facing (was Phase 1).
+ * Google: founder-facing (new in Plan 14-04).
+ *
+ * UI-SPEC: founder-speak — "Sign in to start shipping." No technical jargon.
+ */
 export default function SignInPage() {
   const year = new Date().getFullYear();
   return (
@@ -31,8 +40,9 @@ export default function SignInPage() {
           Control plane for your AI agent fleet. Sign in to start shipping.
         </p>
 
-        {/* CTA — prominent, brand-appropriate */}
-        <div className="w-full">
+        {/* CTAs — GitHub (dev) + Google (founder) */}
+        <div className="w-full space-y-3">
+          <GoogleSignInButton />
           <GitHubSignInButton />
         </div>
 
