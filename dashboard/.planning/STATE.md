@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v0.1
 milestone_name: milestone
 status: planning
-stopped_at: Completed 13-10-PLAN.md (Wave 6b agents/queue/changes/workflows polish)
-last_updated: "2026-04-22T21:52:18.294Z"
+stopped_at: Completed 13-11-PLAN.md (Wave 6c memory/metrics/chat/plan/signin polish)
+last_updated: "2026-04-23T07:06:00Z"
 progress:
   total_phases: 14
   completed_phases: 10
   total_plans: 83
-  completed_plans: 68
-  percent: 82
+  completed_plans: 69
+  percent: 83
 ---
 
 # cae-dashboard — Project State
@@ -31,6 +31,14 @@ Plan 10-04 complete (Wave 1 closed). Next: plan 10-05 (API routes).
 
 **Last session:** 2026-04-22T21:52:18.286Z
 **Stopped at:** Completed 13-10-PLAN.md (Wave 6b agents/queue/changes/workflows polish)
+
+## Key Decisions (Phase 13 — Plan 11)
+
+- **13-11:** Shared Panel primitive at components/ui/panel.tsx — headingId auto-derived from title; callers pass explicit headingId when existing test selectors depend on a specific id
+- **13-11:** data! non-null assertions on metrics panels — all null paths return early; assertion is safe and cleaner than optional chaining throughout render
+- **13-11:** Chat bubble max-w-[65ch] not max-w-prose — 65ch is closer to 60-70ch readability sweet spot per UI-SPEC
+- **13-11:** Signin bg-accent text-black for GitHub button — cyan on black is 10:1+ WCAG AA; inverted from app chrome but correct for primary CTA
+- **13-11:** Plan home tabs preview row is aria-hidden — visual preview only; real tabs come in Phase 10
 
 ## Key Decisions (Phase 13 — Plan 08)
 

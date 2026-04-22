@@ -281,6 +281,9 @@ Plans:
 - [x] 13-06-PLAN.md — liveness audit fixes (tab-visibility pause + LastUpdated chip + LivenessChip RTT + HeartbeatDot + SSE health hooks)
 - [x] 13-07-PLAN.md — MC IA adoptions (ambient clock + alert banner + Golden Signals subtitles + agent verb A/B)
 - [x] 13-08-PLAN.md — Incident Stream SSE panel + DebugBreadcrumbPanel + client log bus (Wave 5, 36 new tests)
+- [x] 13-09-PLAN.md — master 6-pillar visual audit + build-home/top-nav polish (Wave 6a, rollup card grid + Lucide + WCAG text-dim fixes)
+- [x] 13-10-PLAN.md — agents/queue/changes/workflows pillar polish (Wave 6b, MC agent cards + queue chrome + timeline hierarchy)
+- [x] 13-11-PLAN.md — memory/metrics/chat/plan/signin pillar polish + shared Panel primitive (Wave 6c, 13 surfaces ≥3 on all pillars)
 
 ## Phase 14: Orchestration depth — Skills Hub + cron + RBAC
 
