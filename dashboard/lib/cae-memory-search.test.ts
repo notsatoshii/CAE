@@ -10,17 +10,23 @@ import {
   __setExecFileForTests,
 } from "./cae-memory-search";
 
-type ExecFileStub = ReturnType<typeof vi.fn>;
+// Loose mock type so we can narrow the impl per-test without fighting
+// vi.fn's stricter generic inference.
+type AnyMock = ReturnType<typeof vi.fn>;
 
-let execFileMock: ExecFileStub;
+let execFileMock: AnyMock;
 
 function installResolve(stdout: string): void {
-  execFileMock = vi.fn(async () => ({ stdout, stderr: "" }));
-  __setExecFileForTests(execFileMock as unknown as Parameters<typeof __setExecFileForTests>[0]);
+  execFileMock = vi.fn();
+  execFileMock.mockResolvedValue({ stdout, stderr: "" });
+  __setExecFileForTests(
+    execFileMock as unknown as Parameters<typeof __setExecFileForTests>[0],
+  );
 }
 
 function installReject(code: number, stderr = ""): void {
-  execFileMock = vi.fn(async () => {
+  execFileMock = vi.fn();
+  execFileMock.mockImplementation(async () => {
     const err = new Error("rg exit " + code) as Error & {
       code?: number;
       stdout?: string;
@@ -31,7 +37,9 @@ function installReject(code: number, stderr = ""): void {
     err.stderr = stderr;
     throw err;
   });
-  __setExecFileForTests(execFileMock as unknown as Parameters<typeof __setExecFileForTests>[0]);
+  __setExecFileForTests(
+    execFileMock as unknown as Parameters<typeof __setExecFileForTests>[0],
+  );
 }
 
 describe("searchMemory", () => {

@@ -20,6 +20,7 @@
  *   - <project>/.planning/phases/\*\/\*.md
  */
 import { readdir, stat } from "node:fs/promises";
+import type { Dirent } from "node:fs";
 import { join } from "node:path";
 import { listProjects } from "./cae-state";
 
@@ -129,9 +130,9 @@ async function walkForMarkdown(
   max: number,
 ): Promise<void> {
   if (collector.length >= max) return;
-  let entries: Awaited<ReturnType<typeof readdir>>;
+  let entries: Dirent[];
   try {
-    entries = await readdir(dir, { withFileTypes: true });
+    entries = (await readdir(dir, { withFileTypes: true })) as Dirent[];
   } catch {
     return; // missing or unreadable — skip silently
   }

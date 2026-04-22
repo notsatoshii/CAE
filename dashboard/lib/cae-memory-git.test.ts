@@ -20,7 +20,7 @@ import {
 } from "./cae-memory-git";
 import { getAllowedRoots } from "./cae-memory-sources";
 
-let tmp: string;
+let tmp: string | undefined;
 
 function runGit(cwd: string, args: string[]): string {
   return execFileSync("git", args, {
