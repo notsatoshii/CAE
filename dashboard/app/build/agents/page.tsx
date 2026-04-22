@@ -17,6 +17,7 @@ export const dynamic = "force-dynamic"
 import { getAgentsRoster } from "@/lib/cae-agents-state"
 import { AgentGrid } from "@/components/agents/agent-grid"
 import { AgentsPageHeading } from "@/components/agents/agents-page-heading"
+import { AgentDetailDrawer } from "@/components/agents/agent-detail-drawer"
 
 export const metadata = {
   title: "Agents — CAE",
@@ -51,6 +52,9 @@ export default async function AgentsPage() {
       ) : (
         <AgentGrid agents={agents} loadError={loadError} />
       )}
+      {/* Drawer mounts unconditionally — invisible until ?agent={name} in URL.
+          Reads its own URL state; must not be gated on agents.length. */}
+      <AgentDetailDrawer />
     </main>
   )
 }
