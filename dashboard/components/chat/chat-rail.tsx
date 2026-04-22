@@ -69,7 +69,7 @@ export function ChatRail() {
         {rail.lastMessagePreview ? (
           <span
             aria-hidden
-            className="text-[10px] text-[color:var(--text-dim,#5a5a5c)] line-clamp-2 text-center px-1"
+            className="text-[10px] text-[color:var(--text-muted,#8a8a8c)] line-clamp-2 text-center px-1"
           >
             {rail.lastMessagePreview}
           </span>

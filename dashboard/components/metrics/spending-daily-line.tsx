@@ -36,7 +36,7 @@ export function SpendingDailyLine({ data }: Props) {
         ariaLabel="Daily token usage, last 30 days"
       />
       {isEmpty && (
-        <span className="text-xs text-[color:var(--text-dim)]">
+        <span className="text-xs text-[color:var(--text-muted)]">
           No data in the last 30 days.
         </span>
       )}

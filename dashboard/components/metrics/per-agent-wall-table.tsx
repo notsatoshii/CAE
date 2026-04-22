@@ -47,7 +47,7 @@ export function PerAgentWallTable({ rows }: Props) {
     return (
       <div
         data-testid="per-agent-wall-empty"
-        className="rounded-md border border-dashed border-[color:var(--border)] p-4 text-sm text-[color:var(--text-dim)]"
+        className="rounded-md border border-dashed border-[color:var(--border)] p-4 text-sm text-[color:var(--text-muted)]"
       >
         No completed jobs yet.
       </div>

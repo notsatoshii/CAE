@@ -46,7 +46,7 @@ export function SuccessGauge({ rate, sampleN, founderLabel, label }: Props) {
         className="flex flex-col gap-1 rounded-md bg-[color:var(--surface)] p-3"
       >
         <span className="text-xs text-[color:var(--text-muted)]">{shown}</span>
-        <span className="text-xs italic text-[color:var(--text-dim)]">
+        <span className="text-xs italic text-[color:var(--text-muted)]">
           {L.metricsWellAgentInsufficientSamples}
         </span>
       </div>

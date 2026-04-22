@@ -146,7 +146,7 @@ export function FloorToolbar({
       {dev && (
         <span
           data-testid="floor-debug-strip"
-          className="ml-1 font-mono text-xs text-[color:var(--text-dim)]"
+          className="ml-1 font-mono text-xs text-[color:var(--text-muted)]"
         >
           q:{metrics.queueSize} fx:{metrics.effectsCount}
         </span>

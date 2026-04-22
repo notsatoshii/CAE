@@ -30,7 +30,7 @@ export function Suggestions({ onPick }: { onPick: (message: string) => void }) {
       data-testid="chat-suggestions"
       className="border-t border-[color:var(--border,#1f1f22)] px-3 py-2"
     >
-      <div className="flex items-center gap-1 text-xs text-[color:var(--text-dim,#5a5a5c)] mb-1">
+      <div className="flex items-center gap-1 text-xs text-[color:var(--text-muted,#8a8a8c)] mb-1">
         <span>{t.chatSuggestionsHeading}</span>
         <ExplainTooltip text={t.chatExplainSuggestions} />
       </div>

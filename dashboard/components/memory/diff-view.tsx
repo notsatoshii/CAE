@@ -198,7 +198,7 @@ function DiffLine({ line }: DiffLineProps) {
   if (line.startsWith("+++") || line.startsWith("---")) {
     cls = "block whitespace-pre italic text-[color:var(--text-muted)]";
   } else if (line.startsWith("@@")) {
-    cls = "block whitespace-pre italic text-[color:var(--text-dim)]";
+    cls = "block whitespace-pre italic text-[color:var(--text-muted)]";
   } else if (line.startsWith("+")) {
     cls =
       "block whitespace-pre text-[color:var(--success,#059669)]";

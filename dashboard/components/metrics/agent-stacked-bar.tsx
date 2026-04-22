@@ -68,7 +68,7 @@ export function AgentStackedBar({ data }: Props) {
     return (
       <div
         data-testid="agent-stacked-bar-empty"
-        className="flex h-60 items-center justify-center rounded-md border border-dashed border-[color:var(--border)] text-sm text-[color:var(--text-dim)]"
+        className="flex h-60 items-center justify-center rounded-md border border-dashed border-[color:var(--border)] text-sm text-[color:var(--text-muted)]"
       >
         No token data in the last 30 days yet.
       </div>

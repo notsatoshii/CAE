@@ -48,7 +48,7 @@ export function TopExpensiveTasks({ data }: Props) {
     return (
       <div
         data-testid="top-expensive-tasks-empty"
-        className="rounded-md border border-dashed border-[color:var(--border)] p-4 text-sm text-[color:var(--text-dim)]"
+        className="rounded-md border border-dashed border-[color:var(--border)] p-4 text-sm text-[color:var(--text-muted)]"
       >
         No recorded jobs yet.
       </div>
@@ -67,7 +67,7 @@ export function TopExpensiveTasks({ data }: Props) {
               className="flex items-center justify-between rounded-md bg-[color:var(--surface)] px-3 py-2 text-sm"
             >
               <span className="flex min-w-0 items-center gap-2">
-                <span className="w-5 font-mono text-[10px] text-[color:var(--text-dim)]">
+                <span className="w-5 font-mono text-[10px] text-[color:var(--text-muted)]">
                   {(idx + 1).toString().padStart(2, "0")}
                 </span>
                 <span aria-hidden="true">{meta.emoji}</span>

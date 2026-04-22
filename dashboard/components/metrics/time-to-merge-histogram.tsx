@@ -48,7 +48,7 @@ export function TimeToMergeHistogram({ bins }: Props) {
     return (
       <div
         data-testid="time-to-merge-empty"
-        className="flex h-48 items-center justify-center rounded-md border border-dashed border-[color:var(--border)] text-sm text-[color:var(--text-dim)]"
+        className="flex h-48 items-center justify-center rounded-md border border-dashed border-[color:var(--border)] text-sm text-[color:var(--text-muted)]"
       >
         No shipped jobs to chart yet.
       </div>

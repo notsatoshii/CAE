@@ -33,7 +33,7 @@ export function HaltEventsLog({ events }: Props) {
     return (
       <div
         data-testid="halt-events-empty"
-        className="rounded-md border border-dashed border-[color:var(--border)] p-4 text-sm text-[color:var(--text-dim)]"
+        className="rounded-md border border-dashed border-[color:var(--border)] p-4 text-sm text-[color:var(--text-muted)]"
       >
         {L.metricsWellHaltsEmpty}
       </div>
@@ -48,7 +48,7 @@ export function HaltEventsLog({ events }: Props) {
           className="flex items-start justify-between gap-3 rounded-md bg-[color:var(--surface)] px-3 py-2 text-sm"
         >
           <span className="text-[color:var(--text)]">{e.reason}</span>
-          <span className="shrink-0 font-mono text-[10px] text-[color:var(--text-dim)]">
+          <span className="shrink-0 font-mono text-[10px] text-[color:var(--text-muted)]">
             {new Date(e.ts).toLocaleString()}
             {dev && e.task_id ? " - " + e.task_id : ""}
           </span>

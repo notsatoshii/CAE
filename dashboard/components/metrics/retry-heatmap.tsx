@@ -45,7 +45,7 @@ export function RetryHeatmap({ cells }: Props) {
         {Array.from({ length: 24 }).map((_, h) => (
           <div
             key={"h-" + h}
-            className="text-center text-[color:var(--text-dim)]"
+            className="text-center text-[color:var(--text-muted)]"
           >
             {h}
           </div>
@@ -53,7 +53,7 @@ export function RetryHeatmap({ cells }: Props) {
         {/* Data rows: label + 24 cells */}
         {DAY_LABELS.map((d, dow) => (
           <React.Fragment key={"row-" + dow}>
-            <div className="pr-1 text-right text-[color:var(--text-dim)]">
+            <div className="pr-1 text-right text-[color:var(--text-muted)]">
               {d}
             </div>
             {Array.from({ length: 24 }).map((_, h) => {
@@ -76,7 +76,7 @@ export function RetryHeatmap({ cells }: Props) {
         ))}
       </div>
       {isEmpty && (
-        <span className="text-xs text-[color:var(--text-dim)]">
+        <span className="text-xs text-[color:var(--text-muted)]">
           No retries in the last 7 days.
         </span>
       )}

@@ -113,7 +113,7 @@ export function DebugBreadcrumbPanel() {
           aria-live="polite"
         >
           {displayed.length === 0 ? (
-            <div className="text-[color:var(--text-dim)] py-2 text-center">
+            <div className="text-[color:var(--text-muted)] py-2 text-center">
               no events yet
             </div>
           ) : (
@@ -131,7 +131,7 @@ export function DebugBreadcrumbPanel() {
                   >
                     {levelLabel(e.level)}
                   </span>
-                  <span className="text-[color:var(--text-dim)] tabular-nums">
+                  <span className="text-[color:var(--text-muted)] tabular-nums">
                     {formatTime(e.time)}
                   </span>
                   <span className="text-[color:var(--text-muted)]">{e.scope}</span>

@@ -56,15 +56,15 @@ export function ConfirmActionDialog(props: ConfirmActionDialogProps) {
         </DialogHeader>
         <div className="space-y-3">
           <div>
-            <div className="text-xs text-[color:var(--text-dim,#5a5a5c)]">{t.chatGateDialogSummaryLabel}</div>
+            <div className="text-xs text-[color:var(--text-muted,#8a8a8c)]">{t.chatGateDialogSummaryLabel}</div>
             <p className="text-sm text-[color:var(--text,#e5e5e5)]">{summary}</p>
           </div>
           <div>
-            <div className="text-xs text-[color:var(--text-dim,#5a5a5c)]">{t.chatGateDialogCostLabel(tokens)}</div>
+            <div className="text-xs text-[color:var(--text-muted,#8a8a8c)]">{t.chatGateDialogCostLabel(tokens)}</div>
           </div>
           {diffPreview ? (
             <div>
-              <div className="text-xs text-[color:var(--text-dim,#5a5a5c)]">{t.chatGateDialogDiffLabel}</div>
+              <div className="text-xs text-[color:var(--text-muted,#8a8a8c)]">{t.chatGateDialogDiffLabel}</div>
               <pre className="max-h-40 overflow-auto text-xs font-mono bg-[color:var(--surface,#121214)] border border-[color:var(--border,#1f1f22)] rounded p-2">{diffPreview}</pre>
             </div>
           ) : null}
