@@ -120,10 +120,10 @@ Plans:
 **Plans:** 4 plans
 
 Plans:
-- [ ] 05-01-PLAN.md — Data API (/api/agents + [name]) + cae-agents-state aggregator + Sparkline primitive + labels.ts agents.* keys (wave 1)
-- [ ] 05-02-PLAN.md — BuildRail left-nav + /build layout rewrite + stub routes for /build/workflows + /build/changes (wave 1)
-- [ ] 05-03-PLAN.md — /build/agents page + AgentGrid + AgentCard (active + idle variants + drift indicator) (wave 2)
-- [ ] 05-04-PLAN.md — AgentDetailDrawer (persona MD + model override + drift banner + lifetime stats + recent invocations) + integration + a11y + Phase 5 VERIFICATION (wave 3)
+- [x] 05-01-PLAN.md — Data API (/api/agents + [name]) + cae-agents-state aggregator + Sparkline primitive + labels.ts agents.* keys (wave 1)
+- [x] 05-02-PLAN.md — BuildRail left-nav + /build layout rewrite + stub routes for /build/workflows + /build/changes (wave 1)
+- [x] 05-03-PLAN.md — /build/agents page + AgentGrid + AgentCard (active + idle variants + drift indicator) (wave 2)
+- [x] 05-04-PLAN.md — AgentDetailDrawer (persona MD + model override + drift banner + lifetime stats + recent invocations) + integration + a11y + Phase 5 VERIFICATION (wave 3)
 
 ## Phase 6: Workflows + Queue
 
