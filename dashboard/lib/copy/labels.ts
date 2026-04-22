@@ -324,6 +324,44 @@ export interface Labels {
   floorExplainForge: string;
   floorReturnToMain: string;
 
+  // === Phase 12: Empty states (EMP-03) ===
+  emptyBuildHomeHeading: string;
+  emptyBuildHomeBody: string;
+  emptyBuildHomeCtaPlan: string;
+  emptyBuildHomeCtaJob: string;
+
+  emptyAgentsHeading: string;
+  emptyAgentsBody: string;
+  emptyAgentsCtaJob: string;
+
+  emptyWorkflowsHeading: string;
+  emptyWorkflowsBody: string;
+  emptyWorkflowsCtaRecipe: string;
+
+  emptyQueueHeading: string;
+  emptyQueueBody: string;
+  emptyQueueCtaJob: string;
+  emptyQueueCtaWorkflows: string;
+
+  emptyChangesHeading: string;
+  emptyChangesBody: string;
+  emptyChangesCtaClear: string;
+
+  emptyMetricsPanelHeading: string;
+  emptyMetricsPanelBody: string;
+  emptyMetricsPanelCtaTest: string;
+
+  emptyMemoryBrowseHeading: string;
+  emptyMemoryBrowseBody: string;
+  emptyMemoryBrowseCtaRegenerate: string;
+
+  emptyMemoryGraphHeading: string;
+  emptyMemoryGraphBody: string;
+
+  emptyPlanStubHeading: string;
+  emptyPlanStubBody: string;
+  emptyPlanStubCtaBuild: string;
+
   // === Phase 9: Chat ===
   chatRailCollapsedAria: string;
   chatRailExpandAria: string;
@@ -644,6 +682,44 @@ const FOUNDER: Labels = {
   floorExplainHub: "Nexus routes work to agents — merge fireworks appear here",
   floorExplainForge: "Forge builds code — pulses while building; red X if Sentinel rejects",
   floorReturnToMain: "Back to main window",
+
+  // === Phase 12: Empty states — FOUNDER copy ===
+  emptyBuildHomeHeading: "Nothing in flight yet.",
+  emptyBuildHomeBody: "Start a feature in Plan, or send a quick job straight to CAE.",
+  emptyBuildHomeCtaPlan: "Go to Plan",
+  emptyBuildHomeCtaJob: "New job",
+
+  emptyAgentsHeading: "No agent activity yet.",
+  emptyAgentsBody: "Send a job and you'll see which agents pick it up here.",
+  emptyAgentsCtaJob: "Send a job",
+
+  emptyWorkflowsHeading: "No recipes yet.",
+  emptyWorkflowsBody: "Describe what you want to automate — CAE will draft a recipe.",
+  emptyWorkflowsCtaRecipe: "New recipe",
+
+  emptyQueueHeading: "Nothing queued.",
+  emptyQueueBody: "CAE's inbox is clear. Send a job or run a recipe.",
+  emptyQueueCtaJob: "New job",
+  emptyQueueCtaWorkflows: "Open recipes",
+
+  emptyChangesHeading: "Nothing matches this filter.",
+  emptyChangesBody: "Clear the filter to see everything that's shipped.",
+  emptyChangesCtaClear: "Clear filter",
+
+  emptyMetricsPanelHeading: "No numbers yet.",
+  emptyMetricsPanelBody: "Once CAE runs a few jobs, this panel fills in.",
+  emptyMetricsPanelCtaTest: "Send a test job",
+
+  emptyMemoryBrowseHeading: "Nothing in memory yet.",
+  emptyMemoryBrowseBody: "The memory index builds as CAE learns. Regenerate to pull the latest notes.",
+  emptyMemoryBrowseCtaRegenerate: "Regenerate",
+
+  emptyMemoryGraphHeading: "Graph not built yet.",
+  emptyMemoryGraphBody: "Click Regenerate to draw the map of what CAE knows.",
+
+  emptyPlanStubHeading: "Plan mode ships soon.",
+  emptyPlanStubBody: "For now, do your planning in Build.",
+  emptyPlanStubCtaBuild: "Go to Build",
 
   // === Phase 9: Chat ===
   chatRailCollapsedAria: "Open chat",
@@ -969,6 +1045,44 @@ const DEV: Labels = {
   floorExplainHub: "Nexus routes work to agents — merge fireworks appear here",
   floorExplainForge: "Forge builds code — pulses while building; red X if Sentinel rejects",
   floorReturnToMain: "Return to main window",
+
+  // === Phase 12: Empty states — DEV copy ===
+  emptyBuildHomeHeading: "No active phases.",
+  emptyBuildHomeBody: "No running tasks, no recent wave activity.",
+  emptyBuildHomeCtaPlan: "Go to Plan",
+  emptyBuildHomeCtaJob: "New job",
+
+  emptyAgentsHeading: "agents.length === 0",
+  emptyAgentsBody: "No forge_end events yet. Delegate a task to populate.",
+  emptyAgentsCtaJob: "Send a job",
+
+  emptyWorkflowsHeading: "No workflows defined.",
+  emptyWorkflowsBody: "POST /api/workflows to create one.",
+  emptyWorkflowsCtaRecipe: "New workflow",
+
+  emptyQueueHeading: "All KANBAN columns empty.",
+  emptyQueueBody: "queue.columns are all length 0.",
+  emptyQueueCtaJob: "Delegate",
+  emptyQueueCtaWorkflows: "Workflows",
+
+  emptyChangesHeading: "No matching commits.",
+  emptyChangesBody: "Project filter matched 0 events.",
+  emptyChangesCtaClear: "Clear filter",
+
+  emptyMetricsPanelHeading: "Samples empty.",
+  emptyMetricsPanelBody: "No token_usage / forge_end events yet.",
+  emptyMetricsPanelCtaTest: "Send a test job",
+
+  emptyMemoryBrowseHeading: "Tree empty.",
+  emptyMemoryBrowseBody: "/api/memory/tree returned 0 nodes.",
+  emptyMemoryBrowseCtaRegenerate: "Regenerate",
+
+  emptyMemoryGraphHeading: "graph.json missing.",
+  emptyMemoryGraphBody: "Run graphify --mode fast to generate.",
+
+  emptyPlanStubHeading: "Phase 10 stub.",
+  emptyPlanStubBody: "Plan mode not yet implemented.",
+  emptyPlanStubCtaBuild: "Go to Build",
 
   // === Phase 9: Chat ===
   chatRailCollapsedAria: "toggle chat rail",
