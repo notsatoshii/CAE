@@ -1,6 +1,8 @@
 "use client";
 
+import React from "react";
 import Link from "next/link";
+import { AlertTriangle, ShieldAlert, FileText, CheckCircle2 } from "lucide-react";
 import { useStatePoll } from "@/lib/hooks/use-state-poll";
 import { useDevMode } from "@/lib/providers/dev-mode";
 import { labelFor } from "@/lib/copy/labels";
@@ -9,10 +11,10 @@ import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { NeedsYouItem } from "@/lib/cae-home-state";
 
-const ICON: Record<NeedsYouItem["type"], string> = {
-  blocked: "⚠",
-  dangerous: "🛡",
-  plan_review: "📝",
+const ICON_COMPONENT: Record<NeedsYouItem["type"], React.ComponentType<{ className?: string; size?: number; "aria-hidden"?: boolean }>> = {
+  blocked: AlertTriangle,
+  dangerous: ShieldAlert,
+  plan_review: FileText,
 };
 
 export function NeedsYouList() {
@@ -29,8 +31,9 @@ export function NeedsYouList() {
           {t.needsYouHeading}
         </h2>
         <Card>
-          <CardContent className="py-6 text-sm text-[color:var(--text-muted)]">
-            {t.needsYouEmpty}
+          <CardContent className="py-6 flex items-center gap-2 text-sm text-[color:var(--text-muted)]">
+            <CheckCircle2 size={16} className="text-[color:var(--success)] shrink-0" aria-hidden />
+            <span>{t.needsYouEmpty}</span>
           </CardContent>
         </Card>
       </section>
@@ -79,9 +82,15 @@ function NeedsYouRow({ item, index, t, dev }: RowProps) {
       data-type={item.type}
       className="flex items-center gap-3 py-2 text-sm"
     >
-      <span className="text-base leading-none" aria-hidden="true">
-        {ICON[item.type]}
-      </span>
+      {React.createElement(ICON_COMPONENT[item.type], {
+        size: 16,
+        "aria-hidden": true,
+        className: item.type === "blocked"
+          ? "text-[color:var(--warning)] shrink-0"
+          : item.type === "dangerous"
+          ? "text-[color:var(--danger)] shrink-0"
+          : "text-[color:var(--text-muted)] shrink-0",
+      })}
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2 flex-wrap">
           <span className="font-mono text-xs text-[color:var(--text-muted)]">

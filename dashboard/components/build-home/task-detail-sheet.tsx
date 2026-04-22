@@ -179,7 +179,7 @@ export function TaskDetailSheet() {
               <summary className="text-xs font-semibold uppercase tracking-wide text-[color:var(--text-muted)] mb-2 cursor-pointer list-none">
                 {t.sheetSectionMemory}
               </summary>
-              <p className="text-sm text-[color:var(--text-dim)] italic mt-2">
+              <p className="text-sm text-[color:var(--text-muted)] italic mt-2">
                 {t.sheetMemoryStub}
               </p>
             </details>

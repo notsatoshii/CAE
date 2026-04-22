@@ -81,7 +81,8 @@ export function LivenessChip() {
         aria-hidden
       />
       <span className="text-[color:var(--text-muted)]">{label}</span>
-      <span className="text-[color:var(--text-dim)]">· {rtt}</span>
+      <span aria-hidden="true" className="text-[color:var(--text-dim)]">·</span>
+      <span className="text-[color:var(--text-muted)]">{rtt}</span>
     </button>
   );
 }

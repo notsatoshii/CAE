@@ -30,7 +30,7 @@ export function TopNav({ session }: TopNavProps) {
       {/* Left cluster: wordmark + mode toggle */}
       <div className="flex items-center gap-3">
         <span className="text-sm font-semibold tracking-tight text-[color:var(--text)]">CAE</span>
-        <span className="text-[color:var(--text-dim)]">·</span>
+        <span className="text-[color:var(--text-dim)]" aria-hidden="true">·</span>
         <ModeToggle />
       </div>
 

@@ -24,6 +24,7 @@
  */
 
 import { useState } from "react";
+import { AlertTriangle } from "lucide-react";
 import { useStatePoll } from "@/lib/hooks/use-state-poll";
 import type { StateResponse } from "@/lib/hooks/use-state-poll";
 
@@ -108,13 +109,12 @@ export function AlertBanner() {
     >
       {/* Icon + copy */}
       <div className="flex items-center gap-2 min-w-0">
-        <span
+        <AlertTriangle
           aria-hidden
+          size={16}
           style={{ color: "var(--warning, #f59e0b)" }}
-          className="text-base flex-shrink-0"
-        >
-          ⚠
-        </span>
+          className="flex-shrink-0"
+        />
         <span className="truncate">{copy}</span>
       </div>
 
