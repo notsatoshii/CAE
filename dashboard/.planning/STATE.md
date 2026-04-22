@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v0.1
 milestone_name: milestone
 status: planning
-stopped_at: Completed 13-02-PLAN.md
-last_updated: "2026-04-22T19:54:40.905Z"
+stopped_at: Completed 13-03-PLAN.md
+last_updated: "2026-04-22T20:05:14.601Z"
 progress:
   total_phases: 14
   completed_phases: 10
   total_plans: 83
-  completed_plans: 60
-  percent: 72
+  completed_plans: 61
+  percent: 73
 ---
 
 # cae-dashboard — Project State
@@ -29,8 +29,15 @@ progress:
 Phase 10 — Plan mode: Projects / PRDs / Roadmaps / UAT (`/plan/*` routes wrapping Shift).
 Plan 10-04 complete (Wave 1 closed). Next: plan 10-05 (API routes).
 
-**Last session:** 2026-04-22T19:54:40.900Z
-**Stopped at:** Completed 13-02-PLAN.md
+**Last session:** 2026-04-22T20:05:14.592Z
+**Stopped at:** Completed 13-03-PLAN.md
+
+## Key Decisions (Phase 13 — Plan 03)
+
+- **13-03:** WR-01 confirmed via static code analysis — 4 randomUUID() calls in send/route.ts stream (lines 165/213/222/273) overwrite client lastSeenMsgId (chat-panel.tsx:200); unread always 0 after reload. Fix in plan 13-04.
+- **13-03:** verify.py SOURCE-ONLY mode: all 17 panels produce source values; 14 AUTH-DEFERRED pending authsetup.sh; 2 UNVERIFIABLE (in_flight, wave_current — derivation requires re-implementing cae-phase-detail.ts).
+- **13-03:** Pre-auth discovery: circuit-breakers.jsonl forge_end events have no input_tokens/output_tokens — recent ledger token sums always 0 (P1 logging gap, not aggregator bug; fix in plan 13-05).
+- **13-03:** rollup.tokens_today vs breakers token sum has structural mismatch risk: API route tails 200 rows, cae-home-state.ts tails 500 rows — can diverge on high-activity days (P0 auth-deferred).
 
 ## Key Decisions (Phase 13 — Plan 02)
 
