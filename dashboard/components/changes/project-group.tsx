@@ -49,7 +49,7 @@ export function ProjectGroup({ group }: { group: ProjectGroupData }) {
           </span>
           <span
             aria-hidden
-            className="text-[color:var(--text-dim,#5a5a5c)] transition-transform group-data-[panel-open]:rotate-180"
+            className="text-[color:var(--text-muted,#8a8a8c)] transition-transform group-data-[panel-open]:rotate-180"
           >
             &#9662;
           </span>

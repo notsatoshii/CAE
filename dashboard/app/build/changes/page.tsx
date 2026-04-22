@@ -24,7 +24,7 @@ export default async function ChangesPage() {
   return (
     <main
       data-testid="changes-page"
-      className="mx-auto max-w-5xl p-8"
+      className="mx-auto max-w-5xl p-8 flex flex-col gap-0"
     >
       <ChangesClient />
     </main>

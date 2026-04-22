@@ -43,7 +43,7 @@ export function DevModeDetail({ event }: { event: ChangeEvent }) {
       ) : null}
       {event.commits.length > 0 ? (
         <div className="pt-1">
-          <div className="text-[color:var(--text-dim,#5a5a5c)]">
+          <div className="text-[color:var(--text-muted,#8a8a8c)]">
             {L.changesDevCommitsHeading(event.commits.length)}
           </div>
           <ul className="list-inside list-disc space-y-0.5">

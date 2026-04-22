@@ -222,8 +222,17 @@ export function WorkflowForm({ mode, initial }: WorkflowFormProps) {
       {/* Right: step graph preview + name input — always visible */}
       <aside data-testid="workflow-form-preview" className="space-y-2">
         <h3 className="text-sm font-semibold">{t.workflowsStepGraphHeading}</h3>
-        <div className="rounded-md border border-[color:var(--border,#1f1f22)] bg-[color:var(--surface,#121214)] p-4 min-h-[200px]">
-          <StepGraph spec={spec} />
+        <div className="rounded-lg border border-[color:var(--border,#1f1f22)] bg-[color:var(--surface,#121214)] p-6 min-h-[200px] flex flex-col">
+          {spec ? (
+            <StepGraph spec={spec} />
+          ) : (
+            /* Empty state: no workflow selected / YAML invalid */
+            <div className="flex flex-1 flex-col items-center justify-center gap-2 text-center">
+              <p className="text-[13px] text-[color:var(--text-muted,#8a8a8c)]">
+                Enter workflow details to preview the step graph
+              </p>
+            </div>
+          )}
         </div>
         {/* Name field lives outside the dev-mode gate so founder-mode
             users can rename a drafted recipe without flipping dev-mode. */}

@@ -28,8 +28,8 @@ export default async function WorkflowsPage() {
 
   return (
     <main data-testid="workflows-page" className="p-8 max-w-4xl">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-medium">{t.workflowsPageHeading}</h1>
+      <div className="flex items-center justify-between mb-8">
+        <h1 className="text-[20px] font-semibold">{t.workflowsPageHeading}</h1>
         <Link
           href="/build/workflows/new"
           data-testid="workflows-create-button"

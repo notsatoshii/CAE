@@ -33,8 +33,14 @@ function emptyQueueState(): QueueState {
       stuck: [],
       shipped: [],
     },
-    generated_at: new Date().toISOString(),
-    cache_ttl_ms: 5000,
+    counts: {
+      waiting: 0,
+      in_progress: 0,
+      double_checking: 0,
+      stuck: 0,
+      shipped: 0,
+    },
+    fetchedAt: Date.now(),
   }
 }
 

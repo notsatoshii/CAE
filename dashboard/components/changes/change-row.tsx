@@ -40,18 +40,19 @@ export function ChangeRow({ event }: { event: ChangeEvent }) {
   }, [dev]);
 
   return (
-    <div
+    <li
       data-testid="change-row"
-      className="group flex flex-col gap-1 py-2"
+      className="group flex flex-col gap-1 pl-4 py-3"
     >
       <div className="flex flex-wrap items-baseline gap-2">
-        <span className="text-sm text-[color:var(--text,#e5e5e5)]">
+        {/* Commit msg / prose: 15px semibold = hierarchy hero */}
+        <span className="text-[15px] font-semibold text-[color:var(--text,#e5e5e5)]">
           {event.prose}
         </span>
         <button
           type="button"
           onClick={() => setOpenTech((v) => !v)}
-          className="text-xs text-[color:var(--text-dim,#5a5a5c)] underline-offset-2 hover:text-[color:var(--text-muted,#8a8a8c)] hover:underline"
+          className="text-xs text-[color:var(--text-muted,#8a8a8c)] underline-offset-2 hover:text-[color:var(--text,#e5e5e5)] hover:underline"
           data-testid="change-row-tech-toggle"
           aria-expanded={openTech}
         >
@@ -60,6 +61,6 @@ export function ChangeRow({ event }: { event: ChangeEvent }) {
         <ExplainTooltip text={L.changesExplainDevToggle} />
       </div>
       {openTech ? <DevModeDetail event={event} /> : null}
-    </div>
+    </li>
   );
 }

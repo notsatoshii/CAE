@@ -131,17 +131,18 @@ export function DayGroup({ events }: { events: ChangeEvent[] }) {
   }
 
   return (
-    <div className="space-y-4" data-testid="day-group">
+    <div className="space-y-6" data-testid="day-group">
       {sections.map(({ key, label, evs }) => (
         <div key={key}>
-          <h3 className="mb-2 text-sm font-medium text-[color:var(--text-muted,#8a8a8c)]">
+          <h3 className="mb-3 text-[13px] font-semibold uppercase tracking-wide text-[color:var(--text-muted,#8a8a8c)]">
             {label}
           </h3>
-          <div className="divide-y divide-[color:var(--border,#1f1f22)]">
+          {/* Timeline: border-l-2 vertical line + pl-4 per item for visual rhythm */}
+          <ul className="border-l-2 border-[color:var(--border,#1f1f22)] flex flex-col">
             {evs.map((e) => (
               <ChangeRow key={e.sha} event={e} />
             ))}
-          </div>
+          </ul>
         </div>
       ))}
     </div>
