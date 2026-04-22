@@ -130,6 +130,39 @@ export interface Labels {
   sheetLogTruncatedNote: string;
   sheetLogPauseScroll: string;
   sheetLogResumeScroll: string;
+
+  // === Phase 5: Agents tab ===
+  agentsPageHeading: string;
+  agentsGroupActive: (n: number) => string;
+  agentsGroupRecent: (n: number) => string;
+  agentsGroupDormant: (n: number) => string;
+  agentsGroupEmpty: string;
+  agentsHeadline: (label: string, founder_label: string) => string;
+  agentsStatTokensPerHour: string;
+  agentsStatSuccess: string;
+  agentsStatWall: string;
+  agentsLiveActiveLabel: (n: number) => string;
+  agentsLiveQueuedLabel: (n: number) => string;
+  agentsLive24hLabel: (n: number) => string;
+  agentsIdleLine: (daysInactive: number, lastRunDay: string) => string;
+  agentsIdleNever: string;
+  agentsDriftBanner: (label: string, pct7d: number, pct30d: number) => string;
+  agentsDrawerTitle: string;
+  agentsDrawerPersonaHeading: string;
+  agentsDrawerPersonaMissing: string;
+  agentsDrawerModelOverrideHeading: string;
+  agentsDrawerModelSaveLabel: string;
+  agentsDrawerLifetimeHeading: string;
+  agentsDrawerLifetimeTasks: string;
+  agentsDrawerLifetimeTokens: string;
+  agentsDrawerLifetimeSuccess: string;
+  agentsDrawerLifetimeAvg: string;
+  agentsDrawerTopExpensiveHeading: string;
+  agentsDrawerRecentHeading: string;
+  agentsDrawerRecentEmpty: string;
+  agentsDrawerRecentStatusOk: string;
+  agentsDrawerRecentStatusFail: string;
+  agentsListFailedToLoad: string;
 }
 
 const FOUNDER: Labels = {
@@ -234,6 +267,40 @@ const FOUNDER: Labels = {
   sheetLogTruncatedNote: "…earlier lines truncated",
   sheetLogPauseScroll: "Pause scroll",
   sheetLogResumeScroll: "Resume scroll",
+
+  // === Phase 5: Agents tab ===
+  agentsPageHeading: "The team",
+  agentsGroupActive: (n) => "Working now (" + n + ")",
+  agentsGroupRecent: (n) => "Recently active (" + n + ")",
+  agentsGroupDormant: (n) => "Quiet (" + n + ")",
+  agentsGroupEmpty: "No one here right now.",
+  agentsHeadline: (label, founder_label) => label + " — " + founder_label,
+  agentsStatTokensPerHour: "tokens / hour",
+  agentsStatSuccess: "success rate",
+  agentsStatWall: "avg task time",
+  agentsLiveActiveLabel: (n) => n + " working",
+  agentsLiveQueuedLabel: (n) => n + " waiting",
+  agentsLive24hLabel: (n) => n + " / day",
+  agentsIdleLine: (d, day) => "inactive " + d + "d · last run " + day,
+  agentsIdleNever: "never run",
+  agentsDriftBanner: (label, p7, _p30) =>
+    label + " is having a rough week — success rate dropped to " + Math.round(p7 * 100) + "%",
+  agentsDrawerTitle: "Agent details",
+  agentsDrawerPersonaHeading: "About",
+  agentsDrawerPersonaMissing: "No notes on file yet.",
+  agentsDrawerModelOverrideHeading: "Which model?",
+  agentsDrawerModelSaveLabel: "Save",
+  agentsDrawerLifetimeHeading: "All-time",
+  agentsDrawerLifetimeTasks: "tasks done",
+  agentsDrawerLifetimeTokens: "tokens used",
+  agentsDrawerLifetimeSuccess: "getting it right",
+  agentsDrawerLifetimeAvg: "avg time per task",
+  agentsDrawerTopExpensiveHeading: "Priciest jobs",
+  agentsDrawerRecentHeading: "Recent jobs",
+  agentsDrawerRecentEmpty: "No jobs yet.",
+  agentsDrawerRecentStatusOk: "shipped",
+  agentsDrawerRecentStatusFail: "stuck",
+  agentsListFailedToLoad: "Couldn't load the team. Try refreshing.",
 };
 
 const DEV: Labels = {
@@ -338,6 +405,45 @@ const DEV: Labels = {
   sheetLogTruncatedNote: "…earlier lines truncated (500-line cap)",
   sheetLogPauseScroll: "Pause",
   sheetLogResumeScroll: "Resume",
+
+  // === Phase 5: Agents tab ===
+  agentsPageHeading: "Agents",
+  agentsGroupActive: (n) => "Active (" + n + ")",
+  agentsGroupRecent: (n) => "Recently used (" + n + ")",
+  agentsGroupDormant: (n) => "Dormant (" + n + ")",
+  agentsGroupEmpty: "(empty)",
+  agentsHeadline: (label, _founder_label) => label.toUpperCase(),
+  agentsStatTokensPerHour: "tok/hr",
+  agentsStatSuccess: "success 7d",
+  agentsStatWall: "avg wall",
+  agentsLiveActiveLabel: (n) => n + " active",
+  agentsLiveQueuedLabel: (n) => n + " queued",
+  agentsLive24hLabel: (n) => n + "/d",
+  agentsIdleLine: (d, day) => "inactive " + d + "d · last " + day,
+  agentsIdleNever: "no runs",
+  agentsDriftBanner: (label, p7, p30) =>
+    label.toLowerCase() +
+    " success rate trending down: " +
+    Math.round(p7 * 100) +
+    "% vs 30d baseline " +
+    Math.round(p30 * 100) +
+    "% (threshold 85%)",
+  agentsDrawerTitle: "Agent detail",
+  agentsDrawerPersonaHeading: "Persona",
+  agentsDrawerPersonaMissing: "No persona file",
+  agentsDrawerModelOverrideHeading: "Model override",
+  agentsDrawerModelSaveLabel: "Save",
+  agentsDrawerLifetimeHeading: "Lifetime",
+  agentsDrawerLifetimeTasks: "tasks total",
+  agentsDrawerLifetimeTokens: "tokens total",
+  agentsDrawerLifetimeSuccess: "success rate",
+  agentsDrawerLifetimeAvg: "avg wall",
+  agentsDrawerTopExpensiveHeading: "Top 5 by tokens",
+  agentsDrawerRecentHeading: "Last 50 invocations",
+  agentsDrawerRecentEmpty: "No invocations",
+  agentsDrawerRecentStatusOk: "ok",
+  agentsDrawerRecentStatusFail: "fail",
+  agentsListFailedToLoad: "/api/agents failed",
 };
 
 export function labelFor(dev: boolean): Labels {
