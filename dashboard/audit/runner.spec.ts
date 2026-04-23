@@ -28,7 +28,7 @@
  *   whatever we have. This matches the Phase 13 screenshot harness
  *   convention.
  */
-import { test, expect, type Cookie } from "@playwright/test"
+import { test, expect, type Cookie, type Page } from "@playwright/test"
 import { mkdir, writeFile } from "node:fs/promises"
 import { dirname, join } from "node:path"
 import { ROUTES, type PersonaId } from "./routes"
@@ -37,6 +37,46 @@ import { extractTruth } from "./scrape/data-truth"
 import { clickwalkRoute } from "./scrape/clickwalk"
 
 const FIXTURE = process.env.FIXTURE ?? "healthy"
+const TRUTH_SETTLE_MS = Number(process.env.AUDIT_TRUTH_SETTLE_MS ?? 6000)
+
+// Lazily-loaded expected-truth map for the active fixture. SSE-driven
+// panels render `data-truth=".loading"` first and flip to `.healthy=yes`
+// once the first fetch lands — screenshotting before the flip makes the
+// truth pillar score 1/5 even when the product is correct. We wait for
+// at least one expected `.healthy=yes` marker to render before snapping.
+// Bounded timeout; if SSE never fires we still capture what rendered.
+let expectedTruthCache: Record<string, string> | null = null
+async function getExpectedTruth(): Promise<Record<string, string>> {
+  if (expectedTruthCache) return expectedTruthCache
+  const mod = (await import(`./fixtures/${FIXTURE}`)) as {
+    readExpectedTruth?: () => Record<string, string>
+  }
+  expectedTruthCache = mod.readExpectedTruth?.() ?? {}
+  return expectedTruthCache
+}
+
+async function waitForTruthSettled(page: Page, timeoutMs: number): Promise<void> {
+  const expected = await getExpectedTruth()
+  const healthyKeys = Object.entries(expected).filter(
+    ([k, v]) => k.endsWith(".healthy") && v === "yes",
+  )
+  if (healthyKeys.length === 0) return
+  const deadline = Date.now() + timeoutMs
+  for (const [key, val] of healthyKeys) {
+    const remaining = deadline - Date.now()
+    if (remaining <= 0) break
+    try {
+      await page
+        .locator(`[data-truth="${key}"]`)
+        .filter({ hasText: val })
+        .first()
+        .waitFor({ state: "attached", timeout: remaining })
+      return
+    } catch {
+      // Try next key — the panel for this one may not be on this route.
+    }
+  }
+}
 const BASE_URL = process.env.AUDIT_BASE_URL ?? "http://localhost:3002"
 const SECRET = process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET
 
@@ -138,6 +178,14 @@ for (const route of ROUTES) {
           name: "NavigationError",
           message: err instanceof Error ? err.message : String(err),
         })
+      }
+
+      // ── Wait for SSE-driven panels to flip from `.loading` to their
+      //    expected `.healthy=yes` values before screenshot. Without this,
+      //    truth pillar scores 1/5 on cells that would otherwise be 4-5.
+      //    Bounded — if nothing settles we still capture what rendered. ─
+      if (navOk) {
+        await waitForTruthSettled(page, TRUTH_SETTLE_MS).catch(() => undefined)
       }
 
       // ── Screenshot ──────────────────────────────────────────────────
