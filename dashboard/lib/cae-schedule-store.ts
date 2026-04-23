@@ -19,11 +19,24 @@ function getTasksFilePath(): string {
 const ID_RE = /^[a-z0-9-]+$/
 
 /**
+ * CR-04 defense-in-depth: buildplan paths read from the registry (or written
+ * via the API) must only contain safe filesystem path characters. This is the
+ * same allowlist used in the API route — if a value somehow bypassed the API
+ * check (hand-edited file, legacy row, future schema change), the validator
+ * here ensures the watcher never receives a path with shell metacharacters.
+ *
+ * Allowed: A-Z a-z 0-9 _ . / -
+ * Blocked: space ' " ; $ ` & | ( ) < > \ * ? ~ newline and all others
+ */
+const BUILDPLAN_RE = /^[A-Za-z0-9_./-]+$/
+
+/**
  * Validate that `obj` conforms to the ScheduledTask shape.
  * Throws a descriptive error when any field is wrong.
  *
  * Security: validates cron via CronExpressionParser (throws on bad input)
  * and timezone via Intl.supportedValuesOf (T-14-03-02).
+ * CR-04: validates buildplan against BUILDPLAN_RE (no shell metacharacters).
  */
 function validateScheduledTask(obj: unknown): ScheduledTask {
   if (typeof obj !== "object" || obj === null) {
@@ -53,6 +66,10 @@ function validateScheduledTask(obj: unknown): ScheduledTask {
   }
   if (typeof t.buildplan !== "string" || !t.buildplan) {
     throw new Error(`invalid buildplan: "${t.buildplan}"`)
+  }
+  // CR-04: reject shell metacharacters in buildplan (defense-in-depth)
+  if (!BUILDPLAN_RE.test(t.buildplan)) {
+    throw new Error(`buildplan contains invalid characters: "${t.buildplan}"`)
   }
   if (typeof t.enabled !== "boolean") {
     throw new Error(`invalid enabled: "${t.enabled}"`)

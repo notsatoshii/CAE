@@ -10,6 +10,16 @@ import type { Role } from "@/lib/cae-types"
 export const runtime = "nodejs"
 
 /**
+ * CR-04: Allowlist for buildplan paths. Only alphanumeric, slash, dot, underscore,
+ * and hyphen are permitted. This blocks all shell metacharacters: `'`, `"`, `;`,
+ * `$`, backtick, space, newline, `&`, `|`, `(`, `)`, `<`, `>`, `\`, `*`, `?`, `~`.
+ *
+ * Applied AFTER path.normalize and the existing absolute-path + CAE_ROOT checks
+ * (defense-in-depth — all three layers must pass).
+ */
+const BUILDPLAN_RE = /^[A-Za-z0-9_./-]+$/
+
+/**
  * GET /api/schedule
  * Returns all scheduled tasks from the registry.
  */
@@ -49,6 +59,8 @@ function generateId(nl: string): string {
  * Security:
  *   - operator role required (T-14-04 defense-in-depth)
  *   - buildplan is an absolute path under CAE_ROOT (T-14-03-01)
+ *   - buildplan must match BUILDPLAN_RE (CR-04: no shell metacharacters)
+ *   - WR-01: caeRoot check uses trailing separator to prevent prefix-escape
  */
 export async function POST(req: NextRequest) {
   // Defense-in-depth: re-check role in handler (STRIDE T-14-04-03)
@@ -74,13 +86,27 @@ export async function POST(req: NextRequest) {
   // T-14-03-01: path traversal prevention
   const caeRoot = process.env.CAE_ROOT ?? "/home/cae/ctrl-alt-elite"
   const normalizedBp = path.normalize(body.buildplan)
+
+  // WR-01: add trailing separator so "/home/cae/ctrl-alt-elite-evil/..." does not pass
+  const caeRootWithSep = caeRoot.endsWith(path.sep) ? caeRoot : caeRoot + path.sep
+
   if (
     !path.isAbsolute(normalizedBp) ||
-    !normalizedBp.startsWith(caeRoot) ||
+    !(normalizedBp === caeRoot || normalizedBp.startsWith(caeRootWithSep)) ||
     normalizedBp.includes("..")
   ) {
     return NextResponse.json(
       { error: "buildplan must be an absolute path under CAE_ROOT" },
+      { status: 400 }
+    )
+  }
+
+  // CR-04: reject shell metacharacters in buildplan path.
+  // The watcher interpolates buildplan into a shell string; any character outside
+  // the allowlist could enable RCE when the watcher runs.
+  if (!BUILDPLAN_RE.test(normalizedBp)) {
+    return NextResponse.json(
+      { error: "buildplan contains invalid characters" },
       { status: 400 }
     )
   }

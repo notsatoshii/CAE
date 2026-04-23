@@ -7,6 +7,10 @@
 #
 # Security:
 #   - Task id validated at write-time (^[a-z0-9-]+$); watcher trusts registry.
+#   - buildplan validated at write-time (BUILDPLAN_RE); no shell metacharacters.
+#   - CR-04: tmux command uses `bash -c '...' _ "$1" "$2" "$3"` positional arg
+#     pattern — buildplan, id, and log path are passed as argv, never interpolated
+#     into the shell command string.
 #   - flock -n per-task prevents double-fire when runs overlap (pitfall 7).
 #   - lastRun written BEFORE spawn to prevent duplicate dispatch on crash.
 #
@@ -125,14 +129,27 @@ while IFS= read -r task; do
     # Spawn the buildplan execution
     if command -v tmux >/dev/null 2>&1; then
       # Spawn via tmux so /api/tail can stream logs (Phase 2 pattern)
+      #
+      # CR-04 fix: buildplan, id, and log path are passed as positional arguments
+      # to an inner `bash -c` script, NOT interpolated into the command string.
+      # This eliminates the shell-injection vector regardless of path content.
+      #
+      # Argument mapping inside the inner script:
+      #   $0 = script name placeholder (_)
+      #   $1 = CAE_BIN
+      #   $2 = buildplan path
+      #   $3 = task id
+      #   $4 = log file path
       session="scheduler-${id}"
       tmux kill-session -t "$session" 2>/dev/null || true
       if [[ -n "$CAE_BIN" ]]; then
-        tmux new-session -d -s "$session" \
-          "\"$CAE_BIN\" execute-buildplan < '$buildplan'; echo \"{\\\"ts\\\":\$(date +%s),\\\"event\\\":\\\"complete\\\",\\\"id\\\":\\\"$id\\\"}\" >> '$LOG'"
+        tmux new-session -d -s "$session" -- \
+          bash -c '"$1" execute-buildplan < "$2"; echo "{\"ts\":$(date +%s),\"event\":\"complete\",\"id\":\"$3\"}" >> "$4"' \
+          _ "$CAE_BIN" "$buildplan" "$id" "$LOG"
       fi
     else
       # No-tmux fallback: run in background subshell
+      # The fallback uses "$buildplan" as a quoted variable — already safe.
       if [[ -n "$CAE_BIN" ]]; then
         (
           "$CAE_BIN" execute-buildplan < "$buildplan" >> "$LOG" 2>&1

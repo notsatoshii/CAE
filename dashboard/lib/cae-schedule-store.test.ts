@@ -157,3 +157,42 @@ describe("cae-schedule-store — toggleTask", () => {
     expect(tasks[0].enabled).toBe(true)
   })
 })
+
+// ─── CR-04 regression: buildplan shell-metacharacter rejection ────────────────
+describe("CR-04: writeTask rejects buildplan paths with shell metacharacters", () => {
+  it("CR-04a: rejects buildplan with single-quote (RCE vector)", async () => {
+    const { writeTask } = await getStore()
+    const task = makeTask({ buildplan: "/home/cae/ctrl-alt-elite/ok'; touch /tmp/pwned; echo '" })
+    await expect(writeTask(task)).rejects.toThrow(/invalid characters/)
+  })
+
+  it("CR-04b: rejects buildplan with semicolon", async () => {
+    const { writeTask } = await getStore()
+    const task = makeTask({ buildplan: "/home/cae/ctrl-alt-elite/ok;id" })
+    await expect(writeTask(task)).rejects.toThrow(/invalid characters/)
+  })
+
+  it("CR-04c: rejects buildplan with dollar-sign (command substitution)", async () => {
+    const { writeTask } = await getStore()
+    const task = makeTask({ buildplan: "/home/cae/ctrl-alt-elite/$(id)" })
+    await expect(writeTask(task)).rejects.toThrow(/invalid characters/)
+  })
+
+  it("CR-04d: rejects buildplan with space", async () => {
+    const { writeTask } = await getStore()
+    const task = makeTask({ buildplan: "/home/cae/ctrl-alt-elite/path with space" })
+    await expect(writeTask(task)).rejects.toThrow(/invalid characters/)
+  })
+
+  it("CR-04e: rejects buildplan with backtick", async () => {
+    const { writeTask } = await getStore()
+    const task = makeTask({ buildplan: "/home/cae/ctrl-alt-elite/`id`" })
+    await expect(writeTask(task)).rejects.toThrow(/invalid characters/)
+  })
+
+  it("CR-04f: accepts valid buildplan path (alphanumeric + /._-)", async () => {
+    const { writeTask } = await getStore()
+    const task = makeTask({ buildplan: "/home/cae/ctrl-alt-elite/tasks/deploy_v2.md" })
+    await expect(writeTask(task)).resolves.toBeUndefined()
+  })
+})
