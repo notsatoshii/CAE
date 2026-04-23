@@ -1,0 +1,4 @@
+=== herald post-commit 2026-04-23T13:09:00Z ===
+=== commit: 243f107 feat(liveness/class3C): annotate /build subroutes ===
+=== changed: dashboard/app/build/admin/roles/role-editor.tsx dashboard/app/build/changes/changes-client.tsx dashboard/app/build/queue/queue-kanban-client.tsx dashboard/app/build/schedule/schedule-client.tsx dashboard/app/build/security/audit/page.tsx dashboard/app/build/security/secrets/page.tsx dashboard/app/build/security/skills/page.tsx dashboard/app/build/skills/[name]/page.tsx dashboard/app/build/skills/skills-client.tsx dashboard/app/build/workflows/[slug]/page.tsx dashboard/app/build/workflows/new/page.tsx dashboard/app/build/workflows/workflows-list-client.tsx  ===
+Herald --fast spawning (changelog) → CHANGELOG.md

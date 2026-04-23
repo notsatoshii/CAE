@@ -1,0 +1,4 @@
+=== herald post-commit 2026-04-23T12:53:09Z ===
+=== commit: c0f5468 feat(liveness/class3A): annotate metrics, memory, chat surfaces ===
+=== changed: dashboard/components/chat/chat-mirror.tsx dashboard/components/chat/chat-panel.tsx dashboard/components/chat/chat-rail.tsx dashboard/components/memory/browse/browse-pane.tsx dashboard/components/memory/browse/search-results.tsx dashboard/components/memory/graph/graph-pane.tsx dashboard/components/metrics/reliability-panel.tsx dashboard/components/metrics/speed-panel.tsx dashboard/components/metrics/spending-panel.tsx dashboard/components/shell/incident-stream.tsx dashboard/components/ui/liveness-panel.test.tsx dashboard/components/ui/liveness-panel.tsx dashboard/components/ui/panel.tsx dashboard/lib/hooks/use-metrics-poll.tsx  ===
+Herald --fast spawning (changelog) → CHANGELOG.md

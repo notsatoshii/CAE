@@ -1,0 +1,4 @@
+=== herald post-commit 2026-04-23T14:16:57Z ===
+=== commit: 601a11f fix(chat/class18): drop claude subprocesses to `cae` user via sudo ===
+=== changed: dashboard/lib/cae-plan-gen.ts dashboard/lib/cae-schedule-parse-llm.ts dashboard/lib/chat-spawn.test.ts dashboard/lib/chat-spawn.ts  ===
+Herald --fast spawning (changelog) → CHANGELOG.md

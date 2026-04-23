@@ -1,0 +1,4 @@
+=== herald post-commit 2026-04-23T14:34:28Z ===
+=== commit: 2ae3cc5 feat(depth/class13d): remaining surfaces + focus-dim + vignettes ===
+=== changed: dashboard/app/build/layout.tsx dashboard/app/globals.css dashboard/app/layout.tsx dashboard/components/chat/chat-rail.tsx dashboard/components/memory/browse/browse-pane.tsx dashboard/components/memory/graph/graph-pane.tsx dashboard/components/memory/graph/node-drawer.tsx dashboard/components/metrics/reliability-panel.tsx dashboard/components/metrics/speed-panel.tsx dashboard/components/metrics/spending-panel.tsx dashboard/components/shell/sidebar.tsx  ===
+Herald --fast spawning (changelog) → CHANGELOG.md

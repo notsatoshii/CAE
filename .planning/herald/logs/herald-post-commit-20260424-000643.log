@@ -1,0 +1,4 @@
+=== herald post-commit 2026-04-23T15:06:43Z ===
+=== commit: 5d76f00 fix(reliability/class2b): suppress /api/state poll on unauthed surfaces ===
+=== changed: dashboard/lib/hooks/use-state-poll.tsx  ===
+Herald --fast spawning (changelog) → CHANGELOG.md

@@ -1,0 +1,4 @@
+=== herald post-commit 2026-04-23T14:51:14Z ===
+=== commit: e137243 fix(adapter/class18): drop claude to cae user in tmux adapter ===
+=== changed: adapters/claude-code.sh  ===
+Herald --fast spawning (changelog) → CHANGELOG.md

@@ -1,0 +1,18 @@
+PLAN WRITTEN.
+
+---
+
+13 sections, 241 estimated lines. Key decisions:
+
+**Keep intact:** problem (tight), diagram (accurate to `bin/cae` logic), differentiators (all code-backed), FAQ (honest status matters).
+
+**Biggest cuts:**
+- "Built on" sub-subsections → flat bullets (~18 lines saved)
+- "Not a developer? Phase 2 Shift..." → **delete** (Shift not shipped, aspirational in present tense)
+
+**Additions needed:**
+- Herald listed explicitly in "What CAE is" (shipped commit `5c5ee4e`, currently missing from prose)
+- `bin/cae` named as Python orchestrator entrypoint (currently anonymous)
+- Scribe fallback model clarified: `gemini-flash` → Claude Haiku fallback (confirmed `config/agent-models.yaml`)
+
+Grounding verified against: `bin/cae`, `config/agent-models.yaml`, `config/circuit-breakers.yaml`, `config/dangerous-actions.yaml`, `scripts/install.sh`, `CURRENT_STATE.md`, git log.

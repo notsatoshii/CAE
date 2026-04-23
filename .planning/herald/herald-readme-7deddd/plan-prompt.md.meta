@@ -1,0 +1,13 @@
+{
+  "session_id": "herald-readme-7deddd-plan",
+  "tmux_session": "cae-herald-readme-7deddd-plan",
+  "exit_code": 0,
+  "duration_seconds": 140,
+  "model": "claude-sonnet-4-6",
+  "invocation": "wrap:gsd-doc-writer",
+  "effort": "max",
+  "permission_mode": "default",
+  "output_bytes": 891,
+  "error_bytes": 0,
+  "timestamp": "2026-04-17T05:45:13Z"
+}

@@ -1,0 +1,4 @@
+=== herald post-commit 2026-04-23T12:37:26Z ===
+=== commit: 29926f4 audit(C2-wave/class2): API routes return 401 JSON on unauth ===
+=== changed: dashboard/audit/reports/C2-FIX-WAVE.md dashboard/lib/hooks/use-state-poll.tsx dashboard/middleware.ts  ===
+Herald --fast spawning (changelog) → CHANGELOG.md

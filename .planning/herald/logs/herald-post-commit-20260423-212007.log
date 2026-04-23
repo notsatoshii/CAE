@@ -1,0 +1,4 @@
+=== herald post-commit 2026-04-23T12:20:07Z ===
+=== commit: 09e3d00 fix(audit/runner): wait for expected .healthy=yes before screenshot ===
+=== changed: dashboard/audit/runner.spec.ts  ===
+Herald --fast spawning (changelog) → CHANGELOG.md
