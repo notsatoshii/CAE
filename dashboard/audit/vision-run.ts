@@ -168,9 +168,7 @@ export function renderVisionFindingsMd(
 
   // Sort routes by worst-avg score ascending (worst first).
   const routeAvg = (entries: Finding[]): number => {
-    const xs = entries
-      .map((e) => e.result?.score ?? 1)
-      .filter((n): n is number => typeof n === "number")
+    const xs: number[] = entries.map((e) => e.result?.score ?? 1)
     if (xs.length === 0) return 1
     return xs.reduce((a, b) => a + b, 0) / xs.length
   }
