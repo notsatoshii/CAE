@@ -7,7 +7,8 @@
 #   CAE_ROOT         — absolute path to the repo root; default /home/cae/ctrl-alt-elite
 #
 # T-14-01-02: jq uses --arg for typed argument passing (no shell interpolation).
-# printf fallback uses %s format specifiers only — safe for filesystem paths.
+# WR-04: printf fallback now hand-escapes PWD before embedding in JSON string
+#         to prevent malformed JSONL from paths containing `"`, `\`, or newlines.
 #
 # NOTE: This script is designed to be sourced or executed as a PostToolUse hook.
 # Registration in ~/.claude/settings.json happens in Plan 14-05 (Security wave).
@@ -40,10 +41,24 @@ if command -v jq >/dev/null 2>&1; then
     --arg cwd  "$PWD" \
     '{ts:$ts,task:$task,tool:$tool,cwd:$cwd}' >> "$AUDIT"
 else
-  # Fallback: hand-written JSON. PWD is always a filesystem path (no special chars expected).
+  # WR-04: jq is unavailable — hand-escape PWD before embedding in JSON.
+  # Linux paths may legally contain `"`, `\`, or even newlines, any of which
+  # would produce malformed JSONL that the downstream parser silently drops.
+  #
+  # Escape sequence:
+  #   1. Replace every `\` with `\\`  (must come first to avoid double-escaping)
+  #   2. Replace every `"` with `\"`
+  #   3. Refuse to log if PWD contains a literal newline (cannot safely embed)
+  esc_cwd="${PWD//\\/\\\\}"
+  esc_cwd="${esc_cwd//\"/\\\"}"
+  # Bail out silently if PWD contains a newline — better to lose one log entry
+  # than to write a malformed JSONL line that corrupts the audit stream.
+  case "$esc_cwd" in
+    *$'\n'*) exit 0 ;;
+  esac
   # shellcheck disable=SC2059
   printf '{"ts":"%s","task":"%s","tool":"%s","cwd":"%s"}\n' \
-    "$TS" "$CAE_TASK_ID" "$TOOL" "$PWD" >> "$AUDIT"
+    "$TS" "$CAE_TASK_ID" "$TOOL" "$esc_cwd" >> "$AUDIT"
 fi
 
 exit 0
