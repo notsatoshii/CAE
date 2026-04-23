@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v0.1
 milestone_name: milestone
 status: planning
-stopped_at: "Completed 14-06-PLAN.md (Integration tests + verification + docs — Phase 14 close-out)"
-last_updated: "2026-04-23T06:00:00Z"
+stopped_at: "P15 capture harness Cap.1–Cap.8 shipped (session 10) — ready for C1 baseline capture (needs live dev server)"
+last_updated: "2026-04-23T15:00:00Z"
 progress:
   total_phases: 14
   completed_phases: 14
@@ -26,11 +26,14 @@ progress:
 
 ## Active Phase
 
-Phase 10 — Plan mode: Projects / PRDs / Roadmaps / UAT (`/plan/*` routes wrapping Shift).
-Plan 10-04 complete (Wave 1 closed). Next: plan 10-05 (API routes).
+Phase 15 — FE overhaul + screenshot-truth harness.
+Capture harness Cap.1–Cap.8 all shipped (session 10, 2026-04-23).
+Next: C1 baseline capture — needs `pnpm dev` running; then
+`AUTH_SECRET=$(...) audit/run-cycle.sh C1 healthy` writes
+`audit/reports/C1-{SCORES,FINDINGS,SUMMARY}.md`.
 
-**Last session:** 2026-04-23T06:00:00Z
-**Stopped at:** Completed 14-06-PLAN.md (Integration tests + verification + docs — Phase 14 close-out)
+**Last session:** 2026-04-23T15:00:00Z
+**Stopped at:** Cap.8 fix gate + CLI — 1348 vitest tests green, tsc clean
 
 ## Key Decisions (Phase 14 — Plan 06)
 
