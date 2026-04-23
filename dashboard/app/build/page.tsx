@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic"
 import { listProjects } from "@/lib/cae-state"
 import { BuildHomeHeading } from "@/components/shell/build-home-heading"
 import { ProjectSelector } from "./project-selector"
+import { LiveActivityPanel } from "@/components/build-home/live-activity-panel"
 import { RollupStrip } from "@/components/build-home/rollup-strip"
 import { LiveOpsLine } from "@/components/build-home/live-ops-line"
 import { ActivePhaseCards } from "@/components/build-home/active-phase-cards"
@@ -34,6 +35,7 @@ export default async function BuildPage({ searchParams }: BuildPageProps) {
       </div>
 
       <div className="flex flex-col gap-6">
+        <LiveActivityPanel />
         <RollupStrip />
         <LiveOpsLine />
         <ActivePhaseCards />
