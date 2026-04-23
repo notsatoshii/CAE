@@ -240,6 +240,56 @@ CLI refuses `--dangerously-skip-permissions` → hook fails silently.
 
 ---
 
+### Class 13 — UI lacks visual depth (Eric session 12, 22:40 KST)
+
+**Cells affected:** all 408 cells indirectly (hurts craft rollup broadly —
+vision flagged "flat cards", "no separation", "massive empty canvas" on
+many routes; these are depth symptoms).
+**Eric's complaint verbatim:** "the entire UI lacks depth."
+
+**Root cause:** no elevation system. Hairline-border cards + no shadows
++ zero backdrop blur + flat color palette with uniform bg → everything
+reads as a single flat paint layer. Linear/Vercel/Raycast establish
+depth via shadow tokens (close+far layered), backdrop blur on overlays,
+and hover-scale + elevation bump on interactive surfaces.
+
+**Proposed fix:**
+1. **Elevation tokens** — add `--elevation-{0,1,2,3,4}` to
+   `app/globals.css`, each a layered shadow (close tight shadow + longer
+   soft shadow). Use 4 levels: baseline, card, raised-panel, modal,
+   toast/palette.
+2. **Replace hairline borders with elevation-1** on primary cards
+   (build-home rollup, agent cards, metrics panels). Borders stay for
+   inputs + separators only.
+3. **Backdrop blur** on modal/sheet/dialog scrim:
+   `backdrop-filter: blur(12px)`. Glass layering over dimmed underlay.
+4. **Hover states** — cards get `hover:scale-[1.01] + elevation bump
+   1→2`, 150ms ease. Click = `active:scale-[0.99] + elevation drop`.
+5. **Focus-dim** — when sheet/modal opens, underlying page dims to
+   `brightness(0.7) + blur(2px)`. Perceived receding background.
+6. **Gradient vignettes** on long surfaces (rail top/bottom, changes
+   timeline edges) — fade to bg implies content continues in z.
+7. **Layer hierarchy enforced:**
+   - top-bar + rail: `elevation-1`
+   - page content: `elevation-0`
+   - drawers/sheets: `elevation-3`
+   - command palette: `elevation-4`
+   - modals: `elevation-3`
+   - toasts: `elevation-4`
+
+**Expected C4 craft lift:** +0.5 to +1.0 (currently 2.93, target ≥3.8).
+Vision should stop flagging "flat", "no separation", "no hierarchy".
+
+**Scope:** ~15-25 components touched. Split into sub-waves:
+- 13A — elevation tokens + Panel primitive + Card primitive bump
+- 13B — Rail + top-bar elevation + overlay blur + command palette
+- 13C — Build surfaces (home rollup, agent cards, kanban, task sheet)
+- 13D — Remaining (metrics panels, memory cards, chat rail, modals)
+
+**Severity:** P0 aesthetic — Eric flagged explicitly. Ships before C4.
+
+---
+
 ## Execution order
 
 1. **Class 2 commit** (this turn — pending) — API 401 + hook short-circuit.
