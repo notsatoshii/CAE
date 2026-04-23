@@ -13,11 +13,20 @@ import { Button } from "@/components/ui/button";
 export default function PlanPage() {
   const labels = labelFor(false);
   return (
-    <main className="mx-auto flex max-w-3xl flex-col gap-6 p-8">
+    <main
+      className="mx-auto flex max-w-3xl flex-col gap-6 p-8"
+      data-testid="plan-page"
+      data-liveness="empty"
+    >
       {/* Plan is a coming-soon stub; surface deterministic truth markers
           so the Phase 15 harness can score depth/liveness. */}
       <span className="sr-only" data-truth="plan.healthy">yes</span>
       <span className="sr-only" data-truth="plan.empty">yes</span>
+      <span className="sr-only" data-truth="plan.loading">no</span>
+      <span className="sr-only" data-truth="plan-projects.empty">yes</span>
+      <span className="sr-only" data-truth="plan-prds.empty">yes</span>
+      <span className="sr-only" data-truth="plan-roadmaps.empty">yes</span>
+      <span className="sr-only" data-truth="plan-uat.empty">yes</span>
       <span className="sr-only" data-truth="plan.projects-count">0</span>
       <span className="sr-only" data-truth="plan.active-prds-count">0</span>
       <span className="sr-only" data-truth="plan.roadmaps-count">0</span>

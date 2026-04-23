@@ -88,18 +88,46 @@ export default function FloorClient({ cbPath, projectPath, popout }: FloorClient
     authDrifted: metrics.authDrifted,
   };
 
-  // Liveness state for truth scoring — "loading" when heartbeat never arrived,
-  // "healthy" once we have a heartbeat (even stale).
-  const floorLoading = metrics.lastHeartbeatMs === null && metrics.effectsCount === 0;
+  // C2-wave/Class 3: richer liveness state machine for Floor:
+  //   - authDrifted           → error
+  //   - never got heartbeat   → loading
+  //   - no effects rendered   → empty (canvas up, quiet system)
+  //   - last heartbeat > 60s  → stale
+  //   - else                  → healthy
+  const STALE_MS = 60_000;
+  const now = Date.now();
+  const floorLiveness: "loading" | "empty" | "stale" | "healthy" | "error" =
+    metrics.authDrifted
+      ? "error"
+      : metrics.lastHeartbeatMs === null
+        ? "loading"
+        : metrics.effectsCount === 0 && now - metrics.lastHeartbeatMs > STALE_MS
+          ? "stale"
+          : metrics.effectsCount === 0
+            ? "empty"
+            : "healthy";
+  // Retained for back-compat with the previous floor.loading marker.
+  const floorLoading = floorLiveness === "loading";
 
   return (
-    <div className="relative h-full w-full bg-[color:var(--bg)]">
+    <div
+      className="relative h-full w-full bg-[color:var(--bg)]"
+      data-testid="floor-client"
+      data-liveness={floorLiveness}
+    >
       <span
         className="sr-only"
         data-truth={floorLoading ? "floor.loading" : "floor.healthy"}
       >
         yes
       </span>
+      <span className="sr-only" data-truth={"floor-canvas." + floorLiveness}>yes</span>
+      {floorLiveness === "empty" && (
+        <span className="sr-only" data-truth="floor.empty">yes</span>
+      )}
+      {floorLiveness === "stale" && (
+        <span className="sr-only" data-truth="floor.stale">yes</span>
+      )}
       <span className="sr-only" data-truth="floor.effects-count">
         {metrics.effectsCount}
       </span>
