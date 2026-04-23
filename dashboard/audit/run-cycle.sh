@@ -19,6 +19,10 @@
 
 set -euo pipefail
 
+# Relocate to dashboard/ regardless of caller cwd so `audit/...` paths
+# resolve consistently from npx/tsx/playwright.
+cd "$(dirname "$0")/.."
+
 LABEL="${1:-}"
 FIXTURE="${2:-healthy}"
 shift 2 || true

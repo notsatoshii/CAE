@@ -38,10 +38,12 @@ export default defineConfig({
   // pick it up. See top-of-file note.
   testMatch: ["runner.spec.ts"],
   outputDir: `shots/${FIXTURE}/_pw-artifacts`,
-  // One page at a time — Next.js dev is single-process and we'd race the
-  // fs-backed aggregators otherwise.
-  fullyParallel: false,
-  workers: 1,
+  // Parallelism: Next dev handles concurrent requests fine; override with
+  // AUDIT_WORKERS env (default 4). fs-backed aggregators only RACE on
+  // writes, and cycles are read-only against the seeded fixture, so
+  // parallel reads are safe.
+  fullyParallel: true,
+  workers: Number(process.env.AUDIT_WORKERS ?? 4),
   retries: 0,
   forbidOnly: !!process.env.CI,
   timeout: 60_000,
