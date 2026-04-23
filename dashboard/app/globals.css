@@ -417,3 +417,49 @@ body {
     background-position: 50% 0, 0 0 !important;
   }
 }
+
+/* ---------------------------------------------------------------------------
+ * Branded shell loader animations (ROADMAP backlog → loading wave).
+ *
+ *   - `.cae-loader-pulse-dot`: the 3-dot waveform rendered by the root
+ *     app/loading.tsx shell and re-used by route-level loaders. The `--i`
+ *     custom property on each dot staggers the animation delay so the three
+ *     dots read as a single travelling wave.
+ *   - `.cae-loader-breath`: gentle scale + opacity breathe for the CAE brand
+ *     wordmark on the cold-boot shell. No translation — layout stays still.
+ *
+ * Both animations short-circuit under prefers-reduced-motion so the shell
+ * still paints as "loading" without motion.
+ * ------------------------------------------------------------------------- */
+@keyframes cae-loader-dot {
+  0%, 80%, 100% { opacity: 0.25; transform: scale(0.85); }
+  40%           { opacity: 1;    transform: scale(1.00); }
+}
+.cae-loader-pulse-dot {
+  animation: cae-loader-dot 1200ms ease-in-out infinite;
+  animation-delay: calc(var(--i, 0) * 180ms);
+  will-change: opacity, transform;
+}
+@media (prefers-reduced-motion: reduce) {
+  .cae-loader-pulse-dot {
+    animation: none !important;
+    opacity: 0.55;
+  }
+}
+
+@keyframes cae-loader-breath {
+  0%, 100% { opacity: 0.78; transform: scale(1.00); }
+  50%      { opacity: 1.00; transform: scale(1.02); }
+}
+.cae-loader-breath {
+  animation: cae-loader-breath 2400ms ease-in-out infinite;
+  transform-origin: center center;
+  will-change: opacity, transform;
+}
+@media (prefers-reduced-motion: reduce) {
+  .cae-loader-breath {
+    animation: none !important;
+    opacity: 0.88;
+    transform: none;
+  }
+}

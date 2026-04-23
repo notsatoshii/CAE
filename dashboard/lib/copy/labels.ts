@@ -442,6 +442,19 @@ export interface Labels {
     overrideBtn: string;
     explainSecurity: string;
   };
+
+  // === Loading pass (ROADMAP backlog → branded loaders) ===
+  // Route-level kind copy replaces default spinners + "loading..." strings.
+  // `appBoot` is an array of voice variants picked randomly on mount by the
+  // root loader; the per-route strings are static — they mount briefly, then
+  // the real page paints. One rotation per boot is enough surface area.
+  loading: {
+    appBoot: readonly string[];
+    chat: string;
+    floor: string;
+    memory: string;
+    metrics: string;
+  };
 }
 
 const FOUNDER: Labels = {
@@ -852,6 +865,23 @@ const FOUNDER: Labels = {
     overrideBtn: "Mark as trusted",
     explainSecurity:
       "We scan every installed skill for leaked keys and risky tool use.",
+  },
+
+  // === Loading pass (ROADMAP backlog → branded loaders) — FOUNDER ===
+  // Kind, human voice. No "loading..." anywhere. `appBoot` variants rotate
+  // on each cold boot so the shell loader doesn't feel like a frozen string.
+  loading: {
+    appBoot: [
+      "waking the agents",
+      "catching up to live",
+      "threading through memory",
+      "pulling the latest dispatches",
+      "warming up the floor",
+    ] as const,
+    chat: "drafting reply…",
+    floor: "booting the isometric engine…",
+    memory: "loading the graph…",
+    metrics: "counting the events…",
   },
 };
 
@@ -1268,6 +1298,22 @@ const DEV: Labels = {
     overrideBtn: "Override",
     explainSecurity:
       "gitleaks detect --source ~/.claude/skills --report-format json; parsed by cae-security-panel.ts.",
+  },
+
+  // === Loading pass — DEV ===
+  // Dev copy is terser — it reads like a log line, not a mantra.
+  loading: {
+    appBoot: [
+      "hydrating shell",
+      "mounting providers",
+      "resolving session",
+      "priming poll loop",
+      "linking client bus",
+    ] as const,
+    chat: "streaming…",
+    floor: "booting pixi stage…",
+    memory: "fetching graph.json…",
+    metrics: "aggregating token_usage…",
   },
 };
 
