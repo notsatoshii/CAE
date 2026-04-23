@@ -8,6 +8,9 @@
  *
  * T-14-05-08: Admin-only endpoint. Both middleware and handler check role.
  * T-14-05-03: owner/name validated against safe slug regex before use.
+ *
+ * CR-03 fix: SLUG_RE tightened to require alphanumeric/underscore start,
+ * consistent with the scan route fix. Pure-dot tokens explicitly rejected.
  */
 import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/auth"
@@ -18,8 +21,11 @@ import { writeOverride, overrideKey } from "@/lib/cae-trust-overrides"
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
 
-/** Safe slug: letters, digits, hyphens, underscores, dots only. */
-const SLUG_RE = /^[A-Za-z0-9_.-]+$/
+/**
+ * Safe slug: must start with alphanumeric or underscore (blocks leading `.` and `-`).
+ * CR-03: tightened from /^[A-Za-z0-9_.-]+$/ to prevent leading-dot and leading-dash.
+ */
+const SLUG_RE = /^[A-Za-z0-9_][A-Za-z0-9_.-]*$/
 
 export async function POST(req: NextRequest) {
   const session = await auth()
@@ -39,10 +45,12 @@ export async function POST(req: NextRequest) {
     typeof owner !== "string" ||
     typeof name !== "string" ||
     !SLUG_RE.test(owner) ||
-    !SLUG_RE.test(name)
+    !SLUG_RE.test(name) ||
+    owner === "." || owner === ".." ||
+    name === "." || name === ".."
   ) {
     return NextResponse.json(
-      { error: "invalid owner or name — must match [A-Za-z0-9_.-]+" },
+      { error: "invalid owner or name — must match [A-Za-z0-9_][A-Za-z0-9_.-]*" },
       { status: 400 }
     )
   }
