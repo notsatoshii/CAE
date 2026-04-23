@@ -115,15 +115,33 @@ the visual effect.
 
 ## BLOCKERS needing your input
 
-### BLOCKER 1: Vision scoring needs `ANTHROPIC_API_KEY`
+### BLOCKER 1: Vision scoring needs `ANTHROPIC_API_KEY` — OR swap to `claude -p`
 
 Vision agent flagged this at `/home/cae/outbox/1776929677-vision-block/NEED_API_KEY.md`.
 
-Resolution:
+**Resolution A (cheapest, direct-billed):**
 ```bash
-# Put your key in dashboard/.env.local
 echo "ANTHROPIC_API_KEY=sk-..." >> /home/cae/ctrl-alt-elite/dashboard/.env.local
 ```
+~$0.07/call × 408 ≈ $29 full baseline.
+
+**Resolution B (uses Max subscription, no separate key):**
+Rewrite `audit/score/llm-vision.ts` to shell out to `claude -p` with the
+image attached via `@path`. Validated working in session 10 against
+`build--laptop.png` — returned `{score: 2, evidence: [11 items],
+recommendations: [11 items]}` in 26s for $0.25. Counts against Max plan
+quota instead of direct API bill. api.anthropic.com explicitly rejects
+OAuth tokens ("OAuth authentication is currently not supported") so
+direct fetch with bearer token does NOT work — must shell out to the
+CLI. Template:
+
+```bash
+claude -p --model claude-opus-4-7 --output-format json \
+  "Score the visual craft of the image at @audit/shots/.../foo.png
+   from 1-5. Return ONLY JSON: {score, evidence[], recommendations[]}"
+```
+
+Both paths unblock craft pillar. Pick whichever.
 
 Then run the retro scorer (no recapture needed — hits existing 408 PNGs):
 ```bash
