@@ -46,6 +46,18 @@ export const __test = {
 // Props
 // ---------------------------------------------------------------------------
 
+/**
+ * Shape forwarded to onMetrics. F3 (Wave 1.5) added lastHeartbeatMs so the
+ * FloorClient can render a liveness badge during stretches of no activity.
+ */
+export interface FloorCanvasMetrics {
+  effectsCount: number;
+  queueSize: number;
+  authDrifted: boolean;
+  /** Epoch ms of the most recent observed heartbeat, or null when none yet. */
+  lastHeartbeatMs: number | null;
+}
+
 export interface FloorCanvasProps {
   /**
    * Absolute path to circuit-breakers.jsonl under an ALLOWED_ROOT.
@@ -61,7 +73,7 @@ export interface FloorCanvasProps {
    * Optional — parent (Plan 04) can opt-in to read live counters.
    * Called each React render with the latest hook values.
    */
-  onMetrics?: (m: { effectsCount: number; queueSize: number; authDrifted: boolean }) => void;
+  onMetrics?: (m: FloorCanvasMetrics) => void;
 }
 
 // ---------------------------------------------------------------------------
@@ -90,7 +102,7 @@ export default function FloorCanvas({ cbPath, paused = false, onMetrics }: Floor
   }, [dev]);
 
   // Delegate SSE + event handling to the hook
-  const { effectsCount, queueSize, authDrifted } = useFloorEvents({
+  const { effectsCount, queueSize, authDrifted, lastHeartbeatMs } = useFloorEvents({
     cbPath,
     paused,
     sceneRef,
@@ -98,8 +110,8 @@ export default function FloorCanvas({ cbPath, paused = false, onMetrics }: Floor
 
   // Forward observable counters to parent (for toolbar / debug UI)
   useEffect(() => {
-    onMetrics?.({ effectsCount, queueSize, authDrifted });
-  }, [effectsCount, queueSize, authDrifted, onMetrics]);
+    onMetrics?.({ effectsCount, queueSize, authDrifted, lastHeartbeatMs });
+  }, [effectsCount, queueSize, authDrifted, lastHeartbeatMs, onMetrics]);
 
   // ---------------------------------------------------------------------------
   // RAF loop — step → render (canvas owns this; hook owns event application)

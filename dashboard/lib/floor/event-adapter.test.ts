@@ -77,7 +77,7 @@ describe("parseEvent — safety (D-15, D-16)", () => {
   });
 });
 
-describe("ALLOWED_EVENTS — 8-entry allowlist (D-08)", () => {
+describe("ALLOWED_EVENTS — 9-entry allowlist (D-08 + Wave 1.5 F3 heartbeat)", () => {
   const expected = [
     "forge_begin",
     "forge_end",
@@ -87,10 +87,11 @@ describe("ALLOWED_EVENTS — 8-entry allowlist (D-08)", () => {
     "sentinel_fallback_triggered",
     "escalate_to_phantom",
     "halt",
+    "heartbeat",
   ];
 
-  it("has exactly 8 entries", () => {
-    expect(ALLOWED_EVENTS).toHaveLength(8);
+  it("has exactly 9 entries", () => {
+    expect(ALLOWED_EVENTS).toHaveLength(9);
   });
 
   for (const ev of expected) {
@@ -225,6 +226,41 @@ describe("mapEvent — synthesis (D-08)", () => {
     )!;
     expect(mapEvent(e, opts)).toEqual([]);
   });
+
+  // ─── F3 (Wave 1.5): heartbeat synthesis ─────────────────────────────────
+  it("heartbeat → subtle pulse at hub, NO station status change", () => {
+    const e = parseEvent(
+      JSON.stringify({
+        ts: "2026-04-23T00:00:00Z",
+        event: "heartbeat",
+        source: "heartbeat-emitter",
+      }),
+    )!;
+    const results = mapEvent(e, opts);
+    const pulse = results.find((r) => r.kind === "effect" && r.effect.kind === "pulse");
+    expect(pulse).toBeDefined();
+    expect((pulse as { kind: "effect"; effect: { atTx: number; atTy: number } }).effect.atTx).toBe(
+      STATIONS.hub.tx,
+    );
+    expect((pulse as { kind: "effect"; effect: { atTx: number; atTy: number } }).effect.atTy).toBe(
+      STATIONS.hub.ty,
+    );
+    // No status entry — heartbeats must NOT change station status
+    const status = results.find((r) => r.kind === "status");
+    expect(status).toBeUndefined();
+  });
+
+  it("heartbeat ttl is short (< regular pulse) so it doesn't dominate", () => {
+    const e = parseEvent(
+      JSON.stringify({ ts: "2026-04-23T00:00:00Z", event: "heartbeat" }),
+    )!;
+    const results = mapEvent(e, opts);
+    const pulse = results.find((r) => r.kind === "effect");
+    expect(pulse).toBeDefined();
+    const ttl = (pulse as { kind: "effect"; effect: { ttl: number } }).effect.ttl;
+    expect(ttl).toBeGreaterThan(0);
+    expect(ttl).toBeLessThan(2.0); // pulse TTL = 2.0s; heartbeat must be shorter
+  });
 });
 
 // ─── mapEvent — reduced-motion gate (D-13) ────────────────────────────────────
@@ -271,5 +307,14 @@ describe("mapEvent — reducedMotion=true (D-13)", () => {
     )!;
     const results = mapEvent(e, opts);
     expect(results.every((r) => r.kind === "status")).toBe(true);
+  });
+
+  it("heartbeat reducedMotion=true → empty (no status either, since heartbeats only emit pulses)", () => {
+    const e = parseEvent(
+      JSON.stringify({ ts: "2026-04-23T00:00:00Z", event: "heartbeat" }),
+    )!;
+    const results = mapEvent(e, opts);
+    // Heartbeats emit only a pulse effect; reduced-motion strips that, leaving []
+    expect(results).toEqual([]);
   });
 });

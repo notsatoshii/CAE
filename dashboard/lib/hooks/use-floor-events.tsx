@@ -16,6 +16,9 @@
  *     hold even when canvas is briefly unmounted (e.g. pop-out detach).
  * Q2: auth-drift probes /api/state (pre-existing, auth-gated identically to /api/tail).
  * Q3: canvas owns sceneRef; hook mutates sceneRef.current; RAF reads each tick.
+ *
+ * F3 (Wave 1.5): exposes lastHeartbeatTs so a liveness badge can render
+ * "system online — last heartbeat Ns ago" between real circuit-breaker events.
  */
 
 import { useState, useEffect, useRef, useCallback, type MutableRefObject } from "react";
@@ -72,6 +75,12 @@ export interface UseFloorEventsResult {
   queueSize: number;
   /** True when /api/state returned 401 on the drift probe; toolbar shows re-auth banner. */
   authDrifted: boolean;
+  /**
+   * F3 (Wave 1.5): epoch ms of the most recent observed heartbeat event,
+   * or null if no heartbeat has arrived yet (or SSE not opened).
+   * Liveness badge subtracts from Date.now() to render "Ns ago".
+   */
+  lastHeartbeatMs: number | null;
   // WR-04: lastEventTs removed — was set but never consumed; use a ref if needed later.
 }
 
@@ -105,6 +114,8 @@ export function useFloorEvents(opts: UseFloorEventsOpts): UseFloorEventsResult {
   const [effectsCount, setEffectsCount] = useState(0);
   const [queueSize, setQueueSize] = useState(0);
   const [authDrifted, setAuthDrifted] = useState(false);
+  // F3: last heartbeat timestamp (epoch ms)
+  const [lastHeartbeatMs, setLastHeartbeatMs] = useState<number | null>(null);
 
   // Drain queue into scene (apply MappedEffects, enforce caps)
   const drain = useCallback(() => {
@@ -149,6 +160,16 @@ export function useFloorEvents(opts: UseFloorEventsOpts): UseFloorEventsResult {
       // D-16: parse + allowlist check (parseEvent handles both)
       const parsed = parseEvent(e.data);
       if (!parsed) return;
+
+      // F3 (Wave 1.5): track heartbeat liveness — does NOT enter the effects
+      // queue if reducedMotion is on (see event-adapter heartbeat case), but
+      // we still want to record liveness independently of motion preference.
+      if (parsed.event === "heartbeat") {
+        // Use the event's own ts when available; fall back to wall clock so a
+        // malformed ts (already filtered upstream) can't ever set NaN.
+        const parsedMs = Date.parse(parsed.ts);
+        setLastHeartbeatMs(Number.isFinite(parsedMs) ? parsedMs : Date.now());
+      }
 
       // Push to queue, enforce QUEUE_CAP (drop-oldest)
       queueRef.current.push(parsed);
@@ -211,5 +232,5 @@ export function useFloorEvents(opts: UseFloorEventsOpts): UseFloorEventsResult {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [opts.cbPath]);
 
-  return { effectsCount, queueSize, authDrifted };
+  return { effectsCount, queueSize, authDrifted, lastHeartbeatMs };
 }

@@ -97,12 +97,25 @@ export interface CbEvent {
   telegram_notify?: boolean
   // sentinel_fallback_triggered
   failures?: number
+  // heartbeat (Wave 1.5 F3, scripts/heartbeat-emitter.sh) — identifies the
+  // emitter; "heartbeat-emitter" today, future emitters may add their own.
+  source?: string
 }
 
 /**
  * Enumerated event kinds observed or emittable. Use as a type guard or for
  * exhaustiveness checks. Presence of a kind here does NOT mean every field
  * on CbEvent is populated for that kind — each kind writes its own subset.
+ *
+ * Writer responsibility (Wave 1.5 F2/F3/F4 audit):
+ *   - forge_*           → bin/circuit_breakers.py (GSD execution layer)
+ *   - sentinel_*        → bin/circuit_breakers.py (sentinel subprocess)
+ *   - escalate_to_*     → bin/circuit_breakers.py
+ *   - phantom_end       → bin/circuit_breakers.py
+ *   - halt              → bin/circuit_breakers.py
+ *   - limit_exceeded    → bin/circuit_breakers.py
+ *   - token_usage       → adapters/claude-code.sh (Phase 7 Wave 0)
+ *   - heartbeat         → dashboard/scripts/heartbeat-emitter.sh (cron @30s)
  */
 export const CB_EVENT_KINDS = [
   "forge_begin",
@@ -115,7 +128,8 @@ export const CB_EVENT_KINDS = [
   "halt",
   "sentinel_json_failure",
   "sentinel_fallback_triggered",
-  "token_usage",           // NEW — emitted by adapters/claude-code.sh after Wave 0
+  "token_usage",           // emitted by adapters/claude-code.sh after Wave 0
+  "heartbeat",             // Wave 1.5 F3 — emitted by dashboard/scripts/heartbeat-emitter.sh
 ] as const
 export type CbEventKind = typeof CB_EVENT_KINDS[number]
 

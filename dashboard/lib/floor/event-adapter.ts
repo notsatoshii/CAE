@@ -11,7 +11,15 @@ import type { CbEvent } from "@/lib/cae-types";
 import type { MappedEffect } from "./state";
 import { STATIONS } from "./scene";
 
-/** 8-entry allowlist from D-08. parseEvent rejects everything else. */
+/**
+ * 9-entry allowlist (D-08 + Wave 1.5 F3 heartbeat).
+ * parseEvent rejects everything else.
+ *
+ * F3 (Wave 1.5): "heartbeat" added so the synthetic emitter
+ * (scripts/heartbeat-emitter.sh, cron @30s) can keep Floor visibly alive
+ * during stretches of no real GSD activity. See mapEvent for the subtle
+ * hub-pulse mapping (no station status change).
+ */
 export const ALLOWED_EVENTS = [
   "forge_begin",
   "forge_end",
@@ -21,6 +29,7 @@ export const ALLOWED_EVENTS = [
   "sentinel_fallback_triggered",
   "escalate_to_phantom",
   "halt",
+  "heartbeat",
 ] as const satisfies readonly string[];
 
 /** Effect TTL values in seconds (per CONTEXT.md §Claude's Discretion). */
@@ -30,6 +39,8 @@ const TTL = {
   pulse: 2.0,
   alarm: 1.5,
   phantomWalk: 2.5,
+  /** F3: shorter than regular pulse so heartbeats don't dominate the canvas. */
+  heartbeat: 0.6,
 } as const;
 
 export interface FloorMapEventOpts {
@@ -83,7 +94,7 @@ export function parseEvent(rawLine: string): CbEvent | null {
  * Returns [] for valid-but-no-scene-change events (forge_slot_acquired, forge_slot_released).
  * When reducedMotion=true, filters out all entries with kind === "effect" before returning.
  *
- * Implementation uses an exhaustive switch on the 8-entry allowlist — no runtime property
+ * Implementation uses an exhaustive switch on the 9-entry allowlist — no runtime property
  * lookup against the parsed payload beyond the enumerated field set (D-16).
  */
 export function mapEvent(e: CbEvent, opts: FloorMapEventOpts): MappedEffect[] {
@@ -182,6 +193,22 @@ export function mapEvent(e: CbEvent, opts: FloorMapEventOpts): MappedEffect[] {
         },
       });
       full.push({ kind: "status", station: "hub", status: "alarm" });
+      break;
+
+    case "heartbeat":
+      // F3 (Wave 1.5): subtle hub pulse — keeps Floor visibly alive during
+      // long stretches of no real activity. NO station status change so the
+      // hub doesn't get stuck in an "active" state. Short TTL so the effect
+      // fades quickly and doesn't accumulate visually under EFFECTS_CAP.
+      full.push({
+        kind: "effect",
+        effect: {
+          kind: "pulse",
+          atTx: STATIONS.hub.tx,
+          atTy: STATIONS.hub.ty,
+          ttl: TTL.heartbeat,
+        },
+      });
       break;
 
     case "forge_slot_acquired":
