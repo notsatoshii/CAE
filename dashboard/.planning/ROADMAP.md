@@ -313,3 +313,23 @@ Plans:
 - Advanced metrics (graph drill-downs, aggregations)
 - Plugin / extension API
 - Billing / usage caps
+
+### Phase 15: screenshot-truth-harness
+
+**Goal:** [To be planned]
+**Requirements**: TBD
+**Depends on:** Phase 14
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd-plan-phase 15 to break down)
+
+### Phase 16: knowledge-layer-and-continuous-labelling
+
+**Goal:** [To be planned]
+**Requirements**: TBD
+**Depends on:** Phase 15
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd-plan-phase 16 to break down)
