@@ -52,7 +52,7 @@ echo "[cycle] STEP 1/7 — seed fixture ${FIXTURE}"
 npx tsx audit/seed-fixture.ts "${FIXTURE}"
 
 echo "[cycle] STEP 2/7 — mint session cookie"
-npx tsx audit/auth/mint-session.ts
+npx tsx audit/auth/mint-session-cli.ts
 
 echo "[cycle] STEP 3/7 — health-check dev server (${BASE_URL})"
 if ! curl -sSf -o /dev/null --max-time 5 "${BASE_URL}/api/auth/session"; then

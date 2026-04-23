@@ -11,7 +11,7 @@ a `data-truth` DOM extract, and a console-error sidecar per cell.
 export AUTH_SECRET=$(openssl rand -base64 32)
 
 # 2. Mint the baseline admin session cookie
-AUTH_SECRET=$AUTH_SECRET npx tsx audit/auth/mint-session.ts
+AUTH_SECRET=$AUTH_SECRET npx tsx audit/auth/mint-session-cli.ts
 # → writes audit/auth/storage-state.json (gitignored)
 ```
 
