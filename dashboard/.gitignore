@@ -29,6 +29,11 @@ tsconfig.tsbuildinfo
 .planning/phases/13-ui-ux-review-polish-loop/scripts/storage-state.json
 .planning/phases/13-ui-ux-review-polish-loop/audit/working/
 
+# Phase 15 audit artifacts — LLM-vision cache (keyed by PNG+pillar+rubric hash)
+audit/score/.cache/
+# Phase 15 screenshot captures — large, regenerable via run-cycle.sh
+audit/shots/
+
 # Phase 14 runtime state (append-only logs + mutable registry, not source)
 # Note: scheduled_tasks.json lives at REPO ROOT (/home/cae/ctrl-alt-elite/), not here.
 # It is gitignored by the root .gitignore.
