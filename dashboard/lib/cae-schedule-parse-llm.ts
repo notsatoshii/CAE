@@ -8,6 +8,11 @@ import { spawn } from "node:child_process"
  * with a constrained prompt and parses the returned JSON.
  *
  * Security: prompt is passed as argv array element (no shell:true).
+ *
+ * Class-18 root/sudo wrapper (C2-FIX-WAVE): claude CLI ≥2.1.117 refuses to
+ * run as root; the dashboard server runs as root. Shell out via
+ * `sudo -u cae -E env HOME=/home/cae claude ...` so the subprocess runs as
+ * the cae user with cae's HOME for credential/config lookup.
  */
 export async function defaultLlm(nl: string): Promise<{ cron: string }> {
   // Guard: never call real LLM in tests — tests MUST inject a mock
@@ -22,8 +27,19 @@ export async function defaultLlm(nl: string): Promise<{ cron: string }> {
 
   return new Promise((resolve, reject) => {
     const child = spawn(
-      "claude",
-      ["--print", "--model", "claude-haiku-4-5", prompt],
+      "sudo",
+      [
+        "-u",
+        "cae",
+        "-E",
+        "env",
+        "HOME=/home/cae",
+        "claude",
+        "--print",
+        "--model",
+        "claude-haiku-4-5",
+        prompt,
+      ],
       { stdio: ["ignore", "pipe", "pipe"] }
     )
 

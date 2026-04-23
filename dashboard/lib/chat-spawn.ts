@@ -1,8 +1,8 @@
 /**
  * Claude CLI subprocess wrapper — Phase 9 Plan 03 Task 2.
  *
- * Thin wrapper around `spawn('claude', ...)` that emits the exact CLI
- * invocation required by 09-CONTEXT D-03:
+ * Thin wrapper that emits the exact CLI invocation required by
+ * 09-CONTEXT D-03:
  *
  *   claude --print
  *          --resume <sessionId>
@@ -21,6 +21,16 @@
  * to cwd (`~/.claude/projects/-home-cae-ctrl-alt-elite/<uuid>.jsonl`),
  * so spawning with any other cwd creates a fresh session and --resume
  * fails (09-CONTEXT gotcha #4).
+ *
+ * Class-18 root/sudo wrapper (C2-FIX-WAVE):
+ *   Claude CLI ≥2.1.117 refuses to run as root. The dashboard dev server
+ *   runs as root so direct `spawn("claude", ...)` silently exits non-zero.
+ *   We drop to the `cae` user via `sudo -u cae -E env HOME=/home/cae claude`.
+ *   `sudo -u cae` switches user; `-E` preserves env; `HOME=/home/cae` is
+ *   forced so Claude's config lookup lands on cae's home (credentials +
+ *   ~/.claude/projects/<slug>/<sessionId>.jsonl for --resume). Credentials
+ *   are mirrored from /root to /home/cae by /usr/local/bin/cae-creds-resync.sh
+ *   on a 3h cron. sudoers.d/cae-claude grants passwordless `sudo -u cae claude`.
  *
  * No unit tests for this module in isolation — it's a ~40-line thin
  * wrapper. Integration-tested via /api/chat/send e2e in Wave 5.
@@ -73,11 +83,19 @@ export function spawnClaudeChat(input: SpawnChatInput): SpawnChatHandle {
     input.model,
   ];
 
-  const child = spawn("claude", args, {
-    cwd: input.cwd,
-    stdio: ["pipe", "pipe", "pipe"],
-    env: { ...process.env },
-  });
+  // Class-18 root/sudo wrapper: claude CLI ≥2.1.117 refuses to run as root.
+  // The dashboard server runs as root; drop to the `cae` user via sudo. The
+  // full argv is therefore: ["sudo", "-u", "cae", "-E", "env", "HOME=/home/cae",
+  // "claude", ...args]. See the module-level comment for the full rationale.
+  const child = spawn(
+    "sudo",
+    ["-u", "cae", "-E", "env", "HOME=/home/cae", "claude", ...args],
+    {
+      cwd: input.cwd,
+      stdio: ["pipe", "pipe", "pipe"],
+      env: { ...process.env },
+    },
+  );
 
   // Feed the message over stdin, then close.
   if (child.stdin) {
@@ -95,8 +113,9 @@ export function spawnClaudeChat(input: SpawnChatInput): SpawnChatHandle {
     waiters.length = 0;
   });
   child.on("error", (err) => {
-    // `error` fires if spawn itself fails (e.g., `claude` not on PATH).
-    // Convert to an exit-style resolution so callers don't hang.
+    // `error` fires if spawn itself fails (e.g., `sudo` not on PATH or
+    // sudoers refuses the request). Convert to an exit-style resolution
+    // so callers don't hang.
     exitErr = err;
     exited = 127;
     for (const w of waiters) w(127);

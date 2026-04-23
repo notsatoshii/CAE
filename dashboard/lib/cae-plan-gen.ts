@@ -176,8 +176,15 @@ export async function runPlanGen(proj: Project): Promise<PlanGenResult> {
     `Follow the GSD plan structure. Write the plan to ${planPath}. ` +
     `Use ${PLAN_GEN_MODEL} quality reasoning.`;
 
+  // Class-18 root/sudo wrapper: claude CLI ≥2.1.117 refuses to run as root
+  // and the tmux server in this process group runs as root. Drop to cae
+  // via sudo so the claude subprocess can start. `-E` preserves env (PATH,
+  // TZ, etc.); `env HOME=/home/cae` forces HOME to cae's home so Claude's
+  // credential and config lookup lands on the mirrored
+  // /home/cae/.claude/.credentials.json (see /usr/local/bin/cae-creds-resync.sh).
   const inner =
     `cd ${quote(planDir)} && ` +
+    `sudo -u cae -E env HOME=/home/cae ` +
     `claude --print --append-system-prompt-file ${quote(CAE_ARCH_PERSONA)} ` +
     `--model ${PLAN_GEN_MODEL} ${quote(prompt)} ` +
     `> ${quote(planPath)} 2> ${quote(logFile)}`;
