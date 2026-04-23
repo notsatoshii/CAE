@@ -124,17 +124,23 @@ export function GraphPane({ onOpenGitTimeline }: GraphPaneProps = {}) {
 
   const graphEdges = payload?.links.length ?? 0;
 
+  // C2-wave/Class 3: rollup liveness for Graph tab.
+  const graphLiveness: "loading" | "error" | "empty" | "healthy" =
+    loading ? "loading" : error ? "error" : isEmpty ? "empty" : "healthy";
+
   return (
     <div
       className="flex h-full min-h-[500px] w-full flex-col"
       data-testid="memory-graph-pane"
+      data-liveness={graphLiveness}
     >
       <span
         className="sr-only"
-        data-truth={loading ? "memory.loading" : isEmpty ? "memory.empty" : "memory.healthy"}
+        data-truth={loading ? "memory.loading" : isEmpty ? "memory.empty" : error ? "memory.error" : "memory.healthy"}
       >
         yes
       </span>
+      <span className="sr-only" data-truth={`memory-graph.${graphLiveness}`}>yes</span>
       <span className="sr-only" data-truth="memory.node-count">{totalNodes}</span>
       <span className="sr-only" data-truth="memory.edge-count">{graphEdges}</span>
       <span className="sr-only" data-truth="memory.last-refreshed-at">

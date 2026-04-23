@@ -20,6 +20,8 @@ interface MetricsPollValue {
   error: Error | null;
   /** True from mount until the first successful fetch completes. */
   loading: boolean;
+  /** Unix-ms timestamp of last successful fetch (null until first success). */
+  lastUpdated: number | null;
 }
 
 const MetricsPollContext = createContext<MetricsPollValue | null>(null);
@@ -38,6 +40,7 @@ export function MetricsPollProvider({
   // WR-02: track whether the first fetch has resolved so panels can distinguish
   // "loading" from "genuinely empty". Starts true, cleared after first poll attempt.
   const [loading, setLoading] = useState(true);
+  const [lastUpdated, setLastUpdated] = useState<number | null>(null);
   const mounted = useRef(true);
 
   useEffect(() => {
@@ -71,6 +74,7 @@ export function MetricsPollProvider({
         const json = (await res.json()) as MetricsState;
         if (!mounted.current) return;
         setData(json);
+        setLastUpdated(Date.now());
         setError(null);
       } catch (err) {
         if (!mounted.current) return;
@@ -100,7 +104,7 @@ export function MetricsPollProvider({
   }, [intervalMs]);
 
   return (
-    <MetricsPollContext.Provider value={{ data, error, loading }}>
+    <MetricsPollContext.Provider value={{ data, error, loading, lastUpdated }}>
       {children}
     </MetricsPollContext.Provider>
   );

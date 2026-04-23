@@ -35,9 +35,12 @@ import { EmptyState, EmptyStateActions } from "@/components/ui/empty-state";
 import { Button } from "@/components/ui/button";
 import { GoldenSignalsSubtitle } from "./golden-signals-subtitles";
 import { CardSkeleton, RowSkeleton, Skeleton } from "@/components/ui/skeleton";
+import { LastUpdated } from "@/components/ui/last-updated";
+
+const METRICS_STALE_MS = 60_000;
 
 export function SpeedPanel() {
-  const { data, error, loading } = useMetricsPoll();
+  const { data, error, loading, lastUpdated } = useMetricsPoll();
   const { dev } = useDevMode();
   const L = labelFor(dev);
   const router = useRouter();
@@ -48,7 +51,9 @@ export function SpeedPanel() {
         title={L.metricsFastHeading}
         headingId="speed-heading"
         testId="speed-panel-error"
+        dataLiveness="error"
       >
+        <span className="sr-only" data-truth="metrics-speed.error">yes</span>
         <p className="text-sm text-[color:var(--text-muted)]">
           {L.metricsFailedToLoad}
         </p>
@@ -65,7 +70,9 @@ export function SpeedPanel() {
         title={L.metricsFastHeading}
         headingId="speed-heading"
         testId="speed-panel-loading"
+        dataLiveness="loading"
       >
+        <span className="sr-only" data-truth="metrics-speed.loading">yes</span>
         <div className="flex flex-col gap-6">
           <span className="sr-only">{L.metricsEmptyState}</span>
           <Skeleton height={20} width="40%" testId="speed-skeleton-lede" label="Loading speed summary" />
@@ -88,7 +95,9 @@ export function SpeedPanel() {
         title={L.metricsFastHeading}
         headingId="speed-heading"
         testId="speed-panel-empty"
+        dataLiveness="empty"
       >
+        <span className="sr-only" data-truth="metrics-speed.empty">yes</span>
         <EmptyState
           icon={LineChart}
           heading={L.emptyMetricsPanelHeading}
@@ -118,13 +127,20 @@ export function SpeedPanel() {
           qualified.reduce((s, p) => s + p.p50_ms * p.n, 0) / totalN,
         );
 
+  const isStale =
+    lastUpdated !== null && Date.now() - lastUpdated > METRICS_STALE_MS;
+  const liveness: "stale" | "healthy" = isStale ? "stale" : "healthy";
+
   return (
     <Panel
       title={L.metricsFastHeading}
       headingId="speed-heading"
       testId="speed-panel"
       className="flex flex-col gap-6"
+      dataLiveness={liveness}
+      subtitle={<LastUpdated at={lastUpdated} threshold_ms={METRICS_STALE_MS} />}
     >
+      <span className="sr-only" data-truth={`metrics-speed.${liveness}`}>yes</span>
       <span className="sr-only" data-truth="metrics.speed-p50-ms">{overallP50}</span>
       <span className="sr-only" data-truth="metrics.queue-depth-now">
         {sp.queue_depth_now}

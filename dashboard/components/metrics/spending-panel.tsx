@@ -47,6 +47,7 @@ import { Panel } from "@/components/ui/panel";
 import { EmptyState, EmptyStateActions } from "@/components/ui/empty-state";
 import { Button } from "@/components/ui/button";
 import { CardSkeleton, Skeleton } from "@/components/ui/skeleton";
+import { LastUpdated } from "@/components/ui/last-updated";
 
 function formatTokens(n: number): string {
   if (n < 1000) return String(n);
@@ -54,8 +55,10 @@ function formatTokens(n: number): string {
   return (n / 1_000_000).toFixed(2) + "M";
 }
 
+const METRICS_STALE_MS = 60_000;
+
 export function SpendingPanel() {
-  const { data, error, loading } = useMetricsPoll();
+  const { data, error, loading, lastUpdated } = useMetricsPoll();
   const { dev } = useDevMode();
   const L = labelFor(dev);
   const router = useRouter();
@@ -66,7 +69,9 @@ export function SpendingPanel() {
         title={L.metricsSpendingHeading}
         headingId="spending-heading"
         testId="spending-panel-error"
+        dataLiveness="error"
       >
+        <span className="sr-only" data-truth="metrics-spending.error">yes</span>
         <p className="text-sm text-[color:var(--text-muted)]">
           {L.metricsFailedToLoad}
         </p>
@@ -83,8 +88,10 @@ export function SpendingPanel() {
         title={L.metricsSpendingHeading}
         headingId="spending-heading"
         testId="spending-panel-loading"
+        dataLiveness="loading"
       >
         <span className="sr-only" data-truth="metrics.loading">yes</span>
+        <span className="sr-only" data-truth="metrics-spending.loading">yes</span>
         <div className="flex flex-col gap-6">
           <span className="sr-only">{L.metricsEmptyState}</span>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
@@ -106,8 +113,10 @@ export function SpendingPanel() {
         title={L.metricsSpendingHeading}
         headingId="spending-heading"
         testId="spending-panel-empty"
+        dataLiveness="empty"
       >
         <span className="sr-only" data-truth="metrics.empty">yes</span>
+        <span className="sr-only" data-truth="metrics-spending.empty">yes</span>
         <EmptyState
           icon={LineChart}
           heading={L.emptyMetricsPanelHeading}
@@ -126,16 +135,26 @@ export function SpendingPanel() {
 
   // data is guaranteed non-null here — all null paths return early above.
   const s = data!.spending;
+  const isStale =
+    lastUpdated !== null && Date.now() - lastUpdated > METRICS_STALE_MS;
+  const liveness: "stale" | "healthy" = isStale ? "stale" : "healthy";
 
   return (
     <Panel
       title={L.metricsSpendingHeading}
       headingId="spending-heading"
       testId="spending-panel"
-      subtitle={<EstDisclaimer />}
+      subtitle={
+        <span className="flex items-center gap-2">
+          <EstDisclaimer />
+          <LastUpdated at={lastUpdated} threshold_ms={METRICS_STALE_MS} />
+        </span>
+      }
       className="flex flex-col gap-6"
+      dataLiveness={liveness}
     >
       <span className="sr-only" data-truth="metrics.healthy">yes</span>
+      <span className="sr-only" data-truth={`metrics-spending.${liveness}`}>yes</span>
       <span className="sr-only" data-truth="metrics.tokens-today">{s.tokens_today}</span>
       <span className="sr-only" data-truth="metrics.tokens-mtd">{s.tokens_mtd}</span>
       <span className="sr-only" data-truth="metrics.tokens-projected-monthly">

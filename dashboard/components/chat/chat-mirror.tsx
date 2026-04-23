@@ -72,8 +72,20 @@ export function ChatMirror({
     };
   }, [def.endpoint]);
 
+  // C2-wave/Class 3: mirror liveness state.
+  const mirrorLiveness: "loading" | "error" | "healthy" = err
+    ? "error"
+    : !payload
+      ? "loading"
+      : "healthy";
+
   return (
-    <div className="p-6 max-w-3xl mx-auto">
+    <div
+      className="p-6 max-w-3xl mx-auto"
+      data-testid="chat-mirror"
+      data-liveness={mirrorLiveness}
+    >
+      <span className="sr-only" data-truth={`chat-mirror.${mirrorLiveness}`}>yes</span>
       {/* Surface picker */}
       <div className="flex items-center gap-2 mb-4">
         <span className="text-sm text-[color:var(--text-muted,#8a8a8c)]">

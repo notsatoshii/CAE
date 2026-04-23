@@ -88,6 +88,9 @@ export function IncidentStream() {
   const [entries, setEntries] = useState<IncidentEntry[]>([]);
   const [selected, setSelected] = useState<IncidentEntry | null>(null);
   const [mountTime, setMountTime] = useState<Date | null>(null);
+  const [connState, setConnState] = useState<"connecting" | "open" | "errored">(
+    "connecting"
+  );
   useEffect(() => {
     setMountTime(new Date());
   }, []);
@@ -105,7 +108,12 @@ export function IncidentStream() {
     const es = new EventSource(SSE_ENDPOINT);
     esRef.current = es;
 
+    es.addEventListener("open", () => {
+      setConnState("open");
+    });
+
     es.addEventListener("message", (ev: MessageEvent) => {
+      setConnState("open");
       try {
         const line = JSON.parse(ev.data) as IncidentEntry;
         setEntries((prev) => {
@@ -119,6 +127,7 @@ export function IncidentStream() {
     });
 
     es.addEventListener("error", () => {
+      setConnState("errored");
       // Connection dropped; browser will auto-retry on EventSource
     });
 
@@ -147,13 +156,29 @@ export function IncidentStream() {
     ? "Waiting for events…"
     : `${entries.length} event${entries.length === 1 ? "" : "s"}`;
 
+  // C2-wave/Class 3: compute liveness state for SSE-backed panel.
+  //  - connecting  → loading
+  //  - errored     → error
+  //  - open + 0 rows → empty
+  //  - open + rows → healthy (SSE: freshness ties to connection, not wall time)
+  const liveness: "loading" | "error" | "empty" | "healthy" =
+    connState === "connecting"
+      ? "loading"
+      : connState === "errored"
+        ? "error"
+        : entries.length === 0
+          ? "empty"
+          : "healthy";
+
   return (
     <Panel
       title="Incident Stream"
       subtitle={subtitle}
       testId="incident-stream-panel"
       className="flex flex-col gap-2"
+      dataLiveness={liveness}
     >
+      <span className="sr-only" data-truth={`incident-stream.${liveness}`}>yes</span>
       {/* Empty state */}
       {entries.length === 0 && (
         <div

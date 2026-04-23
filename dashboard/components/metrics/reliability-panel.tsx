@@ -39,11 +39,13 @@ import { Panel } from "@/components/ui/panel";
 import { EmptyState, EmptyStateActions } from "@/components/ui/empty-state";
 import { Button } from "@/components/ui/button";
 import { CardSkeleton, Skeleton } from "@/components/ui/skeleton";
+import { LastUpdated } from "@/components/ui/last-updated";
 
 const MIN_SAMPLES_FOR_LEDE = 5;
+const METRICS_STALE_MS = 60_000;
 
 export function ReliabilityPanel() {
-  const { data, error, loading } = useMetricsPoll();
+  const { data, error, loading, lastUpdated } = useMetricsPoll();
   const { dev } = useDevMode();
   const L = labelFor(dev);
   const router = useRouter();
@@ -54,7 +56,9 @@ export function ReliabilityPanel() {
         title={L.metricsWellHeading}
         headingId="reliability-heading"
         testId="reliability-panel-error"
+        dataLiveness="error"
       >
+        <span className="sr-only" data-truth="metrics-reliability.error">yes</span>
         <p className="text-sm text-[color:var(--text-muted)]">
           {L.metricsFailedToLoad}
         </p>
@@ -71,7 +75,9 @@ export function ReliabilityPanel() {
         title={L.metricsWellHeading}
         headingId="reliability-heading"
         testId="reliability-panel-loading"
+        dataLiveness="loading"
       >
+        <span className="sr-only" data-truth="metrics-reliability.loading">yes</span>
         <div className="flex flex-col gap-6">
           <span className="sr-only">{L.metricsEmptyState}</span>
           <Skeleton height={20} width="40%" testId="reliability-skeleton-lede" label="Loading reliability summary" />
@@ -93,7 +99,9 @@ export function ReliabilityPanel() {
         title={L.metricsWellHeading}
         headingId="reliability-heading"
         testId="reliability-panel-empty"
+        dataLiveness="empty"
       >
+        <span className="sr-only" data-truth="metrics-reliability.empty">yes</span>
         <EmptyState
           icon={LineChart}
           heading={L.emptyMetricsPanelHeading}
@@ -126,13 +134,20 @@ export function ReliabilityPanel() {
   // Lookup per_agent_7d entry by agent name for gauge composition.
   const byAgent = new Map(r.per_agent_7d.map((p) => [p.agent, p]));
 
+  const isStale =
+    lastUpdated !== null && Date.now() - lastUpdated > METRICS_STALE_MS;
+  const liveness: "stale" | "healthy" = isStale ? "stale" : "healthy";
+
   return (
     <Panel
       title={L.metricsWellHeading}
       headingId="reliability-heading"
       testId="reliability-panel"
       className="flex flex-col gap-6"
+      dataLiveness={liveness}
+      subtitle={<LastUpdated at={lastUpdated} threshold_ms={METRICS_STALE_MS} />}
     >
+      <span className="sr-only" data-truth={`metrics-reliability.${liveness}`}>yes</span>
       <span className="sr-only" data-truth="metrics.reliability-rate">
         {weightedRate.toFixed(3)}
       </span>

@@ -82,7 +82,9 @@ export function SearchResults({ hits, q, onSelectFile }: SearchResultsProps) {
       <div
         className="border-b border-[color:var(--border)] px-3 py-3 text-[12px] text-[color:var(--text-muted)]"
         data-testid="search-no-matches"
+        data-liveness="empty"
       >
+        <span className="sr-only" data-truth="memory-search.empty">yes</span>
         No matches for &quot;{q}&quot;
       </div>
     );
@@ -93,7 +95,9 @@ export function SearchResults({ hits, q, onSelectFile }: SearchResultsProps) {
     <div
       className="border-b border-[color:var(--border)] bg-[color:var(--bg)]"
       data-testid="search-results"
+      data-liveness="healthy"
     >
+      <span className="sr-only" data-truth="memory-search.healthy">yes</span>
       {Array.from(grouped.entries()).map(([file, fileHits]) => {
         const visible = fileHits.slice(0, MAX_HITS_PER_FILE);
         const extra = fileHits.length - visible.length;

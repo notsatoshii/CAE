@@ -125,11 +125,23 @@ export function BrowsePane({
     [],
   );
 
+  // C2-wave/Class 3: liveness for Browse tab (tree fetch).
+  const browseLiveness: "loading" | "error" | "empty" | "healthy" =
+    treeState.status === "loading"
+      ? "loading"
+      : treeState.status === "error"
+        ? "error"
+        : treeState.nodes.length === 0
+          ? "empty"
+          : "healthy";
+
   return (
     <div
       className="flex h-full min-h-0 flex-row overflow-hidden border border-[color:var(--border)] bg-[color:var(--bg)]"
       data-testid="browse-pane"
+      data-liveness={browseLiveness}
     >
+      <span className="sr-only" data-truth={`memory-browse.${browseLiveness}`}>yes</span>
       <aside
         className="flex w-[300px] shrink-0 flex-col overflow-hidden border-r border-[color:var(--border)] bg-[color:var(--bg)]"
         aria-label="Memory browser"

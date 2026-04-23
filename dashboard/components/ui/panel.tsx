@@ -31,6 +31,8 @@ export interface PanelProps {
   testId?: string;
   /** Root element tag (default: section). */
   as?: "section" | "div" | "article";
+  /** C2-wave/Class 3: liveness marker for audit scorer + debug tools. */
+  dataLiveness?: "loading" | "empty" | "stale" | "healthy" | "error";
 }
 
 export function Panel({
@@ -41,6 +43,7 @@ export function Panel({
   className = "",
   testId,
   as: Tag = "section",
+  dataLiveness,
 }: PanelProps) {
   // Derive a stable id from the title when not provided.
   const id =
@@ -51,6 +54,7 @@ export function Panel({
     <Tag
       aria-labelledby={id}
       data-testid={testId}
+      data-liveness={dataLiveness}
       className={
         "rounded-lg border border-[color:var(--border)] bg-[color:var(--surface)] p-6 " +
         className

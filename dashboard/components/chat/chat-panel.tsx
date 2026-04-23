@@ -277,15 +277,34 @@ export function ChatPanel({ standalone = false }: { standalone?: boolean } = {})
       ? Math.ceil((rateLimitUntil - Date.now()) / 1000)
       : 0;
 
+  // C2-wave/Class 3: liveness state for chat panel.
+  //  - initError          → error
+  //  - no session yet     → loading
+  //  - 0 messages         → empty
+  //  - lastMsgAt > 60s    → stale
+  //  - else               → healthy
+  const chatLiveness: "loading" | "error" | "empty" | "stale" | "healthy" =
+    initError
+      ? "error"
+      : !rail.currentSessionId
+        ? "loading"
+        : messages.length === 0
+          ? "empty"
+          : lastMsgAt !== null && Date.now() - lastMsgAt > 60_000
+            ? "stale"
+            : "healthy";
+
   return (
     <div
       data-testid="chat-panel"
+      data-liveness={chatLiveness}
       className={
         standalone
           ? "flex flex-col h-full max-w-[800px] mx-auto"
           : "flex flex-col h-full"
       }
     >
+      <span className="sr-only" data-truth={`chat-panel.${chatLiveness}`}>yes</span>
       {/* SSE stream health — shows when last delta was received */}
       {lastMsgAt !== null && (
         <div className="flex justify-end px-3 py-1 border-b border-[color:var(--border,#1f1f22)]">
