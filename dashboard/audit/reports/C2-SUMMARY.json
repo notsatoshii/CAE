@@ -1,7 +1,7 @@
 {
   "label": "C2",
   "fixture": "healthy",
-  "vision": false,
+  "vision": true,
   "cells": [
     {
       "fixture": "healthy",
@@ -40,9 +40,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 4,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "403 empty state centered with clear hierarchy — headline, subcopy, single CTA",
+            "Dark theme consistent with chrome; top bar icons and status pill well-aligned",
+            "Typography mixes serif headline with sans subcopy — intentional but slightly off-brand vs Linear's all-sans"
           ]
         },
         "reliability": {
@@ -97,9 +99,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 2,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Header controls overflow and clip at viewport edge on mobile (truncated 'tok today', cut-off avatar)",
+            "403 card and floating chat panel overlap, card right edge hidden behind chat rail",
+            "Large empty vertical space above/below card; layout not centered for mobile viewport"
           ]
         },
         "reliability": {
@@ -154,9 +158,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 4,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Centered 403 card with clear hierarchy — title, explanatory copy, and single primary action",
+            "Chrome renders cleanly: dark topbar, status pill, avatar, consistent icon row",
+            "Typography pairing (serif heading + sans body) reads intentional, not default"
           ]
         },
         "reliability": {
@@ -213,7 +219,9 @@
         "craft": {
           "score": 3,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Live Floor dropdown overlaps and visually collides with Live activity card, breaking layout hierarchy",
+            "Four Mission Control tiles (ACTIVE/BURN/BUDGET/LAST 60S) render empty with only placeholder 'appears when...' text — looks broken, not intentional",
+            "Status row cards (shipped/in-flight/warnings/blocked/tok) all show identical 0 NOMINAL state, flat and repetitive without visual differentiation"
           ]
         },
         "reliability": {
@@ -270,7 +278,9 @@
         "craft": {
           "score": 3,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Header crowding: top bar elements overflow/truncate (EST. —, tok today, icon cluster squeezed)",
+            "Layout break: 'cae-dashboard' pill overlaps Mission Control card boundary; Live activity card right edge clipped",
+            "Inconsistent spacing between stat tiles and stray sections (LIVE OPS, ACTIVE PHASES) break the card grid rhythm"
           ]
         },
         "reliability": {
@@ -327,7 +337,9 @@
         "craft": {
           "score": 3,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Live Floor panel overflows container — bullet list bleeds outside card right edge, header 'Live Floor' clipped",
+            "Top-right header row has orphaned dashes/em-dashes ('— ——:——:—— —') where timers/status should render, reads like unpopulated template strings",
+            "Empty-state density uneven: Live activity shows 3 blank skeleton tiles while Recent shows centered clock illustration — inconsistent empty-state language"
           ]
         },
         "reliability": {
@@ -382,9 +394,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 4,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Clean typography hierarchy, muted palette, proper breadcrumb + tab pattern",
+            "Empty-state copy italicized and well-spaced, inline code styling for env vars reads crisp",
+            "Vast bottom whitespace — page feels unfinished at laptop viewport"
           ]
         },
         "reliability": {
@@ -439,9 +453,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 2,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Mobile viewport shows desktop sidebar + rail, content clipped mid-sentence ('admin e…', 'resolved when…')",
+            "Massive empty black void right half of screen — no responsive reflow",
+            "Floating chat bubble overlaps content area with no safe spacing"
           ]
         },
         "reliability": {
@@ -498,7 +514,9 @@
         "craft": {
           "score": 3,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Vast empty canvas below content — page feels unfinished, no visual weight or hierarchy past row 1",
+            "Chrome dense with cryptic glyphs (top-right cluster, sidebar icons unlabeled) — Linear uses restrained, labeled affordances",
+            "Permissions content reads as static prose + monospace env vars, not interactive role management — looks like docs pasted into admin shell"
           ]
         },
         "reliability": {
@@ -555,7 +573,9 @@
         "craft": {
           "score": 3,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Inconsistent card density — Forge card shows Today/100% bar, others show Never/0% but identical layout wastes space",
+            "Header microcopy '— tok today EST. —' looks like broken template placeholders",
+            "Avatar color palette (orange/green/red/purple/blue) lacks hierarchy — feels random vs Linear's restrained accent use"
           ]
         },
         "reliability": {
@@ -612,7 +632,9 @@
         "craft": {
           "score": 3,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Large empty whitespace to right of stacked agent cards wastes mobile viewport",
+            "Typography hierarchy weak — 'Never' and '0%' same weight as labels, hard to scan",
+            "Button trio (Start/Stop/Archive) repeats per card without visual grouping or primary action emphasis"
           ]
         },
         "reliability": {
@@ -667,9 +689,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 4,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Clean dark theme with consistent card layout and typography hierarchy",
+            "Status dots + pill badges align well; sidebar icons evenly spaced",
+            "Agent avatars use varied hues that read as intentional, not random"
           ]
         },
         "reliability": {
@@ -724,9 +748,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 2,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "9 identical 'CAE shipped 2 changes to dashboard Monday.' rows — clear placeholder/broken template leak",
+            "Header '— tok today EST. —' reads as debug string, not polished copy",
+            "Empty-state text 'Nothing's shipped today — yet.' contradicts list below showing 8 shipped items"
           ]
         },
         "reliability": {
@@ -781,9 +807,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 2,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Header text overlaps with top-right icons and clock, unreadable collision",
+            "Large empty right panel on mobile viewport — broken responsive layout",
+            "Lone speech-bubble icon floating in whitespace with no context"
           ]
         },
         "reliability": {
@@ -838,9 +866,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 2,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Massive empty canvas with single centered empty-state string — no layout, header, or filters to frame admin context",
+            "Top bar shows placeholder dashes ('— tok today EST. —', '--:--:--', 'Offline · —') indicating unresolved data bindings shipped to UI",
+            "Sidebar icons lack labels/tooltip affordance; active item is a raw dot glyph, no section heading for the route"
           ]
         },
         "reliability": {
@@ -897,7 +927,9 @@
         "craft": {
           "score": 3,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Kanban columns lack visual separation — no card backgrounds, borders bleed into page bg",
+            "Header meta row shows broken placeholders (`— tok today EST. —`, `--:--:--`)",
+            "Card metadata rendered as em-dash stub (`— · 3d ago`) signals missing fields"
           ]
         },
         "reliability": {
@@ -952,9 +984,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 2,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Header overflows viewport: 'tok today', 'New jo' clipped, Offline pill truncated",
+            "Card content clipped on right edge — titles cut mid-word with no ellipsis handling",
+            "Desktop sidebar rendered on mobile width alongside main rail, wasting ~40% horizontal space and empty black void right of cards"
           ]
         },
         "reliability": {
@@ -1009,9 +1043,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 4,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Clean kanban layout with clear column headers and count badges",
+            "Consistent card styling with icon, title, and timestamp hierarchy",
+            "Header clutter: '— tok today EST. —' text and stray dash icons look unpolished"
           ]
         },
         "reliability": {
@@ -1066,9 +1102,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 4,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Clean dark theme with consistent sidebar and tab navigation typography",
+            "Empty state card well-composed with icon, heading, subtext, and CTA hierarchy",
+            "Top bar dense but readable; spacing around Schedules header matches Linear-esque rhythm"
           ]
         },
         "reliability": {
@@ -1123,9 +1161,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 2,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Content clipped on right edge — header chrome, tab row, empty-state card all truncated mid-text",
+            "Mobile viewport shows desktop sidebar rail instead of responsive nav — no hamburger or bottom tab bar",
+            "Floating chat bubble overlaps header row at top-right, not anchored to bottom"
           ]
         },
         "reliability": {
@@ -1180,9 +1220,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 4,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Clean dark theme with consistent spacing and typography hierarchy",
+            "Well-crafted empty state with icon, heading, description, and primary CTA centered in card",
+            "Tab nav underline active state matches Linear-style convention"
           ]
         },
         "reliability": {
@@ -1237,9 +1279,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 4,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Clean empty state with centered icon, heading, subtext, and CTA in bordered card",
+            "Tab nav with underline active state on 'My schedules' reads polished",
+            "Sidebar icon rail + topbar chrome consistent with Linear-style dark UI"
           ]
         },
         "reliability": {
@@ -1294,9 +1338,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 1,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Running Pikachu loader with cartoon GIF and 'Loading...' text dominates viewport",
+            "Header truncates mid-word ('tok today', '17:58:44 Offline') — broken mobile layout",
+            "Empty right gutter wastes ~40% of mobile width; no responsive collapse"
           ]
         },
         "reliability": {
@@ -1351,9 +1397,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 2,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Main content area empty except for 'Running Pikachu' loading placeholder with cartoon image — unprofessional for admin route",
+            "Top bar shows broken/placeholder text '— tok today EST. —' and '— —:—:—' timer stubs",
+            "Vast empty canvas with no layout, skeleton, or scaffolding — route appears non-functional"
           ]
         },
         "reliability": {
@@ -1408,9 +1456,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 2,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Pikachu loading GIF dominates content area — unprofessional placeholder for admin/build-security route",
+            "Top bar shows broken placeholders: '-- tok today EST. --' and '--:--:--' timestamp",
+            "Route never resolves past loading state; no actual security content rendered"
           ]
         },
         "reliability": {
@@ -1465,9 +1515,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 1,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Pikachu GIF with 'Running Pikachu / Loading...' occupies main content area of admin build-security route",
+            "Header metrics show placeholder dashes ('— tok', '-- : --', 'Offline --')",
+            "Page title truncated ('Running Pikachu' clipped at right edge) on mobile viewport"
           ]
         },
         "reliability": {
@@ -1522,9 +1574,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 2,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Page body shows Pikachu 'Loading...' placeholder instead of real content",
+            "Vast empty black canvas with no layout, cards, or data visible",
+            "Top bar renders broken glyphs (— tok today EST. —, --:--:--) suggesting unresolved state"
           ]
         },
         "reliability": {
@@ -1581,7 +1635,9 @@
         "craft": {
           "score": 3,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Header time/status shows placeholder glyphs '—:—:—' and '-' instead of real values",
+            "Huge empty canvas below single-row table — no empty-state treatment for other columns/context",
+            "Floating chat bubble and bottom-left 'N' avatar overlap content with no visual hierarchy"
           ]
         },
         "reliability": {
@@ -1636,9 +1692,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 2,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Table clips hard right edge — columns cut mid-word (Dire…, /root)",
+            "Huge empty void right of content — no mobile layout, desktop table shoved into phone viewport",
+            "Floating chat bubble overlaps table header area, no safe-area offset"
           ]
         },
         "reliability": {
@@ -1695,7 +1753,9 @@
         "craft": {
           "score": 3,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Vast empty canvas below single row — no empty-state guidance or density",
+            "Header strip cramped with cryptic glyphs (tok today EST, offline dashes) that read as debug output",
+            "Filter row uses raw mm/dd/yyyy browser date inputs — inconsistent with dark theme polish"
           ]
         },
         "reliability": {
@@ -1752,7 +1812,9 @@
         "craft": {
           "score": 3,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Dense uniform list of rows with near-identical right-side status pills creates monotonous scannability",
+            "Row heights generous but lack hierarchy — every gsd-* entry visually equal weight, no grouping or section headers",
+            "Top bar controls render tiny/cramped at this zoom; filter chips and search lack Linear's crisp alignment"
           ]
         },
         "reliability": {
@@ -1809,7 +1871,9 @@
         "craft": {
           "score": 3,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Mobile viewport but desktop sidebar still rendered, squeezing main content",
+            "Table rows repeat identical 'No findings / Rescan' pattern with no visual hierarchy or grouping",
+            "Top toolbar overflows — tabs and controls cramped against right edge"
           ]
         },
         "reliability": {
@@ -1864,9 +1928,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 2,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Dense uniform list no visual hierarchy group header",
+            "Row height too cramped text near border",
+            "Only two columns name plus repeating 'No findings' status — dead right half"
           ]
         },
         "reliability": {
@@ -1921,9 +1987,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 2,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Dense list of repeated red 'Medium' severity badges dominate right rail — monotonous, no visual hierarchy",
+            "Row labels (gsd-*) left-aligned with huge whitespace gap to badges — broken two-column density",
+            "No header, filters, counts, or grouping visible; looks like raw dump not curated admin view"
           ]
         },
         "reliability": {
@@ -1978,9 +2046,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 2,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Dense unstyled list of gsd-* commands with no visual hierarchy or grouping",
+            "Every row shows same yellow Medium badge — looks like raw dump, not curated UI",
+            "Mobile viewport but content not adapted: tiny text, cramped rows, no breathing room"
           ]
         },
         "reliability": {
@@ -2037,7 +2107,9 @@
         "craft": {
           "score": 3,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Badge colors clash — bright red/orange/green pills on every row create noisy, over-saturated rhythm unlike Linear's muted palette",
+            "Dense list lacks vertical rhythm and grouping; rows feel like raw dump, no section headers or dividers",
+            "Left sidebar icons cramped and inconsistently aligned; top bar controls feel undersized vs content density"
           ]
         },
         "reliability": {
@@ -2092,9 +2164,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 4,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Dense card grid with consistent spacing, typography hierarchy, and dark palette feels Linear-adjacent",
+            "Status pills (Catalog/Installed) and per-card badges render uniformly across many rows",
+            "Sidebar icons + topbar chrome align cleanly; no obvious misalignment at laptop width"
           ]
         },
         "reliability": {
@@ -2151,7 +2225,9 @@
         "craft": {
           "score": 3,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Mobile layout renders as single long scroll of near-identical card rows with no grouping, density variation, or section anchors",
+            "Typography hierarchy is flat — title/meta/body blend into one gray mass per card",
+            "No visible filter/sort/search affordances despite long list; header region minimal"
           ]
         },
         "reliability": {
@@ -2208,7 +2284,9 @@
         "craft": {
           "score": 3,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Dense card grid lacks visual hierarchy — every card weighted equally with no grouping or scannable headers",
+            "Cyan badge accents clash with muted neutrals; saturation feels arbitrary vs. Linear's restrained palette",
+            "Card padding and line-height feel cramped; descriptions truncate awkwardly and titles blur together at wide viewport"
           ]
         },
         "reliability": {
@@ -2265,7 +2343,9 @@
         "craft": {
           "score": 3,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Dense card grid lacks clear hierarchy — title, description, and green 'Installed' pills compete visually",
+            "Inconsistent card heights and wrapping create ragged vertical rhythm across columns",
+            "Bright green tag color clashes with muted dark palette; too saturated vs Linear's restrained accent use"
           ]
         },
         "reliability": {
@@ -2320,9 +2400,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 2,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Header title 'Running Pikachu — tok EST. today' truncates and wraps awkwardly on mobile width",
+            "Large empty right panel (chat/side area) consumes ~45% of viewport with no content, wasting mobile real estate",
+            "Pikachu image rendered as raw sharp-edged bitmap on dark bg — no container, radius, or framing; reads as placeholder art not product UI"
           ]
         },
         "reliability": {
@@ -2377,9 +2459,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 2,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Main content area dominated by 'Running Pikachu' loading placeholder — looks like debug/Easter egg leaked into prod view",
+            "Top bar shows broken/placeholder text: '- tok today EST. -' and '--:--:--' time placeholders unrendered",
+            "Vast empty black canvas with no skills UI, no skeleton, no structure — route appears unimplemented"
           ]
         },
         "reliability": {
@@ -2436,7 +2520,9 @@
         "craft": {
           "score": 3,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Header shows raw debug text '— tok today EST. —' next to brand, unprofessional",
+            "Empty-state card duplicates 'No recipes yet' heading and body copy verbatim",
+            "Two 'New recipe' buttons with inconsistent styling (cyan primary top-right vs dark secondary in card) compete for attention"
           ]
         },
         "reliability": {
@@ -2491,9 +2577,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 2,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Top bar overflows viewport — tokens/EST/timer truncated to dashes and labels clip mid-word",
+            "Recipes panel right-clipped: 'New recipe' button and card content cut off at ~345px",
+            "Chat bubble FAB overlaps page content, no safe-area offset on mobile"
           ]
         },
         "reliability": {
@@ -2550,7 +2638,9 @@
         "craft": {
           "score": 3,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Empty state card centered-left instead of center; huge dead space right half",
+            "Top bar cluster right side cryptic: bare em-dashes, '—:—:—' timer placeholder, unlabeled status dots feel unfinished",
+            "Duplicate 'New recipe' CTAs (header + empty state) with inconsistent styling — header pill bright cyan, card button muted gray"
           ]
         },
         "reliability": {
@@ -2607,7 +2697,9 @@
         "craft": {
           "score": 3,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Header text '— tok today EST. —' reads as debug/placeholder, not polished copy",
+            "Right panel 'No steps yet' box is oversized empty rectangle with weak hierarchy vs left form",
+            "Two-column split unbalanced: left form short, right preview huge whitespace, no visual rhythm"
           ]
         },
         "reliability": {
@@ -2662,9 +2754,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 2,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Massive empty black void on right half of mobile viewport — content column ~330px wide with ~390px of dead space, breaks responsive expectation",
+            "Top header truncated/broken: '— tok today EST. — -:-' and '-:-' fragments suggest unrendered template values or clipped labels",
+            "Floating chat bubble overlaps form area; bottom-left circular 'N' badge floats with no anchor or label"
           ]
         },
         "reliability": {
@@ -2721,7 +2815,9 @@
         "craft": {
           "score": 3,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Header shows raw placeholder text '— tok today EST. —' indicating unfilled template values",
+            "Huge empty 'Here's the recipe' canvas dominates right column with only italic 'No steps yet' — wastes viewport, no empty-state guidance",
+            "Right rail chat bubble and bottom-left avatar float without visual anchor; left-column form ends at ~30% height leaving vast dead space"
           ]
         },
         "reliability": {
@@ -2776,9 +2872,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 2,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Left pane stuck on 'Loading…' — dead空白 dominate half viewport",
+            "Top bar cramped, dash separators '— tok today EST. —' look raw/unstyled",
+            "Empty chat panel vast black void, tiny centered text feel unbalanced"
           ]
         },
         "reliability": {
@@ -2833,9 +2931,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 2,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Top header overflows mobile viewport — icon row clipped right edge, timestamp text fragmented ('--:--', '— tok today')",
+            "Empty 'Mirror: Home' sidebar visible on mobile instead of collapsed/drawer pattern — wastes ~40% of width",
+            "Composer 'Send' button uses raw cyan fill with no radius harmony, clashes with muted palette"
           ]
         },
         "reliability": {
@@ -2890,9 +2990,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 2,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Left pane stuck on 'Loading…' with no skeleton — dead space dominates viewport",
+            "Header shows broken/empty state: '— tok today EST. —' dashes where values should be, orphan '—' next to Offline pill",
+            "Empty chat canvas has no visual container, divider, or card — message floats in void with inconsistent alignment vs input bar"
           ]
         },
         "reliability": {
@@ -2947,9 +3049,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 2,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Huge empty black void dominating center — no content, no skeleton, no empty state",
+            "Top bar text truncated/broken: '— tok today EST. —' reads as placeholder garbage",
+            "Floating room legend clipped at right edge, overlapping viewport boundary"
           ]
         },
         "reliability": {
@@ -3004,9 +3108,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 2,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Header controls overflow viewport — timer/status chips clipped right edge",
+            "Large empty black void mid-canvas between header and floating panel — no mobile layout adaptation",
+            "Floating role panel anchored bottom-right desktop-style, overlaps canvas awkwardly on narrow width"
           ]
         },
         "reliability": {
@@ -3061,9 +3167,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 2,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Vast empty black canvas dominates viewport — no content hierarchy or layout structure visible",
+            "Floating legend chip bottom-right clips off-screen and lacks container framing",
+            "Top bar controls crowded/misaligned: truncated 'tok today EST.' label, placeholder dashes where values should render"
           ]
         },
         "reliability": {
@@ -3118,9 +3226,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 2,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Massive empty black canvas — no admin content rendered, only chrome remnants visible",
+            "Floating legend panel clipped at right edge with no container framing or alignment to grid",
+            "Top-right icon cluster overlaps chat bubble icon, no spacing discipline"
           ]
         },
         "reliability": {
@@ -3175,9 +3285,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 2,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Massive empty black void dominates viewport with no content or skeleton",
+            "Floor popout menu clipped off right edge, items extend past viewport",
+            "Top-right icon cluster lacks spacing/grouping, floats against void"
           ]
         },
         "reliability": {
@@ -3232,9 +3344,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 2,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Vast empty black canvas with no content framing, headers, or layout structure",
+            "Legend panel clipped at right edge, items overflow viewport",
+            "Waiting state badge ('waiting for first heartbeat') text clipped behind avatar circle bottom-left"
           ]
         },
         "reliability": {
@@ -3289,9 +3403,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 2,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Loading… state captured as final screenshot; right pane stuck on empty 'Pick a file from the left to read it.' placeholder",
+            "Top bar cramped with unlabeled icons, stray dashes, and low-contrast 'tok today EST.' fragment — looks debug not production",
+            "Heavy serif 'Memory' heading clashes with mono UI chrome; Browse/Graph tabs have weak affordance, near-invisible dividers"
           ]
         },
         "reliability": {
@@ -3346,9 +3462,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 2,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Content stuck on 'Loading…' — mobile view shows unfinished state, not real UI",
+            "Second panel (speech-bubble icon) floats disconnected, overlaps main column awkwardly on narrow width",
+            "Large dead black space right half of screen; no mobile layout collapse, desktop chrome bleeding through"
           ]
         },
         "reliability": {
@@ -3403,9 +3521,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 2,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Massive empty canvas — content occupies <20% of viewport, rest dead black",
+            "Top bar cluttered with unlabeled icons, raw timestamp `17:50:26`, and stray `—` separators",
+            "Loading… stuck in left pane with placeholder `-` header and orphaned `Pick a file` hint"
           ]
         },
         "reliability": {
@@ -3460,9 +3580,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 2,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Giant '0 tok' / '~0 tok' numerals dominate Spending card with weak hierarchy and awkward spacing",
+            "Incident Stream rows are repetitive red pills with cramped timestamps — visually noisy, not Linear-calm",
+            "Bar chart on right is oversized, unlabeled axes, floating '3 waiting' pill collides with chart area"
           ]
         },
         "reliability": {
@@ -3517,9 +3639,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 2,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Header overlaps body content — 'tok today' text bleeds into sidebar area",
+            "Sidebar rail renders as full-width overlay on mobile instead of collapsing, crushing main content",
+            "Skeleton loaders dominate viewport; no real data visible in captured state"
           ]
         },
         "reliability": {
@@ -3574,9 +3698,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 2,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "All four panels stuck in skeleton-loader state on 'healthy' capture — no real data rendered",
+            "Top bar cramped/broken: stray dashes around 'tok today EST.', empty time field '--:--:--', orphan icons with no labels",
+            "Massive empty canvas below cards; no density, hierarchy, or Linear-grade polish — reads as unfinished scaffold"
           ]
         },
         "reliability": {
@@ -3633,7 +3759,9 @@
         "craft": {
           "score": 3,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Empty-state card centered but body copy orphaned high on page with massive whitespace gap below",
+            "Top bar typography mixes serif heading with monospaced status text inconsistently",
+            "Tabs (Projects/PRDs/Roadmaps/UAT) render as flat low-contrast text, no active indicator or Linear-style pill treatment"
           ]
         },
         "reliability": {
@@ -3688,9 +3816,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 2,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Top bar overflows viewport — 'today', time, 'Offline' clipped; icon row crammed edge-to-edge",
+            "Chat pop-out panel overlays main content, truncating heading and body copy mid-word",
+            "Mobile layout shows desktop chrome instead of responsive treatment — no hamburger, tabs unstyled"
           ]
         },
         "reliability": {
@@ -3747,7 +3877,9 @@
         "craft": {
           "score": 3,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Empty-state card centered with tiny compass glyph, minimal visual hierarchy — reads thin and placeholder-y",
+            "Top chrome cluster (status dots, offline pill, avatar) crammed without spacing rhythm; dashes used as literal separators look like render glitches",
+            "Tab row (Projects/PRDs/Roadmaps/UAT) low-contrast and non-interactive feel — no active state, no underline system"
           ]
         },
         "reliability": {
@@ -3802,9 +3934,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 2,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Pikachu GIF + 'Running Pikachu' loading screen on admin root — unprofessional placeholder",
+            "Top bar shows broken tokens: '— tok today EST. —' and '--:--:--' placeholders unreplaced",
+            "Offline pill with trailing dash '• Offline • —' looks half-rendered"
           ]
         },
         "reliability": {
@@ -3859,9 +3993,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 2,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Top bar overflows viewport — timer/status glyphs clipped and unreadable on mobile width",
+            "Pikachu loading GIF with white box on dark theme breaks visual language, feels placeholder/tacky",
+            "Dead empty right panel + narrow middle rail waste mobile real estate, no responsive collapse"
           ]
         },
         "reliability": {
@@ -3918,7 +4054,9 @@
         "craft": {
           "score": 3,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Live Floor panel overlaps Mission Control tile — popover z-index or positioning bug breaks layout",
+            "Mission Control tiles show placeholder skeleton bars with 'appears when...' helper text stacked, reads as unfinished",
+            "Sidebar icons unevenly spaced, lone avatar 'N' floats mid-rail with no grouping"
           ]
         },
         "reliability": {
@@ -3973,9 +4111,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 4,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Clean centered auth card with coherent dark palette and subtle radial backdrop",
+            "Typography hierarchy solid; monospaced wordmark in CTRL+ALT+ELITE feels intentional",
+            "Top nav crowded with cryptic glyphs and '0 tok today EST.' status reads like debug output in a production sign-in"
           ]
         },
         "reliability": {
@@ -4030,9 +4170,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 2,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Header overflows mobile viewport — text clipping ('tok', 'today', dash fragments) and crammed icon row",
+            "Empty chat rail column wastes ~50% horizontal space on mobile, leaving signin card cramped on left",
+            "Floating 'N' avatar bottom-left overlaps content area with no clear affordance"
           ]
         },
         "reliability": {
@@ -4087,9 +4229,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 4,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Centered sign-in card with clean typography and balanced spacing",
+            "Subtle radial gradient backdrop adds depth without noise",
+            "Top bar shows debug-looking placeholder text 'tok today EST.' and stray dashes near status indicators"
           ]
         },
         "reliability": {
@@ -4144,9 +4288,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 4,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Centered 403 card with clear hierarchy, serif heading pairs with sans body",
+            "Muted copy and single primary cyan CTA reads intentional",
+            "Lone 'N' avatar bottom-left floats with no anchoring chrome, feels orphaned"
           ]
         },
         "reliability": {
@@ -4201,9 +4347,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 4,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Centered card with clear hierarchy — bold headline, muted body copy, prominent CTA",
+            "Mobile viewport well-respected; card padding and type scale feel intentional",
+            "Dev indicator (N badge) visible bottom-left, slightly breaks polish"
           ]
         },
         "reliability": {
@@ -4258,9 +4406,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 4,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Centered 403 card with clear hierarchy, serif headline pairs with muted body copy",
+            "Restrained dark palette, single cyan CTA, avatar badge pinned bottom-left",
+            "Card border and background contrast slightly low, edges look flat without subtle elevation"
           ]
         },
         "reliability": {
@@ -4315,9 +4465,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 4,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Clean centered auth card with consistent dark theme and subtle radial glow",
+            "Typography hierarchy solid: logo lockup, muted tagline, clear CTA buttons",
+            "GitHub CTA cyan accent pops but competes with white Google CTA for primary emphasis"
           ]
         },
         "reliability": {
@@ -4372,9 +4524,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 4,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Clean centered auth card with consistent dark palette and tight typography",
+            "Brand lockup, OAuth buttons, and footer align on shared vertical rhythm",
+            "Primary GitHub CTA uses saturated cyan that reads slightly toy-like vs Linear's restrained accents"
           ]
         },
         "reliability": {
@@ -4431,7 +4585,9 @@
         "craft": {
           "score": 3,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Auth card centered on vast empty black canvas wastes viewport, feels like placeholder",
+            "Google button pure white against black = harsh contrast, not Linear-calm",
+            "Cyan GitHub button saturation clashes with muted zinc card — no unified accent system"
           ]
         },
         "reliability": {
@@ -4486,9 +4642,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 4,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Clean centered auth card with consistent dark theme and subtle radial glow",
+            "Typography hierarchy solid: logo lockup, muted tagline, clear CTA buttons",
+            "GitHub CTA cyan accent pops but competes with white Google CTA for primary emphasis"
           ]
         },
         "reliability": {
@@ -4543,9 +4701,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 4,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Clean centered auth card with consistent dark palette and tight typography",
+            "Brand lockup, OAuth buttons, and footer align on shared vertical rhythm",
+            "Primary GitHub CTA uses saturated cyan that reads slightly toy-like vs Linear's restrained accents"
           ]
         },
         "reliability": {
@@ -4602,7 +4762,9 @@
         "craft": {
           "score": 3,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Sign-in card centered on empty void — no product chrome, feels like placeholder",
+            "Generic robot icon + 'CTRL + ALT + ELITE' wordmark reads boilerplate, not branded",
+            "'Compiling' pill bottom-left floats disconnected from layout, low-polish"
           ]
         },
         "reliability": {
@@ -4657,9 +4819,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 4,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Clean centered auth card with consistent dark theme and subtle radial glow",
+            "Typography hierarchy solid: logo lockup, muted tagline, clear CTA buttons",
+            "GitHub CTA cyan accent pops but competes with white Google CTA for primary emphasis"
           ]
         },
         "reliability": {
@@ -4714,9 +4878,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 4,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Clean centered auth card with consistent dark palette and tight typography",
+            "Brand lockup, OAuth buttons, and footer align on shared vertical rhythm",
+            "Primary GitHub CTA uses saturated cyan that reads slightly toy-like vs Linear's restrained accents"
           ]
         },
         "reliability": {
@@ -4773,7 +4939,9 @@
         "craft": {
           "score": 3,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Auth card centered on vast empty black canvas wastes viewport, feels like placeholder",
+            "Google button pure white against black = harsh contrast, not Linear-calm",
+            "Cyan GitHub button saturation clashes with muted zinc card — no unified accent system"
           ]
         },
         "reliability": {
@@ -4828,9 +4996,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 4,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Clean centered auth card with consistent dark theme and subtle radial glow",
+            "Typography hierarchy solid: logo lockup, muted tagline, clear CTA buttons",
+            "GitHub CTA cyan accent pops but competes with white Google CTA for primary emphasis"
           ]
         },
         "reliability": {
@@ -4885,9 +5055,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 4,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Clean centered auth card with consistent dark palette and tight typography",
+            "Brand lockup, OAuth buttons, and footer align on shared vertical rhythm",
+            "Primary GitHub CTA uses saturated cyan that reads slightly toy-like vs Linear's restrained accents"
           ]
         },
         "reliability": {
@@ -4944,7 +5116,9 @@
         "craft": {
           "score": 3,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Auth card centered on vast empty black canvas wastes viewport, feels like placeholder",
+            "Google button pure white against black = harsh contrast, not Linear-calm",
+            "Cyan GitHub button saturation clashes with muted zinc card — no unified accent system"
           ]
         },
         "reliability": {
@@ -4999,9 +5173,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 4,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Clean centered auth card with consistent dark theme and subtle radial glow",
+            "Typography hierarchy solid: logo lockup, muted tagline, clear CTA buttons",
+            "GitHub CTA cyan accent pops but competes with white Google CTA for primary emphasis"
           ]
         },
         "reliability": {
@@ -5056,9 +5232,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 4,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Clean centered auth card with consistent dark palette and tight typography",
+            "Brand lockup, OAuth buttons, and footer align on shared vertical rhythm",
+            "Primary GitHub CTA uses saturated cyan that reads slightly toy-like vs Linear's restrained accents"
           ]
         },
         "reliability": {
@@ -5115,7 +5293,9 @@
         "craft": {
           "score": 3,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Auth card centered on vast empty black canvas wastes viewport, feels like placeholder",
+            "Google button pure white against black = harsh contrast, not Linear-calm",
+            "Cyan GitHub button saturation clashes with muted zinc card — no unified accent system"
           ]
         },
         "reliability": {
@@ -5170,9 +5350,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 4,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Clean centered auth card with consistent dark theme and subtle radial glow",
+            "Typography hierarchy solid: logo lockup, muted tagline, clear CTA buttons",
+            "GitHub CTA cyan accent pops but competes with white Google CTA for primary emphasis"
           ]
         },
         "reliability": {
@@ -5227,9 +5409,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 4,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Clean centered auth card with consistent dark palette and tight typography",
+            "Brand lockup, OAuth buttons, and footer align on shared vertical rhythm",
+            "Primary GitHub CTA uses saturated cyan that reads slightly toy-like vs Linear's restrained accents"
           ]
         },
         "reliability": {
@@ -5286,7 +5470,9 @@
         "craft": {
           "score": 3,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Auth card centered on vast empty black canvas wastes viewport, feels like placeholder",
+            "Google button pure white against black = harsh contrast, not Linear-calm",
+            "Cyan GitHub button saturation clashes with muted zinc card — no unified accent system"
           ]
         },
         "reliability": {
@@ -5341,9 +5527,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 4,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Clean centered auth card with consistent dark theme and subtle radial glow",
+            "Typography hierarchy solid: logo lockup, muted tagline, clear CTA buttons",
+            "GitHub CTA cyan accent pops but competes with white Google CTA for primary emphasis"
           ]
         },
         "reliability": {
@@ -5398,9 +5586,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 4,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Clean centered auth card with consistent dark palette and tight typography",
+            "Brand lockup, OAuth buttons, and footer align on shared vertical rhythm",
+            "Primary GitHub CTA uses saturated cyan that reads slightly toy-like vs Linear's restrained accents"
           ]
         },
         "reliability": {
@@ -5457,7 +5647,9 @@
         "craft": {
           "score": 3,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Auth card centered on vast empty black canvas wastes viewport, feels like placeholder",
+            "Google button pure white against black = harsh contrast, not Linear-calm",
+            "Cyan GitHub button saturation clashes with muted zinc card — no unified accent system"
           ]
         },
         "reliability": {
@@ -5512,9 +5704,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 4,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Clean centered auth card with consistent dark theme and subtle radial glow",
+            "Typography hierarchy solid: logo lockup, muted tagline, clear CTA buttons",
+            "GitHub CTA cyan accent pops but competes with white Google CTA for primary emphasis"
           ]
         },
         "reliability": {
@@ -5569,9 +5763,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 4,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Clean centered auth card with consistent dark palette and tight typography",
+            "Brand lockup, OAuth buttons, and footer align on shared vertical rhythm",
+            "Primary GitHub CTA uses saturated cyan that reads slightly toy-like vs Linear's restrained accents"
           ]
         },
         "reliability": {
@@ -5628,7 +5824,9 @@
         "craft": {
           "score": 3,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Auth card centered on vast empty black canvas wastes viewport, feels like placeholder",
+            "Google button pure white against black = harsh contrast, not Linear-calm",
+            "Cyan GitHub button saturation clashes with muted zinc card — no unified accent system"
           ]
         },
         "reliability": {
@@ -5683,9 +5881,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 4,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Clean centered auth card with consistent dark theme and subtle radial glow",
+            "Typography hierarchy solid: logo lockup, muted tagline, clear CTA buttons",
+            "GitHub CTA cyan accent pops but competes with white Google CTA for primary emphasis"
           ]
         },
         "reliability": {
@@ -5740,9 +5940,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 4,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Clean centered auth card with consistent dark palette and tight typography",
+            "Brand lockup, OAuth buttons, and footer align on shared vertical rhythm",
+            "Primary GitHub CTA uses saturated cyan that reads slightly toy-like vs Linear's restrained accents"
           ]
         },
         "reliability": {
@@ -5797,9 +5999,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 2,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Auth screen shown instead of build-security-skills route — likely redirect/gating misfire on wide viewport",
+            "Persistent 'Compiling' pill bottom-left leaks dev state into captured shot",
+            "Vast empty canvas around small centered card reads as unfinished at wide breakpoint"
           ]
         },
         "reliability": {
@@ -5854,9 +6058,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 4,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Clean centered auth card with consistent dark theme and subtle radial glow",
+            "Typography hierarchy solid: logo lockup, muted tagline, clear CTA buttons",
+            "GitHub CTA cyan accent pops but competes with white Google CTA for primary emphasis"
           ]
         },
         "reliability": {
@@ -5911,9 +6117,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 4,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Clean centered auth card with consistent dark palette and tight typography",
+            "Brand lockup, OAuth buttons, and footer align on shared vertical rhythm",
+            "Primary GitHub CTA uses saturated cyan that reads slightly toy-like vs Linear's restrained accents"
           ]
         },
         "reliability": {
@@ -5970,7 +6178,9 @@
         "craft": {
           "score": 3,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Auth card centered on vast empty black canvas wastes viewport, feels like placeholder",
+            "Google button pure white against black = harsh contrast, not Linear-calm",
+            "Cyan GitHub button saturation clashes with muted zinc card — no unified accent system"
           ]
         },
         "reliability": {
@@ -6025,9 +6235,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 4,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Clean centered auth card with consistent dark theme and subtle radial glow",
+            "Typography hierarchy solid: logo lockup, muted tagline, clear CTA buttons",
+            "GitHub CTA cyan accent pops but competes with white Google CTA for primary emphasis"
           ]
         },
         "reliability": {
@@ -6082,9 +6294,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 4,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Clean centered auth card with consistent dark palette and tight typography",
+            "Brand lockup, OAuth buttons, and footer align on shared vertical rhythm",
+            "Primary GitHub CTA uses saturated cyan that reads slightly toy-like vs Linear's restrained accents"
           ]
         },
         "reliability": {
@@ -6141,7 +6355,9 @@
         "craft": {
           "score": 3,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Auth card centered on vast empty black canvas wastes viewport, feels like placeholder",
+            "Google button pure white against black = harsh contrast, not Linear-calm",
+            "Cyan GitHub button saturation clashes with muted zinc card — no unified accent system"
           ]
         },
         "reliability": {
@@ -6196,9 +6412,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 4,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Clean centered auth card with consistent dark theme and subtle radial glow",
+            "Typography hierarchy solid: logo lockup, muted tagline, clear CTA buttons",
+            "GitHub CTA cyan accent pops but competes with white Google CTA for primary emphasis"
           ]
         },
         "reliability": {
@@ -6253,9 +6471,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 4,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Clean centered auth card with consistent dark palette and tight typography",
+            "Brand lockup, OAuth buttons, and footer align on shared vertical rhythm",
+            "Primary GitHub CTA uses saturated cyan that reads slightly toy-like vs Linear's restrained accents"
           ]
         },
         "reliability": {
@@ -6312,7 +6532,9 @@
         "craft": {
           "score": 3,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Auth card centered on vast empty black canvas wastes viewport, feels like placeholder",
+            "Google button pure white against black = harsh contrast, not Linear-calm",
+            "Cyan GitHub button saturation clashes with muted zinc card — no unified accent system"
           ]
         },
         "reliability": {
@@ -6367,9 +6589,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 4,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Clean centered auth card with consistent dark theme and subtle radial glow",
+            "Typography hierarchy solid: logo lockup, muted tagline, clear CTA buttons",
+            "GitHub CTA cyan accent pops but competes with white Google CTA for primary emphasis"
           ]
         },
         "reliability": {
@@ -6424,9 +6648,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 4,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Clean centered auth card with consistent dark palette and tight typography",
+            "Brand lockup, OAuth buttons, and footer align on shared vertical rhythm",
+            "Primary GitHub CTA uses saturated cyan that reads slightly toy-like vs Linear's restrained accents"
           ]
         },
         "reliability": {
@@ -6483,7 +6709,9 @@
         "craft": {
           "score": 3,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Auth gate shown instead of target route — screenshot captures sign-in card, not build-workflows-new page",
+            "'Compiling' toast bottom-left indicates dev build in progress during capture",
+            "Card composition is clean but generic — logo + two OAuth buttons, no Linear-grade polish (no subtle gradient depth, typography hierarchy thin)"
           ]
         },
         "reliability": {
@@ -6538,9 +6766,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 4,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Clean centered auth card with consistent dark theme and subtle radial glow",
+            "Typography hierarchy solid: logo lockup, muted tagline, clear CTA buttons",
+            "GitHub CTA cyan accent pops but competes with white Google CTA for primary emphasis"
           ]
         },
         "reliability": {
@@ -6595,9 +6825,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 4,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Clean centered auth card with consistent dark palette and tight typography",
+            "Brand lockup, OAuth buttons, and footer align on shared vertical rhythm",
+            "Primary GitHub CTA uses saturated cyan that reads slightly toy-like vs Linear's restrained accents"
           ]
         },
         "reliability": {
@@ -6654,7 +6886,9 @@
         "craft": {
           "score": 3,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Auth card centered on vast empty black canvas wastes viewport, feels like placeholder",
+            "Google button pure white against black = harsh contrast, not Linear-calm",
+            "Cyan GitHub button saturation clashes with muted zinc card — no unified accent system"
           ]
         },
         "reliability": {
@@ -6709,9 +6943,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 4,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Clean centered auth card with consistent dark theme and subtle radial glow",
+            "Typography hierarchy solid: logo lockup, muted tagline, clear CTA buttons",
+            "GitHub CTA cyan accent pops but competes with white Google CTA for primary emphasis"
           ]
         },
         "reliability": {
@@ -6766,9 +7002,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 4,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Clean centered auth card with consistent dark palette and tight typography",
+            "Brand lockup, OAuth buttons, and footer align on shared vertical rhythm",
+            "Primary GitHub CTA uses saturated cyan that reads slightly toy-like vs Linear's restrained accents"
           ]
         },
         "reliability": {
@@ -6825,7 +7063,9 @@
         "craft": {
           "score": 3,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Auth card centered on vast empty black canvas wastes viewport, feels like placeholder",
+            "Google button pure white against black = harsh contrast, not Linear-calm",
+            "Cyan GitHub button saturation clashes with muted zinc card — no unified accent system"
           ]
         },
         "reliability": {
@@ -6880,9 +7120,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 4,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Clean centered auth card with consistent dark theme and subtle radial glow",
+            "Typography hierarchy solid: logo lockup, muted tagline, clear CTA buttons",
+            "GitHub CTA cyan accent pops but competes with white Google CTA for primary emphasis"
           ]
         },
         "reliability": {
@@ -6937,9 +7179,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 4,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Clean centered auth card with consistent dark palette and tight typography",
+            "Brand lockup, OAuth buttons, and footer align on shared vertical rhythm",
+            "Primary GitHub CTA uses saturated cyan that reads slightly toy-like vs Linear's restrained accents"
           ]
         },
         "reliability": {
@@ -6996,7 +7240,9 @@
         "craft": {
           "score": 3,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Auth card centered on vast empty black canvas wastes viewport, feels like placeholder",
+            "Google button pure white against black = harsh contrast, not Linear-calm",
+            "Cyan GitHub button saturation clashes with muted zinc card — no unified accent system"
           ]
         },
         "reliability": {
@@ -7051,9 +7297,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 4,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Clean centered auth card with consistent dark theme and subtle radial glow",
+            "Typography hierarchy solid: logo lockup, muted tagline, clear CTA buttons",
+            "GitHub CTA cyan accent pops but competes with white Google CTA for primary emphasis"
           ]
         },
         "reliability": {
@@ -7108,9 +7356,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 4,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Clean centered auth card with consistent dark palette and tight typography",
+            "Brand lockup, OAuth buttons, and footer align on shared vertical rhythm",
+            "Primary GitHub CTA uses saturated cyan that reads slightly toy-like vs Linear's restrained accents"
           ]
         },
         "reliability": {
@@ -7167,7 +7417,9 @@
         "craft": {
           "score": 3,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Auth card centered on vast empty black canvas wastes viewport, feels like placeholder",
+            "Google button pure white against black = harsh contrast, not Linear-calm",
+            "Cyan GitHub button saturation clashes with muted zinc card — no unified accent system"
           ]
         },
         "reliability": {
@@ -7222,9 +7474,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 4,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Clean centered auth card with consistent dark theme and subtle radial glow",
+            "Typography hierarchy solid: logo lockup, muted tagline, clear CTA buttons",
+            "GitHub CTA cyan accent pops but competes with white Google CTA for primary emphasis"
           ]
         },
         "reliability": {
@@ -7279,9 +7533,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 4,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Clean centered auth card with consistent dark palette and tight typography",
+            "Brand lockup, OAuth buttons, and footer align on shared vertical rhythm",
+            "Primary GitHub CTA uses saturated cyan that reads slightly toy-like vs Linear's restrained accents"
           ]
         },
         "reliability": {
@@ -7338,7 +7594,9 @@
         "craft": {
           "score": 3,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Auth card centered on vast empty black canvas wastes viewport, feels like placeholder",
+            "Google button pure white against black = harsh contrast, not Linear-calm",
+            "Cyan GitHub button saturation clashes with muted zinc card — no unified accent system"
           ]
         },
         "reliability": {
@@ -7393,9 +7651,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 4,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Clean centered auth card with consistent dark theme and subtle radial glow",
+            "Typography hierarchy solid: logo lockup, muted tagline, clear CTA buttons",
+            "GitHub CTA cyan accent pops but competes with white Google CTA for primary emphasis"
           ]
         },
         "reliability": {
@@ -7450,9 +7710,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 4,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Clean centered auth card with consistent dark palette and tight typography",
+            "Brand lockup, OAuth buttons, and footer align on shared vertical rhythm",
+            "Primary GitHub CTA uses saturated cyan that reads slightly toy-like vs Linear's restrained accents"
           ]
         },
         "reliability": {
@@ -7509,7 +7771,9 @@
         "craft": {
           "score": 3,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Auth card centered on vast empty black canvas wastes viewport, feels like placeholder",
+            "Google button pure white against black = harsh contrast, not Linear-calm",
+            "Cyan GitHub button saturation clashes with muted zinc card — no unified accent system"
           ]
         },
         "reliability": {
@@ -7564,9 +7828,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 4,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Clean centered auth card with consistent dark theme and subtle radial glow",
+            "Typography hierarchy solid: logo lockup, muted tagline, clear CTA buttons",
+            "GitHub CTA cyan accent pops but competes with white Google CTA for primary emphasis"
           ]
         },
         "reliability": {
@@ -7621,9 +7887,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 4,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Clean centered auth card with consistent dark palette and tight typography",
+            "Brand lockup, OAuth buttons, and footer align on shared vertical rhythm",
+            "Primary GitHub CTA uses saturated cyan that reads slightly toy-like vs Linear's restrained accents"
           ]
         },
         "reliability": {
@@ -7680,7 +7948,9 @@
         "craft": {
           "score": 3,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Auth card centered on vast empty black canvas wastes viewport, feels like placeholder",
+            "Google button pure white against black = harsh contrast, not Linear-calm",
+            "Cyan GitHub button saturation clashes with muted zinc card — no unified accent system"
           ]
         },
         "reliability": {
@@ -7735,9 +8005,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 4,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Clean centered auth card with consistent dark theme and subtle radial glow",
+            "Typography hierarchy solid: logo lockup, muted tagline, clear CTA buttons",
+            "GitHub CTA cyan accent pops but competes with white Google CTA for primary emphasis"
           ]
         },
         "reliability": {
@@ -7792,9 +8064,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 4,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Clean centered auth card with consistent dark palette and tight typography",
+            "Brand lockup, OAuth buttons, and footer align on shared vertical rhythm",
+            "Primary GitHub CTA uses saturated cyan that reads slightly toy-like vs Linear's restrained accents"
           ]
         },
         "reliability": {
@@ -7851,7 +8125,9 @@
         "craft": {
           "score": 3,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Auth card centered on vast empty black canvas wastes viewport, feels like placeholder",
+            "Google button pure white against black = harsh contrast, not Linear-calm",
+            "Cyan GitHub button saturation clashes with muted zinc card — no unified accent system"
           ]
         },
         "reliability": {
@@ -7906,9 +8182,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 4,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Clean centered 403 card with clear hierarchy: bold headline, muted helper text, single primary CTA",
+            "Top chrome consistent (logo, Plan/Build pills, status cluster, avatar) — matches app shell",
+            "Dark palette, restrained typography, generous whitespace — Linear-adjacent feel"
           ]
         },
         "reliability": {
@@ -7963,9 +8241,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 2,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Top bar overflows viewport — icons clipped on right edge, header text truncated to '— tok EST. today'",
+            "403 card clipped on right side, not centered in mobile viewport",
+            "Floating chat icon and bottom-left avatar overlap content area with no safe-area respect"
           ]
         },
         "reliability": {
@@ -8020,9 +8300,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 4,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Centered 403 card with clear hierarchy, muted secondary copy, single blue CTA — clean Linear-like empty state",
+            "Top bar dense with monochrome icons, consistent spacing, subtle dividers; dark palette reads premium",
+            "'Compiling...' pill bottom-left styled as status chip, matches overall craft"
           ]
         },
         "reliability": {
@@ -8079,7 +8361,9 @@
         "craft": {
           "score": 3,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Live Floor tooltip/popover overlaps and obscures the Live Floor panel content, creating visible layout collision",
+            "Mission Control cards show only tiny placeholder labels ('appears when...') with large empty vertical space — unfinished empty states",
+            "Inconsistent card density and typographic hierarchy: 'Live activity' metrics (0, Idle, 1) feel oversized vs adjacent shipped/in-flight/blocked/tok tiles"
           ]
         },
         "reliability": {
@@ -8134,9 +8418,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 2,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Top header overflows viewport — controls clip off right edge",
+            "Mission Control cards (BURN, LAST 60S) clipped at right; content cut mid-text",
+            "Floating chat bubble overlaps 'Building cae-dashboard' heading and tag"
           ]
         },
         "reliability": {
@@ -8193,7 +8479,9 @@
         "craft": {
           "score": 3,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Live Floor panel overlaps main content as floating popover, breaking layout grid",
+            "Mission Control metric cards show empty states (0 agents, 0% budget, idle sparkline) making hero row feel hollow",
+            "Inconsistent typography weight/size between 'Building cae-dashboard' title and smaller section headers; monospace timestamp in header clashes with sans body"
           ]
         },
         "reliability": {
@@ -8248,9 +8536,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 4,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Consistent dark theme, monospace meta, clear Recently Active vs Quiet grouping",
+            "Avatar color tokens, status pills, and card spacing read polished and Linear-adjacent",
+            "Sidebar icons lack tooltips/labels and the lone collapsed 'N' avatar bottom-left feels orphaned"
           ]
         },
         "reliability": {
@@ -8307,7 +8597,9 @@
         "craft": {
           "score": 3,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Repetitive agent cards with identical 0% / Never / 0 working stats create monotonous wall of empty state",
+            "Horizontal overflow: right-side empty dark area suggests layout not adapted to mobile viewport",
+            "Floating chat bubble overlaps header area awkwardly, and avatar badge (N) floats mid-left with no clear anchor"
           ]
         },
         "reliability": {
@@ -8362,9 +8654,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 4,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Consistent dark palette, clean typography, aligned agent card grid",
+            "Status pills and monospace meta text read polished",
+            "Header row cramped: 'tok today EST.' truncates, top-right cluster crowds timestamp/status"
           ]
         },
         "reliability": {
@@ -8421,7 +8715,9 @@
         "craft": {
           "score": 3,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Vast empty canvas with single centered empty-state line feels unfinished, not intentional",
+            "Top bar shows raw placeholder text `— tok today EST. —` with stray em-dashes, looks like broken template",
+            "Dense icon cluster top-right lacks grouping/spacing, reads cluttered next to otherwise barren layout"
           ]
         },
         "reliability": {
@@ -8476,9 +8772,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 2,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Header text overlaps/clips — '— tok', 'EST. —', 'today' stacking awkwardly at top",
+            "Massive empty canvas with only 'Nothing's shipped in the last 30 days.' stranded top-left — no mobile layout adaptation",
+            "Two vertical icon rails consume significant width on mobile; desktop chrome not collapsed for small viewport"
           ]
         },
         "reliability": {
@@ -8533,9 +8831,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 2,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Empty state lone sentence floating top-center, no illustration/CTA/structure",
+            "Header shows broken/placeholder data: '— tok today EST. —', '——:——:——', 'Offline · —'",
+            "Vast dead canvas below empty state, no card/container framing the message"
           ]
         },
         "reliability": {
@@ -8590,9 +8890,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 4,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Clean kanban layout, consistent card spacing, dark palette reads professional",
+            "Typography hierarchy solid: column headers uppercase tracked, card titles legible, muted timestamps",
+            "Empty-state 'No items' centered per column, count badges aligned with headers"
           ]
         },
         "reliability": {
@@ -8647,9 +8949,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 2,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Desktop sidebar + rail rendered on mobile viewport instead of collapsed nav — horizontal overflow clips 'New job' button and card titles",
+            "Top bar metrics show placeholder dashes ('— tok', '--:--', '— / —') creating broken/unfinished impression",
+            "Chat bubble icon floats mid-canvas with no anchor; overlaps content area awkwardly"
           ]
         },
         "reliability": {
@@ -8704,9 +9008,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 4,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Clean kanban columns with consistent card styling and subtle green accent on Shipped lane",
+            "Typography hierarchy solid — column headers uppercase tracked, counts right-aligned, metadata muted",
+            "Dark palette and spacing coherent; sidebar icons aligned, header chips readable"
           ]
         },
         "reliability": {
@@ -8761,9 +9067,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 4,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Clean empty state with centered icon, heading, subcopy, and single CTA",
+            "Consistent dark palette and sidebar icon rhythm match Linear density",
+            "Header microcopy `- tok today EST. -` looks like unrendered template placeholder"
           ]
         },
         "reliability": {
@@ -8818,9 +9126,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 2,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Mobile viewport shows desktop sidebar + rail chrome instead of mobile nav; massive empty right half",
+            "Topbar truncates: '— tok today', 'EST. —', '17:57:31', 'Offline' crammed with no responsive collapse",
+            "Schedules card clipped at right edge; description text cut mid-word ('CAE')"
           ]
         },
         "reliability": {
@@ -8875,9 +9185,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 4,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Clean empty state with centered icon, heading, supporting copy, and single CTA — Linear-adjacent pattern",
+            "Consistent sidebar grouping (Build/Insights/Plan) with active Schedule row highlighted in brand cyan",
+            "Topbar hierarchy readable: Plan/Build toggle, breadcrumb, status chips, avatar"
           ]
         },
         "reliability": {
@@ -8932,9 +9244,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 2,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Cartoon Pikachu GIF + serif 'Running Pikachu' header clash with pro dashboard chrome",
+            "Loading state fills entire canvas — no skeleton, no layout scaffold, feels like placeholder",
+            "Typography mix (serif title, sans body) inconsistent with rest of shell"
           ]
         },
         "reliability": {
@@ -8989,9 +9303,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 2,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Pikachu loading placeholder with 'Running Pikachu' heading feels unprofessional for production dashboard",
+            "Top bar truncates 'tok today' and shows em-dash placeholders for est/time values",
+            "Right-side chat column is empty dead space on mobile viewport, wasteful layout"
           ]
         },
         "reliability": {
@@ -9046,9 +9362,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 2,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Giant Pikachu GIF with 'Running Pikachu' headline dominates route content — wildly off-brand for Linear-tier product",
+            "Empty 'Loading...' state persists with no skeleton, chrome, or schedule UI rendered",
+            "Header meta 'tok today EST. —' shows unresolved placeholder dashes, looks broken"
           ]
         },
         "reliability": {
@@ -9103,9 +9421,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 2,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Dense list of grep-* rows with no visual hierarchy or grouping — reads like raw log dump",
+            "Red/orange pill badges saturate right column, clash and create noise instead of signal",
+            "Tiny illegible text at laptop viewport; no section headers, filters, or whitespace rhythm"
           ]
         },
         "reliability": {
@@ -9160,9 +9480,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 2,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Placeholder Pikachu game content on security route — unprofessional, breaks product illusion",
+            "Header metrics show em-dash placeholders (`— tok`, `-- : --`) indicating unpopulated data",
+            "Title 'Running Pikachu' clips at right edge on mobile viewport"
           ]
         },
         "reliability": {
@@ -9217,9 +9539,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 2,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Loading state shows 'Running Pikachu' placeholder with cartoon image — unprofessional for production dashboard",
+            "Vast empty canvas with no skeleton loaders or structural hints to anchor user expectation",
+            "Top bar shows broken/placeholder text ('— tok today EST. —', '--:--:--', 'Offline · —') indicating incomplete data wiring"
           ]
         },
         "reliability": {
@@ -9276,7 +9600,9 @@
         "craft": {
           "score": 3,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Empty state is a single bare sentence with no icon, heading, or CTA button",
+            "Topbar clock/offline indicator render as raw ASCII-ish text ('— tok today EST. —', '• Offline • —') looking unfinished",
+            "Vast empty canvas below short tab row feels unbalanced; no content scaffolding or skeleton"
           ]
         },
         "reliability": {
@@ -9331,9 +9657,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 2,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Massive empty black void dominates viewport below tabs — no content, no skeleton, no empty state illustration",
+            "Top bar text overlaps/truncates awkwardly (`— tok` `EST.` `today` fragments visible) — broken responsive layout on mobile",
+            "Empty-state copy 'No scans available. Install a skill...' truncates mid-word at right edge, no word-wrap"
           ]
         },
         "reliability": {
@@ -9390,7 +9718,9 @@
         "craft": {
           "score": 3,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Vast empty canvas with single empty-state line left-aligned at top — no centered empty-state card, icon, or CTA",
+            "Top bar shows placeholder glyphs ('— tok today EST. —', '—:—:—', 'Offline · —') indicating unfinished data bindings visible to user",
+            "Tab row lacks underline weight/indicator polish; active 'Secrets' tab reads as flat filled block rather than Linear-style subtle accent"
           ]
         },
         "reliability": {
@@ -9445,9 +9775,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 2,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Dense list of near-identical rows with uniform red 'Medium' badges creates monotonous, brute-force layout",
+            "Badge treatment inconsistent — some rows show double badges (orange + red) with no visual hierarchy",
+            "No grouping, spacing, or visual rhythm; feels like raw data dump rather than curated UI"
           ]
         },
         "reliability": {
@@ -9502,9 +9834,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 2,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Dense uniform list of gsd-* slash commands with no visual hierarchy or grouping",
+            "Every row shows identical 'medium' orange badge creating heavy repetitive noise",
+            "Mobile viewport crammed with desktop-style rail; text truncated, tap targets tiny"
           ]
         },
         "reliability": {
@@ -9561,7 +9895,9 @@
         "craft": {
           "score": 3,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Dense list of gsd-* rows with heavy colored risk/severity badges feels noisy vs Linear's restraint",
+            "Low-contrast row text against dark bg hurts scannability; no grouping or hierarchy",
+            "Left nav icons lack labels/tooltips at this width, uncertain affordance"
           ]
         },
         "reliability": {
@@ -9618,7 +9954,9 @@
         "craft": {
           "score": 3,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Uniform teal badges on every card create monotonous visual rhythm, no hierarchy",
+            "Card grid dense but typography scale flat — titles and descriptions blend at glance",
+            "Excessive vertical scroll with no section grouping or filtering affordance visible beyond two tabs"
           ]
         },
         "reliability": {
@@ -9675,7 +10013,9 @@
         "craft": {
           "score": 3,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Mobile view renders as long uniform scroll of repeated cards with no grouping, section headers, or visual hierarchy",
+            "Cards appear flat and monotonous — identical sizing/padding creates wall-of-text feel",
+            "No sticky header, filter chips, or progress affordance visible on mobile to orient user"
           ]
         },
         "reliability": {
@@ -9732,7 +10072,9 @@
         "craft": {
           "score": 3,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Dense uniform card grid lacks visual hierarchy — all skills weighted equally with no grouping or sorting affordance",
+            "Teal badges fight for attention across every card creating noisy rhythm vs Linear's restrained accent usage",
+            "Tab row ('Skills'/unreadable second) and header sit cramped against content with weak spacing scale"
           ]
         },
         "reliability": {
@@ -9787,9 +10129,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 4,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Dense card grid with consistent typography, monospace skill IDs, subdued dark palette matches Linear aesthetic",
+            "Green 'Installed' pills uniform across cards; tab chips and header hierarchy clean",
+            "Slight visual monotony — every card identical weight, no scannable emphasis or grouping beyond Recent tab"
           ]
         },
         "reliability": {
@@ -9844,9 +10188,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 2,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Pikachu GIF + 'Running Pikachu' heading looks like placeholder/demo content, not production skill surface",
+            "Top bar truncates text ('tok today', '- -') — broken layout on mobile width",
+            "Massive empty canvas with floating chat bubble icon, no mobile-optimized skill list or controls"
           ]
         },
         "reliability": {
@@ -9903,7 +10249,9 @@
         "craft": {
           "score": 3,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Dense 3-column card grid feels cramped, tight padding, weak visual hierarchy vs Linear's airy lists",
+            "Bright teal 'Installed' badges + teal command names overpower the dark surface, no tonal restraint",
+            "Cards uniform and repetitive with no grouping, sorting affordance, or scannable metadata columns"
           ]
         },
         "reliability": {
@@ -9960,7 +10308,9 @@
         "craft": {
           "score": 3,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Empty state card centered but page uses serif 'Recipes' heading mixed with sans-serif body, inconsistent typographic system",
+            "Duplicate 'New recipe' CTA (top-right + empty state) with different styling — top cyan-filled, inline ghost — weak hierarchy",
+            "Top bar dense with unlabeled icons and raw telemetry ('0 tok today EST.', 'just now 21:25:52', 'Live · 0s') reads like debug HUD, not Linear-grade chrome"
           ]
         },
         "reliability": {
@@ -10015,9 +10365,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 2,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Top bar content clipped: 'tok today', 'EST.', '— —' fragments bleed past viewport on mobile width",
+            "Chat drawer overlays mid-canvas leaving large empty black void to its right — not responsive, desktop layout squeezed into mobile",
+            "'New recipe' button and Recipes heading truncated at right edge; horizontal overflow instead of mobile-adapted layout"
           ]
         },
         "reliability": {
@@ -10072,9 +10424,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 4,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Clean dark theme, consistent nav rail, readable typography hierarchy",
+            "Empty state centered with icon + CTA, feels intentional",
+            "Top bar shows odd '— tok today EST. —' placeholder text, looks unfinished"
           ]
         },
         "reliability": {
@@ -10131,7 +10485,9 @@
         "craft": {
           "score": 3,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Huge empty right column with solitary 'new-recipe' name field floats disconnected from preview card",
+            "Left column buttons stacked vertically with inconsistent colors (teal 'Draft it', cyan 'Save recipe') and no visual hierarchy",
+            "Vast unused canvas below fold — no density, no supporting context, page feels half-built"
           ]
         },
         "reliability": {
@@ -10186,9 +10542,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 2,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Mobile viewport shows desktop sidebar + rail eating half the screen, leaving form cramped in middle column",
+            "Large empty black void on right side — layout not responsive, no mobile breakpoint applied",
+            "Top bar truncated ('— tok today EST. —') and controls overlap awkwardly at this width"
           ]
         },
         "reliability": {
@@ -10245,7 +10603,9 @@
         "craft": {
           "score": 3,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Massive empty right-column whitespace below Name field — layout feels unfinished",
+            "Top bar shows raw placeholder text '- tok today EST. -' with literal dashes",
+            "Two stacked primary-colored buttons (Draft it / Save recipe) compete visually, no hierarchy"
           ]
         },
         "reliability": {
@@ -10300,9 +10660,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 2,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Left pane stuck on 'Loading…' — broken state dominates half the viewport",
+            "Top bar crowded with unlabeled icons, cryptic '— tok today EST. —' fragment, redundant help glyphs",
+            "Empty chat canvas with tiny centered placeholder feels hollow; no visual hierarchy or density"
           ]
         },
         "reliability": {
@@ -10357,9 +10719,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 2,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Top bar overcrowded with unlabeled icons on mobile viewport, causing cramped layout",
+            "Empty 'Loading...' state in sidebar alongside populated chat area feels unfinished",
+            "Desktop-style two-pane layout retained on mobile width — sidebar eats half the screen, chat column cramped"
           ]
         },
         "reliability": {
@@ -10414,9 +10778,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 2,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Left pane stuck on 'Loading…' with no skeleton or placeholder, leaves half the viewport empty",
+            "Top bar crowded with raw debug-looking tokens ('— tok today EST. —', '— 21:49:08', 'Offline · —') that read as unstyled metadata",
+            "Chat empty state floats mid-right with no framing, card, or alignment to a column grid — feels ungridded"
           ]
         },
         "reliability": {
@@ -10471,9 +10837,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 2,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Vast empty black canvas with no content, hierarchy, or loading state",
+            "Floating legend panel clipped at right edge with no container, shadow, or alignment to layout",
+            "Top bar shows broken/truncated text '— tok today EST. —' suggesting unrendered template"
           ]
         },
         "reliability": {
@@ -10528,9 +10896,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 2,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Top bar overflows viewport — timestamps clipped, icons crammed edge-to-edge with no breathing room",
+            "Massive empty black void between header and floating list — no mobile layout adaptation, feels broken",
+            "Floating list card bleeds off right edge, FAB-like chat bubble overlaps header awkwardly"
           ]
         },
         "reliability": {
@@ -10585,9 +10955,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 2,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Massive empty black void dominates center of viewport with no content, skeleton, or loading state",
+            "Compiling indicator with 'Waiting for first heartbeat' stuck in corner while main area renders nothing",
+            "Legend/list clipped at bottom-right edge, items cut off mid-row"
           ]
         },
         "reliability": {
@@ -10642,9 +11014,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 2,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Massive empty black canvas — no admin content rendered, only chrome remnants visible",
+            "Floating legend panel clipped at right edge with no container framing or alignment to grid",
+            "Top-right icon cluster overlaps chat bubble icon, no spacing discipline"
           ]
         },
         "reliability": {
@@ -10699,9 +11073,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 2,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Vast empty black canvas with no content rendered on mobile viewport",
+            "Legend panel overflows right edge, text clipped",
+            "Status pill 'Waiting for first heartbeat' overlaps avatar in bottom-left"
           ]
         },
         "reliability": {
@@ -10756,9 +11132,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 1,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Near-empty black canvas — main content area blank except small 'N' avatar bottom-left",
+            "Floating legend panel bottom-right detached from any visible content, orphaned",
+            "Top-right icon cluster (pause/collapse/help) and chat bubble float without context or grouping"
           ]
         },
         "reliability": {
@@ -10813,9 +11191,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 2,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Page stuck in 'Loading…' state — no content rendered for scoring of actual memory UI",
+            "Vast empty right pane with lone 'Pick a file from the left to read it.' placeholder — poor empty-state density",
+            "Top bar cramped with unlabeled icons and cryptic '— tok today EST. —' text, low polish vs Linear"
           ]
         },
         "reliability": {
@@ -10870,9 +11250,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 2,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Large empty black void on right half of viewport — mobile layout broken, desktop rail not collapsed",
+            "Top bar truncated/overlapping: '— tok today EST. —' text wraps awkwardly next to Plan/Build toggle",
+            "Content stuck on 'Loading...' with no skeleton state; floating 'N' avatar overlaps content area"
           ]
         },
         "reliability": {
@@ -10927,9 +11309,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 2,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Massive empty canvas with tiny left panel stuck in 'Loading...' — no skeleton, no layout balance",
+            "Right pane shows bare hyphen header and placeholder 'Pick a file from the left to read it' — unstyled empty state",
+            "Top bar crowded with low-contrast icon+label pairs, stray dashes around 'tok today EST.', offline dot floating next to clock"
           ]
         },
         "reliability": {
@@ -10986,7 +11370,9 @@
         "craft": {
           "score": 3,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Empty `0 tok` / `~0 tok` metric tiles dominate top-left with no visual hierarchy or empty-state treatment",
+            "Giant `3 waiting` number in Flow Zeit card clashes with compact scale of adjacent tiles — inconsistent typographic rhythm",
+            "Heatmap/grid in `How well it's going` card renders as loose scattered cells, reads unpolished vs Linear's dense aligned grids"
           ]
         },
         "reliability": {
@@ -11041,9 +11427,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 2,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Top bar overflows viewport — 'tok today', timestamp, Offline badge, and avatar clip/wrap awkwardly on mobile width",
+            "Floating chat FAB overlaps page header region instead of docking bottom-right",
+            "Entire page stuck in skeleton-loading state with no visible content or staggered fade, reads as broken"
           ]
         },
         "reliability": {
@@ -11098,9 +11486,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 1,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Next.js build error overlay — route fails to render",
+            "Parsing error in workflows-list-client.tsx (114:9): Expression expected",
+            "No dashboard content visible, only error dialog"
           ]
         },
         "reliability": {
@@ -11157,7 +11547,9 @@
         "craft": {
           "score": 3,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Empty-state card centered but page has huge unused whitespace below, layout feels unbalanced",
+            "Top bar mixes cryptic tokens ('0 tok today EST.', 'just now 21:27:02', 'Live · 0s') — noisy, non-Linear",
+            "Headline 'Plan' uses serif font that clashes with rest of sans-serif UI chrome"
           ]
         },
         "reliability": {
@@ -14575,9 +14967,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 2,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Massive empty black canvas — no admin content rendered, only chrome remnants visible",
+            "Floating legend panel clipped at right edge with no container framing or alignment to grid",
+            "Top-right icon cluster overlaps chat bubble icon, no spacing discipline"
           ]
         },
         "reliability": {
@@ -14632,9 +15026,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 2,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Massive empty black void dominates viewport with no content or skeleton",
+            "Floor popout menu clipped off right edge, items extend past viewport",
+            "Top-right icon cluster lacks spacing/grouping, floats against void"
           ]
         },
         "reliability": {
@@ -18508,9 +18904,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 2,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Massive empty black canvas — no admin content rendered, only chrome remnants visible",
+            "Floating legend panel clipped at right edge with no container framing or alignment to grid",
+            "Top-right icon cluster overlaps chat bubble icon, no spacing discipline"
           ]
         },
         "reliability": {
@@ -18565,9 +18963,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 2,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Vast empty black canvas with no content rendered on mobile viewport",
+            "Legend panel overflows right edge, text clipped",
+            "Status pill 'Waiting for first heartbeat' overlaps avatar in bottom-left"
           ]
         },
         "reliability": {
@@ -21588,7 +21988,9 @@
         "craft": {
           "score": 3,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Empty state centered but large blank canvas below feels unbalanced",
+            "Duplicate 'New recipe' CTAs (top-right + empty state) redundant",
+            "Top bar cramped with cryptic '— tok today EST. —' text, low polish"
           ]
         },
         "reliability": {
@@ -21643,9 +22045,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 2,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Chat panel overlays main content, clipping 'New recipe' button and right side of empty state",
+            "Top bar text truncated/wrapped awkwardly ('— tok' / 'today' / 'EST.')",
+            "Large empty right region where chat extends past content with no visual containment"
           ]
         },
         "reliability": {
@@ -21700,9 +22104,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 4,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Clean empty state with icon, heading, subtext, and primary CTA centered in card",
+            "Consistent nav rail grouping (BUILD/INSIGHTS/PLAN) with active Workflows row highlighted in brand cyan",
+            "Top bar shows corrupted/placeholder text: '— tok today EST. —' and malformed status chips '— 21:44:54' / 'Offline · —'"
           ]
         },
         "reliability": {
@@ -21759,7 +22165,9 @@
         "craft": {
           "score": 3,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Vast empty canvas right of form — no visual hierarchy or density",
+            "Two stacked CTAs (Draft it / Save recipe) misaligned, no primary/secondary distinction",
+            "'Here's the recipe' panel huge but empty, Name field floats below disconnected"
           ]
         },
         "reliability": {
@@ -21816,7 +22224,9 @@
         "craft": {
           "score": 3,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Massive empty right-side gutter on mobile viewport — content column narrow, rest of screen black",
+            "Two stacked CTAs (Draft it / Save recipe) left-aligned with no hierarchy grouping, cramped in narrow column",
+            "Top bar overflows: date label wraps mid-word ('— tok today'), icon row crowds timer/status chips"
           ]
         },
         "reliability": {
@@ -21873,7 +22283,9 @@
         "craft": {
           "score": 3,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Massive empty canvas below form — huge right column and bottom half unused, feels unfinished",
+            "Form controls misaligned: 'Draft it' and 'Save recipe' buttons stacked awkwardly, different widths, no visual grouping",
+            "Low-contrast placeholder text and teal buttons clash with dark theme; buttons look flat, no hover/elevation cues"
           ]
         },
         "reliability": {
@@ -21928,9 +22340,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 2,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Left pane stuck on 'Loading…' — empty half-screen reads broken, not polished",
+            "Top bar icon cluster unlabeled and cramped; 'tok today EST.' status string looks like debug output",
+            "Chat empty state floats mid-pane with no visual anchor, composer pinned bottom-right feels disconnected from greeting"
           ]
         },
         "reliability": {
@@ -21985,9 +22399,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 2,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Top bar overflows mobile viewport: timestamps clipped, icon row crammed edge-to-edge with no breathing room",
+            "Persistent 'Mirror:' sidebar consumes ~40% of mobile width, leaving chat column squeezed and awkwardly centered",
+            "Stray 'N' avatar floats over content bottom-left with no clear anchor or purpose"
           ]
         },
         "reliability": {
@@ -22042,9 +22458,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 2,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Massive empty left panel with only 'Home' heading and stuck 'Loading…' state — broken split layout",
+            "Chat empty state floats dead-center in right panel with no visual anchoring or card treatment",
+            "Top bar crowded with placeholder dashes ('— —:—:—', 'Offline · —') signaling unfinished telemetry"
           ]
         },
         "reliability": {
@@ -22099,9 +22517,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 2,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Massive empty viewport with no content, header, or context — looks broken not minimal",
+            "Top bar renders cryptic fragment '— tok today EST. —' with stray em-dashes suggesting truncation/render bug",
+            "Floating legend panel clipped off right edge, overlapping nothing, no clear anchor or purpose"
           ]
         },
         "reliability": {
@@ -22156,9 +22576,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 2,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Top bar controls overflow viewport, truncated status text '--:--' and cut-off persona badge",
+            "Large empty black canvas with floating controls lacks structure or mobile layout adaptation",
+            "Popover/menu clips off right edge, items bleed past screen boundary"
           ]
         },
         "reliability": {
@@ -22213,9 +22635,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 2,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Massive empty black void dominates viewport with no content skeleton or loading affordance",
+            "Top bar shows broken/missing data: '— tok today EST. —' placeholders and stray em-dashes near status indicators",
+            "Floor legend crammed in bottom-right corner, clipped at right edge, disconnected from any visible floor visualization"
           ]
         },
         "reliability": {
@@ -22270,9 +22694,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 2,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Massive empty black canvas — no admin content rendered, only chrome remnants visible",
+            "Floating legend panel clipped at right edge with no container framing or alignment to grid",
+            "Top-right icon cluster overlaps chat bubble icon, no spacing discipline"
           ]
         },
         "reliability": {
@@ -22327,9 +22753,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 2,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Vast empty black canvas with no content rendered on mobile viewport",
+            "Legend panel overflows right edge, text clipped",
+            "Status pill 'Waiting for first heartbeat' overlaps avatar in bottom-left"
           ]
         },
         "reliability": {
@@ -22384,9 +22812,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 2,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Vast empty black canvas — content occupies <10% of viewport, rest is dead space",
+            "Floating legend pinned bottom-right with no container/card treatment, looks orphaned",
+            "Top-right icon cluster and chat bubble float without grouping or visual anchor"
           ]
         },
         "reliability": {
@@ -22441,9 +22871,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 2,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Page stuck in 'Loading…' state with empty detail pane showing only placeholder text",
+            "Header metadata reads '— tok today EST. —' with stray em-dashes and missing values",
+            "Large empty right pane wastes space; no skeleton states or content hierarchy visible"
           ]
         },
         "reliability": {
@@ -22498,9 +22930,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 2,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Stuck 'Loading...' state dominates viewport — no skeleton or progress affordance",
+            "Massive empty black void on right side of mobile layout suggests broken responsive breakpoint",
+            "Top bar crams truncated 'tok EST. today' text, leaving cramped unreadable header"
           ]
         },
         "reliability": {
@@ -22555,9 +22989,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 2,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Stuck 'Loading…' state captured as final render — no skeleton or shimmer",
+            "Vast empty right pane with tiny centered placeholder text, poor use of space",
+            "Top bar cluttered with cryptic '— tok today EST. —' fragment and redundant help icons"
           ]
         },
         "reliability": {
@@ -22614,7 +23050,9 @@
         "craft": {
           "score": 3,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Giant '0 tok' / '~0 tok' numerals dominate Spending card, crude scale vs other text",
+            "Empty-state copy bleeds into card body with no illustration or hierarchy; feels placeholder",
+            "Bar chart labels overflow/clip ('3 waiting' overlapping bars), axis ticks dense and unstyled"
           ]
         },
         "reliability": {
@@ -22671,7 +23109,9 @@
         "craft": {
           "score": 3,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Top bar cramped on mobile — 'EST.' and 'today' text overlap with clock placeholder ('--:--') and icon row, no responsive stacking",
+            "Skeleton loaders dominate viewport; 'Spending' and 'How fast' sections show only shimmer blocks with no real data hierarchy",
+            "Floating 'N' and chat bubble widgets sit awkwardly mid-canvas, clipping content edges rather than docked/safe-area aligned"
           ]
         },
         "reliability": {
@@ -22728,7 +23168,9 @@
         "craft": {
           "score": 3,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Heavy skeleton loaders dominate view — no actual metrics rendered",
+            "Top bar crowded with cryptic '— tok today EST. —' placeholder text",
+            "Incident Stream card renders but other three quadrants remain empty shells"
           ]
         },
         "reliability": {
@@ -22785,7 +23227,9 @@
         "craft": {
           "score": 3,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Empty-state card centered but page has vast dead space below — feels unfinished not intentional",
+            "Top bar icons cluster with no labels or grouping; 'tok today EST.' string looks like debug text",
+            "Tab row (Projects/PRDs/Roadmaps/UAT) all inactive with no default selection — user lands on nothing"
           ]
         },
         "reliability": {
@@ -22840,9 +23284,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 2,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Top bar overflows viewport — token counter, timestamps, and Live indicator wrap/clip awkwardly on mobile width",
+            "Chat rail panel occupies right half of screen with empty black void, breaking mobile layout",
+            "Main content truncated mid-sentence ('Plan mode is where Projects, PRDs, Roadmaps, and...') due to rail overlap"
           ]
         },
         "reliability": {
@@ -22899,7 +23345,9 @@
         "craft": {
           "score": 3,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Vast empty canvas with single small centered card reads as unfinished placeholder, not intentional empty state",
+            "Top bar cluttered with broken/placeholder text ('— tok today EST. —', '—:—:—', 'Offline · —') undermining polish",
+            "Tab row (Projects/PRDs/Roadmaps/UAT) visually inert — no active state, no content, no hierarchy"
           ]
         },
         "reliability": {
@@ -22954,9 +23402,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 4,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Clean dark theme, consistent spacing, proper monospace usage in headers",
+            "Live Floor panel overlaps/clips the right edge of Live activity card — z-index or positioning bug",
+            "Good typographic hierarchy and muted palette, Linear-adjacent"
           ]
         },
         "reliability": {
@@ -23011,9 +23461,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 2,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Pikachu loading GIF with serif 'Running Pikachu' heading clashes hard with dashboard chrome",
+            "Top bar overflows on mobile: truncated 'tok'/'EST.'/'today' fragments, broken time placeholder '--:--'",
+            "Empty vast dark panels on right, no mobile layout adaptation — desktop chrome squeezed into narrow viewport"
           ]
         },
         "reliability": {
@@ -23068,9 +23520,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 2,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Pikachu loading placeholder with cartoon image feels juvenile, not Linear-grade",
+            "Vast empty dark canvas with lone centered loader — no skeleton, no content scaffold",
+            "Top bar shows placeholder dashes (`— —:—:—`, `Offline · —`) instead of real state"
           ]
         },
         "reliability": {
@@ -23125,9 +23579,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 4,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Clean centered auth card with consistent dark palette and subtle radial backdrop",
+            "Typography hierarchy readable, buttons well-sized with clear brand contrast (Google white, GitHub cyan)",
+            "Top bar dense with status chips but spacing/alignment holds"
           ]
         },
         "reliability": {
@@ -23182,9 +23638,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 2,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Top bar overflows viewport: 'tok today' text clipped, icons crammed edge-to-edge on mobile width",
+            "Signin card not centered vertically; large empty black void above and right chat rail steals width making layout feel broken",
+            "Floating chat bubble and 'Compiling' pill overlap main content area with no mobile-responsive repositioning"
           ]
         },
         "reliability": {
@@ -23239,9 +23697,11 @@
           ]
         },
         "craft": {
-          "score": 3,
+          "score": 4,
           "evidence": [
-            "requires Cap.5 llm-vision"
+            "Clean centered auth card, balanced spacing, legible hierarchy",
+            "Top bar shows garbled label fragment '— tok today EST. —' which reads broken",
+            "Radial backdrop glow + mono logo feel polished and on-brand"
           ]
         },
         "reliability": {
