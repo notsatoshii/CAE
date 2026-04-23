@@ -223,3 +223,4 @@ Primary users for BOTH modes (Plan + Build) are **non-dev founders / product peo
 
 - 2026-04-20: Session 3 roadmap drafted with 4 Ops phases + 4 Build phases + polish.
 - 2026-04-20: Session 4 reordered post-UI-SPEC lock. Phase 2.5 inserted before Phase 3 rewrite.
+- 2026-04-23: Phase 15 added: screenshot-truth-harness — seed→render→capture→assert pixels+data for every card/list (closes composition gap from Eric session-8 critique)
