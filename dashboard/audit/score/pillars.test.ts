@@ -101,12 +101,15 @@ describe("scorePillar: depth", () => {
     const cell = await mkCell({ truth, slug: "metrics" }) // ROUTE_DEPTH[metrics] = 10
     const r = await scorePillar("depth", cell)
     expect(r.score).toBe(5)
+    expect(r.na).toBeUndefined()
   })
 
-  it("scores 1 when none rendered", async () => {
+  it("scores 1 when none rendered and access is 'render'", async () => {
     const cell = await mkCell({ truth: [], slug: "metrics" })
+    cell.expectedAccess = "render"
     const r = await scorePillar("depth", cell)
     expect(r.score).toBe(1)
+    expect(r.na).toBeUndefined()
   })
 
   it("scores 3 at ~50% coverage", async () => {
@@ -117,6 +120,42 @@ describe("scorePillar: depth", () => {
     const cell = await mkCell({ truth, slug: "metrics" }) // 5/10 = 0.5 → 3
     const r = await scorePillar("depth", cell)
     expect(r.score).toBe(3)
+  })
+
+  it("marks N/A when expectedAccess='gate' and zero keys rendered", async () => {
+    const cell = await mkCell({ truth: [], slug: "build-admin-roles" })
+    cell.expectedAccess = "gate"
+    const r = await scorePillar("depth", cell)
+    expect(r.na).toBe(true)
+    expect(r.evidence.join(" ")).toMatch(/access=gate/)
+  })
+
+  it("marks N/A when expectedAccess='redirect' and zero keys rendered", async () => {
+    const cell = await mkCell({ truth: [], slug: "build" })
+    cell.expectedAccess = "redirect"
+    const r = await scorePillar("depth", cell)
+    expect(r.na).toBe(true)
+    expect(r.evidence.join(" ")).toMatch(/access=redirect/)
+  })
+
+  it("does NOT mark N/A when keys did render despite gate expectation", async () => {
+    // Should never happen in practice, but if it does we want the
+    // anomaly surfaced, not buried in N/A.
+    const cell = await mkCell({
+      truth: [{ key: "a", value: "v" }],
+      slug: "build-admin-roles",
+    })
+    cell.expectedAccess = "gate"
+    const r = await scorePillar("depth", cell)
+    expect(r.na).toBeUndefined()
+  })
+
+  it("keeps score 1 when expectedAccess is undefined (legacy fallback)", async () => {
+    const cell = await mkCell({ truth: [], slug: "metrics" })
+    // expectedAccess intentionally unset
+    const r = await scorePillar("depth", cell)
+    expect(r.score).toBe(1)
+    expect(r.na).toBeUndefined()
   })
 })
 

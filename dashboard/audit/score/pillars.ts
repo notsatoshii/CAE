@@ -27,6 +27,7 @@ import {
   VOICE_BANNED,
   type PillarId,
 } from "./rubric"
+import type { AccessExpectation } from "../fixtures/persona-access"
 
 export type { PillarId } from "./rubric"
 
@@ -34,6 +35,16 @@ export interface ScoreResult {
   score: 1 | 2 | 3 | 4 | 5
   evidence: string[]
   recommendations: string[]
+  /**
+   * True when this cell should be excluded from rollup aggregates —
+   * e.g. the depth pillar on a persona-gated route where the capture
+   * legitimately landed on /signin or /403. The `score` field still
+   * carries a 1-5 value for backwards-compat with consumers that
+   * haven't been upgraded to check `na`; new consumers should treat
+   * `na: true` as "no data point" and drop the cell from means, mins,
+   * distributions, and delta comparisons.
+   */
+  na?: true
 }
 
 export interface CaptureCell {
@@ -52,6 +63,15 @@ export interface CaptureCell {
    * pass either a dynamic import or a stub.
    */
   expectedFixture: unknown
+  /**
+   * Optional expected-access hint from audit/fixtures/persona-access.ts.
+   * When present and equal to "gate" or "redirect", the depth scorer
+   * treats empty-truth captures as N/A instead of punishing them with
+   * a score of 1. Undefined falls back to the conservative legacy
+   * behaviour (score 1 on missing keys). Populated by score-run.ts
+   * after walking shots.
+   */
+  expectedAccess?: AccessExpectation
 }
 
 // ── Per-route expected field counts ────────────────────────────────────
@@ -199,6 +219,27 @@ async function scoreDepth(cell: CaptureCell): Promise<ScoreResult> {
   ).size
   const expected = ROUTE_DEPTH[cell.slug] ?? 5
   const ratio = keyCount / expected
+
+  // Class 4B: persona-gated captures legitimately land on /signin or /403,
+  // producing zero data-truth keys for the *requested* route. Scoring that
+  // as 1 punishes the app for correct gating. Only honour the N/A path
+  // when the capture is actually empty — if a gated persona still managed
+  // to render keys (shouldn't happen in practice), keep normal scoring
+  // so we surface the anomaly.
+  if (
+    keyCount === 0 &&
+    (cell.expectedAccess === "gate" || cell.expectedAccess === "redirect")
+  ) {
+    return {
+      score: 1,
+      na: true,
+      evidence: [
+        `persona access=${cell.expectedAccess}; capture landed on gate/signin (0 keys expected)`,
+        "excluded from depth rollup (N/A)",
+      ],
+      recommendations: [],
+    }
+  }
 
   let score: 1 | 2 | 3 | 4 | 5
   if (ratio >= 0.8) score = 5

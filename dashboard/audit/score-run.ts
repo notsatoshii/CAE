@@ -30,6 +30,9 @@ import {
   type ScoreResult,
 } from "./score/pillars"
 import { scoreWithVision } from "./score/llm-vision"
+import { lookupAccess } from "./fixtures/persona-access"
+import { ROUTES } from "./routes"
+import type { PersonaId } from "./routes"
 
 // ── Types ──────────────────────────────────────────────────────────────
 export interface CellSummary {
@@ -38,7 +41,19 @@ export interface CellSummary {
   route: string
   slug: string
   viewport: string
-  scores: Record<PillarId, { score: 1 | 2 | 3 | 4 | 5; evidence: string[] }>
+  scores: Record<
+    PillarId,
+    {
+      score: 1 | 2 | 3 | 4 | 5
+      evidence: string[]
+      /**
+       * True when the scorer marked the cell not-applicable (e.g. a
+       * gated capture on a persona that can't reach the route). Rollup,
+       * delta, and findings skip N/A cells. Absent for legacy cells.
+       */
+      na?: true
+    }
+  >
 }
 
 export interface RunSummary {
@@ -134,8 +149,19 @@ export async function runScoring(
     // leave null — scorer handles that gracefully
   }
 
+  // Resolve a (slug → RouteEntry) index once so per-cell lookups are O(1).
+  const routeBySlug = new Map(ROUTES.map((r) => [r.slug, r]))
+
   const cellSummaries: CellSummary[] = []
   for (const cp of cellPaths) {
+    // Class 4B: tag the cell with its expected persona access so the
+    // depth scorer can distinguish genuine missing-annotation cases
+    // (score 1) from correctly-gated ones (N/A).
+    const routeEntry = routeBySlug.get(cp.slug)
+    const expectedAccess = routeEntry
+      ? lookupAccess(cp.persona as PersonaId, cp.slug)
+      : undefined
+
     const cell: CaptureCell = {
       fixture: opts.fixture,
       persona: cp.persona,
@@ -146,6 +172,7 @@ export async function runScoring(
       truthPath: cp.truthPath,
       consolePath: cp.consolePath,
       expectedFixture: fixtureModule,
+      expectedAccess,
     }
     const scored = await scoreCell(cell)
     if (opts.vision) {
@@ -178,12 +205,12 @@ function pack(
   cell: CaptureCell,
   scored: Record<PillarId, ScoreResult>,
 ): CellSummary {
-  const entries = {} as Record<
-    PillarId,
-    { score: 1 | 2 | 3 | 4 | 5; evidence: string[] }
-  >
+  const entries = {} as CellSummary["scores"]
   for (const p of PILLARS) {
-    entries[p] = { score: scored[p].score, evidence: scored[p].evidence }
+    const r = scored[p]
+    entries[p] = r.na
+      ? { score: r.score, evidence: r.evidence, na: true }
+      : { score: r.score, evidence: r.evidence }
   }
   return {
     fixture: cell.fixture,
@@ -205,15 +232,20 @@ export function renderScoresMd(run: RunSummary): string {
   )
   lines.push("")
 
-  // Rollup: per-pillar average + distribution
+  // Rollup: per-pillar average + distribution.
+  // N/A cells (e.g. depth on a persona-gated capture) are excluded from
+  // the mean and the 1-5 buckets; surfaced in a separate "na" column so
+  // the reader can see how many cells were skipped.
   lines.push("## Rollup")
   lines.push("")
-  lines.push("| pillar | avg | 1 | 2 | 3 | 4 | 5 |")
-  lines.push("| --- | --- | --- | --- | --- | --- | --- |")
+  lines.push("| pillar | avg | 1 | 2 | 3 | 4 | 5 | na |")
+  lines.push("| --- | --- | --- | --- | --- | --- | --- | --- |")
   for (const p of PILLARS) {
-    const scores = run.cells.map((c) => c.scores[p].score)
+    const applicable = run.cells.filter((c) => !c.scores[p].na)
+    const naCount = run.cells.length - applicable.length
+    const scores = applicable.map((c) => c.scores[p].score)
     if (scores.length === 0) {
-      lines.push(`| ${p} | — | 0 | 0 | 0 | 0 | 0 |`)
+      lines.push(`| ${p} | — | 0 | 0 | 0 | 0 | 0 | ${naCount} |`)
       continue
     }
     const avg = (
@@ -222,7 +254,7 @@ export function renderScoresMd(run: RunSummary): string {
     const dist = [1, 2, 3, 4, 5].map(
       (n) => scores.filter((s) => s === n).length,
     )
-    lines.push(`| ${p} | ${avg} | ${dist.join(" | ")} |`)
+    lines.push(`| ${p} | ${avg} | ${dist.join(" | ")} | ${naCount} |`)
   }
   lines.push("")
 
@@ -241,7 +273,8 @@ export function renderScoresMd(run: RunSummary): string {
     const cells = PILLARS.map((p) => {
       const s = c.scores[p]
       const ev = (s.evidence[0] ?? "").replace(/\|/g, "\\|").slice(0, 60)
-      return `${s.score} · ${ev}`
+      const head = s.na ? "N/A" : String(s.score)
+      return `${head} · ${ev}`
     })
     lines.push(
       `| ${c.fixture} | ${c.persona} | ${c.route} | ${c.viewport} | ${cells.join(" | ")} |`,
@@ -260,9 +293,13 @@ export function renderFindingsMd(run: RunSummary): string {
   lines.push("")
 
   // Group cells by route, only those with any failing pillar.
+  // N/A pillars are not "failing" — skip them when deciding whether the
+  // cell deserves a findings entry and when listing per-pillar failures.
   const byRoute = new Map<string, CellSummary[]>()
   for (const c of run.cells) {
-    const hasFail = PILLARS.some((p) => c.scores[p].score <= 3)
+    const hasFail = PILLARS.some(
+      (p) => !c.scores[p].na && c.scores[p].score <= 3,
+    )
     if (!hasFail) continue
     const list = byRoute.get(c.route) ?? []
     list.push(c)
@@ -283,6 +320,7 @@ export function renderFindingsMd(run: RunSummary): string {
       lines.push("")
       for (const p of PILLARS) {
         const s = c.scores[p]
+        if (s.na) continue
         if (s.score > 3) continue
         lines.push(`- **${p}** — score **${s.score}**`)
         for (const ev of s.evidence.slice(0, 3)) {
@@ -323,6 +361,8 @@ export function computeDelta(
     const pc = priorMap.get(key(c))
     if (!pc) continue
     for (const p of PILLARS) {
+      // N/A → no data point in either direction. Skip delta.
+      if (c.scores[p].na || pc.scores[p].na) continue
       const from = pc.scores[p].score
       const to = c.scores[p].score
       const delta = from - to // positive = regression
