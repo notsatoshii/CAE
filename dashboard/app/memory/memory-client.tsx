@@ -152,6 +152,17 @@ export default function MemoryClient() {
       className="flex min-h-0 flex-1 flex-col gap-3 overflow-hidden"
       data-testid="memory-client"
     >
+      <span className="sr-only" data-truth="memory.healthy">yes</span>
+      <span className="sr-only" data-truth="memory.view">{view}</span>
+      <span className="sr-only" data-truth="memory.selected-path">
+        {selectedPath ?? ""}
+      </span>
+      <span className="sr-only" data-truth="memory.why-drawer-open">
+        {whyOpen ? "true" : "false"}
+      </span>
+      <span className="sr-only" data-truth="memory.git-drawer-open">
+        {gitOpen ? "true" : "false"}
+      </span>
       <Tabs.Root
         value={view}
         onValueChange={(v) => setView(v as View)}

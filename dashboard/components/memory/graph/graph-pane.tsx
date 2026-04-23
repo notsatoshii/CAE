@@ -122,11 +122,24 @@ export function GraphPane({ onOpenGitTimeline }: GraphPaneProps = {}) {
   // Empty state — no graph generated yet OR walker found nothing.
   const isEmpty = !loading && !error && totalNodes === 0;
 
+  const graphEdges = payload?.links.length ?? 0;
+
   return (
     <div
       className="flex h-full min-h-[500px] w-full flex-col"
       data-testid="memory-graph-pane"
     >
+      <span
+        className="sr-only"
+        data-truth={loading ? "memory.loading" : isEmpty ? "memory.empty" : "memory.healthy"}
+      >
+        yes
+      </span>
+      <span className="sr-only" data-truth="memory.node-count">{totalNodes}</span>
+      <span className="sr-only" data-truth="memory.edge-count">{graphEdges}</span>
+      <span className="sr-only" data-truth="memory.last-refreshed-at">
+        {payload?.generated_at ?? ""}
+      </span>
       {/* 500-cap banner (D-05) */}
       {truncated ? (
         <div
