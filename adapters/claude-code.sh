@@ -131,7 +131,15 @@ tmux kill-session -t "$TMUX_SESSION" 2>/dev/null || true
 # - cd to invoker's cwd (claude plan mode is cwd-sensitive)
 # - Redirect stdin from task file, stdout to output file, stderr to error file
 # - Write exit code to meta file atomically (tmp + mv) so the waiting loop can detect completion
-INNER_CMD="cd $(printf '%q' "$CWD") && claude $(printf '%q ' "${CLAUDE_ARGS[@]}") < $(printf '%q' "$TASK_FILE") > $(printf '%q' "$OUT_FILE") 2> $(printf '%q' "$ERR_FILE"); echo \"exit_code=\$?\" > $(printf '%q' "${META_FILE}.tmp") && mv $(printf '%q' "${META_FILE}.tmp") $(printf '%q' "${META_FILE}.done")"
+# When invoker is root, Claude CLI refuses to run.  Drop to cae user so
+# the credentials cron-mirrored to /home/cae/.claude can be used.  Gated
+# so non-root invocations stay unchanged.
+if [[ "$(id -u)" -eq 0 ]]; then
+  CLAUDE_WRAPPER="sudo -u cae -E env HOME=/home/cae claude"
+else
+  CLAUDE_WRAPPER="claude"
+fi
+INNER_CMD="cd $(printf '%q' "$CWD") && $CLAUDE_WRAPPER $(printf '%q ' "${CLAUDE_ARGS[@]}") < $(printf '%q' "$TASK_FILE") > $(printf '%q' "$OUT_FILE") 2> $(printf '%q' "$ERR_FILE"); echo \"exit_code=\$?\" > $(printf '%q' "${META_FILE}.tmp") && mv $(printf '%q' "${META_FILE}.tmp") $(printf '%q' "${META_FILE}.done")"
 
 # Phase 8 Wave 6 (08-08 verification): when a pre-existing tmux server is
 # already running, `tmux new-session` hands the request to that server,
