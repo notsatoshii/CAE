@@ -53,11 +53,15 @@ export function RegenerateButton({
   const L = labelFor(dev);
 
   const [pending, setPending] = useState(false);
-  const [cooldownUntil, setCooldownUntil] = useState<number | null>(() =>
-    initialCooldownFrom(generatedAt),
-  );
-  const [now, setNow] = useState(() => Date.now());
+  const [cooldownUntil, setCooldownUntil] = useState<number | null>(null);
+  const [now, setNow] = useState<number | null>(null);
   const hydratedFromProp = useRef(false);
+
+  useEffect(() => {
+    setNow(Date.now());
+    setCooldownUntil(initialCooldownFrom(generatedAt));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // If `generatedAt` updates (new fetch lands), re-hydrate cooldown IF it's
   // not currently active — avoid squashing an in-progress cooldown.
@@ -86,10 +90,12 @@ export function RegenerateButton({
     return () => clearInterval(id);
   }, [cooldownUntil]);
 
-  const cooldownActive = cooldownUntil !== null && now < cooldownUntil;
-  const secondsLeft = cooldownUntil
-    ? Math.max(0, Math.ceil((cooldownUntil - now) / 1000))
-    : 0;
+  const cooldownActive =
+    cooldownUntil !== null && now !== null && now < cooldownUntil;
+  const secondsLeft =
+    cooldownUntil && now !== null
+      ? Math.max(0, Math.ceil((cooldownUntil - now) / 1000))
+      : 0;
   const disabled = pending || cooldownActive;
 
   const handleClick = useCallback(async () => {

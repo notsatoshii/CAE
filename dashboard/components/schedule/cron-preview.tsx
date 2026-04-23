@@ -1,6 +1,6 @@
 "use client"
 
-import React from "react"
+import React, { useEffect, useState } from "react"
 
 export type CronPreviewProps = {
   english: string
@@ -16,8 +16,10 @@ export type CronPreviewProps = {
  * Source pill: rule = green (deterministic), llm = amber (warn about AI interpretation).
  */
 export function CronPreview({ english, nextRun, source, cron }: CronPreviewProps) {
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => setMounted(true), [])
   const nextRunDate = nextRun ? new Date(nextRun) : null
-  const relativeTime = nextRunDate ? formatRelativeTime(nextRunDate) : null
+  const relativeTime = mounted && nextRunDate ? formatRelativeTime(nextRunDate) : null
 
   return (
     <div

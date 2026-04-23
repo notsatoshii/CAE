@@ -27,14 +27,15 @@ export function LastUpdated({
   threshold_ms: number;
   className?: string;
 }) {
-  const [now, setNow] = useState(() => Date.now());
+  const [now, setNow] = useState<number | null>(null);
 
   useEffect(() => {
+    setNow(Date.now());
     const id = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(id);
   }, []);
 
-  if (!at) {
+  if (!at || now === null) {
     return (
       <span className={`text-xs text-[color:var(--text-dim)] ${className}`}>—</span>
     );

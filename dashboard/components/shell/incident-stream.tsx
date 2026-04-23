@@ -87,7 +87,10 @@ function severityStyle(level: string): {
 export function IncidentStream() {
   const [entries, setEntries] = useState<IncidentEntry[]>([]);
   const [selected, setSelected] = useState<IncidentEntry | null>(null);
-  const [mountTime] = useState(() => new Date());
+  const [mountTime, setMountTime] = useState<Date | null>(null);
+  useEffect(() => {
+    setMountTime(new Date());
+  }, []);
   const listRef = useRef<HTMLDivElement>(null);
   const isPausedRef = useRef(false);
   const esRef = useRef<EventSource | null>(null);
@@ -172,7 +175,7 @@ export function IncidentStream() {
             />
           </svg>
           <p className="text-sm font-medium text-[color:var(--text)]">
-            No incidents since {mountTime.toLocaleTimeString()}
+            {mountTime ? `No incidents since ${mountTime.toLocaleTimeString()}` : "No incidents"}
           </p>
           <p className="text-xs text-[color:var(--text-muted)]">Gateway healthy.</p>
         </div>
