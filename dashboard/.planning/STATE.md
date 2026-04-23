@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v0.1
 milestone_name: milestone
 status: planning
-stopped_at: "Completed 14-04-PLAN.md (RBAC: Google SSO + 3-role whitelist + RoleGate)"
-last_updated: "2026-04-23T00:03:33.581Z"
+stopped_at: "Completed 14-05-PLAN.md (Security panel: trust scores + secrets scan + audit log)"
+last_updated: "2026-04-23T00:29:31Z"
 progress:
   total_phases: 14
   completed_phases: 11
   total_plans: 83
-  completed_plans: 74
-  percent: 89
+  completed_plans: 75
+  percent: 90
 ---
 
 # cae-dashboard — Project State
@@ -29,8 +29,16 @@ progress:
 Phase 10 — Plan mode: Projects / PRDs / Roadmaps / UAT (`/plan/*` routes wrapping Shift).
 Plan 10-04 complete (Wave 1 closed). Next: plan 10-05 (API routes).
 
-**Last session:** 2026-04-23T00:03:33.574Z
-**Stopped at:** Completed 14-04-PLAN.md (RBAC: Google SSO + 3-role whitelist + RoleGate)
+**Last session:** 2026-04-23T00:29:31Z
+**Stopped at:** Completed 14-05-PLAN.md (Security panel: trust scores + secrets scan + audit log)
+
+## Key Decisions (Phase 14 — Plan 05)
+
+- **14-05:** Injectable spawnImpl for gitleaks tests — avoids ESM sealed namespace issue with vi.spyOn on node:fs/promises
+- **14-05:** JSONL append-only for audit log and scan results — no DB dependency
+- **14-05:** Mutation-only hook filter in audit-hook.sh — Read/Glob/Grep skipped, only Bash/Write/Edit/MultiEdit/Agent/Task logged
+- **14-05:** Atomic trust-override write: tmp + chmod 0600 + rename — TOCTOU safe, world-read prevented
+
 
 ## Key Decisions (Phase 13 — Plan 12)
 
