@@ -17,7 +17,7 @@
 | Variable | Purpose | Default |
 |----------|---------|---------|
 | `AUTH_URL` | NextAuth base URL (needed in some deploy environments) | Inferred from request |
-| `AUTH_GOOGLE_HOSTED_DOMAIN` | Google Workspace domain lock — only users with this Google-hosted domain can sign in via Google. E.g. `diiant.com`. | Unset (any Google account) |
+| `AUTH_GOOGLE_HOSTED_DOMAIN` | Google Workspace domain lock. When set, the `signIn` callback in `auth.ts` enforces three checks server-side: `email_verified=true`, `hd` claim equals this domain, and email ends with `@<domain>`. All three must pass or sign-in is rejected. Note: the `hd` OAuth URL param sent to Google is a UX hint only (pre-selects account chooser) — the actual security gate is the server-side `signIn` callback. E.g. `diiant.com`. | Unset (any Google account allowed) |
 | `SHIFT_PROJECTS_HOME` | Root directory scanned for Shift-managed projects | `/home/cae` |
 | `CAE_ROOT` | Root path for buildplan path validation and runtime state files (scheduled_tasks.json, .cae/) | `/home/cae/ctrl-alt-elite` |
 | `CAE_SKILLS_DIR` | Override for the local skills directory (used in tests for isolation) | `~/.claude/skills` |
@@ -68,7 +68,7 @@ AUTH_GOOGLE_SECRET=GOCSPX-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 ADMIN_EMAILS=eric@diiant.com
 OPERATOR_EMAILS=ops@diiant.com
 
-# Optional — lock Google SSO to @diiant.com workspace only:
+# Optional — lock Google SSO to @diiant.com workspace only (enforced server-side):
 # AUTH_GOOGLE_HOSTED_DOMAIN=diiant.com
 
 # Optional — override runtime state root:

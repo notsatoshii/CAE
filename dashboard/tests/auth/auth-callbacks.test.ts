@@ -96,3 +96,59 @@ describe("authCallbacks.session", () => {
     expect((result.user as { role?: string }).role).toBe("viewer")
   })
 })
+
+// ─── CR-01 regression: Google hosted-domain server-side enforcement ────────────
+describe("CR-01: googleSignInCheck — Google hd claim server-side enforcement", () => {
+  afterEach(() => {
+    vi.resetModules()
+  })
+
+  it("CR-01a: allows sign-in when no domain restriction is configured", async () => {
+    const { googleSignInCheck } = await import("@/auth")
+    const profile = { hd: "personal.com", email: "user@personal.com", email_verified: true }
+    expect(googleSignInCheck(profile, undefined)).toBe(true)
+  })
+
+  it("CR-01b: allows sign-in when hd matches expected domain and email_verified=true", async () => {
+    const { googleSignInCheck } = await import("@/auth")
+    const profile = { hd: "diiant.com", email: "user@diiant.com", email_verified: true }
+    expect(googleSignInCheck(profile, "diiant.com")).toBe(true)
+  })
+
+  it("CR-01c: rejects sign-in when hd is missing (personal Gmail, no hd claim)", async () => {
+    const { googleSignInCheck } = await import("@/auth")
+    // Personal Gmail accounts have no hd claim
+    const profile = { email: "attacker@gmail.com", email_verified: true }
+    expect(googleSignInCheck(profile, "diiant.com")).toBe(false)
+  })
+
+  it("CR-01d: rejects sign-in when hd mismatches expected domain", async () => {
+    const { googleSignInCheck } = await import("@/auth")
+    const profile = { hd: "evil.com", email: "attacker@evil.com", email_verified: true }
+    expect(googleSignInCheck(profile, "diiant.com")).toBe(false)
+  })
+
+  it("CR-01e: rejects sign-in when email_verified is false", async () => {
+    const { googleSignInCheck } = await import("@/auth")
+    const profile = { hd: "diiant.com", email: "user@diiant.com", email_verified: false }
+    expect(googleSignInCheck(profile, "diiant.com")).toBe(false)
+  })
+
+  it("CR-01f: rejects sign-in when email_verified is absent", async () => {
+    const { googleSignInCheck } = await import("@/auth")
+    const profile = { hd: "diiant.com", email: "user@diiant.com" }
+    expect(googleSignInCheck(profile, "diiant.com")).toBe(false)
+  })
+
+  it("CR-01g: rejects when hd matches but email domain does not (split-brain protection)", async () => {
+    const { googleSignInCheck } = await import("@/auth")
+    // hd claim matches but email is from a different domain — belt-and-suspenders
+    const profile = { hd: "diiant.com", email: "user@otherdomain.com", email_verified: true }
+    expect(googleSignInCheck(profile, "diiant.com")).toBe(false)
+  })
+
+  it("CR-01h: rejects when profile is null", async () => {
+    const { googleSignInCheck } = await import("@/auth")
+    expect(googleSignInCheck(null, "diiant.com")).toBe(false)
+  })
+})
