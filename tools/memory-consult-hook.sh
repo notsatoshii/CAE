@@ -33,6 +33,13 @@ set +e
 set -u
 set +o pipefail
 
+# F4 (Wave 1.5): diagnostic echo — captures EVERY invocation regardless of
+# opt-in gate so we can determine whether the harness fires the hook at all.
+# Records PWD (which decides opt-in), tool-detection env vars, and whether the
+# opt-in directory exists. Does NOT touch stdin so the real hook flow below is
+# untouched. Review /tmp/memory-consult-hook-debug.log after the next session.
+echo "$(date -u +%FT%TZ 2>/dev/null) hook_called pwd=$PWD claude_tool=${CLAUDE_TOOL_NAME:-MISSING} session=${CLAUDE_SESSION_ID:-MISSING} cae_task=${CAE_TASK_ID:-MISSING} opt_in_dir=$([[ -d "$PWD/.cae/metrics" ]] && echo yes || echo no)" >> /tmp/memory-consult-hook-debug.log 2>/dev/null || :
+
 # Hard cap wall time for defense-in-depth. If we blow past 2 seconds, abort
 # silently. The outer Claude Code invocation may also wrap us in `timeout`,
 # but we don't rely on it.

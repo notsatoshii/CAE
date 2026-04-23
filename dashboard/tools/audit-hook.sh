@@ -16,6 +16,13 @@
 
 set -euo pipefail
 
+# F2 (Wave 1.5): diagnostic echo — captures EVERY hook invocation regardless of
+# tool match so we can determine whether the harness fires the hook at all and,
+# if so, which env var carries the tool name. Review /tmp/audit-hook-debug.log
+# after a real Claude session to confirm root cause.
+# Remove this block once the auto-fire pipeline is verified working.
+echo "$(date -u +%FT%TZ) hook_called tool=${CLAUDE_TOOL_NAME:-MISSING} other_env=$(env | grep -E 'CLAUDE_|TOOL_' | tr '\n' ',')" >> /tmp/audit-hook-debug.log 2>/dev/null || true
+
 # Plan 14-05: double-gate filter — only log mutation tools.
 # The settings.json matcher is the primary filter; this is defense-in-depth
 # so accidental matcher removal doesn't flood the log with Read events.
