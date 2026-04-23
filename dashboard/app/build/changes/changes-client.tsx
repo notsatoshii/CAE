@@ -85,6 +85,7 @@ export function ChangesClient() {
         data-testid="changes-error"
         className="text-sm text-[color:var(--destructive,#ef4444)]"
       >
+        <span className="sr-only" data-truth="build-changes.error">yes</span>
         {L.changesFailedToLoad}
       </p>
     );
@@ -96,16 +97,21 @@ export function ChangesClient() {
         data-testid="changes-loading"
         className="text-sm text-[color:var(--text-muted,#8a8a8c)]"
       >
+        <span className="sr-only" data-truth="build-changes.loading">yes</span>
         {L.changesEmpty}
       </p>
     );
   }
 
   const totalToday = countEventsToday(data);
+  const totalEvents = data.projects.reduce((s, p) => s + p.events.length, 0);
 
   if (data.projects.length === 0) {
     return (
       <div>
+        <span className="sr-only" data-truth="build-changes.empty">yes</span>
+        <span className="sr-only" data-truth="build-changes.project-count">0</span>
+        <span className="sr-only" data-truth="build-changes.event-count">0</span>
         <h1 className="mb-4 flex items-center gap-2 text-2xl font-medium text-[color:var(--text,#e5e5e5)]">
           {L.changesPageHeading}
           <ExplainTooltip text={L.changesExplainTimeline} />
@@ -134,6 +140,16 @@ export function ChangesClient() {
 
   return (
     <div>
+      <span className="sr-only" data-truth="build-changes.healthy">yes</span>
+      <span className="sr-only" data-truth="build-changes.project-count">
+        {data.projects.length}
+      </span>
+      <span className="sr-only" data-truth="build-changes.event-count">
+        {totalEvents}
+      </span>
+      <span className="sr-only" data-truth="build-changes.events-today">
+        {totalToday}
+      </span>
       <h1 className="mb-1 flex items-center gap-2 text-2xl font-medium text-[color:var(--text,#e5e5e5)]">
         {L.changesPageHeading}
         <ExplainTooltip text={L.changesExplainTimeline} />

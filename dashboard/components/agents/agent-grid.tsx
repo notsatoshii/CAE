@@ -41,6 +41,7 @@ export function AgentGrid({ agents, loadError }: AgentGridProps) {
         data-testid="agent-grid-error"
         className="rounded-lg border border-[color:var(--danger,#ef4444)]/50 bg-[color:var(--danger,#ef4444)]/5 p-6 text-sm text-[color:var(--danger,#ef4444)]"
       >
+        <span className="sr-only" data-truth="build-agents.error">yes</span>
         {t.agentsListFailedToLoad}
       </div>
     )
@@ -55,6 +56,17 @@ export function AgentGrid({ agents, loadError }: AgentGridProps) {
 
   return (
     <div data-testid="agent-grid" className="flex flex-col gap-8">
+      <span className="sr-only" data-truth="build-agents.healthy">yes</span>
+      <span className="sr-only" data-truth="build-agents.total-count">{agents.length}</span>
+      <span className="sr-only" data-truth="build-agents.active-count">
+        {grouped.active.length}
+      </span>
+      <span className="sr-only" data-truth="build-agents.recently-used-count">
+        {grouped.recently_used.length}
+      </span>
+      <span className="sr-only" data-truth="build-agents.dormant-count">
+        {grouped.dormant.length}
+      </span>
       {GROUP_ORDER.map((group) => {
         const members = grouped[group]
         if (members.length === 0) return null

@@ -83,28 +83,44 @@ export function QueueKanbanClient({ initialState }: Props) {
 
   if (totalTasks === 0 && !error) {
     return (
-      <EmptyState
-        testId="queue-kanban-empty"
-        icon={Inbox}
-        heading={t.emptyQueueHeading}
-        body={t.emptyQueueBody}
-        actions={
-          <EmptyStateActions>
-            <Button variant="secondary" onClick={() => router.push("/chat")}>
-              {t.emptyQueueCtaJob}
-            </Button>
-            <Button variant="secondary" onClick={() => router.push("/build/workflows")}>
-              {t.emptyQueueCtaWorkflows}
-            </Button>
-          </EmptyStateActions>
-        }
-      />
+      <>
+        <span className="sr-only" data-truth="build-queue.empty">yes</span>
+        <span className="sr-only" data-truth="build-queue.count">0</span>
+        <EmptyState
+          testId="queue-kanban-empty"
+          icon={Inbox}
+          heading={t.emptyQueueHeading}
+          body={t.emptyQueueBody}
+          actions={
+            <EmptyStateActions>
+              <Button variant="secondary" onClick={() => router.push("/chat")}>
+                {t.emptyQueueCtaJob}
+              </Button>
+              <Button variant="secondary" onClick={() => router.push("/build/workflows")}>
+                {t.emptyQueueCtaWorkflows}
+              </Button>
+            </EmptyStateActions>
+          }
+        />
+      </>
     )
   }
 
   return (
     // overflow-x-auto enables mobile horizontal scroll across 5 columns
     <div className="overflow-x-auto">
+      <span className="sr-only" data-truth="build-queue.count">{totalTasks}</span>
+      <span className="sr-only" data-truth="build-queue.healthy">yes</span>
+      <span className="sr-only" data-truth="build-queue.waiting">
+        {state.columns.waiting.length}
+      </span>
+      <span className="sr-only" data-truth="build-queue.in-progress">
+        {state.columns.in_progress.length}
+      </span>
+      <span className="sr-only" data-truth="build-queue.shipped">
+        {state.columns.shipped.length}
+      </span>
+      {error && <span className="sr-only" data-truth="build-queue.error">yes</span>}
       <div
         data-testid="queue-kanban"
         className="flex gap-3 min-w-max lg:grid lg:grid-cols-5 lg:min-w-0"

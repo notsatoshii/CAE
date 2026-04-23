@@ -94,24 +94,33 @@ export function WorkflowsListClient({
 
   if (workflows.length === 0) {
     return (
-      <EmptyState
-        testId="workflows-empty"
-        icon={BookMarked}
-        heading={t.emptyWorkflowsHeading}
-        body={t.workflowsListEmpty}
-        actions={
-          <EmptyStateActions>
-            <Button variant="secondary" onClick={() => router.push("/build/workflows/new")}>
-              {t.emptyWorkflowsCtaRecipe}
-            </Button>
-          </EmptyStateActions>
-        }
-      />
+      <>
+        <span className="sr-only" data-truth="build-workflows.empty">yes</span>
+        <span className="sr-only" data-truth="build-workflows.count">0</span>
+        <EmptyState
+          testId="workflows-empty"
+          icon={BookMarked}
+          heading={t.emptyWorkflowsHeading}
+          body={t.workflowsListEmpty}
+          actions={
+            <EmptyStateActions>
+              <Button variant="secondary" onClick={() => router.push("/build/workflows/new")}>
+                {t.emptyWorkflowsCtaRecipe}
+              </Button>
+            </EmptyStateActions>
+          }
+        />
+      </>
     )
   }
 
   return (
     <>
+      <span className="sr-only" data-truth="build-workflows.count">{workflows.length}</span>
+      <span className="sr-only" data-truth="build-workflows.healthy">yes</span>
+      <span className="sr-only" data-truth="build-workflows.running">
+        {runningSlug ?? "none"}
+      </span>
       <div data-testid="workflows-list" className="flex flex-col gap-3">
         {workflows.map((w) => (
           <Card key={w.slug} data-testid={"workflow-row-" + w.slug}>
