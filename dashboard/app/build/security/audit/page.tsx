@@ -17,15 +17,29 @@ export const dynamic = "force-dynamic"
 async function fetchAudit(
   cookieHeader: string
 ): Promise<{ entries: AuditEntry[]; total: number }> {
+  // Same hardening as /build/security/skills fetch-trust-scores (C1 bug):
+  // AUTH_URL > NEXTAUTH_URL > localhost:3000; content-type check; await
+  // res.json() so try/catch actually catches a rejected promise.
+  const base =
+    process.env.AUTH_URL ??
+    process.env.NEXTAUTH_URL ??
+    "http://localhost:3000"
+  const from = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
   try {
-    const base = process.env.NEXTAUTH_URL ?? "http://localhost:3000"
-    const from = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
     const res = await fetch(
       `${base}/api/security/audit?from=${from}&limit=200`,
       { headers: { Cookie: cookieHeader }, cache: "no-store" }
     )
     if (!res.ok) return { entries: [], total: 0 }
-    return res.json()
+    const ct = res.headers.get("content-type") ?? ""
+    if (!ct.toLowerCase().startsWith("application/json")) {
+      return { entries: [], total: 0 }
+    }
+    const data = (await res.json()) as { entries?: AuditEntry[]; total?: number }
+    return {
+      entries: Array.isArray(data.entries) ? data.entries : [],
+      total: typeof data.total === "number" ? data.total : 0,
+    }
   } catch {
     return { entries: [], total: 0 }
   }

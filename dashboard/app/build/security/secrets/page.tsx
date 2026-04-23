@@ -21,14 +21,24 @@ type ScanEntry = {
 }
 
 async function fetchScans(cookieHeader: string): Promise<ScanEntry[]> {
+  // NextAuth v5 AUTH_URL first (v4 NEXTAUTH_URL fallback, localhost:3000 last).
+  // Content-type guard + awaited res.json() prevent the "SyntaxError:
+  // Unexpected token '<'" crash the C1 audit surfaced when wrong-port
+  // routing returned HTML.
+  const base =
+    process.env.AUTH_URL ??
+    process.env.NEXTAUTH_URL ??
+    "http://localhost:3000"
   try {
-    const base = process.env.NEXTAUTH_URL ?? "http://localhost:3000"
     const res = await fetch(`${base}/api/security/scans`, {
       headers: { Cookie: cookieHeader },
       cache: "no-store",
     })
     if (!res.ok) return []
-    return res.json()
+    const ct = res.headers.get("content-type") ?? ""
+    if (!ct.toLowerCase().startsWith("application/json")) return []
+    const data = (await res.json()) as unknown
+    return Array.isArray(data) ? (data as ScanEntry[]) : []
   } catch {
     return []
   }
