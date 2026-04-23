@@ -1,11 +1,10 @@
 /**
- * Root app/loading.tsx tests — Pikachu loader port.
+ * Root app/loading.tsx tests — arrow-key Pikachu port.
  *
  * Contract:
- *   - renders with role=status + aria-busy
- *   - shows the pikachu GIF + "Loading..." text
- *   - mousemove updates cursor-follower position
- *   - click spawns trail clones
+ *   - renders with role=status + aria-busy + aria-live
+ *   - shows the pikachu gif + "Running Pikachu" heading + "Loading..." text
+ *   - right-arrow keydown moves pikachu +25px, left-arrow moves -25px
  *   - no console errors on render
  */
 
@@ -13,7 +12,7 @@ import { describe, it, expect, vi, afterEach } from "vitest";
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import RootLoading from "./loading";
 
-describe("RootLoading — pikachu port", () => {
+describe("RootLoading — arrow-key pikachu", () => {
   const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
   afterEach(() => {
     consoleErrorSpy.mockClear();
@@ -27,40 +26,45 @@ describe("RootLoading — pikachu port", () => {
     expect(root.getAttribute("aria-live")).toBe("polite");
   });
 
-  it("shows the pikachu gif + Loading text", () => {
+  it("shows pikachu gif + heading + loading text", () => {
     render(<RootLoading />);
-    const img = screen.getByAltText("Loading") as HTMLImageElement;
+    const img = screen.getByAltText("running pikachu") as HTMLImageElement;
     expect(img.src).toContain("pikachu-loading.gif");
+    expect(screen.getByText("Running Pikachu")).toBeTruthy();
     expect(screen.getByText("Loading...")).toBeTruthy();
   });
 
-  it("cursor-follower appears on mousemove inside loader, hides on leave", () => {
+  it("right arrow translates pikachu by +25px", () => {
     const { container } = render(<RootLoading />);
-    const loader = screen.getByTestId("root-loading");
-    // Not visible until mouse enters.
-    expect(container.querySelectorAll(".cae-pikachu-mouse").length).toBe(0);
+    const pikachu = container.querySelector("#pikachu") as HTMLElement;
+    expect(pikachu.style.transform).toBe("translateX(0px)");
     act(() => {
-      fireEvent.mouseMove(loader, { clientX: 50, clientY: 60 });
+      fireEvent.keyDown(document, { keyCode: 39 });
     });
-    expect(container.querySelectorAll(".cae-pikachu-mouse").length).toBe(1);
+    expect(pikachu.style.transform).toBe("translateX(25px)");
     act(() => {
-      fireEvent.mouseLeave(loader);
+      fireEvent.keyDown(document, { keyCode: 39 });
     });
-    expect(container.querySelectorAll(".cae-pikachu-mouse").length).toBe(0);
+    expect(pikachu.style.transform).toBe("translateX(50px)");
   });
 
-  it("click inside loader spawns a trail clone", () => {
+  it("left arrow translates pikachu by -25px", () => {
     const { container } = render(<RootLoading />);
-    const loader = screen.getByTestId("root-loading");
+    const pikachu = container.querySelector("#pikachu") as HTMLElement;
     act(() => {
-      fireEvent.mouseMove(loader, { clientX: 50, clientY: 60 });
+      fireEvent.keyDown(document, { keyCode: 37 });
     });
-    const before = container.querySelectorAll(".cae-pikachu-mouse").length;
+    expect(pikachu.style.transform).toBe("translateX(-25px)");
+  });
+
+  it("ignores non-arrow keys", () => {
+    const { container } = render(<RootLoading />);
+    const pikachu = container.querySelector("#pikachu") as HTMLElement;
     act(() => {
-      fireEvent.click(loader, { clientX: 100, clientY: 100 });
+      fireEvent.keyDown(document, { keyCode: 32 }); // space
+      fireEvent.keyDown(document, { keyCode: 13 }); // enter
     });
-    const after = container.querySelectorAll(".cae-pikachu-mouse").length;
-    expect(after).toBe(before + 1);
+    expect(pikachu.style.transform).toBe("translateX(0px)");
   });
 
   it("logs no console errors", () => {

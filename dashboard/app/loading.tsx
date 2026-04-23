@@ -1,105 +1,77 @@
 "use client";
 
 /**
- * Suspense fallback — Pikachu walking GIF + cursor-trail effect per
- * Eric session-10 pick (codepen.io/raudaschl/pen/JzRKqN).
+ * Suspense fallback — arrow-key-driven Running Pikachu port.
  *
- * Scoped to the content area (NOT full viewport) — preserves the top-nav
- * and sidebar chrome, only the route content pane swaps to the loader.
- * Background matches the dashboard dark theme (`--bg`).
+ * Original CodePen source pasted by Eric:
  *
- * jQuery-source effects ported to React:
- *   - Centered pikachu gif
- *   - Hidden real cursor replaced by a yellow dot that follows mousemove
- *     and pulses (CSS keyframes)
- *   - Click spawns a static clone dot at click position (trail effect)
+ *   import React from "react";
+ *   import ReactDOM from "react-dom";
+ *   ...
+ *   function move({ keyCode }) {
+ *     switch (keyCode) {
+ *       case 39: setPosition(p => p + 25); break;
+ *       case 37: setPosition(p => p - 25); break;
+ *     }
+ *   }
+ *   <div id="pikachu" style={{ transform: `translateX(${position}px)` }}>
+ *     <img src={pikachu} />
+ *   </div>
  *
- * Re-exported by per-layout loading.tsx files (build, plan, etc.) so
- * Next App Router picks it up for any subtab transition.
+ * Scoped to the content area — preserves top-nav + sidebar chrome.
  */
 
 import Image from "next/image";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 
 export default function RootLoading() {
-  const containerRef = useRef<HTMLDivElement | null>(null);
-  const [cursor, setCursor] = useState<{ x: number; y: number; visible: boolean }>({
-    x: -100,
-    y: -100,
-    visible: false,
-  });
-  const [trail, setTrail] = useState<Array<{ id: number; x: number; y: number }>>([]);
-  const nextId = useRef(0);
+  const [position, setPosition] = useState(0);
 
   useEffect(() => {
-    const el = containerRef.current;
-    if (!el) return;
-    const toLocal = (e: MouseEvent) => {
-      const r = el.getBoundingClientRect();
-      return { x: e.clientX - r.left, y: e.clientY - r.top };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.keyCode === 39) setPosition((p) => p + 25);
+      else if (e.keyCode === 37) setPosition((p) => p - 25);
     };
-    const onMove = (e: MouseEvent) => {
-      const p = toLocal(e);
-      setCursor({ x: p.x, y: p.y, visible: true });
-    };
-    const onLeave = () => setCursor((c) => ({ ...c, visible: false }));
-    const onClick = (e: MouseEvent) => {
-      const p = toLocal(e);
-      nextId.current += 1;
-      setTrail((t) => [...t, { id: nextId.current, x: p.x, y: p.y }]);
-    };
-    el.addEventListener("mousemove", onMove);
-    el.addEventListener("mouseleave", onLeave);
-    el.addEventListener("click", onClick);
-    return () => {
-      el.removeEventListener("mousemove", onMove);
-      el.removeEventListener("mouseleave", onLeave);
-      el.removeEventListener("click", onClick);
-    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
   }, []);
 
   return (
     <div
-      ref={containerRef}
       data-testid="root-loading"
       role="status"
       aria-busy="true"
       aria-live="polite"
       aria-label="Loading"
-      className="cae-pikachu-loader relative w-full min-h-[calc(100vh-40px)] flex flex-col items-center justify-center gap-4 bg-[color:var(--bg)]"
+      className="cae-pikachu-loader relative w-full min-h-[calc(100vh-40px)] flex flex-col items-center justify-center gap-3 bg-[color:var(--bg)] overflow-hidden"
     >
-      <Image
-        src="/pikachu-loading.gif"
-        alt="Loading"
-        width={200}
-        height={209}
-        priority
-        unoptimized
-        className="block"
-      />
+      <h1 className="text-2xl font-semibold text-[color:var(--text)]">
+        Running Pikachu
+      </h1>
+      <p className="text-sm text-[color:var(--text-muted)]">
+        Use left and right arrow keys to move.
+      </p>
+
+      <div
+        id="pikachu"
+        className="mt-2 transition-transform duration-150 ease-out will-change-transform"
+        style={{ transform: `translateX(${position}px)` }}
+      >
+        <Image
+          src="/pikachu-loading.gif"
+          alt="running pikachu"
+          width={200}
+          height={209}
+          priority
+          unoptimized
+          className="block"
+        />
+      </div>
+
       <span id="loadingText" className="text-[color:var(--text)] text-base font-medium">
         Loading...
       </span>
 
-      {/* Cursor-follower yellow dot (replaces hidden real cursor).
-          Only rendered while pointer is inside the loader. */}
-      {cursor.visible && (
-        <span
-          aria-hidden="true"
-          className="cae-pikachu-mouse"
-          style={{ left: cursor.x - 16, top: cursor.y - 16 }}
-        />
-      )}
-
-      {/* Click-spawned trail clones */}
-      {trail.map((dot) => (
-        <span
-          key={dot.id}
-          aria-hidden="true"
-          className="cae-pikachu-mouse cae-pikachu-mouse-trail"
-          style={{ left: dot.x - 16, top: dot.y - 16 }}
-        />
-      ))}
     </div>
   );
 }
