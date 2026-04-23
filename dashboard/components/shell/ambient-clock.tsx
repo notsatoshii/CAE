@@ -35,29 +35,27 @@ export function AmbientClock() {
   const reduceMotion = getReducedMotion();
   const intervalMs = reduceMotion ? 60_000 : 1_000;
 
-  const [time, setTime] = useState<string>(() => fmt(new Date(), reduceMotion));
+  const [time, setTime] = useState<string | null>(null);
 
   useEffect(() => {
-    // Tick
+    setTime(fmt(new Date(), reduceMotion));
     const id = setInterval(() => {
       setTime(fmt(new Date(), reduceMotion));
     }, intervalMs);
     return () => clearInterval(id);
-    // reduceMotion is read once on mount — it's a constant for the lifetime
-    // of the component (matchMedia changes trigger a remount at the page level)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // aria-label uses HH:mm (human-readable minutes granularity is enough)
-  const ariaTime = time.slice(0, 5); // "HH:mm" from "HH:mm:ss" or "HH:mm"
+  const ariaTime = time ? time.slice(0, 5) : "";
 
   return (
     <span
       className="font-mono text-[10px] text-[color:var(--text-muted)] tabular-nums select-none"
       aria-label={`Local time ${ariaTime}`}
       data-testid="ambient-clock"
+      suppressHydrationWarning
     >
-      {time}
+      {time ?? "--:--:--"}
     </span>
   );
 }
