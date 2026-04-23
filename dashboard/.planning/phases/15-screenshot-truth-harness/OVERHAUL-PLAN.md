@@ -1,6 +1,22 @@
-# Phase 15 — FE Overhaul + Truth Harness
+# Phase 15 — FE Overhaul + Truth Harness + Knowledge Layer + Instrumentation
 
-**Mandate (Eric, 2026-04-23 session 9):** the dashboard "looks like garbage", "0 depth", "no character", logs/liveness lie, sidebar/sliders/fonts/colors all amateur. Original P15 scope (screenshot-truth-harness) preserved as one wave; phase scope expanded to total FE craft pass + structural overhaul.
+**Mandate (Eric, 2026-04-23 session 9, three-message expansion):**
+1. Dashboard "looks like garbage", 0 depth, no character, sidebar/sliders/fonts/colors amateur
+2. Knowledge graphs don't work like Eric wanted — should be Obsidian-style with auto-relinking, in-app re-analyze button, continuous labelling between actions ↔ files ↔ agents ↔ knowledge ↔ memory
+3. Token / usage / logs don't show correctly — data not surfacing in UI; pixelagents and "a lot of stuff just doesn't work"
+
+Three failure classes stacked: (a) instrumentation never installed → no data captured; (b) FE can't render absent data; (c) presentation shallow even where data exists.
+
+Scope expanded to **four parallel tracks**:
+
+| Track | What | Why |
+|-------|------|-----|
+| **A — FE app surfaces** | Truth, depth, liveness, IA, craft, voice on every route | Closes "looks like garbage", "0 depth", "no character", sidebar/font/color/scrollbar complaints |
+| **B — Knowledge layer** | Memory file format (Obsidian-compatible), analyzer agent, in-app graph rework, re-analyze button, auto-extracted backlinks | Closes knowledge-graph + memory-readability + auto-relink complaints |
+| **C — Continuous labelling pipeline** | Post-commit hook + agent-invocation logger emit node/edge writes to knowledge index in real time | Closes "constantly labelled / organized / established between actions, files, agents, knowledge, memory" |
+| **D — Instrumentation pipeline** | Install + verify audit hook, scheduler cron, token tracker, cost computer, SSE event source for Live Floor | Closes "token/usage/logs don't show correctly", "pixelagents don't work", "nothing active when active" |
+
+Tracks share the C1–C6+ audit cycles. Each cycle scores all 4 tracks across all personas.
 
 This document is the **methodology** — what we review, how we review it, how we prove fixes landed. The 6 cycles below show the methodology being refined; each cycle is a real edit, not theater.
 
@@ -221,6 +237,178 @@ Each audit cycle scores routes from each persona's POV. A route can score 5/5 fo
 
 Persona scoring runs as a 7×6 matrix (pillars × personas) per route. A route's bottleneck is the lowest cell.
 
+---
+
+# Cycle 7 — vision-vs-shipped delta (draft)
+
+**Eric's mandate (third expansion):** "Consider from a user's perspective what I would've wanted and why, then look at what we have on FE currently and how limited that is."
+
+Inferring Eric's vision from: complaints + the fact he is a non-dev founder who explicitly invoked Linear/Vercel-tier polish + the original UI-SPEC mission-control framing + the live-spectator persona ("show me MY agents working").
+
+## Per-surface vision vs shipped (draft v1)
+
+| Surface | What Eric likely envisioned | What shipped | Gap class |
+|---------|----------------------------|--------------|-----------|
+| **Live Floor** | Named pixel agents walking/working/idling in an isometric room, watchable like an aquarium, click an agent → see what it's doing, real-time event particles streaming overhead | Isometric scaffold; agents are abstract dots not characters; no name labels; events likely not flowing because audit hook never installed | Visualization + instrumentation |
+| **Build home** | Mission-control: big "what's running NOW" hero panel, live waveforms, project-fleet at a glance, drill-down portals | Rollup strip (3 numbers) + recent ledger (text rows) + active-phase cards (shallow). Feels like an admin panel, not a control room | Density + theatricality |
+| **Agent detail** | Rich profile: persona avatar (pixel art), invocation history with cost/tokens/duration, drift trend chart, what-it-built timeline, model genealogy | Drawer with persona text + model + 50 invocations as text rows | Visualization absent |
+| **Memory tab** | Obsidian-grade interactive graph: nodes pulse when accessed, click reveals content + backlinks, force-layout reorganizes around selection, search highlights paths between nodes, "re-analyze" button triggers visible reorg animation | Static Graphify render, click = view file only, no backlinks panel, no relationship types, no analyzer | Functional + visualization |
+| **Workflows** | Flowchart visualization with live execution overlay (current step highlighted, completed steps green, failed red, queue depth per step), play/pause/step-debug | YAML editor + run button + plain list of past runs | Visualization absent |
+| **Metrics** | Beautiful charts with anomaly callouts, model-cost stacked bars, agent-cost bubble chart, time-of-day heatmaps, week-over-week deltas | Success gauge + speed panel + retry heatmap (probably empty) | Anomaly intelligence absent |
+| **Logs / tail** | Terminal-grade: syntax-highlighted JSON, collapsible objects, filter pills, search-across-streams, copy-as-cURL, jump-to-source-code link | Plain text tail with mono font | Affordances absent |
+| **Token / cost** | Burn-rate gauge with hourly velocity, projection-to-EOD/EOW, per-agent attribution donut, model-cost breakdown, alerts at thresholds | Cost ticker (one number) | Burn intelligence absent |
+| **Recent builds / changes** | Rich timeline cards: each card = phase summary + commit list + tests added + screenshots from that phase + agent that built it + duration + token cost. Click → full reconstruction | DayGroup with text rows showing commit subjects | Card density absent |
+| **Sidebar / IA** | Linear-style: collapsed shows icons, hover-tooltip with label, click expands rail with section headers + counts per item, persistent state | BuildRail without expand mechanism per Eric complaint | Affordance absent |
+| **Empty / loading / error states** | Each has character: empty = friendly prompt + suggested action; loading = branded shimmer not generic spinner; error = "here's what happened, here's what you can do, here's how to ask for help" | Generic "no data" or blank | Voice absent |
+| **Command palette** | Cmd-K opens beautiful sheet, fuzzy across pages/agents/workflows/skills/memory/commands; recent + suggested at top; arrow-keys preview | Functional but visually plain | Polish gap |
+
+## Visualizations Eric likely wanted built (Track E — new)
+
+Specific things that should EXIST AS A VISUALIZATION but currently are text-or-absent:
+
+1. **Token burn-rate gauge** — radial dial with current rate vs daily budget, color band green→amber→red
+2. **Cost-by-agent donut** — slice per agent, hover reveals breakdown by task
+3. **Model-cost stacked bar** — bars per day, colors per model (sonnet/opus/haiku)
+4. **Live activity sparkline** — last-60-minutes per-minute event count, rolling tick
+5. **Agent drift trend line** — drift % over invocations, threshold band
+6. **Build history flame timeline** — Gantt-like per-phase bars, color by status, expandable rows
+7. **Workflow flowchart** — nodes per step, edges with conditions, live state overlay
+8. **Memory graph** — already present (Graphify) but needs interactivity + backlinks
+9. **Skills dependency graph** — which workflows depend on which skills
+10. **Audit log heatmap** — calendar grid, intensity by tool-call density
+11. **Live Floor enhancements** — agent labels, action bubbles, room sections, cost-per-agent floating tags
+12. **Phase progress radial** — wave-by-wave completion ring per active phase
+13. **PR / commit activity** — GitHub-style contributions square per project
+14. **Queue depth waterfall** — vertical timeline showing tasks queued/in-flight/done
+15. **Test pass-rate strip** — color band per test run, click for failure detail
+
+---
+
+# Cycle 8 — critique of Cycle 7 (visualizations missed)
+
+**What's still missing:**
+
+1. **Personality / character viz.** Eric wants "character" — visualizations should feel made by a person, not a template. Missing: brand-mascot/anim signature, custom loading "CAE thinking" sequence, error pages with personality.
+
+2. **Cross-surface relationships.** Eric's complaint about "no clickthrough" — visualizations should INTERLINK. Click cost → drill to which task/agent caused it. Click memory node → drill to which phase produced it. Need a relationship-aware navigation layer, not isolated viz.
+
+3. **Realtime/replay duality.** Cycle 7 says "live activity sparkline" but missed that Eric wants **replay** too — scrub backward through last hour, watch what agents did. Like a DVR.
+
+4. **Pixel-art character design.** "Pixelagents" implies sprite design Eric wants. Need a sprite kit per agent type, animation states (idle, typing, thinking, building, errored, victory).
+
+5. **Sound design.** Subtle audio cues for state transitions (build complete, error, agent invocation). Currently zero.
+
+6. **Notifications + presence.** Where is "agent X just finished phase Y" announced? Toast? Banner? Currently nowhere visible.
+
+7. **"What happened while I was away" digest.** Eric is the returning-founder persona — a since-you-left summary should be the first thing he sees on login.
+
+8. **Overview-first IA.** Linear opens to inbox/active issues; CAE should open to "here's everything happening across all projects." Currently default is project-specific.
+
+9. **Eric-specific dashboard widgets.** "Pixelagents I can't see anywhere" hints he wants a Live Floor pinned/embedded to home, not buried in /floor route.
+
+10. **The "mission-control" feel.** Current is admin-panel feel. Mission control = bigger, more theatrical, more colored, more dynamic. Density + drama matter.
+
+---
+
+# Cycle 9 — refined: vision-shipped delta with concrete viz specs
+
+## Final visualization spec (Track E, locked)
+
+For each viz, defined: **what** + **why a user wants it** + **data source** + **interaction model** + **placement**.
+
+### E1 — Mission Control hero (Build home top fold)
+- **What:** Full-bleed banner with: count of agents currently active (animated number), token burn rate (animated bar), current cost-vs-budget radial, last 60s event sparkline, "since you were gone" diff card (when returning).
+- **Why:** First glance answers "is anything happening, and is it going OK." Closes "nothing active when active" lie.
+- **Data:** `.cae/breakers/*.jsonl` tail (active count); `.cae/metrics/tool-calls.jsonl` (token rate, requires audit hook installed); `.cae/sessions/last-seen.json` (returning-founder diff).
+- **Interaction:** Each tile clickable → drill to detailed surface.
+- **Placement:** Top of /build (above existing rollup strip; existing strip becomes secondary).
+
+### E2 — Live Floor pinned widget (home embed) + full route
+- **What:** 240px-tall isometric scene embedded on /build home top-right; click expands to full /floor route. Named pixel sprites per agent, animated states (idle/typing/building/errored/done), action bubbles ("forging plan-15-02"), particle effects on event arrival.
+- **Why:** Eric wants pixelagents visible without navigating. Closes "pixel agents can't be seen anywhere."
+- **Data:** SSE from `/api/floor/events` consuming `.cae/breakers/*.jsonl` events.
+- **Interaction:** Click sprite → opens agent drawer.
+- **Sprite kit:** 6 base sprites (planner, executor, reviewer, security, ui, fixer) × 5 states.
+
+### E3 — Token burn-rate gauge
+- **What:** Radial gauge with current rate (tok/min), daily-budget arc, projected EOD/EOW costs.
+- **Why:** Founder needs to know if they're on fire.
+- **Data:** `.cae/metrics/tool-calls.jsonl` (input_tokens + output_tokens); cost computed from model price table.
+- **Interaction:** Click → /metrics deep view.
+- **Placement:** Mission Control E1 + top-nav permanent.
+
+### E4 — Agent cost donut + per-agent attribution
+- **What:** Donut chart, slice per agent, hover reveals breakdown by task/phase, click drills to that agent's detail.
+- **Why:** "Where did all my $ go" — explainability.
+- **Data:** Same as E3 + agent-name attribution from breaker events.
+- **Placement:** /metrics + agent detail drawer.
+
+### E5 — Model-cost stacked bars (last 7d)
+- **What:** Bars per day, colored by model (Opus/Sonnet/Haiku/etc.), height = cost.
+- **Why:** Trend visibility. Spot model-mix drift.
+- **Placement:** /metrics.
+
+### E6 — Build history flame timeline
+- **What:** Horizontal Gantt-like visualization, one row per phase, bars = waves, color by status, click row → reconstruct that phase.
+- **Why:** Eric: "recent builds show crap for history logs and no clickthrough." This is the clickthrough.
+- **Data:** `.planning/STATE.md` + `.planning/phases/*/VERIFICATION.md` + git log.
+- **Placement:** /build/history (new route).
+
+### E7 — Workflow flowchart with live overlay
+- **What:** Render workflow YAML as a flowchart (steps as nodes, dependencies as edges), overlay current execution state in real-time.
+- **Why:** Workflow is currently invisible structurally. Closes "workflows look like garbage."
+- **Lib:** react-flow (already in project for memory graph).
+- **Placement:** /build/workflows/[slug] detail page.
+
+### E8 — Memory graph v2 (Track B — knowledge layer)
+- **What:** Force-directed react-flow graph; nodes = memory files; edges = extracted relationships (mentions / related / derived-from / supersedes); edge color by type; node size by inbound-link count; node halo when accessed in last 24h; click → side panel with content + backlinks; search highlights paths; "re-analyze" button triggers a visible reorg animation.
+- **Why:** Eric: "knowledge graphs DO NOT work the way I wanted them to." This is the closer.
+- **Data:** Memory files + analyzer-extracted edge index (Track B).
+- **Placement:** /memory tab graph view (replaces current).
+
+### E9 — Logs panel v2
+- **What:** Terminal-grade: syntax-highlighted JSON (collapsible), filter pills (level/scope/source), search across streams, copy-as-cURL on requests, jump-to-source-code link on stack frames, infinite-scroll virtualized.
+- **Why:** Eric: "logs are showing 0 real info." Make logs actually useful.
+- **Lib:** react-syntax-highlighter or Shiki for highlighting; react-virtuoso for virtualization.
+- **Placement:** Replace existing tail-panel.
+
+### E10 — Anomaly callouts on metrics
+- **What:** When a metric crosses a threshold or shows outlier, render a callout pin with explanation.
+- **Why:** Don't make Eric eyeball anomalies; surface them.
+- **Lib:** Simple z-score or rolling-mean detection in lib/cae-metrics-state.ts.
+
+### E11 — DVR / replay scrubber
+- **What:** Time-slider at top of /build that lets user scrub backward through the last 24h of activity. Live Floor + Mission Control + Logs all replay together.
+- **Why:** Eric: returning-founder persona. "What happened while I was away."
+- **Data:** Append-only event log (already exists in `.cae/breakers/*.jsonl`).
+
+### E12 — Notifications drawer
+- **What:** Bell icon top-nav; opens drawer with inbox of "agent X finished phase Y", "workflow Z failed", "cost crossed $X today", "skill ABC was installed". Mark-as-read, click → drill to event.
+- **Why:** Currently nothing announces state changes. Eric reads silence as "nothing happening."
+
+### E13 — Since-you-left card
+- **What:** On home, if last visit > 1h, render a hero card summarizing changes since: phases shipped, commits, tokens spent, errors hit, top events.
+- **Why:** Returning-founder persona core need.
+- **Data:** Diff `.cae/sessions/last-seen.json` against current state files.
+
+### E14 — Per-agent invocation timeline
+- **What:** In agent drawer, replace text-row list of 50 invocations with a stacked timeline (x = time, y = duration), color by success/fail, hover = task title + cost + tokens.
+- **Why:** Visual pattern detection (e.g. agent gets slower over time).
+
+### E15 — Skills dependency tree
+- **What:** Tree view showing which workflows use which skills, which skills depend on which other skills.
+- **Why:** Eric: skills surface is opaque. Show me what's connected to what.
+
+## Visualization stack (locked)
+- **Charts:** Recharts (already-friendly with React 19)
+- **Graphs:** react-flow (already in project)
+- **Sprite scenes:** Existing canvas in components/floor/, extend with sprite kit
+- **Syntax highlight:** Shiki (modern; smaller bundle than older highlighter)
+- **Animations:** Framer Motion (consistent motion language)
+- **Time scrubbing:** Custom (don't bring in heavy DVR lib)
+
+---
+
 ## Audit→fix cycles after implementation (Eric mandate: 4-6 full cycles, not just R-prefix)
 
 Each **C-cycle** is a complete loop: capture → score → critique → fix → recapture. Not bucketed by pillar (R1-R6 above are now superseded).
@@ -257,8 +445,13 @@ If after C6 any route × persona × pillar is still ≤3, **add C7+ cycles until
 - [x] Operational reality (Cycle 5)
 - [x] Locked methodology (Cycle 6)
 - [x] Personas added + audit-cycles redefined as C1–C6+ (post-Eric clarification)
-- [ ] Eric answers 7 open questions (or auto-defaults applied)
-- [ ] Inventory pass
+- [x] Tracks B/C/D added (knowledge layer + continuous labelling + instrumentation) per Eric expansion
+- [x] Vision-vs-shipped delta drafted (Cycle 7)
+- [x] Visualizations missed critique (Cycle 8)
+- [x] Refined viz spec E1–E15 + stack locked (Cycle 9)
+- [x] Inventory pass (INVENTORY.md, 527 lines, by Explore agent)
+- [ ] Auto-defaults applied for 7 open questions (no Eric input expected per session-9 directive)
+- [ ] Track D Wave 1: instrumentation install + verify (audit hook, scheduler cron, SSE event source, token tracker, cost computer)
 - [ ] Auth harness shipped
 - [ ] C1: baseline capture + score + P0 fix wave
 - [ ] C2: depth + IA fix wave
