@@ -39,6 +39,7 @@ import {
   type CellSummary,
   type RunSummary,
 } from "./score-run"
+import { emitActivity } from "../lib/cae-event-emit"
 
 // ── CLI parse ──────────────────────────────────────────────────────────
 export interface VisionRunArgs {
@@ -322,6 +323,34 @@ export async function runVisionPass(args: VisionRunArgs): Promise<VisionRunResul
         `[vision] ${i + 1}/${cells.length}  spent=$${_getCumulativeUsd().toFixed(4)}  ` +
           `cached=${cachedHits}  scored=${scored}  skipped=${skipped}`,
       )
+    }
+
+    // Class 15B: surface vision progress on the dashboard Activity Feed.
+    // Every 50 cells + on the final cell so the feed shows start → progress
+    // → complete without spamming one row per cell.
+    if ((i + 1) % 50 === 0 || i + 1 === cells.length) {
+      try {
+        await emitActivity({
+          ts: new Date().toISOString(),
+          type: "vision_score",
+          source: "audit-vision-run",
+          actor: "vision-scorer",
+          summary: `vision scored ${i + 1}/${cells.length} cells (spent $${_getCumulativeUsd().toFixed(2)})`,
+          meta: {
+            label: args.label,
+            fixture: args.fixture,
+            pillar: args.pillar,
+            progress: i + 1,
+            total: cells.length,
+            scored,
+            cached_hits: cachedHits,
+            skipped,
+            spent_usd: _getCumulativeUsd(),
+          },
+        })
+      } catch {
+        // Never fail the scoring loop because the activity log couldn't write.
+      }
     }
   }
 

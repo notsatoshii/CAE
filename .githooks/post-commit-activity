@@ -1,0 +1,79 @@
+#!/usr/bin/env bash
+# post-commit-activity — Class 15B.
+#
+# Appends a commit-type row to .cae/metrics/activity.jsonl after every
+# landed commit, so the dashboard's Recent Commits + Activity Feed cards
+# show the commit the moment it's written (no polling GitHub, no waiting
+# on Herald).
+#
+# Invoked by .githooks/post-commit alongside the existing Herald hook.
+# Writes via `jq -c -n` to guarantee JSON-safe escaping (subject lines
+# contain backticks, quotes, newlines — raw echo would corrupt the file).
+#
+# Failure mode: if jq isn't installed or the append fails, we exit 0
+# silently. A broken activity log must never block a commit.
+
+set -u
+
+REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null)" || exit 0
+cd "$REPO_ROOT" || exit 0
+
+# Opt-out so tests + scripted rewrites don't spam the log.
+if [[ "${CAE_SKIP_ACTIVITY:-0}" == "1" ]]; then
+  exit 0
+fi
+
+METRICS_DIR="$REPO_ROOT/.cae/metrics"
+ACTIVITY_LOG="$METRICS_DIR/activity.jsonl"
+mkdir -p "$METRICS_DIR" || exit 0
+
+# Parse the commit we just landed.
+SHA="$(git rev-parse HEAD 2>/dev/null)" || exit 0
+SHORT_SHA="$(git rev-parse --short=7 HEAD 2>/dev/null)" || exit 0
+SUBJECT="$(git log -1 --format='%s' HEAD 2>/dev/null)" || exit 0
+AUTHOR="$(git log -1 --format='%an' HEAD 2>/dev/null)" || exit 0
+TS_ISO="$(git log -1 --format='%cI' HEAD 2>/dev/null)" || exit 0
+FILES_CHANGED="$(git diff-tree --no-commit-id --name-only -r HEAD 2>/dev/null | wc -l)"
+FILES_CHANGED="${FILES_CHANGED//[[:space:]]/}"
+
+# Build a row. Prefer jq for bulletproof escaping; fall back to a
+# best-effort Python one-liner if jq is missing (box minimum: python3).
+if command -v jq >/dev/null 2>&1; then
+  LINE="$(jq -c -n \
+    --arg ts "$TS_ISO" \
+    --arg sha "$SHA" \
+    --arg short "$SHORT_SHA" \
+    --arg subject "$SUBJECT" \
+    --arg author "$AUTHOR" \
+    --argjson files "$FILES_CHANGED" \
+    '{ts:$ts, type:"commit", source:"git-post-commit", actor:$author,
+      summary:($short+" "+$subject),
+      meta:{sha:$sha, short_sha:$short, subject:$subject, files_changed_count:$files}}' \
+    2>/dev/null)"
+elif command -v python3 >/dev/null 2>&1; then
+  LINE="$(TS="$TS_ISO" SHA="$SHA" SHORT="$SHORT_SHA" SUBJECT="$SUBJECT" \
+        AUTHOR="$AUTHOR" FILES="$FILES_CHANGED" python3 -c '
+import json, os
+print(json.dumps({
+  "ts": os.environ["TS"],
+  "type": "commit",
+  "source": "git-post-commit",
+  "actor": os.environ["AUTHOR"],
+  "summary": os.environ["SHORT"] + " " + os.environ["SUBJECT"],
+  "meta": {
+    "sha": os.environ["SHA"],
+    "short_sha": os.environ["SHORT"],
+    "subject": os.environ["SUBJECT"],
+    "files_changed_count": int(os.environ["FILES"] or 0),
+  },
+}))')"
+else
+  # No JSON-safe encoder available — skip silently.
+  exit 0
+fi
+
+if [[ -n "$LINE" ]]; then
+  printf '%s\n' "$LINE" >> "$ACTIVITY_LOG" 2>/dev/null || true
+fi
+
+exit 0

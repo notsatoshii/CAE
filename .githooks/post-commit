@@ -13,15 +13,26 @@
 #   - Output goes to .planning/herald/logs/herald-post-commit-<ts>.log so
 #     stale runs are reviewable.
 #   - Opt-out: export CAE_SKIP_HERALD=1 before commit.
+#
+# Class 15B (session 11): in addition to Herald, fires the activity hook
+# on every commit so the dashboard's Recent Commits card shows up-to-the-
+# second work even when Herald debounce is in effect.
 
 set -u
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+cd "$REPO_ROOT" || exit 0
+
+# Class 15B: always fire the activity hook FIRST so the dashboard sees the
+# commit within a second, regardless of Herald's debounce / opt-out state.
+# The hook exits 0 on any failure so it can never block a commit.
+if [[ -x "$REPO_ROOT/.githooks/post-commit-activity" ]]; then
+  "$REPO_ROOT/.githooks/post-commit-activity" || true
+fi
 
 if [[ "${CAE_SKIP_HERALD:-0}" == "1" ]]; then
   exit 0
 fi
-
-REPO_ROOT="$(git rev-parse --show-toplevel)"
-cd "$REPO_ROOT" || exit 0
 
 # ── Material-change gate ──────────────────────────────────────────────
 # Look at files changed in the just-landed commit.

@@ -52,13 +52,39 @@ fi
 BASE_URL="${AUDIT_BASE_URL:-http://localhost:3002}"
 CLICKWALK="${AUDIT_CLICKWALK:-0}"
 
+# Class 15B: emit an activity row at each step boundary so the dashboard's
+# ActivityFeed card shows the cycle progressing in real time. Writes to
+# the canonical activity.jsonl at CAE_ROOT (not the cycle scratch dir —
+# this log is about the *dashboard repo's* ops, not the fixture's).
+#
+# Uses jq when available; falls back to a raw line that's still valid JSON
+# (all fields are hard-coded ASCII so no escaping needed).
+ACTIVITY_LOG="${CAE_ROOT:-/home/cae/ctrl-alt-elite}/.cae/metrics/activity.jsonl"
+mkdir -p "$(dirname "$ACTIVITY_LOG")" 2>/dev/null || true
+emit_step() {
+  local step="$1"
+  local summary="$2"
+  local ts
+  ts="$(date -u +%Y-%m-%dT%H:%M:%S.%3NZ)"
+  # Hard-coded JSON — the only dynamic parts are ts + summary, both of which
+  # we control (no quotes or backslashes make it here).
+  printf '{"ts":"%s","type":"cycle_step","source":"audit-run-cycle","summary":"%s","meta":{"label":"%s","fixture":"%s","step":"%s"}}\n' \
+    "$ts" "$summary" "${LABEL}" "${FIXTURE}" "$step" \
+    >> "$ACTIVITY_LOG" 2>/dev/null || true
+}
+
+emit_step "start" "cycle start: ${LABEL} (${FIXTURE})"
+
 echo "[cycle] STEP 1/7 — seed fixture ${FIXTURE}"
+emit_step "seed-fixture" "seed fixture ${FIXTURE}"
 npx tsx audit/seed-fixture.ts "${FIXTURE}"
 
 echo "[cycle] STEP 2/7 — mint session cookie"
+emit_step "mint-session" "mint session cookie"
 npx tsx audit/auth/mint-session-cli.ts
 
 echo "[cycle] STEP 3/7 — health-check dev server (${BASE_URL})"
+emit_step "health-check" "health-check dev server"
 if ! curl -sSf -o /dev/null --max-time 5 "${BASE_URL}/api/auth/session"; then
   echo "[cycle] dev server not reachable at ${BASE_URL}." >&2
   echo "[cycle] Run in another terminal: pnpm dev" >&2
@@ -67,14 +93,17 @@ if ! curl -sSf -o /dev/null --max-time 5 "${BASE_URL}/api/auth/session"; then
 fi
 
 echo "[cycle] STEP 4/7 — run playwright (fixture=${FIXTURE} clickwalk=${CLICKWALK})"
+emit_step "playwright" "run playwright (clickwalk=${CLICKWALK})"
 FIXTURE="${FIXTURE}" AUDIT_CLICKWALK="${CLICKWALK}" AUDIT_BASE_URL="${BASE_URL}" \
   npx playwright test -c audit/playwright.config.ts
 
 echo "[cycle] STEP 5/7 — score run ${LABEL}"
+emit_step "score" "score run ${LABEL}"
 # shellcheck disable=SC2086 # intentional word-splitting for optional flags
 npx tsx audit/score-run.ts "${LABEL}" --fixture "${FIXTURE}" ${VISION} ${PRIOR}
 
 echo "[cycle] STEP 6/7 — reports written:"
+emit_step "reports" "reports written"
 for f in "audit/reports/${LABEL}-SCORES.md" \
          "audit/reports/${LABEL}-FINDINGS.md" \
          "audit/reports/${LABEL}-SUMMARY.json" \
@@ -83,3 +112,4 @@ for f in "audit/reports/${LABEL}-SCORES.md" \
 done
 
 echo "[cycle] STEP 7/7 — cycle complete: ${LABEL} (${FIXTURE})"
+emit_step "complete" "cycle complete: ${LABEL} (${FIXTURE})"
