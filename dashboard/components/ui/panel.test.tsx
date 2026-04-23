@@ -55,4 +55,48 @@ describe("Panel", () => {
     const h2 = container.querySelector("h2");
     expect(h2?.getAttribute("id")).toBe("spending-heading");
   });
+
+  // Class 13A — elevation tokens
+  it("omits elevation shadow class when elevation is 0 (default)", () => {
+    const { container } = render(<Panel title="Test">content</Panel>);
+    const root = container.querySelector("section");
+    expect(root?.className).not.toContain("shadow-elevation-");
+    expect(root?.getAttribute("data-elevation")).toBe("0");
+  });
+
+  it("applies shadow-elevation-1 when elevation=1", () => {
+    const { container } = render(
+      <Panel title="Test" elevation={1}>content</Panel>,
+    );
+    const root = container.querySelector("section");
+    expect(root?.className).toContain("shadow-elevation-1");
+    expect(root?.getAttribute("data-elevation")).toBe("1");
+  });
+
+  it("applies shadow-elevation-3 when elevation=3", () => {
+    const { container } = render(
+      <Panel title="Test" elevation={3}>content</Panel>,
+    );
+    const root = container.querySelector("section");
+    expect(root?.className).toContain("shadow-elevation-3");
+  });
+
+  it("interactive=true sets resting elevation-1 + hover-elevation-2 + scale", () => {
+    const { container } = render(
+      <Panel title="Test" interactive>content</Panel>,
+    );
+    const root = container.querySelector("section");
+    expect(root?.className).toContain("shadow-elevation-1");
+    expect(root?.className).toContain("hover:shadow-elevation-2");
+    expect(root?.className).toContain("hover:scale-[1.01]");
+    expect(root?.className).toContain("transition-all");
+    expect(root?.getAttribute("data-interactive")).toBe("true");
+  });
+
+  it("interactive=false (default) does not set interactive className hints", () => {
+    const { container } = render(<Panel title="Test">content</Panel>);
+    const root = container.querySelector("section");
+    expect(root?.className).not.toContain("hover:scale-[1.01]");
+    expect(root?.getAttribute("data-interactive")).toBeNull();
+  });
 });

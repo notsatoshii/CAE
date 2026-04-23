@@ -51,6 +51,28 @@
   --elev-3: oklch(0.27 0.010 245); /* dropdown / popover */
   --elev-4: oklch(0.31 0.012 245); /* dialog / sheet */
 
+  /* ---------------------------------------------------------------------
+   * Class 13A — Elevation SHADOW tokens (Eric session 12: "UI lacks depth").
+   *
+   * Layered shadow convention from Linear / Vercel / Raycast: one short
+   * tight shadow (crisp contact edge) + one longer soft shadow (ambient
+   * depth halo). Alpha is high on dark-theme bg (#0a0a0a equivalent via
+   * OKLCH 0.16) because low-alpha shadows vanish against near-black. These
+   * values target "visible at 1.5x zoom" per the spec.
+   *
+   * Semantics:
+   *   elevation-0 → resting page surface (no shadow)
+   *   elevation-1 → cards / panels / rail / top-bar at rest
+   *   elevation-2 → card hover, sub-popovers, dropdowns
+   *   elevation-3 → dialogs, sheets, drawers
+   *   elevation-4 → command palette, toasts (highest z)
+   * ------------------------------------------------------------------- */
+  --elevation-0: none;
+  --elevation-1: 0 1px 2px rgba(0, 0, 0, 0.32), 0 2px 6px rgba(0, 0, 0, 0.22);
+  --elevation-2: 0 2px 4px rgba(0, 0, 0, 0.38), 0 6px 14px rgba(0, 0, 0, 0.26);
+  --elevation-3: 0 4px 10px rgba(0, 0, 0, 0.46), 0 14px 32px rgba(0, 0, 0, 0.34);
+  --elevation-4: 0 8px 18px rgba(0, 0, 0, 0.54), 0 28px 56px rgba(0, 0, 0, 0.42);
+
   /* Density tokens — keep spacing decisions consistent across components. */
   --density-tight:        0.5rem;   /*  8px */
   --density-comfortable:  0.75rem;  /* 12px */
@@ -144,6 +166,15 @@
   --elev-2: var(--surface-hover);
   --elev-3: oklch(0.27 0.010 245);
   --elev-4: oklch(0.31 0.012 245);
+
+  /* Class 13A — shadow tokens mirrored on .dark. Dashboard ships dark-only
+     today; when a light theme lands these values should halve (the dark
+     defaults would crush a light surface). */
+  --elevation-0: none;
+  --elevation-1: 0 1px 2px rgba(0, 0, 0, 0.32), 0 2px 6px rgba(0, 0, 0, 0.22);
+  --elevation-2: 0 2px 4px rgba(0, 0, 0, 0.38), 0 6px 14px rgba(0, 0, 0, 0.26);
+  --elevation-3: 0 4px 10px rgba(0, 0, 0, 0.46), 0 14px 32px rgba(0, 0, 0, 0.34);
+  --elevation-4: 0 8px 18px rgba(0, 0, 0, 0.54), 0 28px 56px rgba(0, 0, 0, 0.42);
 
   --background: var(--bg);
   --foreground: var(--text);
@@ -255,6 +286,19 @@ body {
     font-feature-settings: "zero", "calt", "ss20";
   }
 }
+
+/* ---------------------------------------------------------------------------
+ * Class 13A — Elevation utilities (shadow-elevation-{0..4}).
+ *
+ * Tailwind v4 `@utility` registers these as first-class utilities so
+ * `className="shadow-elevation-1"` (and `hover:shadow-elevation-2`) work
+ * alongside Tailwind's built-ins without arbitrary-property soup.
+ * ------------------------------------------------------------------------- */
+@utility shadow-elevation-0 { box-shadow: var(--elevation-0); }
+@utility shadow-elevation-1 { box-shadow: var(--elevation-1); }
+@utility shadow-elevation-2 { box-shadow: var(--elevation-2); }
+@utility shadow-elevation-3 { box-shadow: var(--elevation-3); }
+@utility shadow-elevation-4 { box-shadow: var(--elevation-4); }
 
 @keyframes cae-shake {
   0%, 100% { transform: translate3d(0, 0, 0); }
