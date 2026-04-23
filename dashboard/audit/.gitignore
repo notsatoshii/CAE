@@ -1,0 +1,7 @@
+# Audit harness artifacts (regenerable; large)
+shots/
+reports/
+.tmp/
+.cache/
+test-results/
+playwright-report/
