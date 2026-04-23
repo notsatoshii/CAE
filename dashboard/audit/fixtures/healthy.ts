@@ -92,6 +92,26 @@ export function readExpectedTruth(): Record<string, string> {
 
     // Legacy queue key — kept for harness callers that still reference it.
     "build-queue.count": "0",
+
+    // /chat layout is static; split view renders deterministically.
+    "chat.healthy": "yes",
+    "chat.surface": "home",
+    "chat.layout": "split",
+    "chat.standalone": "true",
+
+    // /build/admin/roles — empty whitelist when env vars unset (default in tests).
+    "build-admin-roles.healthy": "yes",
+    "build-admin-roles.readonly": "true",
+
+    // /build/skills tab shell — no catalog loaded under harness seeds.
+    "build-skills.healthy": "yes",
+    "build-skills.tab": "catalog",
+    "build-skills.drawer-open": "false",
+
+    // /build/schedule — default tab + no tasks seeded.
+    "build-schedule.healthy": "yes",
+    "build-schedule.tab": "list",
+    "build-schedule.saving": "false",
   }
 }
 

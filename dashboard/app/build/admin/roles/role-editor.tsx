@@ -38,6 +38,20 @@ function EmailList({ emails, emptyLabel }: { emails: string[]; emptyLabel: strin
 export function RoleEditor({ admins, operators }: Props) {
   return (
     <section className="space-y-8 max-w-2xl">
+      <span className="sr-only" data-truth="build-admin-roles.healthy">yes</span>
+      <span className="sr-only" data-truth="build-admin-roles.admin-count">
+        {admins.length}
+      </span>
+      <span className="sr-only" data-truth="build-admin-roles.operator-count">
+        {operators.length}
+      </span>
+      <span
+        className="sr-only"
+        data-truth={admins.length === 0 && operators.length === 0 ? "build-admin-roles.empty" : "build-admin-roles.nonempty"}
+      >
+        {admins.length === 0 && operators.length === 0 ? "yes" : "no"}
+      </span>
+      <span className="sr-only" data-truth="build-admin-roles.readonly">true</span>
       <div>
         <h2 className="text-lg font-semibold text-[color:var(--text,#e5e5e5)]">
           Permissions

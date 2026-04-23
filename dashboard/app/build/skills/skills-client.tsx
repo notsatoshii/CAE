@@ -64,6 +64,23 @@ export function SkillsClient({ catalog, currentRole }: Props) {
 
   return (
     <>
+      <span className="sr-only" data-truth="build-skills.healthy">yes</span>
+      <span className="sr-only" data-truth="build-skills.catalog-count">
+        {localCatalog.length}
+      </span>
+      <span className="sr-only" data-truth="build-skills.installed-count">
+        {installed.length}
+      </span>
+      <span
+        className="sr-only"
+        data-truth={localCatalog.length === 0 ? "build-skills.empty" : "build-skills.nonempty"}
+      >
+        {localCatalog.length === 0 ? "yes" : "no"}
+      </span>
+      <span className="sr-only" data-truth="build-skills.tab">{tab}</span>
+      <span className="sr-only" data-truth="build-skills.drawer-open">
+        {drawerSkill ? "true" : "false"}
+      </span>
       {/* Tab bar */}
       <div className="flex gap-1 border-b border-zinc-800 pb-3 mb-4">
         <button

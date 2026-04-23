@@ -62,6 +62,20 @@ export default async function SecurityAuditPage() {
 
   return (
     <SecurityClient currentRole={role}>
+      <span className="sr-only" data-truth="build-security-audit.healthy">yes</span>
+      <span className="sr-only" data-truth="build-security-audit.total">
+        {initial.total}
+      </span>
+      <span className="sr-only" data-truth="build-security-audit.entries-count">
+        {initial.entries.length}
+      </span>
+      <span
+        className="sr-only"
+        data-truth={initial.entries.length === 0 ? "build-security-audit.empty" : "build-security-audit.nonempty"}
+      >
+        {initial.entries.length === 0 ? "yes" : "no"}
+      </span>
+      <span className="sr-only" data-truth="build-security-audit.role">{role}</span>
       <AuditTable initial={initial} />
     </SecurityClient>
   )

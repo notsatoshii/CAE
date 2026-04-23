@@ -88,8 +88,21 @@ export function ScheduleClient({ initialTasks, currentRole }: ScheduleClientProp
     }
   }
 
+  const enabledCount = tasks.filter((t) => t.enabled).length
+
   return (
     <div className="space-y-4">
+      <span className="sr-only" data-truth="build-schedule.healthy">yes</span>
+      <span className="sr-only" data-truth="build-schedule.count">{tasks.length}</span>
+      <span className="sr-only" data-truth={tasks.length === 0 ? "build-schedule.empty" : "build-schedule.nonempty"}>
+        {tasks.length === 0 ? "yes" : "no"}
+      </span>
+      <span className="sr-only" data-truth="build-schedule.enabled-count">{enabledCount}</span>
+      <span className="sr-only" data-truth="build-schedule.tab">{tab}</span>
+      <span className="sr-only" data-truth="build-schedule.saving">
+        {saving ? "true" : "false"}
+      </span>
+      {saveError && <span className="sr-only" data-truth="build-schedule.error">yes</span>}
       {/* Tab switcher — "New schedule" tab only visible to operators+ */}
       <div className="flex gap-2 border-b border-[color:var(--border,#1f1f22)]">
         <button

@@ -32,6 +32,10 @@ export function ChatLayout() {
       data-testid="chat-layout"
       className="flex h-[calc(100vh-40px)] w-full overflow-hidden"
     >
+      <span className="sr-only" data-truth="chat.healthy">yes</span>
+      <span className="sr-only" data-truth="chat.surface">{surface}</span>
+      <span className="sr-only" data-truth="chat.layout">split</span>
+      <span className="sr-only" data-truth="chat.standalone">true</span>
       {/* Left pane: read-only mirror of the selected Build surface */}
       <section
         aria-label="Mirror of the Build surface"

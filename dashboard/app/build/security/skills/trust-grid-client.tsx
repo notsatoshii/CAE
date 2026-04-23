@@ -32,11 +32,28 @@ export function TrustGridClient({
     }
   }
 
+  const trustedCount = entries.filter((e) => e.trust?.trusted).length
+
   return (
-    <TrustGrid
-      entries={entries}
-      currentRole={currentRole}
-      onOverride={handleOverride}
-    />
+    <>
+      <span className="sr-only" data-truth="build-security-skills.healthy">yes</span>
+      <span className="sr-only" data-truth="build-security-skills.count">
+        {entries.length}
+      </span>
+      <span
+        className="sr-only"
+        data-truth={entries.length === 0 ? "build-security-skills.empty" : "build-security-skills.nonempty"}
+      >
+        {entries.length === 0 ? "yes" : "no"}
+      </span>
+      <span className="sr-only" data-truth="build-security-skills.trusted-count">
+        {trustedCount}
+      </span>
+      <TrustGrid
+        entries={entries}
+        currentRole={currentRole}
+        onOverride={handleOverride}
+      />
+    </>
   )
 }
