@@ -463,3 +463,41 @@ body {
     transform: none;
   }
 }
+
+/* ─── Pikachu loader (codepen JzRKqN port) ────────────────────────────
+ * Scoped to the content area (not full viewport). Dark theme uses
+ * --bg as background. Cursor inside the loader is hidden and replaced
+ * by a yellow dot that pulses via CSS. Click spawns static clone dots
+ * as a trail (React state, see app/loading.tsx).
+ */
+.cae-pikachu-loader,
+.cae-pikachu-loader * {
+  cursor: none;
+}
+.cae-pikachu-loader {
+  overflow: hidden;
+}
+.cae-pikachu-mouse {
+  position: absolute;
+  width: 25px;
+  height: 25px;
+  border-radius: 100%;
+  background-color: #fff782;
+  animation: cae-pikachu-mouse 500ms infinite ease-in-out alternate;
+  pointer-events: none;
+  z-index: 60;
+}
+.cae-pikachu-mouse-trail {
+  animation: none;
+  width: 20px;
+  height: 20px;
+}
+@keyframes cae-pikachu-mouse {
+  from { width: 25px; height: 25px; }
+  to   { width: 15px; height: 15px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cae-pikachu-mouse {
+    animation: none;
+  }
+}
