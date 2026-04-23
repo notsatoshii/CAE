@@ -29,6 +29,8 @@ export function TopNav({ session }: TopNavProps) {
     >
       {/* Left cluster: wordmark + mode toggle */}
       <div className="flex items-center gap-3">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/brand/cae-icon-white.png" alt="CAE" className="h-5 w-auto" />
         <span className="text-sm font-semibold tracking-tight text-[color:var(--text)]">CAE</span>
         <span className="text-[color:var(--text-dim)]" aria-hidden="true">·</span>
         <ModeToggle />

@@ -26,13 +26,19 @@ export default function SignInPage() {
 
       <div className="relative z-10 flex w-full max-w-sm flex-col items-center gap-6 rounded-xl border border-[color:var(--border)] bg-[color:var(--surface)] px-8 py-10 shadow-xl">
         {/* Product wordmark — pillar-1 focal point */}
-        <div className="flex flex-col items-center gap-1 text-center">
-          <h1 className="text-[32px] font-semibold tracking-tight text-[color:var(--text)]">
-            CAE
-          </h1>
-          <p className="text-[13px] font-medium tracking-widest text-[color:var(--text-muted)] uppercase">
-            Ctrl+Alt+Elite
-          </p>
+        <div className="flex flex-col items-center gap-3 text-center">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/brand/cae-icon-white.png"
+            alt="CAE"
+            className="h-16 w-auto"
+          />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/brand/cae-wordmark-white.png"
+            alt="CTRL + ALT + ELITE"
+            className="h-5 w-auto"
+          />
         </div>
 
         {/* Value proposition — pillar-5: 15px body */}
