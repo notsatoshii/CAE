@@ -1,15 +1,17 @@
-import { BuildRail } from "@/components/shell/build-rail"
+import { SidebarServer } from "@/components/shell/sidebar-server"
 
 /**
- * BuildLayout — wraps every /build/* page with the 48px left-rail.
+ * BuildLayout — wraps every /build/* page with the Linear-style sidebar.
+ *
+ * Phase 15 Wave 2 §2.3 swapped the legacy 48px BuildRail for the new
+ * collapsible Sidebar. Width animates between 56px (collapsed, icon-only)
+ * and 224px (expanded, icons + labels). State persists per-user via the
+ * `cae-sidebar-state` cookie, which the SidebarServer wrapper reads on
+ * the server so the first paint matches.
  *
  * Structure:
  *   app/layout.tsx       → <html>/<body>/<TopNav h=40px>
- *   app/build/layout.tsx → <flex-row>: [BuildRail w=48px] [main flex-1 overflow-auto]
- *
- * `min-h-[calc(100vh-40px)]` fills the remaining viewport under the global
- * TopNav. `overflow-auto` on the main pane keeps the rail fixed-visual
- * while long page content scrolls.
+ *   app/build/layout.tsx → <flex-row>: [Sidebar 56|224] [main flex-1 overflow-auto]
  */
 export default async function BuildLayout({
   children,
@@ -18,7 +20,7 @@ export default async function BuildLayout({
 }) {
   return (
     <div className="flex min-h-[calc(100vh-40px)] w-full">
-      <BuildRail />
+      <SidebarServer />
       <div className="flex-1 min-w-0 overflow-auto">{children}</div>
     </div>
   )
