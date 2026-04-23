@@ -17,6 +17,8 @@
  *
  * 07-05: ExplainTooltip anchors attached next to per-agent heading (P50 + P95),
  * queue-depth card (QueueDepth), and time-to-merge heading (TimeToMerge).
+ *
+ * Phase 15 Wave 2.7: loading copy replaced by <CardSkeleton> placeholders.
  */
 
 import { useRouter } from "next/navigation";
@@ -32,6 +34,7 @@ import { Panel } from "@/components/ui/panel";
 import { EmptyState, EmptyStateActions } from "@/components/ui/empty-state";
 import { Button } from "@/components/ui/button";
 import { GoldenSignalsSubtitle } from "./golden-signals-subtitles";
+import { CardSkeleton, RowSkeleton, Skeleton } from "@/components/ui/skeleton";
 
 export function SpeedPanel() {
   const { data, error, loading } = useMetricsPoll();
@@ -54,6 +57,8 @@ export function SpeedPanel() {
   }
 
   // WR-02: show loading state while first fetch is in-flight, not EmptyState.
+  // Phase 15 Wave 2.7: skeleton placeholders mirror the loaded layout (agent
+  // wall table on the left, queue-depth card on the right, histogram below).
   if (loading && !data) {
     return (
       <Panel
@@ -61,7 +66,17 @@ export function SpeedPanel() {
         headingId="speed-heading"
         testId="speed-panel-loading"
       >
-        <p className="text-sm text-[color:var(--text-muted)]">{L.metricsEmptyState}</p>
+        <div className="flex flex-col gap-6">
+          <span className="sr-only">{L.metricsEmptyState}</span>
+          <Skeleton height={20} width="40%" testId="speed-skeleton-lede" label="Loading speed summary" />
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+            <div className="lg:col-span-2">
+              <RowSkeleton rows={4} testId="speed-skeleton-table" />
+            </div>
+            <CardSkeleton testId="speed-skeleton-queue" />
+          </div>
+          <Skeleton height={96} width="100%" testId="speed-skeleton-hist" label="Loading time-to-merge histogram" />
+        </div>
       </Panel>
     );
   }

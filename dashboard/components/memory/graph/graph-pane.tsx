@@ -10,6 +10,9 @@
  *
  * This file carries `"use client"` (D-08) because react-flow and the
  * event-driven drawer need the browser runtime.
+ *
+ * Phase 15 Wave 2.7: ad-hoc `animate-pulse` shapes replaced with the shared
+ * <Skeleton> primitive.
  */
 
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -23,6 +26,7 @@ import { NodeDrawer } from "./node-drawer";
 import { GraphFilters } from "./graph-filters";
 import { RegenerateButton } from "./regenerate-button";
 import { EmptyState, EmptyStateActions } from "@/components/ui/empty-state";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const ALL_KINDS: readonly NodeKind[] = ["phases", "agents", "notes", "PRDs"];
 
@@ -162,11 +166,13 @@ export function GraphPane({ onOpenGitTimeline }: GraphPaneProps = {}) {
             aria-busy="true"
             aria-label="Loading memory graph"
           >
-            {/* Skeleton shimmer — visually distinct from empty state */}
+            {/* Phase 15 Wave 2.7: shared <Skeleton> primitive replaces ad-hoc
+                animate-pulse divs so the loading rhythm matches every other
+                surface in the app. */}
             <div className="flex flex-col items-center gap-2">
-              <div className="h-4 w-32 animate-pulse rounded bg-[color:var(--border)] motion-reduce:animate-none" />
-              <div className="h-3 w-48 animate-pulse rounded bg-[color:var(--border)] motion-reduce:animate-none" />
-              <div className="h-3 w-40 animate-pulse rounded bg-[color:var(--border)] motion-reduce:animate-none" />
+              <Skeleton height={16} width={128} variant="text" label="Loading graph header" />
+              <Skeleton height={12} width={192} variant="text" label="Loading graph subtitle" />
+              <Skeleton height={12} width={160} variant="text" label="Loading graph note" />
             </div>
             <p className="text-xs text-[color:var(--text-muted)]">{L.metricsEmptyState}</p>
           </div>

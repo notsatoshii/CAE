@@ -5,7 +5,7 @@
  *
  * Consumes `useMetricsPoll()` and renders the three render states:
  *   1. error-without-data  — panel shell + failed-to-load note
- *   2. loading (data null) — panel shell + empty-state copy
+ *   2. loading (data null) — panel shell + CardSkeleton placeholders
  *   3. loaded              — full panel: big-number row + stacked bar + sparkline + top-10
  *
  * Composition (all children are `"use client"` islands themselves):
@@ -26,6 +26,10 @@
  *   provider once around all panels. This panel assumes the provider is
  *   above it in the tree (useMetricsPoll() throws if not).
  * - No recharts imports in this file; sub-charts isolate that dependency.
+ *
+ * Phase 15 Wave 2.7: loading copy replaced by <CardSkeleton> grid so the
+ * pre-fetch state visually matches the loaded layout instead of collapsing
+ * to a single line of text.
  */
 
 import { useRouter } from "next/navigation";
@@ -42,6 +46,7 @@ import { GoldenSignalsSubtitle } from "./golden-signals-subtitles";
 import { Panel } from "@/components/ui/panel";
 import { EmptyState, EmptyStateActions } from "@/components/ui/empty-state";
 import { Button } from "@/components/ui/button";
+import { CardSkeleton, Skeleton } from "@/components/ui/skeleton";
 
 function formatTokens(n: number): string {
   if (n < 1000) return String(n);
@@ -70,6 +75,8 @@ export function SpendingPanel() {
   }
 
   // WR-02: show loading state while first fetch is in-flight, not EmptyState.
+  // Phase 15 Wave 2.7: skeleton placeholders mirror the loaded big-number row +
+  // sparkline so the layout doesn't shift when data lands.
   if (loading && !data) {
     return (
       <Panel
@@ -77,7 +84,16 @@ export function SpendingPanel() {
         headingId="spending-heading"
         testId="spending-panel-loading"
       >
-        <p className="text-sm text-[color:var(--text-muted)]">{L.metricsEmptyState}</p>
+        <div className="flex flex-col gap-6">
+          <span className="sr-only">{L.metricsEmptyState}</span>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <CardSkeleton testId="spending-skeleton-card-0" />
+            <CardSkeleton testId="spending-skeleton-card-1" />
+            <CardSkeleton testId="spending-skeleton-card-2" />
+          </div>
+          <Skeleton height={64} width="100%" testId="spending-skeleton-bar" label="Loading spending bar" />
+          <Skeleton height={32} width="100%" testId="spending-skeleton-line" label="Loading spending sparkline" />
+        </div>
       </Panel>
     );
   }

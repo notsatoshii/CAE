@@ -1,0 +1,152 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`CardSkeleton > matches snapshot for default props 1`] = `
+<div
+  aria-busy="true"
+  aria-label="Loading card"
+  aria-live="polite"
+  class="card-base flex flex-col gap-3 min-h-[80px]"
+  data-testid="card-skeleton"
+  role="status"
+>
+  <div
+    aria-busy="true"
+    aria-label="Loading title"
+    aria-live="polite"
+    class="animate-pulse bg-[color:var(--surface-hover)] rounded"
+    data-testid="card-skeleton-line-1"
+    role="status"
+    style="width: 60%; height: 24px;"
+  >
+    <span
+      class="sr-only"
+    >
+      Loading title
+    </span>
+  </div>
+  <div
+    aria-busy="true"
+    aria-label="Loading subtitle"
+    aria-live="polite"
+    class="animate-pulse bg-[color:var(--surface-hover)] rounded"
+    data-testid="card-skeleton-line-2"
+    role="status"
+    style="width: 40%; height: 12px;"
+  >
+    <span
+      class="sr-only"
+    >
+      Loading subtitle
+    </span>
+  </div>
+  <span
+    class="sr-only"
+  >
+    Loading card
+  </span>
+</div>
+`;
+
+exports[`RowSkeleton > matches snapshot for a 2-row variant 1`] = `
+<div
+  aria-busy="true"
+  aria-label="Loading rows"
+  aria-live="polite"
+  class="flex flex-col gap-2"
+  data-testid="row-skeleton"
+  role="status"
+>
+  <div
+    class="flex flex-col gap-1.5"
+    data-testid="row-skeleton-row-0"
+  >
+    <div
+      aria-busy="true"
+      aria-label="Loading"
+      aria-live="polite"
+      class="animate-pulse bg-[color:var(--surface-hover)] rounded-sm"
+      data-testid="row-skeleton-row-0-title"
+      role="status"
+      style="width: 100%; height: 16px;"
+    >
+      <span
+        class="sr-only"
+      >
+        Loading
+      </span>
+    </div>
+    <div
+      aria-busy="true"
+      aria-label="Loading"
+      aria-live="polite"
+      class="animate-pulse bg-[color:var(--surface-hover)] rounded-sm"
+      data-testid="row-skeleton-row-0-subtitle"
+      role="status"
+      style="width: 60%; height: 12px;"
+    >
+      <span
+        class="sr-only"
+      >
+        Loading
+      </span>
+    </div>
+  </div>
+  <div
+    class="flex flex-col gap-1.5"
+    data-testid="row-skeleton-row-1"
+  >
+    <div
+      aria-busy="true"
+      aria-label="Loading"
+      aria-live="polite"
+      class="animate-pulse bg-[color:var(--surface-hover)] rounded-sm"
+      data-testid="row-skeleton-row-1-title"
+      role="status"
+      style="width: 100%; height: 16px;"
+    >
+      <span
+        class="sr-only"
+      >
+        Loading
+      </span>
+    </div>
+    <div
+      aria-busy="true"
+      aria-label="Loading"
+      aria-live="polite"
+      class="animate-pulse bg-[color:var(--surface-hover)] rounded-sm"
+      data-testid="row-skeleton-row-1-subtitle"
+      role="status"
+      style="width: 60%; height: 12px;"
+    >
+      <span
+        class="sr-only"
+      >
+        Loading
+      </span>
+    </div>
+  </div>
+  <span
+    class="sr-only"
+  >
+    Loading rows
+  </span>
+</div>
+`;
+
+exports[`Skeleton (atomic) > matches snapshot for default props 1`] = `
+<div
+  aria-busy="true"
+  aria-label="Loading"
+  aria-live="polite"
+  class="animate-pulse bg-[color:var(--surface-hover)] rounded"
+  data-testid="skeleton"
+  role="status"
+>
+  <span
+    class="sr-only"
+  >
+    Loading
+  </span>
+</div>
+`;

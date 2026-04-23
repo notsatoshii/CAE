@@ -12,7 +12,7 @@
  *
  * Handles three render states:
  *   1. error with no data → error card with the failed-to-load copy
- *   2. loading (no data yet) → loading card with empty-state copy
+ *   2. loading (no data yet) → CardSkeleton grid (Phase 15 Wave 2.7)
  *   3. loaded → full panel with lede line (weighted rate across n>=5 agents)
  *
  * Lede math: weight success_rate by sample_n so a 100% / n=5 agent doesn't
@@ -38,6 +38,7 @@ import { GoldenSignalsSubtitle } from "./golden-signals-subtitles";
 import { Panel } from "@/components/ui/panel";
 import { EmptyState, EmptyStateActions } from "@/components/ui/empty-state";
 import { Button } from "@/components/ui/button";
+import { CardSkeleton, Skeleton } from "@/components/ui/skeleton";
 
 const MIN_SAMPLES_FOR_LEDE = 5;
 
@@ -62,6 +63,8 @@ export function ReliabilityPanel() {
   }
 
   // WR-02: show loading state while first fetch is in-flight, not EmptyState.
+  // Phase 15 Wave 2.7: skeleton placeholders mirror the loaded gauge grid +
+  // heatmap area for visual continuity.
   if (loading && !data) {
     return (
       <Panel
@@ -69,7 +72,16 @@ export function ReliabilityPanel() {
         headingId="reliability-heading"
         testId="reliability-panel-loading"
       >
-        <p className="text-sm text-[color:var(--text-muted)]">{L.metricsEmptyState}</p>
+        <div className="flex flex-col gap-6">
+          <span className="sr-only">{L.metricsEmptyState}</span>
+          <Skeleton height={20} width="40%" testId="reliability-skeleton-lede" label="Loading reliability summary" />
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+            {Array.from({ length: 5 }, (_, i) => (
+              <CardSkeleton key={i} testId={`reliability-skeleton-card-${i}`} />
+            ))}
+          </div>
+          <Skeleton height={96} width="100%" testId="reliability-skeleton-heatmap" label="Loading retry heatmap" />
+        </div>
       </Panel>
     );
   }

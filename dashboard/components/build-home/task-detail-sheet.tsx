@@ -19,6 +19,7 @@ import { AgentAvatars } from "./agent-avatars";
 import { SheetLiveLog } from "./sheet-live-log";
 import { SheetActions } from "./sheet-actions";
 import { TaskHeaderSummary } from "./task-header-summary";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export function TaskDetailSheet() {
   const router = useRouter();
@@ -148,16 +149,26 @@ export function TaskDetailSheet() {
             <h3 className="text-xs font-semibold uppercase tracking-wide text-[color:var(--text-muted)] mb-2">
               {t.sheetSectionSummary}
             </h3>
-            <p className="text-sm text-[color:var(--text)]">
-              {phaseSummary
-                ? t.phaseCardWaveLabel(
-                    phaseSummary.wave_current,
-                    phaseSummary.wave_total
-                  ) +
+            {phaseSummary ? (
+              <p className="text-sm text-[color:var(--text)]">
+                {t.phaseCardWaveLabel(
+                  phaseSummary.wave_current,
+                  phaseSummary.wave_total,
+                ) +
                   " · " +
-                  t.phaseCardProgressLabel(phaseSummary.progress_pct)
-                : "Loading…"}
-            </p>
+                  t.phaseCardProgressLabel(phaseSummary.progress_pct)}
+              </p>
+            ) : (
+              // Phase 15 Wave 2.7: skeleton placeholder beats the bare "Loading…"
+              // string for visual continuity with the rest of the sheet.
+              <Skeleton
+                testId="sheet-summary-skeleton"
+                height={16}
+                width="60%"
+                variant="text"
+                label="Loading task summary"
+              />
+            )}
           </section>
 
           {/* 3. Live log */}

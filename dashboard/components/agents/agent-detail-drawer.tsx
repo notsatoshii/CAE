@@ -26,6 +26,9 @@
  *
  * See .planning/phases/05-agents-tab/05-CONTEXT.md §Detail drawer + §Drift
  * detection thresholds for the authoritative contract.
+ *
+ * Phase 15 Wave 2.7: ad-hoc `animate-pulse` shapes replaced with the shared
+ * <Skeleton> primitive so the loading rhythm matches every other surface.
  */
 
 import { useCallback, useEffect, useState } from "react"
@@ -45,6 +48,7 @@ import { ModelOverride } from "./model-override"
 import { LifetimeStats } from "./lifetime-stats"
 import { RecentInvocationsTable } from "./recent-invocations-table"
 import { Stats7dSparklines } from "./stats-7d-sparklines"
+import { Skeleton } from "@/components/ui/skeleton"
 import type { AgentDetailEntry } from "@/lib/cae-agents-state"
 
 export function AgentDetailDrawer() {
@@ -152,10 +156,11 @@ export function AgentDetailDrawer() {
             <div
               data-testid="agent-detail-loading"
               className="flex flex-col gap-2"
+              aria-busy="true"
             >
-              <div className="h-4 w-32 rounded bg-[color:var(--surface-hover,#1a1a1d)] animate-pulse" />
-              <div className="h-24 rounded bg-[color:var(--surface-hover,#1a1a1d)] animate-pulse" />
-              <div className="h-12 rounded bg-[color:var(--surface-hover,#1a1a1d)] animate-pulse" />
+              <Skeleton height={16} width={128} label="Loading agent header" />
+              <Skeleton height={96} width="100%" label="Loading agent persona" />
+              <Skeleton height={48} width="100%" label="Loading agent stats" />
             </div>
           )}
 
