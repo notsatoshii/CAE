@@ -37,6 +37,7 @@ function SourceBadge({ source }: { source: CatalogSkill["source"] }) {
  *   currentRole — gates the Install button (operator+ required)
  *
  * Phase 14 Plan 04: viewers see a disabled "Read-only" button.
+ * Phase 15 Wave 2.1: surface uses `.card-base card-base--interactive`.
  */
 export function SkillCard({ skill, onOpen, onInstall, currentRole }: Props) {
   const { name, owner, description, source, installs, stars, installed } = skill
@@ -51,7 +52,7 @@ export function SkillCard({ skill, onOpen, onInstall, currentRole }: Props) {
   return (
     <div
       data-testid="skill-card"
-      className="relative flex flex-col gap-2 rounded-lg border border-[color:var(--border,#1f1f22)] bg-[color:var(--surface,#121214)] p-3 transition-colors hover:border-zinc-600 cursor-pointer"
+      className="card-base card-base--interactive relative flex flex-col"
     >
       {/* Installed badge */}
       {installed && (

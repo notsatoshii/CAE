@@ -11,6 +11,9 @@
  * Phase 6 queue cards don't map to a specific phase number — the sheet
  * gracefully handles missing/NaN phase (per task-detail-sheet.tsx §line 93,
  * `Number.isNaN(phaseNumber)` guard).
+ *
+ * Phase 15 Wave 2.1 — Surface uses `.card-base card-base--interactive`
+ * (globals.css). Status accent stays as a 2px left ribbon.
  */
 
 import { useRouter, useSearchParams, usePathname } from "next/navigation"
@@ -60,7 +63,7 @@ export function QueueCard({ card }: { card: QueueCardData }) {
           openSheet()
         }
       }}
-      className="rounded-md border border-[color:var(--border,#1f1f22)] bg-[color:var(--surface,#121214)] p-3 text-left text-xs hover:border-[color:var(--accent,#00d4ff)] focus:border-[color:var(--accent,#00d4ff)] focus:outline-none cursor-pointer min-h-[80px] flex flex-col gap-1 relative overflow-hidden"
+      className="card-base card-base--interactive text-left text-xs min-h-[80px] flex flex-col relative overflow-hidden"
     >
       {/* Left-border status accent — status color here only, not on whole card */}
       <span

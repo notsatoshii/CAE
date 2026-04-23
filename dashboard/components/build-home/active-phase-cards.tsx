@@ -65,7 +65,7 @@ export function ActivePhaseCards() {
               data-phase-number={p.phaseNumber}
               data-project={p.projectName}
               onClick={() => openSheet(p.phaseNumber, p.project)}
-              className="text-left rounded-lg border border-[color:var(--border-subtle)] bg-[color:var(--surface)] p-4 transition-colors hover:bg-[color:var(--surface-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]"
+              className="card-base card-base--interactive text-left"
             >
               <div className="flex items-start justify-between gap-4 mb-3">
                 <h3 className="text-sm font-medium text-[color:var(--text)]">

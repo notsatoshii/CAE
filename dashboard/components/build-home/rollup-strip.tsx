@@ -85,7 +85,7 @@ export function RollupStrip() {
           <div
             key={s.key}
             data-testid={"rollup-slot-" + s.key}
-            className="relative rounded-lg border border-[color:var(--border-subtle)] bg-[color:var(--surface)] p-4"
+            className="card-base relative"
           >
             <s.Icon
               aria-hidden

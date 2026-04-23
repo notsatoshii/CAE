@@ -18,6 +18,10 @@
  * Plan 13-10: visual redesign; stats preserved in an expandable area triggered
  * by clicking the card body (URL state ?agent={name} opens the detail drawer).
  *
+ * Phase 15 Wave 2.1: card surface uses `.card-base card-base--interactive`
+ * (globals.css). The wrapper handles focus/keyboard, the styled inner div
+ * collapses into the wrapper to keep a single focusable surface.
+ *
  * See .planning/phases/05-agents-tab/05-CONTEXT.md §Agent card layout for
  * the original contract. This plan reshapes UI; props stay the same.
  */
@@ -135,93 +139,91 @@ export function AgentCard({ agent }: AgentCardProps) {
       data-testid={"agent-card-" + agent.name}
       data-group={agent.group}
       aria-label={agent.label + " — open details"}
-      className="group cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent,#00d4ff)] rounded-lg"
+      className="card-base card-base--interactive group relative block focus:outline-none"
     >
-      <div className="relative rounded-lg border border-[color:var(--border,#1f1f22)] bg-[color:var(--surface,#121214)] p-4 transition-colors hover:border-[color:var(--accent,#00d4ff)]/30">
 
-        {/* Header: avatar + name/model on left; status pill on right */}
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex items-start gap-3 min-w-0">
-            <AgentAvatar name={agent.name} size={40} />
-            <div className="min-w-0">
-              <div
-                className="text-[15px] font-semibold text-[color:var(--text,#e5e5e5)] truncate"
-                data-testid={"agent-card-" + agent.name + "-headline"}
-              >
-                {dev ? agent.label.toUpperCase() : agent.label}
-              </div>
-              <div
-                className="mt-0.5 text-[12px] font-mono text-[color:var(--text-muted,#8a8a8c)] truncate"
-                data-testid={"agent-card-" + agent.name + "-subtitle"}
-              >
-                {dev ? agent.model : agent.founder_label}
-              </div>
+      {/* Header: avatar + name/model on left; status pill on right */}
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex items-start gap-3 min-w-0">
+          <AgentAvatar name={agent.name} size={40} />
+          <div className="min-w-0">
+            <div
+              className="text-[15px] font-semibold text-[color:var(--text,#e5e5e5)] truncate"
+              data-testid={"agent-card-" + agent.name + "-headline"}
+            >
+              {dev ? agent.label.toUpperCase() : agent.label}
+            </div>
+            <div
+              className="mt-0.5 text-[12px] font-mono text-[color:var(--text-muted,#8a8a8c)] truncate"
+              data-testid={"agent-card-" + agent.name + "-subtitle"}
+            >
+              {dev ? agent.model : agent.founder_label}
             </div>
           </div>
-          <StatusPill active={isActive} />
         </div>
+        <StatusPill active={isActive} />
+      </div>
 
-        {/* Last-active + success rate row */}
-        <div className="mt-3 flex items-center justify-between text-[12px] text-[color:var(--text-muted,#8a8a8c)] font-mono">
-          <span data-testid={"agent-card-" + agent.name + "-idle"}>
-            {lastActiveDisplay}
-          </span>
-          <span>{successPct}</span>
-        </div>
+      {/* Last-active + success rate row */}
+      <div className="mt-3 flex items-center justify-between text-[12px] text-[color:var(--text-muted,#8a8a8c)] font-mono">
+        <span data-testid={"agent-card-" + agent.name + "-idle"}>
+          {lastActiveDisplay}
+        </span>
+        <span>{successPct}</span>
+      </div>
 
-        {/* Drift warning badge (conditional) */}
-        {agent.drift_warning && (
-          <div
-            className="mt-2 rounded-sm border border-[color:var(--danger,#ef4444)] bg-[color:var(--danger,#ef4444)]/10 px-2 py-1 text-xs text-[color:var(--danger,#ef4444)] flex items-center gap-1"
-            data-testid={"agent-card-" + agent.name + "-drift-indicator"}
-            aria-label="drift warning"
-          >
-            <span aria-hidden>⚠</span> drift
-          </div>
-        )}
-
-        {/* Hover-reveal verb actions — opacity-0 at rest, opacity-100 on hover/focus */}
+      {/* Drift warning badge (conditional) */}
+      {agent.drift_warning && (
         <div
-          className="mt-4 flex gap-2 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity"
-          data-testid={"agent-card-" + agent.name + "-verbs"}
+          className="mt-2 rounded-sm border border-[color:var(--danger,#ef4444)] bg-[color:var(--danger,#ef4444)]/10 px-2 py-1 text-xs text-[color:var(--danger,#ef4444)] flex items-center gap-1"
+          data-testid={"agent-card-" + agent.name + "-drift-indicator"}
+          aria-label="drift warning"
         >
-          <button
-            type="button"
-            aria-label={verbs.primary + " " + agent.label}
-            onClick={(e) => { e.stopPropagation() }}
-            className="flex-1 rounded border border-[color:var(--border,#1f1f22)] px-2 py-1.5 text-[12px] font-mono text-[color:var(--text-muted,#8a8a8c)] hover:border-[color:var(--accent,#00d4ff)] hover:text-[color:var(--accent,#00d4ff)] transition-colors min-h-[24px] min-w-[24px]"
-            data-testid={"agent-card-" + agent.name + "-verb-primary"}
-          >
-            {verbs.primary}
-          </button>
-          <button
-            type="button"
-            aria-label={verbs.stop + " " + agent.label}
-            onClick={(e) => { e.stopPropagation() }}
-            className="flex-1 rounded border border-[color:var(--border,#1f1f22)] px-2 py-1.5 text-[12px] font-mono text-[color:var(--text-muted,#8a8a8c)] hover:border-[color:var(--warning,#f59e0b)] hover:text-[color:var(--warning,#f59e0b)] transition-colors min-h-[24px] min-w-[24px]"
-            data-testid={"agent-card-" + agent.name + "-verb-stop"}
-          >
-            {verbs.stop}
-          </button>
-          <button
-            type="button"
-            aria-label={verbs.archive + " " + agent.label}
-            onClick={(e) => { e.stopPropagation() }}
-            className="flex-1 rounded border border-[color:var(--border,#1f1f22)] px-2 py-1.5 text-[12px] font-mono text-[color:var(--text-muted,#8a8a8c)] hover:border-[color:var(--danger,#ef4444)] hover:text-[color:var(--danger,#ef4444)] transition-colors min-h-[24px] min-w-[24px]"
-            data-testid={"agent-card-" + agent.name + "-verb-archive"}
-          >
-            {verbs.archive}
-          </button>
+          <span aria-hidden>⚠</span> drift
         </div>
+      )}
 
-        {/* Footer: active · queued · /day */}
-        <div className="mt-3 flex items-center gap-3 text-xs text-[color:var(--text-muted,#8a8a8c)] font-mono">
-          <span>{t.agentsLiveActiveLabel(agent.current.concurrent)}</span>
-          <span aria-hidden>·</span>
-          <span>{t.agentsLiveQueuedLabel(agent.current.queued)}</span>
-          <span aria-hidden>·</span>
-          <span>{t.agentsLive24hLabel(agent.current.last_24h_count)}</span>
-        </div>
+      {/* Hover-reveal verb actions — opacity-0 at rest, opacity-100 on hover/focus */}
+      <div
+        className="mt-4 flex gap-2 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity"
+        data-testid={"agent-card-" + agent.name + "-verbs"}
+      >
+        <button
+          type="button"
+          aria-label={verbs.primary + " " + agent.label}
+          onClick={(e) => { e.stopPropagation() }}
+          className="flex-1 rounded border border-[color:var(--border,#1f1f22)] px-2 py-1.5 text-[12px] font-mono text-[color:var(--text-muted,#8a8a8c)] hover:border-[color:var(--accent,#00d4ff)] hover:text-[color:var(--accent,#00d4ff)] transition-colors min-h-[24px] min-w-[24px]"
+          data-testid={"agent-card-" + agent.name + "-verb-primary"}
+        >
+          {verbs.primary}
+        </button>
+        <button
+          type="button"
+          aria-label={verbs.stop + " " + agent.label}
+          onClick={(e) => { e.stopPropagation() }}
+          className="flex-1 rounded border border-[color:var(--border,#1f1f22)] px-2 py-1.5 text-[12px] font-mono text-[color:var(--text-muted,#8a8a8c)] hover:border-[color:var(--warning,#f59e0b)] hover:text-[color:var(--warning,#f59e0b)] transition-colors min-h-[24px] min-w-[24px]"
+          data-testid={"agent-card-" + agent.name + "-verb-stop"}
+        >
+          {verbs.stop}
+        </button>
+        <button
+          type="button"
+          aria-label={verbs.archive + " " + agent.label}
+          onClick={(e) => { e.stopPropagation() }}
+          className="flex-1 rounded border border-[color:var(--border,#1f1f22)] px-2 py-1.5 text-[12px] font-mono text-[color:var(--text-muted,#8a8a8c)] hover:border-[color:var(--danger,#ef4444)] hover:text-[color:var(--danger,#ef4444)] transition-colors min-h-[24px] min-w-[24px]"
+          data-testid={"agent-card-" + agent.name + "-verb-archive"}
+        >
+          {verbs.archive}
+        </button>
+      </div>
+
+      {/* Footer: active · queued · /day */}
+      <div className="mt-3 flex items-center gap-3 text-xs text-[color:var(--text-muted,#8a8a8c)] font-mono">
+        <span>{t.agentsLiveActiveLabel(agent.current.concurrent)}</span>
+        <span aria-hidden>·</span>
+        <span>{t.agentsLiveQueuedLabel(agent.current.queued)}</span>
+        <span aria-hidden>·</span>
+        <span>{t.agentsLive24hLabel(agent.current.last_24h_count)}</span>
       </div>
     </div>
   )

@@ -331,3 +331,44 @@ body {
 .scrollbar-overlay:hover { scrollbar-color: var(--border-strong) transparent; }
 .scrollbar-overlay::-webkit-scrollbar-thumb { background-color: transparent; }
 .scrollbar-overlay:hover::-webkit-scrollbar-thumb { background-color: var(--border-strong); }
+
+/* ---------------------------------------------------------------------------
+ * Phase 15 Wave 2.1 — Standardized card density.
+ *
+ * Source: .planning/phases/15-screenshot-truth-harness/WAVE-2-PLAN.md §2.1
+ *
+ * Problem (from KANBAN-COLUMNAR-AUDIT): card surfaces drifted to inconsistent
+ * paddings (queue p-3, agent p-4, skill p-3) and inconsistent hover/focus
+ * affordances. Result reads as "tacky" — same surface family, different rhythm.
+ *
+ * Fix: a single utility hooked to the Wave 1 density tokens. Apply to actual
+ * card containers only; do not over-apply to row-shaped surfaces.
+ *
+ * `.card-base--interactive` opt-in conveys "this whole card is clickable" via
+ * cursor + active-state translate (matches MC pattern from VISUAL-RESEARCH §6).
+ * ------------------------------------------------------------------------- */
+.card-base {
+  padding: var(--density-card-pad);
+  gap: var(--density-card-gap);
+  border-radius: var(--radius);
+  background-color: var(--surface);
+  border: 1px solid var(--border-subtle);
+  transition: border-color var(--dur-quick) var(--ease-default),
+              background-color var(--dur-quick) var(--ease-default);
+}
+.card-base:hover {
+  border-color: var(--border-strong);
+  background-color: var(--surface-hover);
+}
+.card-base:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.card-base--interactive { cursor: pointer; }
+.card-base--interactive:active { transform: translateY(1px); }
+
+@media (prefers-reduced-motion: reduce) {
+  .card-base { transition: none; }
+  .card-base--interactive:active { transform: none; }
+}
