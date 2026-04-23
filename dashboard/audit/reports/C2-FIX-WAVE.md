@@ -157,6 +157,89 @@ persona demo.
 
 ---
 
+### Class 8 — Pixel-agents broken on /floor + Build-home FloorPin
+
+**Cells affected:** every `/floor` + `/floor/popout` cell + `/build` home
+FloorPin (~50 cells potentially). Flagged P0 in session-10 backlog.
+**Root cause (hypothesis, needs repro):**
+- Event-adapter may not be consuming `circuit-breakers.jsonl` correctly
+- Canvas may not mount (`<canvas>` absent or zero dims)
+- Heartbeat-emitter may not fire synthetic beats when breakers idle
+- cbPath could be null → idle scene
+**Proposed fix approach:**
+1. Open browser DevTools on `/floor` + compare vs `/build` FloorPin — grab
+   console errors + Network tab SSE state
+2. Confirm canvas element present with non-zero dims
+3. Trace `useFloorEvents` → `/api/tail/circuit-breakers` → JSONL parse
+4. Fix root cause (single point in chain, not a shotgun)
+**Expected C3 lift:** reliability + depth + liveness on /floor cells.
+**Severity:** P0 (session-10 blocker).
+**Slot:** after Classes 3+7 land. Needs browser repro.
+
+---
+
+### Class 9 — Chat hydration mismatch (admin · mobile + wide)
+
+**Cells affected:** 2 cells (admin · mobile · /chat, admin · wide · /chat).
+Laptop OK. Non-fatal — React patches but logs warning.
+**Root cause:** `useDevMode()` in `app/chat/chat-layout.tsx` reads
+localStorage/cookie client-only state that flips aria-label between
+server + client render.
+**Proposed fix:** (choose one)
+- (a) Gate `labelFor(dev)` behind a `useEffect`-mount flag so server render
+  uses default labels, client promotes to dev-mode labels on mount.
+- (b) Read dev-mode cookie on the server (via `cookies()` in Server
+  Component) and pass as prop — zero hydration mismatch.
+  Preferred: (b). Cleaner, no post-mount flash.
+**Expected C3 lift:** reliability on 2 cells + clean console log.
+**Severity:** narrow, cosmetic. Ship with next chat-adjacent commit.
+
+---
+
+### Class 10 — SSE unread-count regression (WR-01)
+
+**Cells affected:** chat rail cells across all personas.
+**Status:** fix claimed shipped in `13-04-PLAN.md` (Wave 4 Phase 13),
+but session-10 C1 baseline still showed unread count stuck at 0. Needs
+re-verify — may have regressed or original fix didn't cover this path.
+**Proposed fix:** re-run the isolation test: open /build, send message from
+admin, confirm rail unread-dot + count both advance. If broken: trace
+SSE `id` stability + client `assistantMsgId` promotion.
+**Severity:** single regression, surfaces every chat-rail cell.
+**Slot:** after Class 3 (touches chat surface anyway).
+
+---
+
+### Class 11 — Voice pillar scorer not wired
+
+**Cells affected:** 0 today (pillar not in cycle). BUT: absence means every
+cycle ships without grading copy/tone/founder-speak. Known hole.
+**Proposed fix:**
+1. Add `audit/score/llm-voice.ts` — grades `data-label-*` extracts + prose
+   via LLM against the founder-speak rubric.
+2. Wire into `audit/score-run.ts` cycle.
+3. Produce `CN-VOICE-FINDINGS.md` per cycle.
+4. Voice pillar target: mean ≥ 4.0 on founder personas.
+**Severity:** systemic hole. Not a regression — never scored.
+**Slot:** C4+. Spec in follow-up wave doc.
+
+---
+
+### Class 12 — Herald runs blocked under root user
+
+**Cells affected:** 0 (infrastructure, not audit-visible). But Herald
+post-commit hook writes logs every commit; under root the `claude`
+CLI refuses `--dangerously-skip-permissions` → hook fails silently.
+**Proposed fix options:**
+- (a) Run dashboard as non-root user (cleaner, requires box reconfig)
+- (b) Patch adapter to skip `--dangerously-skip-permissions` under root
+- (c) Document as "Herald offline under root" + accept doc staleness
+  until the box is reconfigured
+**Severity:** low (docs go stale, not a user-visible bug).
+**Slot:** ops task, deprioritise below code classes.
+
+---
+
 ## Execution order
 
 1. **Class 2 commit** (this turn — pending) — API 401 + hook short-circuit.
