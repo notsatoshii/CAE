@@ -20,6 +20,8 @@
  *   2. Model override
  *   3. Drift banner (conditional — above Lifetime)
  *   4. Lifetime stats
+ *   4b. 7-day sparklines (P15 fix — surfaces stats_7d that was always in
+ *       state but never rendered)
  *   5. Recent invocations
  *
  * See .planning/phases/05-agents-tab/05-CONTEXT.md §Detail drawer + §Drift
@@ -42,6 +44,7 @@ import { PersonaMarkdown } from "./persona-markdown"
 import { ModelOverride } from "./model-override"
 import { LifetimeStats } from "./lifetime-stats"
 import { RecentInvocationsTable } from "./recent-invocations-table"
+import { Stats7dSparklines } from "./stats-7d-sparklines"
 import type { AgentDetailEntry } from "@/lib/cae-agents-state"
 
 export function AgentDetailDrawer() {
@@ -213,6 +216,11 @@ export function AgentDetailDrawer() {
 
               {/* 4. Lifetime stats */}
               <LifetimeStats lifetime={detail.lifetime} />
+
+              {/* 4b. 7-day sparklines — P15 detail-expand fix. stats_7d is
+                   on AgentDetailEntry but was never rendered; surfaces here
+                   under Lifetime so trend is visible at a glance. */}
+              <Stats7dSparklines stats_7d={detail.stats_7d} />
 
               {/* 5. Recent invocations */}
               <RecentInvocationsTable
