@@ -5,28 +5,12 @@
  * Admin override capability wired through client component.
  */
 import { auth } from "@/auth"
-import type { Role, CatalogSkill, TrustScore } from "@/lib/cae-types"
+import type { Role } from "@/lib/cae-types"
 import { SecurityClient } from "../security-client"
 import { TrustGridClient } from "./trust-grid-client"
+import { fetchTrustScores } from "./fetch-trust-scores"
 
 export const dynamic = "force-dynamic"
-
-type TrustEntry = { skill: CatalogSkill; trust: TrustScore }
-
-async function fetchTrustScores(cookieHeader: string): Promise<TrustEntry[]> {
-  try {
-    // Server-side fetch needs absolute URL
-    const base = process.env.NEXTAUTH_URL ?? "http://localhost:3000"
-    const res = await fetch(`${base}/api/security/trust`, {
-      headers: { Cookie: cookieHeader },
-      cache: "no-store",
-    })
-    if (!res.ok) return []
-    return res.json()
-  } catch {
-    return []
-  }
-}
 
 export default async function SecuritySkillsPage() {
   const session = await auth()

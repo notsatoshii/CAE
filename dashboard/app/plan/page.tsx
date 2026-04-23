@@ -1,3 +1,8 @@
+"use client";
+
+// Client component: Next 16 RSC serialisation refuses to pass a function
+// (the Lucide icon) from server → client props. EmptyState is already a
+// client component. Page has no server-only work so going client is safe.
 import Link from "next/link";
 import { Compass } from "lucide-react";
 import { labelFor } from "@/lib/copy/labels";
