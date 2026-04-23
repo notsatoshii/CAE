@@ -13,6 +13,26 @@ import type { WorkflowStep } from "@/lib/cae-workflows"
 import { withLog } from "@/lib/with-log"
 import type { Role } from "@/lib/cae-types"
 
+/**
+ * WR-02: Validate slug at the API boundary before using it to construct taskId
+ * or filesystem paths. Linux filenames can contain `;`, `&`, `$`, spaces, etc.
+ * The tmux command passes `"cae execute-buildplan " + taskId` as a shell string,
+ * so a workflow file with a malicious slug would give RCE.
+ *
+ * Allowlist: lowercase alphanumeric and hyphens only, 1–64 chars, must start
+ * with a letter or digit (no leading hyphen).
+ */
+const SLUG_RE = /^[a-z0-9][a-z0-9-]{0,63}$/
+
+/**
+ * WR-02: Validate taskId before passing to tmux shell string.
+ * taskId = "wf-" + slug + "-" + ts + "-" + uuid4chars
+ * All components are safe after slug validation, but we add an explicit check
+ * as belt-and-suspenders against future changes to taskId construction.
+ * Allowed: alphanumeric, hyphen, underscore only.
+ */
+const TASK_ID_RE = /^[a-zA-Z0-9_-]+$/
+
 function firstAgentStep(
   steps: WorkflowStep[],
 ): { agent: string; task: string } | null {
@@ -64,6 +84,12 @@ async function postHandler(
   }
 
   const { slug } = await ctx.params
+
+  // WR-02: validate slug before using it in taskId or filesystem paths
+  if (!SLUG_RE.test(slug)) {
+    return Response.json({ error: "invalid workflow slug" }, { status: 400 })
+  }
+
   const workflow = await getWorkflow(slug)
   if (!workflow) {
     return Response.json({ error: "workflow not found" }, { status: 404 })
@@ -82,6 +108,12 @@ async function postHandler(
 
   const ts = Date.now()
   const taskId = "wf-" + slug + "-" + ts + "-" + randomUUID().slice(0, 4)
+
+  // WR-02: belt-and-suspenders check on the fully-constructed taskId
+  if (!TASK_ID_RE.test(taskId)) {
+    return Response.json({ error: "internal: invalid taskId" }, { status: 500 })
+  }
+
   const taskDir = join(INBOX_ROOT, taskId)
   await mkdir(taskDir, { recursive: true })
   await writeFile(
