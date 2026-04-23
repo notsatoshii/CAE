@@ -1,13 +1,10 @@
 /**
- * Plan 13-10 — AgentCard MC-style redesign tests.
+ * AgentCard tests.
  *
- * Assertions:
- *   1. Avatar initial renders (first letter of agent name).
- *   2. Status pill shows "Active" for active group.
- *   3. Status pill shows "Offline" for dormant group.
- *   4. Verb buttons render text from agentVerbs() (default: Start/Stop/Archive).
- *   5. Hover-reveal verb container has opacity-0 at rest.
- *   6. Card acts as a button with correct aria-label.
+ * Plan 13-10 — MC-style redesign baseline (avatar, status pill, verb labels).
+ * Phase 15 Wave 2.2 — verb container is now ALWAYS visible at rest. The
+ * old "verb container starts with opacity-0" assertion was inverted to
+ * assert visibility + keyboard reachability.
  */
 
 import { describe, it, expect, afterEach, vi, beforeEach } from "vitest"
@@ -102,10 +99,25 @@ describe("AgentCard (MC-style redesign)", () => {
     expect(screen.getByTestId("agent-card-forge-verb-archive")).toHaveTextContent("Archive")
   })
 
-  it("verb container starts with opacity-0 class (hover-reveal pattern)", () => {
+  it("Wave 2.2 — verb container is visible at rest (no opacity-0 hover gate)", () => {
     renderCard(makeAgent())
     const verbContainer = screen.getByTestId("agent-card-forge-verbs")
-    expect(verbContainer.className).toContain("opacity-0")
+    // Wave 2.2 contract: the row must NOT use opacity-0 (which hid it from
+    // both pointer-less + keyboard users) and must NOT depend on group-hover
+    // to become visible.
+    expect(verbContainer.className).not.toContain("opacity-0")
+    expect(verbContainer.className).not.toContain("group-hover:opacity-100")
+  })
+
+  it("Wave 2.2 — each verb button is keyboard reachable (a real <button>)", () => {
+    renderCard(makeAgent())
+    for (const verb of ["primary", "stop", "archive"] as const) {
+      const btn = screen.getByTestId("agent-card-forge-verb-" + verb)
+      expect(btn.tagName).toBe("BUTTON")
+      expect(btn).toHaveAttribute("type", "button")
+      // tabIndex must not be -1 — implicit "0" on a real <button> is fine.
+      expect(btn.getAttribute("tabindex")).not.toBe("-1")
+    }
   })
 
   it("card has role=button with aria-label", () => {

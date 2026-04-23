@@ -8,19 +8,22 @@
  *     on the left cluster.
  *   - Right-aligned status pill: green dot + "Active" or gray dot + "Offline".
  *   - Last-active time in muted mono below the header row.
- *   - Hover-reveal action verbs at bottom (group-hover:opacity-100 + focus-within).
+ *   - Always-visible compact action row at bottom (Phase 15 Wave 2.2).
  *
- * Hover-reveal verbs reduce visual noise at rest (MC pattern) while keeping
- * the affordance discoverable. Keyboard users get focus-within reveal.
+ * Phase 15 Wave 2.2: replaced the old `opacity-0 group-hover:opacity-100`
+ * hover-reveal verbs with a persistent compact action row. Hidden verbs
+ * leak no affordance for keyboard users (focus-within reveal didn't help
+ * because nothing is focused at rest) and break Eric's "you should be
+ * able to see what you can do" rule. New rest state: muted text on
+ * transparent surface; hover/focus jumps to --accent + --surface-hover
+ * background. Buttons stay compact (text-xs / py-1.5 / px-2.5) so the
+ * row reads as a secondary affordance, not a primary CTA.
+ *
+ * Phase 15 Wave 2.1: card surface uses `.card-base card-base--interactive`.
+ *
  * All verb buttons are ≥24×24px click targets (WCAG SC 2.5.8).
  *
  * Plan 13-07: verbs from agentVerbs(getAgentVerbSet()) — A/B via localStorage.
- * Plan 13-10: visual redesign; stats preserved in an expandable area triggered
- * by clicking the card body (URL state ?agent={name} opens the detail drawer).
- *
- * Phase 15 Wave 2.1: card surface uses `.card-base card-base--interactive`
- * (globals.css). The wrapper handles focus/keyboard, the styled inner div
- * collapses into the wrapper to keep a single focusable surface.
  *
  * See .planning/phases/05-agents-tab/05-CONTEXT.md §Agent card layout for
  * the original contract. This plan reshapes UI; props stay the same.
@@ -130,6 +133,12 @@ export function AgentCard({ agent }: AgentCardProps) {
       ? Math.round(agent.stats_7d.success_rate * 100) + "%"
       : "—"
 
+  // Shared compact-action-button class: muted at rest, accent on hover/focus.
+  // Per-verb hover hue is overridden inline so the variant tints don't fight
+  // the resting state.
+  const verbBase =
+    "flex-1 rounded border border-transparent bg-transparent px-2.5 py-1.5 text-xs font-mono text-[color:var(--text-muted,#8a8a8c)] hover:bg-[color:var(--surface-hover,#1a1a1d)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent,#00d4ff)] transition-colors min-h-[24px] min-w-[24px]"
+
   return (
     <div
       role="button"
@@ -183,16 +192,17 @@ export function AgentCard({ agent }: AgentCardProps) {
         </div>
       )}
 
-      {/* Hover-reveal verb actions — opacity-0 at rest, opacity-100 on hover/focus */}
+      {/* Always-visible compact action row (Wave 2.2). Buttons sit in the
+          tab order at rest; no opacity gating. */}
       <div
-        className="mt-4 flex gap-2 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity"
+        className="mt-4 flex gap-2"
         data-testid={"agent-card-" + agent.name + "-verbs"}
       >
         <button
           type="button"
           aria-label={verbs.primary + " " + agent.label}
           onClick={(e) => { e.stopPropagation() }}
-          className="flex-1 rounded border border-[color:var(--border,#1f1f22)] px-2 py-1.5 text-[12px] font-mono text-[color:var(--text-muted,#8a8a8c)] hover:border-[color:var(--accent,#00d4ff)] hover:text-[color:var(--accent,#00d4ff)] transition-colors min-h-[24px] min-w-[24px]"
+          className={cn(verbBase, "hover:border-[color:var(--accent,#00d4ff)] hover:text-[color:var(--accent,#00d4ff)]")}
           data-testid={"agent-card-" + agent.name + "-verb-primary"}
         >
           {verbs.primary}
@@ -201,7 +211,7 @@ export function AgentCard({ agent }: AgentCardProps) {
           type="button"
           aria-label={verbs.stop + " " + agent.label}
           onClick={(e) => { e.stopPropagation() }}
-          className="flex-1 rounded border border-[color:var(--border,#1f1f22)] px-2 py-1.5 text-[12px] font-mono text-[color:var(--text-muted,#8a8a8c)] hover:border-[color:var(--warning,#f59e0b)] hover:text-[color:var(--warning,#f59e0b)] transition-colors min-h-[24px] min-w-[24px]"
+          className={cn(verbBase, "hover:border-[color:var(--warning,#f59e0b)] hover:text-[color:var(--warning,#f59e0b)]")}
           data-testid={"agent-card-" + agent.name + "-verb-stop"}
         >
           {verbs.stop}
@@ -210,7 +220,7 @@ export function AgentCard({ agent }: AgentCardProps) {
           type="button"
           aria-label={verbs.archive + " " + agent.label}
           onClick={(e) => { e.stopPropagation() }}
-          className="flex-1 rounded border border-[color:var(--border,#1f1f22)] px-2 py-1.5 text-[12px] font-mono text-[color:var(--text-muted,#8a8a8c)] hover:border-[color:var(--danger,#ef4444)] hover:text-[color:var(--danger,#ef4444)] transition-colors min-h-[24px] min-w-[24px]"
+          className={cn(verbBase, "hover:border-[color:var(--danger,#ef4444)] hover:text-[color:var(--danger,#ef4444)]")}
           data-testid={"agent-card-" + agent.name + "-verb-archive"}
         >
           {verbs.archive}
