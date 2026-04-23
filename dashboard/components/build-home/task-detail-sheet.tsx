@@ -18,6 +18,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { AgentAvatars } from "./agent-avatars";
 import { SheetLiveLog } from "./sheet-live-log";
 import { SheetActions } from "./sheet-actions";
+import { TaskHeaderSummary } from "./task-header-summary";
 
 export function TaskDetailSheet() {
   const router = useRouter();
@@ -109,6 +110,14 @@ export function TaskDetailSheet() {
           <div className="flex items-start justify-between gap-4">
             <SheetTitle className="text-base">{title}</SheetTitle>
             {phaseSummary && <AgentAvatars agents={phaseSummary.agents_active} />}
+          </div>
+          {/* P15 detail-expand fix: stage / wave / ETA / cost chips. The audit
+              flagged these 3 P0 fields (ETA, $ cost, current stage) as missing
+              from the sheet — surfaces them above the Pause/Abort actions so
+              they're visible without scrolling. Data sourced from PhaseSummary
+              (already polled), no extra fetches. */}
+          <div className="mt-3">
+            <TaskHeaderSummary phase={phaseSummary} />
           </div>
           <div className="flex items-center gap-2 mt-3">
             <button
