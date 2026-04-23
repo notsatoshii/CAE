@@ -529,6 +529,9 @@ export function Sidebar({ initialCollapsed = false }: SidebarProps) {
         className={cn(
           "flex h-[calc(100vh-40px)] shrink-0 flex-col overflow-hidden",
           "border-r border-[color:var(--border-subtle)] bg-[color:var(--surface)]",
+          // Class 13B — rail reads as an elevated layer above page content
+          // so the left edge has a clear drop-shadow against the canvas.
+          "shadow-elevation-1",
         )}
       >
         <SidebarHeader collapsed={collapsed} onToggle={handleToggle} />

@@ -71,7 +71,11 @@ export function CommandPalette(): React.JSX.Element | null {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent
-        className="p-0 sm:max-w-lg"
+        // Class 13B — command palette is the highest-z surface. Override the
+        // default dialog elevation-3 with elevation-4 so the palette sits
+        // above any modal that happens to be open beneath it, with a
+        // stronger lg blur on its backdrop to match the z-layer bump.
+        className="p-0 sm:max-w-lg shadow-elevation-4 backdrop-blur-lg"
         showCloseButton={false}
         aria-label="Command palette"
       >

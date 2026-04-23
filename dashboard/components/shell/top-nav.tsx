@@ -24,7 +24,9 @@ export function TopNav({ session }: TopNavProps) {
   return (
     <header
       data-testid="top-nav"
-      className="sticky top-0 z-50 flex h-10 items-center border-b border-[color:var(--border-subtle)] bg-[color:var(--bg)]/95 px-3 backdrop-blur"
+      // Class 13B — top-bar elevation-1 so the bottom edge has a visible
+      // drop-shadow against page content (depth cue Eric flagged was flat).
+      className="sticky top-0 z-50 flex h-10 items-center border-b border-[color:var(--border-subtle)] bg-[color:var(--bg)]/95 px-3 backdrop-blur shadow-elevation-1"
       style={{ fontFamily: "var(--font-sans)" }}
     >
       {/* Left cluster: wordmark + mode toggle */}
