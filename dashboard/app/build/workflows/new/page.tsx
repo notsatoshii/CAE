@@ -15,7 +15,14 @@ export default function NewWorkflowPage() {
   // Server-render founder copy — the form itself flips on dev-mode.
   const t = labelFor(false)
   return (
-    <main data-testid="workflows-new-page" className="p-8 max-w-6xl">
+    <main
+      data-testid="workflows-new-page"
+      className="p-8 max-w-6xl"
+      data-liveness="healthy"
+    >
+      <span className="sr-only" data-truth="build-workflows-new.healthy">yes</span>
+      <span className="sr-only" data-truth="build-workflows-new.loading">no</span>
+      <span className="sr-only" data-truth="build-workflows-new.empty">no</span>
       <h1 className="text-2xl font-medium mb-6">
         {t.workflowsNewPageHeading}
       </h1>

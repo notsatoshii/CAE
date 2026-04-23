@@ -60,23 +60,30 @@ export default async function SecurityAuditPage() {
 
   const initial = await fetchAudit(cookieHeader)
 
+  const auditLiveness: "empty" | "healthy" =
+    initial.entries.length === 0 ? "empty" : "healthy";
+
   return (
     <SecurityClient currentRole={role}>
-      <span className="sr-only" data-truth="build-security-audit.healthy">yes</span>
-      <span className="sr-only" data-truth="build-security-audit.total">
-        {initial.total}
-      </span>
-      <span className="sr-only" data-truth="build-security-audit.entries-count">
-        {initial.entries.length}
-      </span>
-      <span
-        className="sr-only"
-        data-truth={initial.entries.length === 0 ? "build-security-audit.empty" : "build-security-audit.nonempty"}
-      >
-        {initial.entries.length === 0 ? "yes" : "no"}
-      </span>
-      <span className="sr-only" data-truth="build-security-audit.role">{role}</span>
-      <AuditTable initial={initial} />
+      <div data-testid="build-security-audit-root" data-liveness={auditLiveness}>
+        <span className="sr-only" data-truth={"build-security-audit." + auditLiveness}>yes</span>
+        <span className="sr-only" data-truth="build-security-audit.healthy">yes</span>
+        <span className="sr-only" data-truth="build-security-audit.loading">no</span>
+        <span className="sr-only" data-truth="build-security-audit.total">
+          {initial.total}
+        </span>
+        <span className="sr-only" data-truth="build-security-audit.entries-count">
+          {initial.entries.length}
+        </span>
+        <span
+          className="sr-only"
+          data-truth={initial.entries.length === 0 ? "build-security-audit.empty" : "build-security-audit.nonempty"}
+        >
+          {initial.entries.length === 0 ? "yes" : "no"}
+        </span>
+        <span className="sr-only" data-truth="build-security-audit.role">{role}</span>
+        <AuditTable initial={initial} />
+      </div>
     </SecurityClient>
   )
 }

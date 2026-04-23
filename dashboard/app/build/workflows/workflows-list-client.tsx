@@ -94,8 +94,9 @@ export function WorkflowsListClient({
 
   if (workflows.length === 0) {
     return (
-      <>
+      <div data-testid="workflows-list-empty" data-liveness="empty">
         <span className="sr-only" data-truth="build-workflows.empty">yes</span>
+        <span className="sr-only" data-truth="build-workflows.loading">no</span>
         <span className="sr-only" data-truth="build-workflows.count">0</span>
         <EmptyState
           testId="workflows-empty"
@@ -110,14 +111,15 @@ export function WorkflowsListClient({
             </EmptyStateActions>
           }
         />
-      </>
+      </div>
     )
   }
 
   return (
-    <>
+    <div data-testid="workflows-list-root" data-liveness="healthy">
       <span className="sr-only" data-truth="build-workflows.count">{workflows.length}</span>
       <span className="sr-only" data-truth="build-workflows.healthy">yes</span>
+      <span className="sr-only" data-truth="build-workflows.loading">no</span>
       <span className="sr-only" data-truth="build-workflows.running">
         {runningSlug ?? "none"}
       </span>
@@ -187,6 +189,6 @@ export function WorkflowsListClient({
         ))}
       </div>
       <ConfirmActionDialog {...gate.dialogProps} />
-    </>
+    </div>
   )
 }

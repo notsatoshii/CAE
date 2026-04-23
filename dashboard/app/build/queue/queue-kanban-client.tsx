@@ -83,8 +83,9 @@ export function QueueKanbanClient({ initialState }: Props) {
 
   if (totalTasks === 0 && !error) {
     return (
-      <>
+      <div data-testid="build-queue-empty-root" data-liveness="empty">
         <span className="sr-only" data-truth="build-queue.empty">yes</span>
+        <span className="sr-only" data-truth="build-queue.loading">no</span>
         <span className="sr-only" data-truth="build-queue.count">0</span>
         <EmptyState
           testId="queue-kanban-empty"
@@ -102,13 +103,21 @@ export function QueueKanbanClient({ initialState }: Props) {
             </EmptyStateActions>
           }
         />
-      </>
+      </div>
     )
   }
 
+  const queueLiveness: "error" | "healthy" = error ? "error" : "healthy";
+
   return (
     // overflow-x-auto enables mobile horizontal scroll across 5 columns
-    <div className="overflow-x-auto">
+    <div
+      className="overflow-x-auto"
+      data-testid="build-queue-root"
+      data-liveness={queueLiveness}
+    >
+      <span className="sr-only" data-truth={"build-queue." + queueLiveness}>yes</span>
+      <span className="sr-only" data-truth="build-queue.loading">no</span>
       <span className="sr-only" data-truth="build-queue.count">{totalTasks}</span>
       <span className="sr-only" data-truth="build-queue.healthy">yes</span>
       <span className="sr-only" data-truth="build-queue.waiting">
@@ -128,13 +137,17 @@ export function QueueKanbanClient({ initialState }: Props) {
         {COLUMNS.map((col) => {
           const cards = state.columns[col.key]
           const colLabel = t[col.labelKey] as string
+          const colLiveness: "empty" | "healthy" =
+            cards.length === 0 ? "empty" : "healthy"
           return (
             // Each column: min-w-64 (256px) so mobile scroll works cleanly
             <section
               key={col.key}
               data-testid={"queue-column-" + col.key}
+              data-liveness={colLiveness}
               className="flex min-w-64 flex-col gap-2 rounded-lg border border-[color:var(--border,#1f1f22)] bg-[color:var(--surface,#121214)] p-3 min-h-[200px]"
             >
+              <span className="sr-only" data-truth={"build-queue-" + col.key + "." + colLiveness}>yes</span>
               <header className="flex items-center justify-between">
                 <h3 className="text-[13px] font-semibold tracking-wide uppercase text-[color:var(--text-muted,#8a8a8c)]">
                   {colLabel}

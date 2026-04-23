@@ -43,7 +43,14 @@ export default async function SkillDetailPage({ params }: Props) {
   }
 
   return (
-    <div className="mx-auto max-w-3xl p-6">
+    <div
+      className="mx-auto max-w-3xl p-6"
+      data-testid="build-skills-detail-root"
+      data-liveness="healthy"
+    >
+      <span className="sr-only" data-truth="build-skills-detail.healthy">yes</span>
+      <span className="sr-only" data-truth="build-skills-detail.loading">no</span>
+      <span className="sr-only" data-truth="build-skills-detail.empty">no</span>
       <h1 className="mb-4 text-xl font-semibold text-zinc-100">{safeName}</h1>
 
       {/* Trust score slot — ships in Plan 14-05 */}

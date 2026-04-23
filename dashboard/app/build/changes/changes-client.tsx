@@ -83,6 +83,7 @@ export function ChangesClient() {
     return (
       <p
         data-testid="changes-error"
+        data-liveness="error"
         className="text-sm text-[color:var(--destructive,#ef4444)]"
       >
         <span className="sr-only" data-truth="build-changes.error">yes</span>
@@ -95,6 +96,7 @@ export function ChangesClient() {
     return (
       <p
         data-testid="changes-loading"
+        data-liveness="loading"
         className="text-sm text-[color:var(--text-muted,#8a8a8c)]"
       >
         <span className="sr-only" data-truth="build-changes.loading">yes</span>
@@ -108,8 +110,9 @@ export function ChangesClient() {
 
   if (data.projects.length === 0) {
     return (
-      <div>
+      <div data-testid="build-changes-empty-root" data-liveness="empty">
         <span className="sr-only" data-truth="build-changes.empty">yes</span>
+        <span className="sr-only" data-truth="build-changes.loading">no</span>
         <span className="sr-only" data-truth="build-changes.project-count">0</span>
         <span className="sr-only" data-truth="build-changes.event-count">0</span>
         <h1 className="mb-4 flex items-center gap-2 text-2xl font-medium text-[color:var(--text,#e5e5e5)]">
@@ -139,8 +142,9 @@ export function ChangesClient() {
   const allIds = data.projects.map((p) => p.project);
 
   return (
-    <div>
+    <div data-testid="build-changes-root" data-liveness="healthy">
       <span className="sr-only" data-truth="build-changes.healthy">yes</span>
+      <span className="sr-only" data-truth="build-changes.loading">no</span>
       <span className="sr-only" data-truth="build-changes.project-count">
         {data.projects.length}
       </span>

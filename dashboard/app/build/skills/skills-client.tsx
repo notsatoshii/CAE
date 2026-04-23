@@ -62,9 +62,28 @@ export function SkillsClient({ catalog, currentRole }: Props) {
         : "text-zinc-400 hover:text-zinc-200"
     }`
 
+  // C2-wave/Class 3: liveness based on catalog size + current tab content.
+  const activeList = tab === "installed" ? installed : localCatalog;
+  const skillsLiveness: "empty" | "healthy" =
+    activeList.length === 0 ? "empty" : "healthy";
+
   return (
-    <>
+    <div data-testid="skills-client" data-liveness={skillsLiveness}>
+      <span className="sr-only" data-truth={"build-skills." + skillsLiveness}>yes</span>
       <span className="sr-only" data-truth="build-skills.healthy">yes</span>
+      <span className="sr-only" data-truth="build-skills.loading">no</span>
+      {tab === "installed" && installed.length === 0 && (
+        <span className="sr-only" data-truth="build-skills-installed.empty">yes</span>
+      )}
+      {tab === "catalog" && localCatalog.length === 0 && (
+        <span className="sr-only" data-truth="build-skills-catalog.empty">yes</span>
+      )}
+      {tab === "installed" && installed.length > 0 && (
+        <span className="sr-only" data-truth="build-skills-installed.healthy">yes</span>
+      )}
+      {tab === "catalog" && localCatalog.length > 0 && (
+        <span className="sr-only" data-truth="build-skills-catalog.healthy">yes</span>
+      )}
       <span className="sr-only" data-truth="build-skills.catalog-count">
         {localCatalog.length}
       </span>
@@ -127,6 +146,6 @@ export function SkillsClient({ catalog, currentRole }: Props) {
           currentRole={currentRole}
         />
       )}
-    </>
+    </div>
   )
 }

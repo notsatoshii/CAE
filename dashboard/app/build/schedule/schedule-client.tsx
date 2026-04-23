@@ -89,10 +89,21 @@ export function ScheduleClient({ initialTasks, currentRole }: ScheduleClientProp
   }
 
   const enabledCount = tasks.filter((t) => t.enabled).length
+  const scheduleLiveness: "error" | "empty" | "healthy" = saveError
+    ? "error"
+    : tasks.length === 0
+      ? "empty"
+      : "healthy";
 
   return (
-    <div className="space-y-4">
+    <div
+      className="space-y-4"
+      data-testid="build-schedule-root"
+      data-liveness={scheduleLiveness}
+    >
+      <span className="sr-only" data-truth={"build-schedule." + scheduleLiveness}>yes</span>
       <span className="sr-only" data-truth="build-schedule.healthy">yes</span>
+      <span className="sr-only" data-truth="build-schedule.loading">no</span>
       <span className="sr-only" data-truth="build-schedule.count">{tasks.length}</span>
       <span className="sr-only" data-truth={tasks.length === 0 ? "build-schedule.empty" : "build-schedule.nonempty"}>
         {tasks.length === 0 ? "yes" : "no"}

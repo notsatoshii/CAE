@@ -73,9 +73,23 @@ export default async function SecuritySecretsPage() {
     } satisfies ScanResult,
   }))
 
+  const secretsLiveness: "empty" | "healthy" =
+    scans.length === 0 ? "empty" : "healthy";
+
   return (
     <SecurityClient currentRole={role}>
-      <SecretsReportClient scans={scans} currentRole={role} />
+      <div data-testid="build-security-secrets-root" data-liveness={secretsLiveness}>
+        <span className="sr-only" data-truth={"build-security-secrets." + secretsLiveness}>yes</span>
+        <span className="sr-only" data-truth="build-security-secrets.healthy">yes</span>
+        <span className="sr-only" data-truth="build-security-secrets.loading">no</span>
+        <span className="sr-only" data-truth="build-security-secrets.scans-count">
+          {scans.length}
+        </span>
+        {scans.length === 0 && (
+          <span className="sr-only" data-truth="build-security-secrets.empty">yes</span>
+        )}
+        <SecretsReportClient scans={scans} currentRole={role} />
+      </div>
     </SecurityClient>
   )
 }

@@ -36,8 +36,16 @@ function EmailList({ emails, emptyLabel }: { emails: string[]; emptyLabel: strin
 }
 
 export function RoleEditor({ admins, operators }: Props) {
+  const rolesLiveness: "empty" | "healthy" =
+    admins.length === 0 && operators.length === 0 ? "empty" : "healthy";
   return (
-    <section className="space-y-8 max-w-2xl">
+    <section
+      className="space-y-8 max-w-2xl"
+      data-testid="build-admin-roles-root"
+      data-liveness={rolesLiveness}
+    >
+      <span className="sr-only" data-truth={"build-admin-roles." + rolesLiveness}>yes</span>
+      <span className="sr-only" data-truth="build-admin-roles.loading">no</span>
       <span className="sr-only" data-truth="build-admin-roles.healthy">yes</span>
       <span className="sr-only" data-truth="build-admin-roles.admin-count">
         {admins.length}

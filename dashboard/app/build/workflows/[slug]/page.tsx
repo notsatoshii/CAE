@@ -32,7 +32,11 @@ export default async function EditWorkflowPage({
       data-testid="workflows-edit-page"
       data-slug={record.slug}
       className="p-8 max-w-6xl"
+      data-liveness="healthy"
     >
+      <span className="sr-only" data-truth="build-workflows-edit.healthy">yes</span>
+      <span className="sr-only" data-truth="build-workflows-edit.loading">no</span>
+      <span className="sr-only" data-truth="build-workflows-edit.empty">no</span>
       <h1 className="text-2xl font-medium mb-6">
         {t.workflowsEditPageHeading(record.spec.name)}
       </h1>
