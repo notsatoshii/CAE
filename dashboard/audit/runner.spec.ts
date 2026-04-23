@@ -35,31 +35,32 @@ import { ROUTES, type PersonaId } from "./routes"
 import { PERSONAS, buildPersonaCookies, type Persona } from "./personas"
 import { extractTruth } from "./scrape/data-truth"
 import { clickwalkRoute } from "./scrape/clickwalk"
+import { readExpectedTruth as readExpectedHealthy } from "./fixtures/healthy"
+import { readExpectedTruth as readExpectedEmpty } from "./fixtures/empty"
+import { readExpectedTruth as readExpectedDegraded } from "./fixtures/degraded"
+import { readExpectedTruth as readExpectedBroken } from "./fixtures/broken"
 
 const FIXTURE = process.env.FIXTURE ?? "healthy"
 const TRUTH_SETTLE_MS = Number(process.env.AUDIT_TRUTH_SETTLE_MS ?? 6000)
 
-// Lazily-loaded expected-truth map for the active fixture. SSE-driven
-// panels render `data-truth=".loading"` first and flip to `.healthy=yes`
-// once the first fetch lands — screenshotting before the flip makes the
-// truth pillar score 1/5 even when the product is correct. We wait for
-// at least one expected `.healthy=yes` marker to render before snapping.
-// Bounded timeout; if SSE never fires we still capture what rendered.
-let expectedTruthCache: Record<string, string> | null = null
-async function getExpectedTruth(): Promise<Record<string, string>> {
-  if (expectedTruthCache) return expectedTruthCache
-  const mod = (await import(`./fixtures/${FIXTURE}`)) as {
-    readExpectedTruth?: () => Record<string, string>
-  }
-  expectedTruthCache = mod.readExpectedTruth?.() ?? {}
-  return expectedTruthCache
+// SSE-driven panels render `data-truth=".loading"` first and flip to
+// `.healthy=yes` once the first fetch lands — screenshotting before
+// the flip makes the truth pillar score 1/5 even when the product is
+// correct. We wait for at least one expected `.healthy=yes` marker to
+// render before snapping. Bounded; if SSE never fires we still capture.
+const FIXTURE_TRUTH: Record<string, () => Record<string, string>> = {
+  healthy: readExpectedHealthy,
+  empty: readExpectedEmpty,
+  degraded: readExpectedDegraded,
+  broken: readExpectedBroken,
 }
+const EXPECTED_TRUTH: Record<string, string> = FIXTURE_TRUTH[FIXTURE]?.() ?? {}
+const HEALTHY_KEYS: Array<[string, string]> = Object.entries(EXPECTED_TRUTH).filter(
+  ([k, v]) => k.endsWith(".healthy") && v === "yes",
+)
 
 async function waitForTruthSettled(page: Page, timeoutMs: number): Promise<void> {
-  const expected = await getExpectedTruth()
-  const healthyKeys = Object.entries(expected).filter(
-    ([k, v]) => k.endsWith(".healthy") && v === "yes",
-  )
+  const healthyKeys = HEALTHY_KEYS
   if (healthyKeys.length === 0) return
   const deadline = Date.now() + timeoutMs
   for (const [key, val] of healthyKeys) {
