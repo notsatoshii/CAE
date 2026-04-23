@@ -301,6 +301,134 @@ Vision should stop flagging "flat", "no separation", "no hierarchy".
 
 ---
 
+### Class 14 — Data correctness: DOM truth keys missing or wrong (post-wait diagnosis)
+
+**Cells affected:** TBD — determined by C3 delta once Class 1 truth-wait
+actually lands in a cycle. C2 baseline showed top drift keys on nearly
+every cell (408/408 for `mission-control.active-count`, 408/408 for
+`live-activity.last-24h-count`, 406/408 for `mission-control.healthy`),
+which a pure-timing fix cannot explain.
+**Hypothesis:** component code doesn't emit the fixture-expected
+`data-truth="<key>=<value>"` attribute set. Either:
+- Keys renamed in component but fixture expectations weren't updated
+- Keys rendered under different DOM branches than the scorer walks
+- Component reads wrong state field (e.g. `.active` vs `.activeCount`)
+- Data genuinely not present in API response after hydration
+
+**Decision gate:** after C3 landed, sample 2-3 affected pages' rendered
+DOM (curl + grep `data-truth`) and fixture expectations
+(`audit/fixtures/healthy.ts → readExpectedTruth`). Compare. Classify
+by root cause → split into 14A/14B/14C sub-waves per component family.
+
+**Severity:** P0 — Eric's session-12 remark "data not being shown
+properly" is this. Vision found it too ("Lies pervasively" on 268 cells).
+
+**Slot:** immediately after C3 delta review, before Class 5 craft waves.
+
+---
+
+### Class 15 — Dashboard disconnected from actual CAE activity
+
+**Cells affected:** entire dashboard experience for power users.
+**Eric's complaint (session 12):** "the FE shows that you or all
+these agents you have running aren't running the build history shows
+nothing in the logs etc."
+**Root cause confirmed:** dashboard tails `.cae/metrics/*.jsonl` +
+`.planning/phases/*/state.json`. Agents spawned via Claude Code's
+`Agent` tool bypass `cae` orchestration entirely — they run as a
+separate process tree with their own commits but **never emit** into
+CAE's event log. Vision retro-runs, direct git commits, cycle runs
+also don't emit. Result: dashboard correctly shows "nothing
+happening" because, from its POV, nothing CAE-shaped is happening.
+
+**Evidence:**
+- `/home/cae/ctrl-alt-elite/.cae/metrics/circuit-breakers.jsonl`:
+  2 lines, last write 2026-04-23T13:21 (9hr ago as of this section)
+- `/home/cae/ctrl-alt-elite/.cae/metrics/heartbeat.jsonl`: same staleness
+- `.planning/phases/`: only `03-timmy-bridge` (historical); no active
+- **This session did 12+ commits, 3 bg agents, vision run, C3 cycle** —
+  none visible to the dashboard.
+
+**Proposed fix (split 15A/15B):**
+
+**15A — Activity sink primitives** (new)
+- `lib/cae-event-emit.ts` — exports `emitActivity({type, agent, phase,
+  source, tokens, duration_ms, status, note})` that appends to
+  `.cae/metrics/activity.jsonl` (new canonical stream).
+- Add tails + consumers: extend `/api/state` and `/api/tail` to union
+  activity.jsonl on top of breakers/heartbeat.
+- UI: new Activity card on `/build` home + chronological feed surface.
+- **Commits surface (Eric explicit ask, session 12):** `/build` home
+  gets a "Recent commits" card that reads both:
+  - Local: `git log --all --since='7d'` via `/api/commits/local`
+    (server-side, no auth leak; strip co-author emails)
+  - Remote: GitHub REST `GET /repos/{owner}/{repo}/commits?since=...`
+    via `/api/commits/github` (GITHUB_TOKEN env; graceful fallback to
+    local-only if token missing). Render per-commit: SHA short, title,
+    author, relative time, linked PR if any. Cap 10 visible + "See
+    all" → full page.
+  - Acts as the visible proof-of-work surface even when CAE
+    orchestration events are absent. Cross-reference with Activity
+    card — commits with matching session IDs link to their agent
+    traces.
+
+**15B — Bridges from non-orchestrated work**
+- `adapters/git-commit-to-activity.sh` — post-commit hook: parses
+  `HEAD` commit, emits `type=commit`, agent inferred from committer.
+  Existing Herald hook gains 3 lines + optional skip env.
+- `adapters/claude-agent-to-activity.sh` — wraps `npx claude` +
+  `Agent` spawns in this repo; tails task.output JSONL, emits
+  `type=agent_spawn` + `type=agent_complete` events.
+- `adapters/audit-cycle-to-activity.sh` — `audit/run-cycle.sh` tail
+  emits one event per step (capture/score/write).
+- `adapters/vision-run-to-activity.sh` — vision-run progress lines
+  emit per-cell events.
+
+**Backfill:** retroactively script the session-12 events into
+activity.jsonl so the dashboard shows this session's history next
+time Eric opens it. `tools/backfill-activity.ts` reads git log +
+known session boundaries.
+
+**Severity:** P0 — primary dashboard surface is non-functional without
+this. No point polishing craft if the data is empty.
+
+**Slot:** tied for P0 with Class 14. Execute in parallel (different
+file scopes).
+
+---
+
+### Class 16 — Font swap: Geist → Roboto + Ubuntu (deferred)
+
+**Cells affected:** all 408 cells cosmetically (identity shift).
+**Eric's directive:** "lets change all fonts to roboto and ubuntu later".
+**Current:** Geist Sans 13px body + Geist Mono 12px metadata.
+**Target:** Roboto primary + Ubuntu accent / mono (best-guess — confirm
+with Eric before shipping).
+**Files:** `app/layout.tsx` (font imports), `app/globals.css` (CSS vars),
+grep + replace any explicit `font-geist*` in components, update
+`docs/UI-SPEC.md` §13.
+**Note:** Ubuntu Mono is wider than Geist Mono — tabular number
+columns may need re-spacing after swap.
+**Severity:** cosmetic. "Later" per Eric.
+**Slot:** after Classes 5, 13, 14, 15 close. Before C5 cycle.
+
+---
+
+### Class 17 — Layout and formatting systematic pass (deferred)
+
+**Cells affected:** broad.
+**Eric's directive (session 12):** "we should look at layout and
+formatting for everything sometime later as well."
+**Scope:** after functional classes land, a dedicated pass with
+vision-scored craft findings drives specific layout fixes — gutters,
+alignment, whitespace, tabular alignment, content density, responsive
+breakpoints. Crosses into Class 13 depth + Class 5 mobile responsive
+territory; this is the "final polish" wave once bones are correct.
+**Severity:** deferred explicitly.
+**Slot:** last P0 before closing milestone v0.1.
+
+---
+
 ## Invariants / traps
 
 - **Do not** chase per-cell bugs until vision completes. Vision surfaces craft issues that will restructure components — fixing a cell-specific hierarchy thing pre-vision risks re-fix after vision recs land.
