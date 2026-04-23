@@ -60,7 +60,7 @@ describe("InstallButton", () => {
     )
 
     const { InstallButton } = await import("./install-button")
-    render(<InstallButton skill={SKILL} />)
+    render(<InstallButton skill={SKILL} currentRole="operator" />)
 
     fireEvent.click(screen.getByRole("button", { name: /install/i }))
 
@@ -93,7 +93,7 @@ describe("InstallButton", () => {
 
     const onInstalled = vi.fn()
     const { InstallButton } = await import("./install-button")
-    render(<InstallButton skill={SKILL} onInstalled={onInstalled} />)
+    render(<InstallButton skill={SKILL} onInstalled={onInstalled} currentRole="operator" />)
 
     fireEvent.click(screen.getByRole("button", { name: /install/i }))
 
@@ -115,7 +115,7 @@ describe("InstallButton", () => {
     vi.stubGlobal("fetch", fetchMock)
 
     const { InstallButton } = await import("./install-button")
-    render(<InstallButton skill={SKILL} />)
+    render(<InstallButton skill={SKILL} currentRole="operator" />)
 
     fireEvent.click(screen.getByRole("button", { name: /install/i }))
 

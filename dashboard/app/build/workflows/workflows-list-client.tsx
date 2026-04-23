@@ -13,6 +13,9 @@
  * Run button → gate dialog → POST /api/workflows/{slug}/run → sonner toast
  * with the returned taskId. The list stays on this page; the queue page is
  * the place to watch progress.
+ *
+ * Phase 14 Plan 04: currentRole prop gates the Run button via RoleGate.
+ * Viewer-role users see a disabled "Read-only" button instead.
  */
 
 import { useState } from "react"
@@ -27,7 +30,9 @@ import { labelFor } from "@/lib/copy/labels"
 import { useGatedAction } from "@/lib/chat-gated-actions"
 import { ConfirmActionDialog } from "@/components/chat/confirm-action-dialog"
 import { EmptyState, EmptyStateActions } from "@/components/ui/empty-state"
+import { RoleGate } from "@/components/auth/role-gate"
 import type { WorkflowRecord } from "@/lib/cae-workflows"
+import type { Role } from "@/lib/cae-types"
 
 function relativeTime(ms: number): string {
   const diff = Date.now() - ms
@@ -39,8 +44,10 @@ function relativeTime(ms: number): string {
 
 export function WorkflowsListClient({
   initialWorkflows,
+  currentRole,
 }: {
   initialWorkflows: WorkflowRecord[]
+  currentRole?: Role
 }) {
   const { dev } = useDevMode()
   const t = labelFor(dev)
@@ -135,21 +142,37 @@ export function WorkflowsListClient({
                   )}
                 </div>
               </div>
-              <Button
-                type="button"
-                data-testid={"workflow-run-button-" + w.slug}
-                variant="outline"
-                size="sm"
-                disabled={runningSlug === w.slug || gate.open}
-                onClick={() => {
-                  setPendingRun({ slug: w.slug, name: w.spec.name ?? w.slug })
-                  gate.request()
-                }}
+              <RoleGate
+                role="operator"
+                currentRole={currentRole}
+                fallback={
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled
+                    title="Ask an admin to give you operator access to run workflows"
+                  >
+                    Read-only
+                  </Button>
+                }
               >
-                {runningSlug === w.slug
-                  ? t.workflowsRunBtnPending
-                  : t.workflowsListRowRunButton}
-              </Button>
+                <Button
+                  type="button"
+                  data-testid={"workflow-run-button-" + w.slug}
+                  variant="outline"
+                  size="sm"
+                  disabled={runningSlug === w.slug || gate.open}
+                  onClick={() => {
+                    setPendingRun({ slug: w.slug, name: w.spec.name ?? w.slug })
+                    gate.request()
+                  }}
+                >
+                  {runningSlug === w.slug
+                    ? t.workflowsRunBtnPending
+                    : t.workflowsListRowRunButton}
+                </Button>
+              </RoleGate>
             </CardContent>
           </Card>
         ))}

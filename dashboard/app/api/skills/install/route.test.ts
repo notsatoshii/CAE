@@ -1,6 +1,25 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
 import { NextRequest } from "next/server"
 
+// Mock next-auth and @/auth — route now calls auth() for role checks
+vi.mock("next-auth", () => ({
+  default: () => ({ handlers: {}, signIn: vi.fn(), signOut: vi.fn(), auth: vi.fn() }),
+}))
+vi.mock("next-auth/providers/github", () => ({ default: {} }))
+vi.mock("next-auth/providers/google", () => ({
+  default: (_opts?: unknown) => ({ id: "google", type: "oauth" }),
+}))
+// Default: operator session so existing tests pass the role gate
+vi.mock("@/auth", () => ({
+  auth: vi.fn().mockResolvedValue({
+    user: { email: "test@example.com", role: "operator" },
+    expires: "2099-01-01",
+  }),
+  signIn: vi.fn(),
+  signOut: vi.fn(),
+  handlers: {},
+}))
+
 // Mock the install module
 vi.mock("@/lib/cae-skills-install", () => ({
   installSkill: vi.fn(),

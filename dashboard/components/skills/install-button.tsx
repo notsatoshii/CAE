@@ -1,11 +1,14 @@
 "use client"
 
 import React, { useState, useRef } from "react"
-import type { CatalogSkill } from "@/lib/cae-types"
+import type { CatalogSkill, Role } from "@/lib/cae-types"
+import { RoleGate } from "@/components/auth/role-gate"
 
 type Props = {
   skill: CatalogSkill
   onInstalled?: () => void
+  /** Role from server-component parent. Operator+ required to install. */
+  currentRole?: Role
 }
 
 type LogLine = { type: "line" | "err"; text: string }
@@ -20,8 +23,11 @@ type LogLine = { type: "line" | "err"; text: string }
  *   event: line\ndata: "..."\n\n
  *   event: err\ndata: "..."\n\n
  *   event: done\ndata: "0"\n\n
+ *
+ * Phase 14 Plan 04: RoleGate gates the install trigger button.
+ * Viewers see a disabled "Read-only" button with a tooltip.
  */
-export function InstallButton({ skill, onInstalled }: Props) {
+export function InstallButton({ skill, onInstalled, currentRole }: Props) {
   const [open, setOpen] = useState(false)
   const [installing, setInstalling] = useState(false)
   const [log, setLog] = useState<LogLine[]>([])
@@ -113,15 +119,30 @@ export function InstallButton({ skill, onInstalled }: Props) {
 
   return (
     <>
-      <button
-        type="button"
-        aria-label={`Install ${skill.name}`}
-        onClick={startInstall}
-        disabled={installing}
-        className="rounded bg-[color:var(--accent,#00d4ff)] px-2.5 py-1 text-xs font-medium text-black transition-opacity hover:opacity-80 disabled:opacity-50"
+      <RoleGate
+        role="operator"
+        currentRole={currentRole}
+        fallback={
+          <button
+            type="button"
+            disabled
+            title="Ask an admin to give you operator access to install skills"
+            className="rounded border border-zinc-700 px-2.5 py-1 text-xs font-medium text-zinc-500 cursor-not-allowed"
+          >
+            Read-only
+          </button>
+        }
       >
-        {installing ? "Installing…" : "Install"}
-      </button>
+        <button
+          type="button"
+          aria-label={`Install ${skill.name}`}
+          onClick={startInstall}
+          disabled={installing}
+          className="rounded bg-[color:var(--accent,#00d4ff)] px-2.5 py-1 text-xs font-medium text-black transition-opacity hover:opacity-80 disabled:opacity-50"
+        >
+          {installing ? "Installing…" : "Install"}
+        </button>
+      </RoleGate>
 
       {/* Install dialog */}
       {open && (

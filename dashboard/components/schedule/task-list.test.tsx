@@ -63,6 +63,7 @@ describe("TaskList", () => {
         onToggle={onToggle}
         onDelete={vi.fn()}
         onOpenLog={vi.fn()}
+        currentRole="operator"
       />
     )
     // Click the toggle for "morning-brief" (enabled=true → should pass false)
@@ -79,6 +80,7 @@ describe("TaskList", () => {
         onToggle={vi.fn()}
         onDelete={onDelete}
         onOpenLog={vi.fn()}
+        currentRole="operator"
       />
     )
     const deleteBtns = screen.getAllByRole("button", { name: /delete/i })

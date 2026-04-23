@@ -1,13 +1,15 @@
 "use client"
 
 import React, { useState, useEffect, useCallback } from "react"
-import type { CatalogSkill } from "@/lib/cae-types"
+import type { CatalogSkill, Role } from "@/lib/cae-types"
 import { SkillCard } from "./skill-card"
 
 type Props = {
   initial: CatalogSkill[]
   onOpen?: (skill: CatalogSkill) => void
   onInstall?: (skill: CatalogSkill) => void
+  /** Role from server-component parent. Forwarded to SkillCard → InstallButton. */
+  currentRole?: Role
 }
 
 /**
@@ -16,8 +18,10 @@ type Props = {
  * - Debounced search (200ms) on the q input
  * - Filters by name, owner, or description (case-insensitive)
  * - Shows "no results" empty state when filter yields nothing
+ *
+ * Phase 14 Plan 04: currentRole forwarded to SkillCard for InstallButton gating.
  */
-export function CatalogGrid({ initial, onOpen, onInstall }: Props) {
+export function CatalogGrid({ initial, onOpen, onInstall, currentRole }: Props) {
   const [q, setQ] = useState("")
   const [displayedQ, setDisplayedQ] = useState("")
 
@@ -75,6 +79,7 @@ export function CatalogGrid({ initial, onOpen, onInstall }: Props) {
               skill={skill}
               onOpen={handleOpen}
               onInstall={handleInstall}
+              currentRole={currentRole}
             />
           ))}
         </div>

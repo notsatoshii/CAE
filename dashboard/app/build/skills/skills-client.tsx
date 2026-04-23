@@ -2,13 +2,15 @@
 
 import React, { useState, useCallback } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
-import type { CatalogSkill } from "@/lib/cae-types"
+import type { CatalogSkill, Role } from "@/lib/cae-types"
 import { CatalogGrid } from "@/components/skills/catalog-grid"
 import { SkillDetailDrawer } from "@/components/skills/skill-detail-drawer"
 import { InstallButton } from "@/components/skills/install-button"
 
 type Props = {
   catalog: CatalogSkill[]
+  /** Role from server-component parent. Forwarded to InstallButton for gating. */
+  currentRole?: Role
 }
 
 /**
@@ -18,8 +20,11 @@ type Props = {
  * - Opens SkillDetailDrawer on card click
  * - Opens InstallButton on install click
  * - Refreshes catalog after successful install
+ *
+ * Phase 14 Plan 04: currentRole forwarded to InstallButton so viewer-role
+ * users see a disabled button with a tooltip.
  */
-export function SkillsClient({ catalog }: Props) {
+export function SkillsClient({ catalog, currentRole }: Props) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const tab = searchParams.get("tab") === "installed" ? "installed" : "catalog"
@@ -85,12 +90,14 @@ export function SkillsClient({ catalog }: Props) {
           initial={localCatalog}
           onOpen={setDrawerSkill}
           onInstall={(skill) => setDrawerSkill(skill)}
+          currentRole={currentRole}
         />
       ) : (
         <CatalogGrid
           initial={installed}
           onOpen={setDrawerSkill}
           onInstall={(skill) => setDrawerSkill(skill)}
+          currentRole={currentRole}
         />
       )}
 
@@ -100,6 +107,7 @@ export function SkillsClient({ catalog }: Props) {
           skill={drawerSkill}
           onClose={() => setDrawerSkill(null)}
           onInstalled={handleInstalled}
+          currentRole={currentRole}
         />
       )}
     </>

@@ -1,6 +1,8 @@
 import React from "react"
 import { readTasks } from "@/lib/cae-schedule-store"
+import { auth } from "@/auth"
 import { ScheduleClient } from "./schedule-client"
+import type { Role } from "@/lib/cae-types"
 
 export const dynamic = "force-dynamic"
 
@@ -12,6 +14,9 @@ export default async function SchedulePage() {
     // If store is unavailable, render with empty list
   }
 
+  const session = await auth()
+  const currentRole: Role = (session?.user?.role as Role | undefined) ?? "viewer"
+
   return (
     <div className="flex flex-col gap-6 p-6">
       <div>
@@ -22,7 +27,7 @@ export default async function SchedulePage() {
           Describe a recurring task in plain English and CAE will run it on schedule.
         </p>
       </div>
-      <ScheduleClient initialTasks={tasks} />
+      <ScheduleClient initialTasks={tasks} currentRole={currentRole} />
     </div>
   )
 }

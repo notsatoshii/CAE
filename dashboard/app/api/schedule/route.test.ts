@@ -2,6 +2,25 @@ import { describe, it, expect, vi, beforeEach } from "vitest"
 import { NextRequest } from "next/server"
 import type { ScheduledTask } from "@/lib/cae-types"
 
+// Mock next-auth and @/auth so route handlers don't pull in the NextAuth runtime
+vi.mock("next-auth", () => ({
+  default: () => ({ handlers: {}, signIn: vi.fn(), signOut: vi.fn(), auth: vi.fn() }),
+}))
+vi.mock("next-auth/providers/github", () => ({ default: {} }))
+vi.mock("next-auth/providers/google", () => ({
+  default: (_opts?: unknown) => ({ id: "google", type: "oauth" }),
+}))
+// Default: operator session so existing tests pass the role gate
+vi.mock("@/auth", () => ({
+  auth: vi.fn().mockResolvedValue({
+    user: { email: "test@example.com", role: "operator" },
+    expires: "2099-01-01",
+  }),
+  signIn: vi.fn(),
+  signOut: vi.fn(),
+  handlers: {},
+}))
+
 vi.mock("@/lib/cae-schedule-store", () => ({
   readTasks: vi.fn(),
   writeTask: vi.fn(),

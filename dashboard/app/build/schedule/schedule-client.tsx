@@ -2,21 +2,26 @@
 
 import React, { useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
-import type { ScheduledTask } from "@/lib/cae-types"
+import type { ScheduledTask, Role } from "@/lib/cae-types"
 import { TaskList } from "@/components/schedule/task-list"
 import { NlInput, type ParseResult } from "@/components/schedule/nl-input"
 import { CronPreview } from "@/components/schedule/cron-preview"
+import { RoleGate } from "@/components/auth/role-gate"
 
 export type ScheduleClientProps = {
   initialTasks: ScheduledTask[]
+  currentRole?: Role
 }
 
 /**
  * ScheduleClient — client-side schedule manager.
  *
  * Two tabs: "My schedules" (TaskList) | "New schedule" (NlInput + Save).
+ *
+ * Phase 14 Plan 04: currentRole gates the "New schedule" tab and the
+ * toggle/delete actions in TaskList. Viewers see the list read-only.
  */
-export function ScheduleClient({ initialTasks }: ScheduleClientProps) {
+export function ScheduleClient({ initialTasks, currentRole }: ScheduleClientProps) {
   const router = useRouter()
   const [tab, setTab] = useState<"list" | "new">("list")
   const [tasks, setTasks] = useState(initialTasks)
@@ -85,22 +90,32 @@ export function ScheduleClient({ initialTasks }: ScheduleClientProps) {
 
   return (
     <div className="space-y-4">
-      {/* Tab switcher */}
+      {/* Tab switcher — "New schedule" tab only visible to operators+ */}
       <div className="flex gap-2 border-b border-[color:var(--border,#1f1f22)]">
-        {(["list", "new"] as const).map((t) => (
+        <button
+          onClick={() => setTab("list")}
+          className={[
+            "pb-2 px-1 text-sm font-medium border-b-2 transition-colors",
+            tab === "list"
+              ? "border-[color:var(--accent,#00d4ff)] text-[color:var(--accent,#00d4ff)]"
+              : "border-transparent text-[color:var(--text-muted,#8a8a8c)] hover:text-[color:var(--text,#e5e5e5)]",
+          ].join(" ")}
+        >
+          My schedules
+        </button>
+        <RoleGate role="operator" currentRole={currentRole}>
           <button
-            key={t}
-            onClick={() => setTab(t)}
+            onClick={() => setTab("new")}
             className={[
               "pb-2 px-1 text-sm font-medium border-b-2 transition-colors",
-              tab === t
+              tab === "new"
                 ? "border-[color:var(--accent,#00d4ff)] text-[color:var(--accent,#00d4ff)]"
                 : "border-transparent text-[color:var(--text-muted,#8a8a8c)] hover:text-[color:var(--text,#e5e5e5)]",
             ].join(" ")}
           >
-            {t === "list" ? "My schedules" : "New schedule"}
+            New schedule
           </button>
-        ))}
+        </RoleGate>
       </div>
 
       {tab === "list" && (
@@ -109,52 +124,63 @@ export function ScheduleClient({ initialTasks }: ScheduleClientProps) {
           onToggle={handleToggle}
           onDelete={handleDelete}
           onOpenLog={handleOpenLog}
+          currentRole={currentRole}
         />
       )}
 
       {tab === "new" && (
-        <div className="space-y-4 max-w-xl">
-          <div className="space-y-1">
-            <label className="text-sm font-medium text-[color:var(--text,#e5e5e5)]">
-              When should this run?
-            </label>
-            <NlInput onResult={setParseResult} />
+        <RoleGate
+          role="operator"
+          currentRole={currentRole}
+          fallback={
+            <p className="text-sm text-[color:var(--text-muted,#8a8a8c)]">
+              You need operator access to create schedules.
+            </p>
+          }
+        >
+          <div className="space-y-4 max-w-xl">
+            <div className="space-y-1">
+              <label className="text-sm font-medium text-[color:var(--text,#e5e5e5)]">
+                When should this run?
+              </label>
+              <NlInput onResult={setParseResult} />
+            </div>
+
+            {parseResult && (
+              <CronPreview
+                cron={parseResult.cron}
+                source={parseResult.source}
+                english={parseResult.english}
+                nextRun={parseResult.nextRun}
+              />
+            )}
+
+            <div className="space-y-1">
+              <label className="text-sm font-medium text-[color:var(--text,#e5e5e5)]">
+                Buildplan path
+              </label>
+              <input
+                type="text"
+                value={buildplan}
+                onChange={(e) => setBuildplan(e.target.value)}
+                placeholder="/home/cae/ctrl-alt-elite/tasks/plan.md"
+                className="w-full rounded-md border border-[color:var(--border,#1f1f22)] bg-[color:var(--surface,#121214)] px-3 py-2 text-sm text-[color:var(--text,#e5e5e5)] placeholder:text-[color:var(--text-muted,#8a8a8c)] focus:outline-none focus:ring-1 focus:ring-[color:var(--accent,#00d4ff)]"
+              />
+            </div>
+
+            {saveError && (
+              <p className="text-sm text-red-400">{saveError}</p>
+            )}
+
+            <button
+              onClick={handleSave}
+              disabled={!parseResult || !buildplan.trim() || saving}
+              className="rounded-md bg-[color:var(--accent,#00d4ff)] px-4 py-2 text-sm font-medium text-black disabled:opacity-40 hover:opacity-90 transition-opacity"
+            >
+              {saving ? "Saving…" : "Save schedule"}
+            </button>
           </div>
-
-          {parseResult && (
-            <CronPreview
-              cron={parseResult.cron}
-              source={parseResult.source}
-              english={parseResult.english}
-              nextRun={parseResult.nextRun}
-            />
-          )}
-
-          <div className="space-y-1">
-            <label className="text-sm font-medium text-[color:var(--text,#e5e5e5)]">
-              Buildplan path
-            </label>
-            <input
-              type="text"
-              value={buildplan}
-              onChange={(e) => setBuildplan(e.target.value)}
-              placeholder="/home/cae/ctrl-alt-elite/tasks/plan.md"
-              className="w-full rounded-md border border-[color:var(--border,#1f1f22)] bg-[color:var(--surface,#121214)] px-3 py-2 text-sm text-[color:var(--text,#e5e5e5)] placeholder:text-[color:var(--text-muted,#8a8a8c)] focus:outline-none focus:ring-1 focus:ring-[color:var(--accent,#00d4ff)]"
-            />
-          </div>
-
-          {saveError && (
-            <p className="text-sm text-red-400">{saveError}</p>
-          )}
-
-          <button
-            onClick={handleSave}
-            disabled={!parseResult || !buildplan.trim() || saving}
-            className="rounded-md bg-[color:var(--accent,#00d4ff)] px-4 py-2 text-sm font-medium text-black disabled:opacity-40 hover:opacity-90 transition-opacity"
-          >
-            {saving ? "Saving…" : "Save schedule"}
-          </button>
-        </div>
+        </RoleGate>
       )}
     </div>
   )

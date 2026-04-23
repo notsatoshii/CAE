@@ -2,12 +2,15 @@
 
 import React from "react"
 import { cn } from "@/lib/utils"
-import type { CatalogSkill } from "@/lib/cae-types"
+import type { CatalogSkill, Role } from "@/lib/cae-types"
+import { RoleGate } from "@/components/auth/role-gate"
 
 type Props = {
   skill: CatalogSkill
   onOpen: (skill: CatalogSkill) => void
   onInstall: (skill: CatalogSkill) => void
+  /** Role from server-component parent. Gates the Install button. */
+  currentRole?: Role
 }
 
 function SourceBadge({ source }: { source: CatalogSkill["source"] }) {
@@ -28,14 +31,16 @@ function SourceBadge({ source }: { source: CatalogSkill["source"] }) {
  * SkillCard — displays a single skill in the catalog grid.
  *
  * Props:
- *   skill    — CatalogSkill data
- *   onOpen   — fired when the card body is clicked (opens detail drawer)
- *   onInstall — fired when the Install button is clicked
+ *   skill       — CatalogSkill data
+ *   onOpen      — fired when the card body is clicked (opens detail drawer)
+ *   onInstall   — fired when the Install button is clicked
+ *   currentRole — gates the Install button (operator+ required)
+ *
+ * Phase 14 Plan 04: viewers see a disabled "Read-only" button.
  */
-export function SkillCard({ skill, onOpen, onInstall }: Props) {
+export function SkillCard({ skill, onOpen, onInstall, currentRole }: Props) {
   const { name, owner, description, source, installs, stars, installed } = skill
 
-  const count = installs ?? stars
   const countLabel = installs != null ? `${installs.toLocaleString()} installs` : stars != null ? `${stars.toLocaleString()} stars` : null
 
   function handleInstall(e: React.MouseEvent) {
@@ -84,17 +89,32 @@ export function SkillCard({ skill, onOpen, onInstall }: Props) {
         )}
       </div>
 
-      {/* Actions row */}
+      {/* Actions row — gated by RoleGate */}
       {!installed && (
         <div className="flex justify-end pt-1">
-          <button
-            type="button"
-            aria-label={`Install ${name}`}
-            onClick={handleInstall}
-            className="rounded bg-[color:var(--accent,#00d4ff)] px-2.5 py-1 text-xs font-medium text-black transition-opacity hover:opacity-80 active:opacity-70"
+          <RoleGate
+            role="operator"
+            currentRole={currentRole}
+            fallback={
+              <button
+                type="button"
+                disabled
+                title="Ask an admin to give you operator access to install skills"
+                className="rounded border border-zinc-700 px-2.5 py-1 text-xs font-medium text-zinc-500 cursor-not-allowed"
+              >
+                Read-only
+              </button>
+            }
           >
-            Install
-          </button>
+            <button
+              type="button"
+              aria-label={`Install ${name}`}
+              onClick={handleInstall}
+              className="rounded bg-[color:var(--accent,#00d4ff)] px-2.5 py-1 text-xs font-medium text-black transition-opacity hover:opacity-80 active:opacity-70"
+            >
+              Install
+            </button>
+          </RoleGate>
         </div>
       )}
     </div>

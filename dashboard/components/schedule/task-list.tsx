@@ -1,13 +1,16 @@
 "use client"
 
 import React, { useState } from "react"
-import type { ScheduledTask } from "@/lib/cae-types"
+import type { ScheduledTask, Role } from "@/lib/cae-types"
+import { RoleGate } from "@/components/auth/role-gate"
 
 export type TaskListProps = {
   tasks: ScheduledTask[]
   onToggle: (id: string, enabled: boolean) => void
   onDelete: (id: string) => void
   onOpenLog: (id: string) => void
+  /** Role from server-component parent. Gates toggle + delete. */
+  currentRole?: Role
 }
 
 function formatEpoch(epoch: number): string {
@@ -19,9 +22,11 @@ function formatEpoch(epoch: number): string {
  * TaskList — renders scheduled tasks in a table with toggle/delete/expand.
  *
  * Row expand: click row to see buildplan path + last run log link.
- * Toggle: enables/disables schedule. Delete: removes from registry.
+ * Toggle: enables/disables schedule (operator+ only).
+ * Delete: removes from registry (operator+ only).
+ * Viewer-role users see the list but toggle and delete are hidden.
  */
-export function TaskList({ tasks, onToggle, onDelete, onOpenLog }: TaskListProps) {
+export function TaskList({ tasks, onToggle, onDelete, onOpenLog, currentRole }: TaskListProps) {
   const [expanded, setExpanded] = useState<string | null>(null)
 
   if (tasks.length === 0) {
@@ -60,38 +65,64 @@ export function TaskList({ tasks, onToggle, onDelete, onOpenLog }: TaskListProps
                   {formatEpoch(task.lastRun)}
                 </td>
                 <td className="px-4 py-3">
-                  <button
-                    aria-label={`Toggle ${task.nl}`}
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      onToggle(task.id, !task.enabled)
-                    }}
-                    className={[
-                      "inline-flex h-5 w-9 items-center rounded-full transition-colors",
-                      task.enabled
-                        ? "bg-[color:var(--accent,#00d4ff)]"
-                        : "bg-[color:var(--border,#1f1f22)]",
-                    ].join(" ")}
+                  <RoleGate
+                    role="operator"
+                    currentRole={currentRole}
+                    fallback={
+                      /* Viewer: show read-only indicator */
+                      <span
+                        className={[
+                          "inline-flex h-5 w-9 items-center rounded-full",
+                          task.enabled
+                            ? "bg-[color:var(--accent,#00d4ff)] opacity-50"
+                            : "bg-[color:var(--border,#1f1f22)] opacity-50",
+                        ].join(" ")}
+                        title="Read-only"
+                      >
+                        <span
+                          className={[
+                            "inline-block h-4 w-4 rounded-full bg-white shadow",
+                            task.enabled ? "translate-x-4" : "translate-x-0.5",
+                          ].join(" ")}
+                        />
+                      </span>
+                    }
                   >
-                    <span
+                    <button
+                      aria-label={`Toggle ${task.nl}`}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        onToggle(task.id, !task.enabled)
+                      }}
                       className={[
-                        "inline-block h-4 w-4 rounded-full bg-white shadow transition-transform",
-                        task.enabled ? "translate-x-4" : "translate-x-0.5",
+                        "inline-flex h-5 w-9 items-center rounded-full transition-colors",
+                        task.enabled
+                          ? "bg-[color:var(--accent,#00d4ff)]"
+                          : "bg-[color:var(--border,#1f1f22)]",
                       ].join(" ")}
-                    />
-                  </button>
+                    >
+                      <span
+                        className={[
+                          "inline-block h-4 w-4 rounded-full bg-white shadow transition-transform",
+                          task.enabled ? "translate-x-4" : "translate-x-0.5",
+                        ].join(" ")}
+                      />
+                    </button>
+                  </RoleGate>
                 </td>
                 <td className="px-4 py-3 text-right">
-                  <button
-                    aria-label={`Delete ${task.nl}`}
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      onDelete(task.id)
-                    }}
-                    className="text-xs text-red-400 hover:text-red-300 transition-colors px-2 py-1 rounded"
-                  >
-                    Delete
-                  </button>
+                  <RoleGate role="operator" currentRole={currentRole}>
+                    <button
+                      aria-label={`Delete ${task.nl}`}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        onDelete(task.id)
+                      }}
+                      className="text-xs text-red-400 hover:text-red-300 transition-colors px-2 py-1 rounded"
+                    >
+                      Delete
+                    </button>
+                  </RoleGate>
                 </td>
               </tr>
               {expanded === task.id && (

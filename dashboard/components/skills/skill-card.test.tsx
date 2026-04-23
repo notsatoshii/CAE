@@ -76,7 +76,7 @@ describe("SkillCard", () => {
 
   it("Test 1e: shows Install button when not installed", () => {
     render(
-      <SkillCard skill={BASE_SKILL} onOpen={vi.fn()} onInstall={vi.fn()} />
+      <SkillCard skill={BASE_SKILL} onOpen={vi.fn()} onInstall={vi.fn()} currentRole="operator" />
     )
     expect(
       screen.getByRole("button", { name: /install agent-skills/i })
@@ -100,7 +100,7 @@ describe("SkillCard", () => {
   it("Test 1g: calls onInstall when Install button clicked", () => {
     const onInstall = vi.fn()
     render(
-      <SkillCard skill={BASE_SKILL} onOpen={vi.fn()} onInstall={onInstall} />
+      <SkillCard skill={BASE_SKILL} onOpen={vi.fn()} onInstall={onInstall} currentRole="operator" />
     )
     // Use the aria-label which is specific: "Install agent-skills"
     fireEvent.click(screen.getByRole("button", { name: /install agent-skills/i }))

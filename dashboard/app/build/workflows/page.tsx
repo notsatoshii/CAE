@@ -10,18 +10,24 @@ export const dynamic = "force-dynamic"
  *
  * Replaces the Phase 5 stub. Interactive "Run now" buttons and the
  * client-side dev-mode flip live in `./workflows-list-client.tsx`.
+ *
+ * Phase 14 Plan 04: passes currentRole from auth() to WorkflowsListClient
+ * so RoleGate can disable the Run button for viewer-role users.
  */
 
 import Link from "next/link"
 import { listWorkflows } from "@/lib/cae-workflows"
 import { labelFor } from "@/lib/copy/labels"
+import { auth } from "@/auth"
 import { WorkflowsListClient } from "./workflows-list-client"
+import type { Role } from "@/lib/cae-types"
 
 export const metadata = { title: "Workflows" }
 
 export default async function WorkflowsPage() {
-  const workflows = await listWorkflows()
+  const [workflows, session] = await Promise.all([listWorkflows(), auth()])
   workflows.sort((a, b) => b.mtime - a.mtime)
+  const currentRole: Role = (session?.user?.role as Role | undefined) ?? "viewer"
   // Server-render founder copy for the heading; interactive bits live
   // in the client component which flips copy on dev-mode.
   const t = labelFor(false)
@@ -38,7 +44,7 @@ export default async function WorkflowsPage() {
           {t.workflowsCreateButton}
         </Link>
       </div>
-      <WorkflowsListClient initialWorkflows={workflows} />
+      <WorkflowsListClient initialWorkflows={workflows} currentRole={currentRole} />
     </main>
   )
 }

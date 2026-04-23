@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react"
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
-import type { CatalogSkill } from "@/lib/cae-types"
+import type { CatalogSkill, Role } from "@/lib/cae-types"
 import type { SkillFrontmatter } from "@/lib/cae-skills-parse"
 import { InstallButton } from "./install-button"
 
@@ -11,6 +11,8 @@ type Props = {
   skill: CatalogSkill | null
   onClose: () => void
   onInstalled?: () => void
+  /** Role from server-component parent — forwarded to InstallButton. */
+  currentRole?: Role
 }
 
 type DetailData = {
@@ -26,8 +28,10 @@ type DetailData = {
  *
  * Footer: Install button (if not installed) + copy installCmd to clipboard.
  * Trust score slot: placeholder div (ships in Plan 14-05).
+ *
+ * Phase 14 Plan 04: currentRole forwarded to InstallButton for gating.
  */
-export function SkillDetailDrawer({ skill, onClose, onInstalled }: Props) {
+export function SkillDetailDrawer({ skill, onClose, onInstalled, currentRole }: Props) {
   const [detail, setDetail] = useState<DetailData>(null)
   const [loading, setLoading] = useState(false)
 
@@ -136,7 +140,7 @@ export function SkillDetailDrawer({ skill, onClose, onInstalled }: Props) {
             Copy install command
           </button>
           {!skill.installed && (
-            <InstallButton skill={skill} onInstalled={onInstalled} />
+            <InstallButton skill={skill} onInstalled={onInstalled} currentRole={currentRole} />
           )}
         </div>
       </aside>
