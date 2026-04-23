@@ -11,6 +11,7 @@ import { existsSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { seedFixture } from "./seed-fixture"
+import { readExpectedTruth as healthyReadExpectedTruth } from "./fixtures/healthy"
 import {
   runScoring,
   writeReports,
@@ -86,9 +87,10 @@ describe("score-run", () => {
     const shotsDir = join(workDir, "shots")
     const reportsDir = join(workDir, "reports")
 
-    // healthy fixture's readExpectedTruth() expects
-    // "mission-control.active-count" = "5" etc. We render matching rows so
-    // truth pillar scores high; reliability high via empty console.
+    // healthy fixture's readExpectedTruth() expects a map of scalar keys.
+    // Reflect it 1:1 so truth pillar scores 5 (zero drift) while we also
+    // cover every annotation we've added to product code.
+    const healthyExpected = healthyReadExpectedTruth()
     await writeSyntheticCell(
       shotsDir,
       "healthy",
@@ -96,13 +98,10 @@ describe("score-run", () => {
       "build",
       "laptop",
       {
-        truth: [
-          { key: "mission-control.active-count", value: "5" },
-          { key: "mission-control.empty", value: "false" },
-          { key: "metrics.total-events", value: "85" },
-          { key: "build-queue.count", value: "0" },
-          { key: "tool-calls.last-60s", value: "60" },
-        ],
+        truth: Object.entries(healthyExpected).map(([key, value]) => ({
+          key,
+          value,
+        })),
       },
     )
 

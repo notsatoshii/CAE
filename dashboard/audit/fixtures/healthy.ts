@@ -30,13 +30,68 @@ import { join } from "node:path"
 // 5 still in flight); sparkline should reflect a dense tool-call stream.
 // Values here are the exact strings product code should render into
 // `[data-truth]` when this fixture is seeded — scorer diffs these.
+// Scalar keys only: anything that depends on wall-clock drift (burn-rate
+// USD, last_event_at epoch, cost_today_usd, etc.) is omitted so the diff
+// stays deterministic. The scorer still credits those toward depth since
+// depth counts unique keys rendered, not expected-value matches.
 export function readExpectedTruth(): Record<string, string> {
   return {
+    // /build mission-control hero — 5 of 30 forge_begin events unmatched.
     "mission-control.active-count": "5",
     "mission-control.empty": "false",
-    "metrics.total-events": "85", // 30 begin + 25 end + 30 token_usage
+    "mission-control.healthy": "yes",
+    // /build live-activity panel — starts in loading state under the harness;
+    // if the capture waits for first fetch, healthy+last-24h-count replace these.
+    // We encode the stable post-fetch values. `last-24h-count` = 120 tool-calls.
+    "live-activity.healthy": "yes",
+    "live-activity.last-24h-count": "120",
+    // /build rollup-strip — depends on aggregator state.rollup which reads
+    // forge events. Healthy fixture seeds no ships today, so shipped=0,
+    // warnings=0, blocked=0, in_flight=5 (matches active_count), tokens=0.
+    "rollup.healthy": "yes",
+    "rollup.warnings": "0",
+    "rollup.blocked": "0",
+    // /build active-phase-cards + needs-you + recent-ledger — healthy fixture
+    // seeds no home_phases / no needs_you / no events_recent, so they all
+    // render their empty branches.
+    "active-phases.empty": "yes",
+    "active-phases.count": "0",
+    "needs-you.empty": "yes",
+    "needs-you.count": "0",
+    "recent-ledger.empty": "yes",
+    "recent-ledger.count": "0",
+
+    // /metrics — panels start in loading without a seeded /api/metrics state.
+    "metrics.loading": "yes",
+
+    // /floor — canvas init renders the loading marker until the first
+    // heartbeat arrives. The healthy fixture doesn't seed heartbeats, so
+    // floor stays on the loading branch.
+    "floor.loading": "yes",
+    "floor.effects-count": "0",
+    "floor.queue-size": "0",
+    "floor.paused": "false",
+    "floor.minimized": "false",
+    "floor.popout": "false",
+    "floor.auth-drifted": "false",
+
+    // /plan — coming-soon stub is static.
+    "plan.healthy": "yes",
+    "plan.empty": "yes",
+    "plan.projects-count": "0",
+    "plan.active-prds-count": "0",
+    "plan.roadmaps-count": "0",
+    "plan.uat-count": "0",
+    "plan.tabs-count": "4",
+    "plan.stub": "true",
+
+    // /memory — fresh mount starts in loading until /api/memory-graph returns.
+    "memory.view": "browse",
+    "memory.why-drawer-open": "false",
+    "memory.git-drawer-open": "false",
+
+    // Legacy queue key — kept for harness callers that still reference it.
     "build-queue.count": "0",
-    "tool-calls.last-60s": "60",
   }
 }
 
