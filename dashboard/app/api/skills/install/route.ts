@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { installSkill } from "@/lib/cae-skills-install"
+import { installSkill, isSafeRepo } from "@/lib/cae-skills-install"
 import { auth } from "@/auth"
 import { requireRole } from "@/lib/cae-rbac"
 import type { Role } from "@/lib/cae-types"
@@ -9,6 +9,15 @@ import os from "node:os"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
+
+/**
+ * Safe segment regex — used to re-validate the derived skillName before
+ * passing it to path.join(). Must start with alnum/underscore, no leading
+ * dots or dashes, and must not be the pure-dot tokens `.` or `..`.
+ *
+ * CR-02: defense-in-depth on top of isSafeRepo() in cae-skills-install.ts.
+ */
+const SAFE_NAME_RE = /^[A-Za-z0-9_][A-Za-z0-9_.-]*$/
 
 /**
  * POST /api/skills/install
@@ -21,6 +30,7 @@ export const dynamic = "force-dynamic"
  *
  * Security:
  *   - repo validated by installSkill() against allowlist regex (T-14-02-01)
+ *   - skillName re-validated before path.join (CR-02)
  *   - spawn uses argv array, never shell:true
  *   - invalid repo → 400 before any child process is started
  *   - operator role required (T-14-04 defense-in-depth; middleware is first line)
@@ -47,6 +57,22 @@ export async function POST(req: NextRequest) {
     )
   }
 
+  // CR-02: derive skillName via explicit regex match (not split().pop()) so we
+  // never accidentally pass a `..` or leading-dash token to path.join.
+  // Strip URL prefix and tree suffix, then extract owner/name via REPO_RE.
+  const repoPart = body.repo
+    .replace(/^https?:\/\/github\.com\//, "")
+    .split("/tree/")[0]
+  const slugMatch = /^([A-Za-z0-9_][A-Za-z0-9_.-]*)\/([A-Za-z0-9_][A-Za-z0-9_.-]*)$/.exec(repoPart)
+  if (!slugMatch) {
+    return NextResponse.json({ error: "invalid repo" }, { status: 400 })
+  }
+  const skillName = slugMatch[2]
+  // Belt-and-suspenders: reject pure-dot tokens even if regex somehow passed them
+  if (skillName === "." || skillName === ".." || !SAFE_NAME_RE.test(skillName)) {
+    return NextResponse.json({ error: "invalid repo" }, { status: 400 })
+  }
+
   let stream: AsyncIterable<{ type: string; data: string }>
   try {
     stream = installSkill(body.repo)
@@ -56,9 +82,6 @@ export async function POST(req: NextRequest) {
       { status: 400 }
     )
   }
-
-  // Derive the skill directory name from repo slug (e.g. "vercel-labs/deploy" → "deploy")
-  const skillName = body.repo.replace(/^https?:\/\/github\.com\//, "").split("/").pop() ?? body.repo
 
   const enc = new TextEncoder()
   const body_ = new ReadableStream({
@@ -81,12 +104,18 @@ export async function POST(req: NextRequest) {
         controller.close()
         // T-14-05-06: Fire-and-forget scan after successful install.
         // Does NOT block the SSE response. Scan failure is logged but never surfaced here.
+        // skillName is pre-validated above — safe to join with skillsDir.
         if (installSucceeded) {
           const skillsDir = process.env.CAE_SKILLS_DIR ?? path.join(os.homedir(), ".claude", "skills")
           const skillDir = path.join(skillsDir, skillName)
-          scanSkill(skillDir)
-            .then((result) => appendScan(skillName, result))
-            .catch(() => undefined)
+          // CR-02 final guard: resolved path must stay inside skillsDir
+          const resolved = path.resolve(skillDir)
+          const resolvedRoot = path.resolve(skillsDir)
+          if (resolved.startsWith(resolvedRoot + path.sep) || resolved === resolvedRoot) {
+            scanSkill(skillDir)
+              .then((result) => appendScan(skillName, result))
+              .catch(() => undefined)
+          }
         }
       }
     },

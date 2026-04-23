@@ -5,9 +5,42 @@ export type InstallEvent = { type: "line" | "err" | "done"; data: string }
 
 // Allowlist: owner/name slug or https://github.com/... URL
 // T-14-02-01: argv array injection mitigation
-const REPO_RE = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/
+//
+// CR-02 fix: tightened from /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/ to require
+// each segment to START with an alphanumeric or underscore (blocks leading `-`,
+// leading `.`, and pure-dot tokens like `..` or `.`).
+//
+// Safe slug segment: starts with [A-Za-z0-9_], then any mix of [A-Za-z0-9_.-]
+// This rejects:  `..`, `.`, `-x`, `--help`, `../foo`, `foo/..`, `foo/.`
+const SLUG_SEGMENT = /^[A-Za-z0-9_][A-Za-z0-9_.-]*$/
+
+/** owner/name short-form slug */
+const REPO_RE = /^[A-Za-z0-9_][A-Za-z0-9_.-]*\/[A-Za-z0-9_][A-Za-z0-9_.-]*$/
+
 const URL_OK =
-  /^https:\/\/github\.com\/[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+(\/tree\/[A-Za-z0-9_./-]+)?$/
+  /^https:\/\/github\.com\/[A-Za-z0-9_][A-Za-z0-9_.-]*\/[A-Za-z0-9_][A-Za-z0-9_.-]*(\/tree\/[A-Za-z0-9_./-]+)?$/
+
+/**
+ * isSafeRepo — validates that a slug has no dot-only segments (`.` or `..`).
+ *
+ * REPO_RE already blocks leading-dot and leading-dash segments.
+ * This extra check blocks the residual case where a trailing dot creates a
+ * segment that normalises to a parent directory (e.g. `foo/..` would pass a
+ * naive regex if dots were allowed mid-token, but our regex already blocks it;
+ * this is belt-and-suspenders).
+ *
+ * CR-02: explicitly reject `.` and `..` segment names even if the regex
+ * somehow allowed them (defense-in-depth).
+ */
+export function isSafeRepo(repo: string): boolean {
+  if (!REPO_RE.test(repo)) return false
+  const [owner, name] = repo.split("/")
+  // Reject pure-dot segments — belt-and-suspenders on top of REPO_RE
+  if (owner === "." || owner === ".." || name === "." || name === "..") return false
+  // Each segment must pass the segment regex (should always be true after REPO_RE, but explicit)
+  if (!SLUG_SEGMENT.test(owner) || !SLUG_SEGMENT.test(name)) return false
+  return true
+}
 
 /**
  * Installs a skill via `npx skills add <repo>` and yields events:
@@ -15,7 +48,7 @@ const URL_OK =
  *   { type: "err",  data: string } — each stderr chunk
  *   { type: "done", data: exitCode.toString() }
  *
- * Security: repo is validated against REPO_RE or URL_OK before spawn.
+ * Security: repo is validated against REPO_RE/isSafeRepo or URL_OK before spawn.
  * spawn is called with an argv ARRAY (never shell:true) to prevent injection.
  * SKILLS_TELEMETRY_DISABLED=1 prevents telemetry calls.
  */
@@ -23,7 +56,9 @@ export async function* installSkill(
   repo: string,
   spawnImpl: typeof spawn = spawn
 ): AsyncIterable<InstallEvent> {
-  if (!REPO_RE.test(repo) && !URL_OK.test(repo)) {
+  const isSlug = isSafeRepo(repo)
+  const isUrl = !isSlug && URL_OK.test(repo)
+  if (!isSlug && !isUrl) {
     throw new Error(`invalid repo: ${repo}`)
   }
 

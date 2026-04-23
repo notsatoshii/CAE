@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest"
-import { installSkill } from "./cae-skills-install"
+import { installSkill, isSafeRepo } from "./cae-skills-install"
 import { mockSpawn } from "../tests/helpers/spawn-mock"
 
 describe("installSkill", () => {
@@ -105,5 +105,56 @@ describe("installSkill", () => {
 
     expect(spawnMock).toHaveBeenCalled()
     expect(events.find((e) => e.type === "done")).toBeDefined()
+  })
+})
+
+// ─── CR-02 regression: REPO_RE tightening ─────────────────────────────────────
+describe("CR-02: isSafeRepo — rejects path-traversal and argv-injection slugs", () => {
+  it("CR-02a: rejects foo/.. (skillName='..' → path traversal to ~/.claude)", () => {
+    expect(isSafeRepo("foo/..")).toBe(false)
+  })
+
+  it("CR-02b: rejects foo/. (skillName='.' → scans skills dir itself)", () => {
+    expect(isSafeRepo("foo/.")).toBe(false)
+  })
+
+  it("CR-02c: rejects ../foo (owner segment starts with dot)", () => {
+    expect(isSafeRepo("../foo")).toBe(false)
+  })
+
+  it("CR-02d: rejects -x/foo (leading dash → argv flag injection)", () => {
+    expect(isSafeRepo("-x/foo")).toBe(false)
+  })
+
+  it("CR-02e: rejects --help/foo (double-dash argv injection)", () => {
+    expect(isSafeRepo("--help/foo")).toBe(false)
+  })
+
+  it("CR-02f: accepts normal owner/name slug", () => {
+    expect(isSafeRepo("vercel-labs/agent-skills")).toBe(true)
+  })
+
+  it("CR-02g: accepts slug with underscores and dots mid-token", () => {
+    expect(isSafeRepo("my_org/skill.v2")).toBe(true)
+  })
+
+  it("CR-02h: rejects slug with leading dot in name segment", () => {
+    expect(isSafeRepo("foo/.hidden")).toBe(false)
+  })
+
+  it("CR-02i: installSkill throws on foo/.. before spawn", async () => {
+    const spawnMock = vi.fn()
+    await expect(async () => {
+      for await (const _ of installSkill("foo/..", spawnMock)) { /* drain */ }
+    }).rejects.toThrow(/invalid repo/)
+    expect(spawnMock).not.toHaveBeenCalled()
+  })
+
+  it("CR-02j: installSkill throws on --help/x before spawn", async () => {
+    const spawnMock = vi.fn()
+    await expect(async () => {
+      for await (const _ of installSkill("--help/x", spawnMock)) { /* drain */ }
+    }).rejects.toThrow(/invalid repo/)
+    expect(spawnMock).not.toHaveBeenCalled()
   })
 })
