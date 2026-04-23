@@ -6,9 +6,16 @@
  * Filters: date range (from/to), tool name select, task text filter.
  * On filter change, re-fetches /api/security/audit with params.
  * Click row to expand full cwd + ts detail.
+ *
+ * Phase 15 Wave 2.6 (bonus): both empty branches now adopt <EmptyState>
+ * + EMPTY_COPY.audit so the rest-state speaks in CAE's voice and matches
+ * every other surface visually. testIds preserved (audit-empty / audit-table-empty).
  */
 import { useState, useCallback, Fragment } from "react"
+import { ShieldCheck } from "lucide-react"
 import type { AuditEntry } from "@/lib/cae-types"
+import { EmptyState } from "@/components/ui/empty-state"
+import { EMPTY_COPY } from "@/lib/copy/empty-states"
 
 const PAGE_SIZE = 50
 
@@ -70,11 +77,14 @@ export function AuditTable({ initial }: AuditTableProps) {
 
   const pageCount = Math.max(1, Math.ceil(total / PAGE_SIZE))
 
+  // Cold-start empty (no filters applied yet) — use the full character copy.
   if (entries.length === 0 && !loading && !tool && !from && !to && !taskFilter) {
     return (
-      <div data-testid="audit-empty" className="text-sm text-zinc-500 py-8 text-center">
-        No tool-call entries yet. Run a task to start populating the audit log.
-      </div>
+      <EmptyState
+        icon={ShieldCheck}
+        testId="audit-empty"
+        {...EMPTY_COPY.audit}
+      />
     )
   }
 
@@ -125,9 +135,15 @@ export function AuditTable({ initial }: AuditTableProps) {
       {/* Table */}
       <div className="rounded border border-zinc-800 overflow-hidden">
         {entries.length === 0 ? (
-          <p data-testid="audit-table-empty" className="py-6 text-center text-xs text-zinc-500">
-            No entries match the current filters.
-          </p>
+          // Filter-applied empty — short copy because the user controls the filters.
+          <div data-testid="audit-table-empty" className="py-6">
+            <EmptyState
+              icon={ShieldCheck}
+              testId="audit-table-empty-state"
+              title="No entries match the current filters"
+              description="Loosen the date range or clear the tool / task filter to see more."
+            />
+          </div>
         ) : (
           <table className="w-full text-xs">
             <thead>

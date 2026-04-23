@@ -1,8 +1,10 @@
 "use client"
 
 import React, { useState, useEffect, useCallback } from "react"
+import { SearchX } from "lucide-react"
 import type { CatalogSkill, Role } from "@/lib/cae-types"
 import { SkillCard } from "./skill-card"
+import { EmptyState } from "@/components/ui/empty-state"
 
 type Props = {
   initial: CatalogSkill[]
@@ -20,6 +22,10 @@ type Props = {
  * - Shows "no results" empty state when filter yields nothing
  *
  * Phase 14 Plan 04: currentRole forwarded to SkillCard for InstallButton gating.
+ *
+ * Phase 15 Wave 2.6 (bonus): no-results state adopts <EmptyState> for
+ * visual consistency with every other surface. testId preserved
+ * (catalog-no-results) so existing harnesses keep working.
  */
 export function CatalogGrid({ initial, onOpen, onInstall, currentRole }: Props) {
   const [q, setQ] = useState("")
@@ -84,12 +90,13 @@ export function CatalogGrid({ initial, onOpen, onInstall, currentRole }: Props) 
           ))}
         </div>
       ) : (
-        <div
-          data-testid="catalog-no-results"
-          className="py-16 text-center text-sm text-zinc-500"
-        >
-          No skills match your search. Try a different term.
-        </div>
+        <EmptyState
+          icon={SearchX}
+          testId="catalog-no-results"
+          title="No skills match your search"
+          description="Try a different term, or clear the search box to see the whole catalog."
+          tip="Skills come from skills.sh + clawhub + your local ~/.claude/skills directory."
+        />
       )}
     </div>
   )

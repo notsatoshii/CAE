@@ -9,6 +9,7 @@ import { labelFor } from "@/lib/copy/labels";
 import { agentMetaFor } from "@/lib/copy/agent-meta";
 import { Panel } from "@/components/ui/panel";
 import { LastUpdated } from "@/components/ui/last-updated";
+import { EmptyState } from "@/components/ui/empty-state";
 import type { RecentEvent } from "@/lib/cae-home-state";
 
 function formatTok(n: number): string {
@@ -75,10 +76,15 @@ export function RecentLedger() {
         testId="recent-ledger"
         className="mb-6"
       >
-        <div className="flex items-center gap-2 text-sm text-[color:var(--text-muted)]">
-          <Clock size={16} className="shrink-0 text-[color:var(--text-muted)]" aria-hidden />
-          <span>{t.recentEmpty}</span>
-        </div>
+        {/* Phase 15 Wave 2.6 (bonus): adopts <EmptyState> for visual rhythm.
+            Keeps the existing labelFor(dev) copy verbatim so the regression
+            test that greps "nothing shipped yet|no events logged" still passes. */}
+        <EmptyState
+          icon={Clock}
+          testId="recent-ledger-empty"
+          title={t.recentEmpty}
+          description="Tool calls and ship events light this up the moment work resumes."
+        />
       </Panel>
     );
   }

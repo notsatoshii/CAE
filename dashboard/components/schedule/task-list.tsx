@@ -1,8 +1,10 @@
 "use client"
 
 import React, { useState } from "react"
+import { CalendarClock } from "lucide-react"
 import type { ScheduledTask, Role } from "@/lib/cae-types"
 import { RoleGate } from "@/components/auth/role-gate"
+import { EmptyState } from "@/components/ui/empty-state"
 
 export type TaskListProps = {
   tasks: ScheduledTask[]
@@ -25,15 +27,22 @@ function formatEpoch(epoch: number): string {
  * Toggle: enables/disables schedule (operator+ only).
  * Delete: removes from registry (operator+ only).
  * Viewer-role users see the list but toggle and delete are hidden.
+ *
+ * Phase 15 Wave 2.6 (bonus): empty state adopts <EmptyState> +
+ * EMPTY_COPY.schedule for character + a CTA back to /build/schedule/new.
  */
 export function TaskList({ tasks, onToggle, onDelete, onOpenLog, currentRole }: TaskListProps) {
   const [expanded, setExpanded] = useState<string | null>(null)
 
   if (tasks.length === 0) {
     return (
-      <p className="text-sm text-[color:var(--text-muted,#8a8a8c)] py-4">
-        No schedules yet. Create one to get started.
-      </p>
+      <EmptyState
+        icon={CalendarClock}
+        testId="task-list-empty"
+        title="No schedules yet"
+        description="Cron jobs you create from /build/schedule/new appear here. Toggle, expand, or delete each row in place."
+        cta={{ label: "Create one", href: "/build/schedule/new" }}
+      />
     )
   }
 
