@@ -333,3 +333,55 @@ Plans:
 
 Plans:
 - [ ] TBD (run /gsd-plan-phase 16 to break down)
+
+### Phase 17: ui-harness extraction → shared CAE package
+
+**Goal:** Extract `dashboard/audit/` to `cae/packages/ui-harness/` so any
+CAE frontend (Shift web, future founder-app, any Next app) can drop in
+routes + personas + auth plugin + fixtures and reuse the core scoring /
+clickwalk / LLM-vision / cycle orchestrator / fix-gate machinery.
+
+**Requirements:**
+- Move app-agnostic modules: `score/` (rubric + pillars + llm-vision),
+  `scrape/` (clickwalk + data-truth), `score-run.ts`, `gate.ts` +
+  `gate-cli.ts`, `run-cycle.sh`, `seed-fixture.ts` orchestration
+- Define plugin interfaces: AuthPlugin (mint cookie), FixturePlugin
+  (seed state), RoutesProvider, PersonasProvider, ViewportsProvider
+- Keep `dashboard/audit/` as a thin per-app adapter: NextAuth v5 JWE
+  minter, 25 dashboard routes, 6 dashboard personas, .cae/ fixtures
+- Swap per-app config by environment var or config file
+- Prove it: Shift web gets a `shift/audit/` adapter too, re-runs a cycle
+  end-to-end on a different auth stack (or non-auth) and different routes
+
+**Depends on:** Phase 15 close-out (do NOT extract mid-cycle — derails
+the overhaul loop)
+
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd-plan-phase 17 to break down)
+
+**Source:** Eric session-10, 2026-04-23.
+
+## Backlog (not scheduled yet)
+
+Quick-capture. Promote with `/gsd-review-backlog` when ready.
+
+### Loading screens — branded / cool
+- Current loading states are default spinners or blank. Feels cheap.
+- Need a branded identity moment: logo animation, ambient gradient,
+  sparkline shimmer, or pixel-agent preview walking across. Should
+  reinforce "CAE is alive and working" on cold boot + route transition.
+- Scope: top-level app shell loader + per-route suspense boundaries
+  (chat, floor, memory, metrics — slowest routes).
+- Source: Eric session-10, 2026-04-23.
+
+### Pixel agents broken on FE
+- `/floor` isometric view + Build-home FloorPin (Wave 3.2) are not
+  rendering agents as of session 10. Repro + root-cause:
+  - Is the event-adapter consuming breakers.jsonl correctly?
+  - Is FloorCanvas mounting (canvas element present + non-zero dims)?
+  - Is the heartbeat-emitter firing synthetic beats when breakers idle?
+  - Console errors in `/floor` vs `/build`?
+- Blocker for Wave 3 acceptance. Bumps Phase 15 Wave 3 to re-test.
+- Source: Eric session-10, 2026-04-23.
