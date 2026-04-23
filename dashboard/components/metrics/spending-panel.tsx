@@ -84,6 +84,7 @@ export function SpendingPanel() {
         headingId="spending-heading"
         testId="spending-panel-loading"
       >
+        <span className="sr-only" data-truth="metrics.loading">yes</span>
         <div className="flex flex-col gap-6">
           <span className="sr-only">{L.metricsEmptyState}</span>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
@@ -106,6 +107,7 @@ export function SpendingPanel() {
         headingId="spending-heading"
         testId="spending-panel-empty"
       >
+        <span className="sr-only" data-truth="metrics.empty">yes</span>
         <EmptyState
           icon={LineChart}
           heading={L.emptyMetricsPanelHeading}
@@ -133,6 +135,15 @@ export function SpendingPanel() {
       subtitle={<EstDisclaimer />}
       className="flex flex-col gap-6"
     >
+      <span className="sr-only" data-truth="metrics.healthy">yes</span>
+      <span className="sr-only" data-truth="metrics.tokens-today">{s.tokens_today}</span>
+      <span className="sr-only" data-truth="metrics.tokens-mtd">{s.tokens_mtd}</span>
+      <span className="sr-only" data-truth="metrics.tokens-projected-monthly">
+        {s.tokens_projected_monthly}
+      </span>
+      <span className="sr-only" data-truth="metrics.top-expensive-count">
+        {s.top_expensive.length}
+      </span>
       <GoldenSignalsSubtitle panel="spending" />
 
       {/* Big-number row */}

@@ -133,6 +133,15 @@ export function ReliabilityPanel() {
       testId="reliability-panel"
       className="flex flex-col gap-6"
     >
+      <span className="sr-only" data-truth="metrics.reliability-rate">
+        {weightedRate.toFixed(3)}
+      </span>
+      <span className="sr-only" data-truth="metrics.reliability-sample-n">
+        {totalN}
+      </span>
+      <span className="sr-only" data-truth="metrics.halt-events-count">
+        {r.halt_events.length}
+      </span>
       <div>
         <GoldenSignalsSubtitle panel="howwell" />
         <p className="flex items-center gap-1.5 text-sm text-[color:var(--text-muted)]">

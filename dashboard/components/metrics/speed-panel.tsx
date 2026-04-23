@@ -125,6 +125,13 @@ export function SpeedPanel() {
       testId="speed-panel"
       className="flex flex-col gap-6"
     >
+      <span className="sr-only" data-truth="metrics.speed-p50-ms">{overallP50}</span>
+      <span className="sr-only" data-truth="metrics.queue-depth-now">
+        {sp.queue_depth_now}
+      </span>
+      <span className="sr-only" data-truth="metrics.time-to-merge-bin-count">
+        {sp.time_to_merge_bins.length}
+      </span>
       <div>
         <GoldenSignalsSubtitle panel="howfast" />
         <p className="text-sm text-[color:var(--text-muted)]">
