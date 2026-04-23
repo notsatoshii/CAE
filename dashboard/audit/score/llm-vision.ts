@@ -23,6 +23,7 @@
  * so we won't over-spend between checks.
  */
 
+import { spawn } from "node:child_process"
 import { createHash } from "node:crypto"
 import { mkdir, readFile, writeFile, access } from "node:fs/promises"
 import { dirname, join } from "node:path"
@@ -58,6 +59,15 @@ export interface VisionOpts {
   cacheDir?: string
   /** Abort signal for the fetch call. */
   signal?: AbortSignal
+  /**
+   * Force the `claude -p` CLI transport instead of the direct API. Default:
+   * AUDIT_VISION_USE_CLI=1, or auto-on when ANTHROPIC_API_KEY is missing and
+   * the `claude` CLI is on PATH. api.anthropic.com rejects OAuth tokens, so
+   * Max-plan users have to go through the CLI.
+   */
+  useCli?: boolean
+  /** Override the CLI binary for tests (default "claude"). */
+  cliBin?: string
 }
 
 function resolveModel(opts?: VisionOpts): string {
@@ -77,6 +87,86 @@ function resolveBudget(opts?: VisionOpts): number {
 
 function resolveCacheDir(opts?: VisionOpts): string {
   return opts?.cacheDir ?? join(__dirname, ".cache")
+}
+
+function resolveUseCli(opts: VisionOpts | undefined, apiKey: string | undefined): boolean {
+  if (typeof opts?.useCli === "boolean") return opts.useCli
+  if (process.env.AUDIT_VISION_USE_CLI === "1") return true
+  // Fall-through: if no API key, auto-use CLI (Max-plan path).
+  return !apiKey
+}
+
+// ── `claude -p` CLI transport ──────────────────────────────────────────
+// api.anthropic.com rejects OAuth tokens, so Max-plan users have to shell
+// out to the local `claude` CLI. We pass the image via the @-path syntax
+// and request JSON output; the CLI wraps the model reply in
+// {type:"result", result:"<model text>", ...}.
+interface CliShellOpts {
+  prompt: string
+  imagePath: string
+  model: string
+  bin: string
+  signal?: AbortSignal
+}
+async function callClaudeCli(opts: CliShellOpts): Promise<ScoreResult> {
+  // Prompt the model to look at the attached image. Escape the path into
+  // the prompt (claude -p substitutes @path at send time).
+  const promptWithImage =
+    `${opts.prompt}\n\nImage to score: @${opts.imagePath}`
+  const args = [
+    "-p",
+    "--model", opts.model,
+    "--output-format", "json",
+    promptWithImage,
+  ]
+  const { stdout } = await runCli(opts.bin, args, opts.signal)
+  // CLI returns an envelope: {type:"result", subtype:"success", result:"..."}.
+  // `result` is the raw model text — our ScoreResult JSON.
+  let envelope: { result?: string; is_error?: boolean }
+  try {
+    envelope = JSON.parse(stdout)
+  } catch (err) {
+    throw new Error(
+      `audit/llm-vision: claude CLI returned non-JSON stdout: ` +
+        `${stdout.slice(0, 300)}`,
+      { cause: err },
+    )
+  }
+  if (envelope.is_error) {
+    throw new Error(`audit/llm-vision: claude CLI reported error: ${stdout.slice(0, 500)}`)
+  }
+  const modelText = typeof envelope.result === "string" ? envelope.result : ""
+  return parseVisionResponse(modelText)
+}
+
+function runCli(
+  bin: string,
+  args: string[],
+  signal?: AbortSignal,
+): Promise<{ stdout: string; stderr: string }> {
+  return new Promise((resolve, reject) => {
+    const child = spawn(bin, args, { stdio: ["ignore", "pipe", "pipe"] })
+    const outChunks: Buffer[] = []
+    const errChunks: Buffer[] = []
+    child.stdout.on("data", (c: Buffer) => outChunks.push(c))
+    child.stderr.on("data", (c: Buffer) => errChunks.push(c))
+    const onAbort = () => child.kill("SIGTERM")
+    signal?.addEventListener("abort", onAbort, { once: true })
+    child.on("error", (err) => {
+      signal?.removeEventListener("abort", onAbort)
+      reject(err)
+    })
+    child.on("close", (code) => {
+      signal?.removeEventListener("abort", onAbort)
+      const stdout = Buffer.concat(outChunks).toString("utf8")
+      const stderr = Buffer.concat(errChunks).toString("utf8")
+      if (code !== 0) {
+        reject(new Error(`${bin} ${args[0]} exited ${code}: ${stderr.slice(0, 500)}`))
+        return
+      }
+      resolve({ stdout, stderr })
+    })
+  })
 }
 
 // ── Cost math ──────────────────────────────────────────────────────────
@@ -225,14 +315,29 @@ export async function scoreWithVision(
   }
 
   const apiKey = process.env.ANTHROPIC_API_KEY
-  if (!apiKey) {
-    throw new Error(
-      "audit/llm-vision: ANTHROPIC_API_KEY not set. Either export the key " +
-        "or run with AUDIT_VISION_DRY_RUN=1.",
-    )
+  const useCli = resolveUseCli(opts, apiKey)
+  const prompt = buildPrompt(pillar)
+
+  if (useCli) {
+    const cliResult = await callClaudeCli({
+      prompt,
+      imagePath: cell.pngPath,
+      model,
+      bin: opts?.cliBin ?? "claude",
+      signal: opts?.signal,
+    })
+    cumulativeUsd += projected
+    await writeCache(cacheDir, hash, cliResult)
+    return cliResult
   }
 
-  const prompt = buildPrompt(pillar)
+  if (!apiKey) {
+    throw new Error(
+      "audit/llm-vision: no transport available. Set ANTHROPIC_API_KEY, " +
+        "install the `claude` CLI, set AUDIT_VISION_USE_CLI=1, or run " +
+        "with AUDIT_VISION_DRY_RUN=1.",
+    )
+  }
   const body = {
     model,
     max_tokens: MAX_OUTPUT_TOKENS,
