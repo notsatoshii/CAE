@@ -33,6 +33,8 @@ import { mkdir, writeFile } from "node:fs/promises"
 import { dirname, join } from "node:path"
 import { ROUTES, type PersonaId } from "./routes"
 import { PERSONAS, buildPersonaCookies, type Persona } from "./personas"
+import { extractTruth } from "./scrape/data-truth"
+import { clickwalkRoute } from "./scrape/clickwalk"
 
 const FIXTURE = process.env.FIXTURE ?? "healthy"
 const BASE_URL = process.env.AUDIT_BASE_URL ?? "http://localhost:3002"
@@ -151,17 +153,28 @@ for (const route of ROUTES) {
         })
 
       // ── Truth extract (data-truth annotations) ──────────────────────
-      const truth = await page
-        .locator("[data-truth]")
-        .evaluateAll((els) =>
-          els.map((e) => ({
-            key: e.getAttribute("data-truth"),
-            value: e.textContent?.trim() ?? null,
-            tag: e.tagName.toLowerCase(),
-          })),
-        )
-        .catch(() => [] as Array<{ key: string | null; value: string | null; tag: string }>)
+      const truth = await extractTruth(page)
       await writeFile(outBase + ".truth.json", JSON.stringify(truth, null, 2), "utf8")
+
+      // ── Optional clickwalk (AUDIT_CLICKWALK=1) — time-bound ────────
+      if (process.env.AUDIT_CLICKWALK === "1") {
+        try {
+          const walk = await clickwalkRoute(
+            page as unknown as Parameters<typeof clickwalkRoute>[0],
+            { path: route.path, slug: route.slug },
+          )
+          await writeFile(
+            outBase.replace(/--[^-]+$/, `--clickwalk`) + ".json",
+            JSON.stringify(walk, null, 2),
+            "utf8",
+          )
+        } catch (err) {
+          pageErrors.push({
+            name: "ClickwalkError",
+            message: err instanceof Error ? err.message : String(err),
+          })
+        }
+      }
 
       // ── Console JSON sidecar ────────────────────────────────────────
       await writeFile(
