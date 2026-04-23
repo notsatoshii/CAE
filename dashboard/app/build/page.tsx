@@ -9,6 +9,8 @@ import { LiveOpsLine } from "@/components/build-home/live-ops-line"
 import { ActivePhaseCards } from "@/components/build-home/active-phase-cards"
 import { NeedsYouList } from "@/components/build-home/needs-you-list"
 import { RecentLedger } from "@/components/build-home/recent-ledger"
+import { RecentCommits } from "@/components/build-home/recent-commits"
+import { ActivityFeed } from "@/components/build-home/activity-feed"
 import { TaskDetailSheet } from "@/components/build-home/task-detail-sheet"
 import { MissionControlHero } from "@/components/build-home/mission-control-hero"
 import { FloorPin } from "@/components/build-home/floor-pin"
@@ -45,7 +47,10 @@ export default async function BuildPage({ searchParams }: BuildPageProps) {
         <MissionControlHero />
       </div>
 
-      {/* Two-column layout on desktop: main stack + Live Floor pin (3.2). */}
+      {/* Two-column layout on desktop: main stack + Live Floor pin (3.2).
+          Class 15C: RecentCommits card above the existing Changes-style
+          ledger; ActivityFeed sits in the right aside beside FloorPin so
+          the feed is always in view without pushing the main column. */}
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
         <div className="flex flex-col gap-6 min-w-0">
           <LiveActivityPanel />
@@ -53,11 +58,13 @@ export default async function BuildPage({ searchParams }: BuildPageProps) {
           <LiveOpsLine />
           <ActivePhaseCards />
           <NeedsYouList />
+          <RecentCommits />
           <RecentLedger />
         </div>
 
-        <aside className="hidden lg:block">
+        <aside className="hidden lg:flex lg:flex-col lg:gap-6">
           <FloorPin cbPath={cbPath} projectPath={selected?.path ?? null} />
+          <ActivityFeed />
         </aside>
       </div>
 
