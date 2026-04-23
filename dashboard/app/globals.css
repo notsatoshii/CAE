@@ -8,23 +8,78 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* ---------------------------------------------------------------------------
+ * Phase 15 aesthetic foundation pass.
+ *
+ * Source of truth: .planning/phases/15-screenshot-truth-harness/VISUAL-RESEARCH.md
+ *
+ * What changed from UI-SPEC §13:
+ *   1. Raw hex palette migrated to OKLCH (perceptually uniform, P3-ready).
+ *   2. 5-level elevation scale (--elev-0 .. --elev-4) added.
+ *   3. Density / type scale / easing / duration design tokens added so
+ *      subsequent component waves have a single source of truth.
+ *
+ * Existing shadcn semantic mappings (--background, --foreground, --card, …)
+ * are preserved verbatim so no component refactor is required by this commit.
+ * ------------------------------------------------------------------------- */
+
 :root {
-  /* raw palette — UI-SPEC §13 */
-  --bg: #0a0a0a;
-  --surface: #121214;
-  --surface-hover: #1a1a1d;
-  --border-subtle: #1f1f22;
-  --border-strong: #2a2a2e;
-  --text: #e5e5e5;
-  --text-muted: #8a8a8c;
-  --text-dim: #5a5a5c;
-  --accent: #00d4ff;
-  --accent-hover: #33deff;
-  --accent-muted: #00d4ff20;
-  --success: #22c55e;
-  --warning: #f59e0b;
-  --danger: #ef4444;
-  --info: #3b82f6;
+  /* Raw palette — OKLCH (Phase 15 / VISUAL-RESEARCH §2).
+     Hue 245 = cool blue-grey; gives the dark surfaces depth without tinting
+     into pure neutral. Chroma kept low on neutrals so type stays calm. */
+  --bg:             oklch(0.16 0.005 245);
+  --surface:        oklch(0.20 0.006 245);
+  --surface-hover:  oklch(0.24 0.008 245);
+  --border-subtle:  oklch(0.27 0.010 245);
+  --border-strong:  oklch(0.34 0.012 245);
+  --text:           oklch(0.95 0.005 245);
+  --text-muted:     oklch(0.68 0.010 245);
+  --text-dim:       oklch(0.52 0.010 245);
+  --accent:         oklch(0.78 0.180 230);
+  --accent-hover:   oklch(0.84 0.170 230);
+  --accent-muted:   oklch(0.78 0.180 230 / 0.18);
+  --success:        oklch(0.72 0.180 145);
+  --warning:        oklch(0.78 0.170 75);
+  --danger:         oklch(0.65 0.220 25);
+  --info:           oklch(0.70 0.150 250);
+
+  /* Elevation scale — opaque surfaces ordered shallow → deep.
+     Use these for cards, popovers, modals so depth reads correctly. */
+  --elev-0: var(--bg);             /* page background */
+  --elev-1: var(--surface);        /* card / panel resting */
+  --elev-2: var(--surface-hover);  /* card hover, sidebar selected */
+  --elev-3: oklch(0.27 0.010 245); /* dropdown / popover */
+  --elev-4: oklch(0.31 0.012 245); /* dialog / sheet */
+
+  /* Density tokens — keep spacing decisions consistent across components. */
+  --density-tight:        0.5rem;   /*  8px */
+  --density-comfortable:  0.75rem;  /* 12px */
+  --density-loose:        1rem;     /* 16px */
+  --density-card-pad:     1rem;     /* p-4  */
+  --density-card-gap:     0.75rem;  /* gap-3 */
+  --density-row-h:        2.5rem;   /* 40px */
+  --density-nav-h:        2rem;     /* 32px */
+
+  /* Type scale (Phase 15) — dashboard default body is 13px (--text-sm) per
+     VISUAL-RESEARCH §1, matching Linear / Vercel / Notion convention. */
+  --text-2xs:    0.625rem;   /* 10px */
+  --text-xs:     0.75rem;    /* 12px */
+  --text-sm:     0.8125rem;  /* 13px — dashboard default */
+  --text-base:   0.9375rem;  /* 15px — body */
+  --text-lg:     1.125rem;   /* 18px */
+  --text-xl:     1.5rem;     /* 24px */
+  --text-2xl:    2rem;       /* 32px */
+  --text-display: 2.5rem;    /* 40px */
+
+  /* Motion easing + duration tokens. Snappy ≈ Material; default ≈ Apple. */
+  --ease-snappy:  cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-default: cubic-bezier(0.32, 0.72, 0, 1);
+  --ease-gentle:  cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  --ease-bouncy:  cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  --dur-instant:  100ms;
+  --dur-quick:    150ms;
+  --dur-normal:   200ms;
+  --dur-slow:     300ms;
 
   /* shadcn semantic names mapped onto our palette
      (these drive all existing shadcn components via @theme inline) */
@@ -32,15 +87,15 @@
   --foreground: var(--text);
   --card: var(--surface);
   --card-foreground: var(--text);
-  --popover: var(--surface);
+  --popover: var(--elev-3);
   --popover-foreground: var(--text);
   --primary: var(--accent);
-  --primary-foreground: #0a0a0a;
+  --primary-foreground: oklch(0.16 0.005 245);
   --secondary: var(--surface-hover);
   --secondary-foreground: var(--text);
   --muted: var(--surface-hover);
   --muted-foreground: var(--text-muted);
-  --accent-foreground: #0a0a0a;
+  --accent-foreground: oklch(0.16 0.005 245);
   --destructive: var(--danger);
   --border: var(--border-subtle);
   --input: var(--border-strong);
@@ -55,7 +110,7 @@
   --sidebar: var(--surface);
   --sidebar-foreground: var(--text);
   --sidebar-primary: var(--accent);
-  --sidebar-primary-foreground: #0a0a0a;
+  --sidebar-primary-foreground: oklch(0.16 0.005 245);
   --sidebar-accent: var(--surface-hover);
   --sidebar-accent-foreground: var(--text);
   --sidebar-border: var(--border-subtle);
@@ -65,36 +120,44 @@
 }
 
 .dark {
-  /* raw palette — UI-SPEC §13 */
-  --bg: #0a0a0a;
-  --surface: #121214;
-  --surface-hover: #1a1a1d;
-  --border-subtle: #1f1f22;
-  --border-strong: #2a2a2e;
-  --text: #e5e5e5;
-  --text-muted: #8a8a8c;
-  --text-dim: #5a5a5c;
-  --accent: #00d4ff;
-  --accent-hover: #33deff;
-  --accent-muted: #00d4ff20;
-  --success: #22c55e;
-  --warning: #f59e0b;
-  --danger: #ef4444;
-  --info: #3b82f6;
+  /* Raw palette — OKLCH (Phase 15 / VISUAL-RESEARCH §2).
+     The dashboard ships dark-by-default so :root and .dark hold the same
+     values. A future light theme will diverge here. */
+  --bg:             oklch(0.16 0.005 245);
+  --surface:        oklch(0.20 0.006 245);
+  --surface-hover:  oklch(0.24 0.008 245);
+  --border-subtle:  oklch(0.27 0.010 245);
+  --border-strong:  oklch(0.34 0.012 245);
+  --text:           oklch(0.95 0.005 245);
+  --text-muted:     oklch(0.68 0.010 245);
+  --text-dim:       oklch(0.52 0.010 245);
+  --accent:         oklch(0.78 0.180 230);
+  --accent-hover:   oklch(0.84 0.170 230);
+  --accent-muted:   oklch(0.78 0.180 230 / 0.18);
+  --success:        oklch(0.72 0.180 145);
+  --warning:        oklch(0.78 0.170 75);
+  --danger:         oklch(0.65 0.220 25);
+  --info:           oklch(0.70 0.150 250);
+
+  --elev-0: var(--bg);
+  --elev-1: var(--surface);
+  --elev-2: var(--surface-hover);
+  --elev-3: oklch(0.27 0.010 245);
+  --elev-4: oklch(0.31 0.012 245);
 
   --background: var(--bg);
   --foreground: var(--text);
   --card: var(--surface);
   --card-foreground: var(--text);
-  --popover: var(--surface);
+  --popover: var(--elev-3);
   --popover-foreground: var(--text);
   --primary: var(--accent);
-  --primary-foreground: #0a0a0a;
+  --primary-foreground: oklch(0.16 0.005 245);
   --secondary: var(--surface-hover);
   --secondary-foreground: var(--text);
   --muted: var(--surface-hover);
   --muted-foreground: var(--text-muted);
-  --accent-foreground: #0a0a0a;
+  --accent-foreground: oklch(0.16 0.005 245);
   --destructive: var(--danger);
   --border: var(--border-subtle);
   --input: var(--border-strong);
@@ -109,7 +172,7 @@
   --sidebar: var(--surface);
   --sidebar-foreground: var(--text);
   --sidebar-primary: var(--accent);
-  --sidebar-primary-foreground: #0a0a0a;
+  --sidebar-primary-foreground: oklch(0.16 0.005 245);
   --sidebar-accent: var(--surface-hover);
   --sidebar-accent-foreground: var(--text);
   --sidebar-border: var(--border-subtle);
@@ -152,6 +215,9 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+  /* --font-geist-sans / --font-geist-mono CSS-var names are preserved by
+     app/layout.tsx; they now resolve to Inter Variable / JetBrains Mono
+     Variable underneath (Phase 15). */
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
   --font-heading: var(--font-geist-sans);
@@ -175,9 +241,18 @@ body {
   }
   body {
     @apply bg-background text-foreground;
+    /* Inter looks best with optical sizing + tabular nums on for the dashboard's
+       many timestamps / latencies / IDs. Keep text-rendering hint conservative. */
+    font-optical-sizing: auto;
+    font-feature-settings: "cv11", "ss01", "ss03", "tnum";
   }
   html {
     @apply font-sans;
+  }
+  /* JetBrains Mono ships slashed-zero behind the `zero` feature; turn it on
+     globally for code/mono contexts so digits don't get confused with O. */
+  code, pre, kbd, samp, [class*="font-mono"] {
+    font-feature-settings: "zero", "calt", "ss20";
   }
 }
 
@@ -228,3 +303,31 @@ body {
     transform: none !important;
   }
 }
+
+/* ---------------------------------------------------------------------------
+ * Phase 15: scrollbar styling.
+ * Default browser scrollbars (especially on Linux/Windows) read as amateur in
+ * a polished dark UI. Use Firefox's scrollbar-* properties + WebKit pseudo-
+ * elements for a thin, surface-blending bar that animates on hover.
+ * ------------------------------------------------------------------------- */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong) transparent;
+}
+*::-webkit-scrollbar { width: 8px; height: 8px; }
+*::-webkit-scrollbar-track { background: transparent; }
+*::-webkit-scrollbar-thumb {
+  background-color: var(--border-strong);
+  border-radius: 4px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+  transition: background-color var(--dur-quick) var(--ease-snappy);
+}
+*::-webkit-scrollbar-thumb:hover { background-color: var(--text-dim); }
+
+/* Hover-reveal variant for floating panels (chat rail, popovers) where a
+   resting scrollbar would intrude on the surface treatment. */
+.scrollbar-overlay { scrollbar-color: transparent transparent; }
+.scrollbar-overlay:hover { scrollbar-color: var(--border-strong) transparent; }
+.scrollbar-overlay::-webkit-scrollbar-thumb { background-color: transparent; }
+.scrollbar-overlay:hover::-webkit-scrollbar-thumb { background-color: var(--border-strong); }
