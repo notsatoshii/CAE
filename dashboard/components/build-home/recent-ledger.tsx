@@ -1,5 +1,7 @@
 "use client";
 
+import { useCallback } from "react";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { Clock } from "lucide-react";
 import { useStatePoll } from "@/lib/hooks/use-state-poll";
 import { useDevMode } from "@/lib/providers/dev-mode";
@@ -27,12 +29,43 @@ function formatTime(iso: string): string {
   }
 }
 
+// Phase number is encoded in the `phase` label (e.g. "p4") and the leading
+// task-id segment ("p4-pl01-t1-...") — extract whichever is available so the
+// TaskDetailSheet can match `phaseNumber` in home_phases.
+function phaseNumberFromEvent(ev: RecentEvent): number {
+  const fromPhase = ev.phase.match(/^p(\d+)$/);
+  if (fromPhase) return parseInt(fromPhase[1], 10);
+  const fromPlan = ev.plan.match(/^p(\d+)-/);
+  if (fromPlan) return parseInt(fromPlan[1], 10);
+  return 0;
+}
+
 export function RecentLedger() {
   const { data, lastUpdated } = useStatePoll();
   const { dev } = useDevMode();
   const t = labelFor(dev);
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
 
   const events = (data?.events_recent ?? []).slice(0, 20);
+
+  const openSheetForEvent = useCallback(
+    (ev: RecentEvent) => {
+      const params = new URLSearchParams(searchParams?.toString() ?? "");
+      const phaseNumber = phaseNumberFromEvent(ev);
+      params.set("sheet", "open");
+      params.set("phase", String(phaseNumber));
+      params.set("project", ev.project);
+      params.set("plan", ev.plan);
+      // Task id mirrors plan id for ledger rows — there's no separate task
+      // identifier in RecentEvent. The sheet falls back gracefully if neither
+      // matches a live phase.
+      params.set("task", ev.plan);
+      router.push((pathname ?? "/build") + "?" + params.toString());
+    },
+    [router, pathname, searchParams],
+  );
 
   if (events.length === 0) {
     return (
@@ -58,9 +91,19 @@ export function RecentLedger() {
       className="mb-6"
       subtitle={<LastUpdated at={lastUpdated} threshold_ms={6000} />}
     >
-      <ul className="divide-y divide-[color:var(--border-subtle)] font-mono text-xs">
+      <ul
+        className="divide-y divide-[color:var(--border-subtle)] font-mono text-xs"
+        role="list"
+      >
         {events.map((ev, i) => (
-          <RecentRow key={i} event={ev} index={i} t={t} dev={dev} />
+          <RecentRow
+            key={i}
+            event={ev}
+            index={i}
+            t={t}
+            dev={dev}
+            onOpen={openSheetForEvent}
+          />
         ))}
       </ul>
     </Panel>
@@ -72,9 +115,10 @@ interface RowProps {
   index: number;
   t: ReturnType<typeof labelFor>;
   dev: boolean;
+  onOpen: (event: RecentEvent) => void;
 }
 
-function RecentRow({ event, index, t, dev }: RowProps) {
+function RecentRow({ event, index, t, dev, onOpen }: RowProps) {
   const ok = event.status === "shipped";
   const iconColor = ok ? "var(--success)" : "var(--danger)";
   const icon = ok ? "✓" : "✗";
@@ -89,20 +133,36 @@ function RecentRow({ event, index, t, dev }: RowProps) {
 
   const trailing = dev ? formatTok(event.tokens) + "tok" : "";
 
+  // Accessible name summarises status + agent + plan so a screen reader user
+  // hears "Open details: shipped p4-pl01-t1 by the builder" rather than the
+  // glyph-only text inside the row.
+  const ariaLabel =
+    "Open details: " +
+    (ok ? "shipped" : "aborted") +
+    " " +
+    event.plan +
+    " by " +
+    agentDisplay;
+
   return (
-    <li
-      data-testid={"recent-row-" + index}
-      data-status={event.status}
-      className="flex items-center gap-3 py-1.5"
-    >
-      <span aria-hidden="true" style={{ color: iconColor }}>
-        {icon}
-      </span>
-      <span className="text-[color:var(--text-muted)]">{formatTime(event.ts)}</span>
-      <span className="text-[color:var(--text)] flex-1 truncate">{middle}</span>
-      {trailing && (
-        <span className="text-[color:var(--text-muted)] shrink-0">{trailing}</span>
-      )}
+    <li role="listitem" className="contents">
+      <button
+        type="button"
+        data-testid={"recent-row-" + index}
+        data-status={event.status}
+        aria-label={ariaLabel}
+        onClick={() => onOpen(event)}
+        className="flex w-full items-center gap-3 py-1.5 text-left cursor-pointer transition-colors hover:bg-[color:var(--surface-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)] rounded-sm px-1 -mx-1"
+      >
+        <span aria-hidden="true" style={{ color: iconColor }}>
+          {icon}
+        </span>
+        <span className="text-[color:var(--text-muted)]">{formatTime(event.ts)}</span>
+        <span className="text-[color:var(--text)] flex-1 truncate">{middle}</span>
+        {trailing && (
+          <span className="text-[color:var(--text-muted)] shrink-0">{trailing}</span>
+        )}
+      </button>
     </li>
   );
 }
