@@ -397,8 +397,15 @@ body {
   border-radius: var(--radius);
   background-color: var(--surface);
   border: 1px solid var(--border-subtle);
+  /* Class 13C (Eric session 12 "UI lacks depth"): layer elevation-1 on
+     the resting card surface. Border stays for definition; shadow adds
+     the z-cue Linear/Vercel use. Transition covers box-shadow too so
+     the hover bump animates. */
+  box-shadow: var(--elevation-1);
   transition: border-color var(--dur-quick) var(--ease-default),
-              background-color var(--dur-quick) var(--ease-default);
+              background-color var(--dur-quick) var(--ease-default),
+              box-shadow var(--dur-quick) var(--ease-default),
+              transform var(--dur-quick) var(--ease-default);
 }
 .card-base:hover {
   border-color: var(--border-strong);
@@ -409,11 +416,21 @@ body {
   outline-offset: 2px;
 }
 
+/* Interactive cards: elevation bump + scale lift on hover (tactile cue).
+   Rest-state keeps elevation-1 from the base rule. */
 .card-base--interactive { cursor: pointer; }
-.card-base--interactive:active { transform: translateY(1px); }
+.card-base--interactive:hover {
+  box-shadow: var(--elevation-2);
+  transform: scale(1.01);
+}
+.card-base--interactive:active {
+  transform: translateY(1px) scale(0.995);
+  box-shadow: var(--elevation-1);
+}
 
 @media (prefers-reduced-motion: reduce) {
   .card-base { transition: none; }
+  .card-base--interactive:hover { transform: none; }
   .card-base--interactive:active { transform: none; }
 }
 

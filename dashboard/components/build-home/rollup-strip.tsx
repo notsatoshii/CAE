@@ -158,6 +158,9 @@ export function RollupStrip() {
       <span className="sr-only" data-truth={rollupLoading ? "rollup.loading" : "rollup.healthy"}>
         yes
       </span>
+      {/* Class 13C — the rollup tiles inside use `.card-base` which picked up
+          elevation-1 globally in 13C's globals.css edit; no extra wrapper
+          needed here. Keep this comment so later waves don't re-wrap. */}
       {/* Mobile + tablet: simple grid, no group dividers. */}
       <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:hidden">
         {flatSlots.map((s) => (

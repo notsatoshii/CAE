@@ -32,7 +32,7 @@ export function NeedsYouList() {
         <h2 className="text-sm font-semibold uppercase tracking-wide text-[color:var(--text-muted)] mb-3">
           {t.needsYouHeading}
         </h2>
-        <Card>
+        <Card elevation={1}>
           <CardContent className="py-6 flex items-center gap-2 text-sm text-[color:var(--text-muted)]">
             <CheckCircle2 size={16} className="text-[color:var(--success)] shrink-0" aria-hidden />
             <span>{t.needsYouEmpty}</span>
@@ -48,7 +48,7 @@ export function NeedsYouList() {
       <h2 className="text-sm font-semibold uppercase tracking-wide text-[color:var(--text-muted)] mb-3">
         {t.needsYouHeading} ({items.length})
       </h2>
-      <Card>
+      <Card elevation={1}>
         <CardContent className="py-2 px-3">
           <ul className="divide-y divide-[color:var(--border-subtle)]">
             {items.map((item, i) => (

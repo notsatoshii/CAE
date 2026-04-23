@@ -183,7 +183,7 @@ export function ActivePhaseCards() {
         <h2 className="text-sm font-semibold uppercase tracking-wide text-[color:var(--text-muted)] mb-3">
           {t.activePhasesHeading}
         </h2>
-        <Card>
+        <Card elevation={1}>
           <CardContent className="py-6 text-sm text-[color:var(--text-muted)]">
             {t.activePhasesEmpty}
           </CardContent>

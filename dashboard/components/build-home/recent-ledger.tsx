@@ -74,6 +74,7 @@ export function RecentLedger() {
         title={t.recentHeading}
         headingId="recent-ledger-heading"
         testId="recent-ledger"
+        elevation={1}
         className="mb-6"
       >
         <span className="sr-only" data-truth="recent-ledger.empty">yes</span>

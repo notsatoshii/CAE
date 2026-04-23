@@ -140,12 +140,16 @@ export function QueueKanbanClient({ initialState }: Props) {
           const colLiveness: "empty" | "healthy" =
             cards.length === 0 ? "empty" : "healthy"
           return (
-            // Each column: min-w-64 (256px) so mobile scroll works cleanly
+            // Each column: min-w-64 (256px) so mobile scroll works cleanly.
+            // Class 13C — elevation-1 per column fixes the vision finding
+            // "Kanban columns lack visual separation". The column now
+            // reads as a distinct surface raised off the page, with
+            // cards-within-cards establishing a second z-layer.
             <section
               key={col.key}
               data-testid={"queue-column-" + col.key}
               data-liveness={colLiveness}
-              className="flex min-w-64 flex-col gap-2 rounded-lg border border-[color:var(--border,#1f1f22)] bg-[color:var(--surface,#121214)] p-3 min-h-[200px]"
+              className="flex min-w-64 flex-col gap-2 rounded-lg border border-[color:var(--border,#1f1f22)] bg-[color:var(--surface,#121214)] p-3 min-h-[200px] shadow-elevation-1"
             >
               <span className="sr-only" data-truth={"build-queue-" + col.key + "." + colLiveness}>yes</span>
               <header className="flex items-center justify-between">
