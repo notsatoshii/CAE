@@ -38,14 +38,14 @@ vi.mock("next/navigation", () => ({
 import { BuildRail } from "./build-rail"
 
 describe("BuildRail", () => {
-  it("Test 8: renders 7 tabs including Skills and Schedules", () => {
+  it("Test 8: renders 8 tabs including Skills, Schedules, and Security", () => {
     render(<BuildRail />)
     const rail = screen.getByTestId("build-rail")
     const links = rail.querySelectorAll("a")
-    expect(links).toHaveLength(7)
+    expect(links).toHaveLength(8)
   })
 
-  it("Test 8b: tabs in locked order: Home·Agents·Workflows·Queue·Skills·Schedules·Changes", () => {
+  it("Test 8b: tabs in locked order: Home·Agents·Workflows·Queue·Skills·Schedules·Security·Changes", () => {
     render(<BuildRail />)
     const links = Array.from(
       screen.getByTestId("build-rail").querySelectorAll("a")
@@ -58,6 +58,7 @@ describe("BuildRail", () => {
       "/build/queue",
       "/build/skills",
       "/build/schedule",
+      "/build/security",
       "/build/changes",
     ])
   })

@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Home, Users, Zap, Inbox, ScrollText, Puzzle, Clock } from "lucide-react"
+import { Home, Users, Zap, Inbox, ScrollText, Puzzle, Clock, ShieldCheck } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 /**
@@ -23,6 +23,7 @@ const TABS = [
   { href: "/build/queue", icon: Inbox, label: "Queue", testid: "build-rail-tab-queue" },
   { href: "/build/skills", icon: Puzzle, label: "Skills", testid: "build-rail-tab-skills" },
   { href: "/build/schedule", icon: Clock, label: "Schedules", testid: "build-rail-tab-schedule" },
+  { href: "/build/security", icon: ShieldCheck, label: "Security", testid: "build-rail-tab-security" },
   { href: "/build/changes", icon: ScrollText, label: "Changes", testid: "build-rail-tab-changes" },
 ] as const
 
