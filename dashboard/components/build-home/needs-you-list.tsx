@@ -27,6 +27,8 @@ export function NeedsYouList() {
   if (items.length === 0) {
     return (
       <section data-testid="needs-you-list" className="mb-6">
+        <span className="sr-only" data-truth="needs-you.empty">yes</span>
+        <span className="sr-only" data-truth="needs-you.count">0</span>
         <h2 className="text-sm font-semibold uppercase tracking-wide text-[color:var(--text-muted)] mb-3">
           {t.needsYouHeading}
         </h2>
@@ -42,6 +44,7 @@ export function NeedsYouList() {
 
   return (
     <section data-testid="needs-you-list" className="mb-6">
+      <span className="sr-only" data-truth="needs-you.count">{items.length}</span>
       <h2 className="text-sm font-semibold uppercase tracking-wide text-[color:var(--text-muted)] mb-3">
         {t.needsYouHeading} ({items.length})
       </h2>

@@ -84,6 +84,7 @@ function AnimatedNumber({
       className="font-mono text-3xl font-semibold tabular-nums leading-none text-[color:var(--text)]"
       style={{ fontVariantNumeric: "tabular-nums" }}
       data-testid="mc-animated-number"
+      data-truth="mission-control.active-count"
     >
       {text}
     </span>
@@ -127,8 +128,19 @@ function TokenBurnBar({
         />
       </div>
       <div className="mt-1.5 flex items-center justify-between text-[10px] text-[color:var(--text-dim)]">
-        <span>{formatUsd(burnUsdPerMin)}/min</span>
         <span>
+          <span className="sr-only" data-truth="mission-control.token-burn-usd-per-min">
+            {burnUsdPerMin.toFixed(2)}
+          </span>
+          {formatUsd(burnUsdPerMin)}/min
+        </span>
+        <span>
+          <span className="sr-only" data-truth="mission-control.cost-today-usd">
+            {costTodayUsd.toFixed(2)}
+          </span>
+          <span className="sr-only" data-truth="mission-control.daily-budget-usd">
+            {budgetUsd.toFixed(2)}
+          </span>
           {formatUsd(costTodayUsd)} / {formatUsd(budgetUsd)} today
         </span>
       </div>
@@ -223,7 +235,10 @@ function CostRadial({ pct }: { pct: number }) {
         )}
       </svg>
       <div className="flex flex-col leading-tight">
-        <span className="font-mono text-lg font-semibold tabular-nums text-[color:var(--text)]">
+        <span
+          className="font-mono text-lg font-semibold tabular-nums text-[color:var(--text)]"
+          data-truth="mission-control.cost-pct-of-budget"
+        >
           {Math.round(clamped * 100)}%
         </span>
         <span className="text-[10px] text-[color:var(--text-dim)]">of budget</span>
@@ -495,6 +510,8 @@ export function MissionControlHero({
 
   const sparklineHasData = sparkline.some((b) => b.count > 0);
 
+  const sparklineTotal60s = sparkline.reduce((s, b) => s + b.count, 0);
+
   return (
     <section
       data-testid="mission-control-hero"
@@ -502,6 +519,25 @@ export function MissionControlHero({
       aria-busy={isLoading}
       className="rounded-lg border border-[color:var(--border-subtle)] bg-[color:var(--surface)] p-3 lg:p-4"
     >
+      {/* Liveness markers — sr-only so visual layout unchanged. */}
+      {isLoading ? (
+        <span className="sr-only" data-truth="mission-control.loading">
+          yes
+        </span>
+      ) : (
+        <span className="sr-only" data-truth="mission-control.healthy">
+          yes
+        </span>
+      )}
+      <span className="sr-only" data-truth="mission-control.empty">
+        {!isLoading && activeCount === 0 ? "true" : "false"}
+      </span>
+      <span className="sr-only" data-truth="mission-control.sparkline-total-60s">
+        {sparklineTotal60s}
+      </span>
+      <span className="sr-only" data-truth="mission-control.last-event-at">
+        {data?.last_event_at ?? 0}
+      </span>
       <header className="mb-3 flex items-center justify-between">
         <h2
           id="mission-control-heading"

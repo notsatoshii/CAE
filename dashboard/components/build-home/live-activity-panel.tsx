@@ -337,24 +337,38 @@ export function LiveActivityPanel({ initialData, disablePolling }: PanelProps = 
       </header>
 
       {isLoading ? (
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-          <SkeletonTile />
-          <SkeletonTile />
-          <SkeletonTile />
-        </div>
+        <>
+          <span className="sr-only" data-truth="live-activity.loading">yes</span>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <SkeletonTile />
+            <SkeletonTile />
+            <SkeletonTile />
+          </div>
+        </>
       ) : (
         <>
+          <span className="sr-only" data-truth="live-activity.healthy">yes</span>
+          <span className="sr-only" data-truth="live-activity.active">
+            {isActive ? "yes" : "no"}
+          </span>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             <Tile
               testId="activity-tile-tools-per-min"
               label="tools/min"
-              value={<span className="font-mono">{data.tools_per_min_now}</span>}
+              value={
+                <span className="font-mono" data-truth="live-activity.tools-per-min-now">
+                  {data.tools_per_min_now}
+                </span>
+              }
             />
             <Tile
               testId="activity-tile-active-stream"
               label="active stream"
               value={
-                <span className="text-[color:var(--text)]">
+                <span
+                  className="text-[color:var(--text)]"
+                  data-truth="live-activity.most-frequent-tool"
+                >
                   {data.most_frequent_tool ?? "Idle"}
                 </span>
               }
@@ -362,7 +376,11 @@ export function LiveActivityPanel({ initialData, disablePolling }: PanelProps = 
             <Tile
               testId="activity-tile-last-24h"
               label="last 24h"
-              value={<span className="font-mono">{data.last_24h_count}</span>}
+              value={
+                <span className="font-mono" data-truth="live-activity.last-24h-count">
+                  {data.last_24h_count}
+                </span>
+              }
               small
             />
           </div>
@@ -379,13 +397,16 @@ export function LiveActivityPanel({ initialData, disablePolling }: PanelProps = 
           </div>
 
           {isEmpty && (
-            <p
-              data-testid="activity-empty-tip"
-              className="mt-3 text-[12px] text-[color:var(--text-muted)]"
-            >
-              Tip: tool calls will appear here once activity resumes. The audit-hook
-              captures every Bash/Edit/Read/Write/Agent/Task invocation.
-            </p>
+            <>
+              <span className="sr-only" data-truth="live-activity.empty">yes</span>
+              <p
+                data-testid="activity-empty-tip"
+                className="mt-3 text-[12px] text-[color:var(--text-muted)]"
+              >
+                Tip: tool calls will appear here once activity resumes. The audit-hook
+                captures every Bash/Edit/Read/Write/Agent/Task invocation.
+              </p>
+            </>
           )}
         </>
       )}

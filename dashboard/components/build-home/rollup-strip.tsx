@@ -71,6 +71,7 @@ function SlotTile({ slot }: { slot: Slot }) {
       {/* Value: text-3xl tabular nums, dominant. */}
       <div
         data-testid={"rollup-value-" + slot.key}
+        data-truth={"rollup." + slot.key}
         className="mt-2 text-3xl font-semibold tabular-nums leading-none text-[color:var(--text)]"
       >
         {slot.value}
@@ -150,8 +151,13 @@ export function RollupStrip() {
   ];
   const flatSlots: Slot[] = groups.flatMap((g) => g.slots);
 
+  const rollupLoading = !data;
+
   return (
     <div data-testid="rollup-strip" className="mb-6">
+      <span className="sr-only" data-truth={rollupLoading ? "rollup.loading" : "rollup.healthy"}>
+        yes
+      </span>
       {/* Mobile + tablet: simple grid, no group dividers. */}
       <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:hidden">
         {flatSlots.map((s) => (

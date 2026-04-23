@@ -178,6 +178,8 @@ export function ActivePhaseCards() {
   if (phases.length === 0) {
     return (
       <section data-testid="active-phase-cards" className="mb-6">
+        <span className="sr-only" data-truth="active-phases.empty">yes</span>
+        <span className="sr-only" data-truth="active-phases.count">0</span>
         <h2 className="text-sm font-semibold uppercase tracking-wide text-[color:var(--text-muted)] mb-3">
           {t.activePhasesHeading}
         </h2>
@@ -192,6 +194,8 @@ export function ActivePhaseCards() {
 
   return (
     <section data-testid="active-phase-cards" className="mb-6">
+      <span className="sr-only" data-truth="active-phases.count">{phases.length}</span>
+      <span className="sr-only" data-truth="active-phases.healthy">yes</span>
       <div className="flex items-center justify-between mb-3">
         <h2 className="text-sm font-semibold uppercase tracking-wide text-[color:var(--text-muted)]">
           {t.activePhasesHeading} ({phases.length})

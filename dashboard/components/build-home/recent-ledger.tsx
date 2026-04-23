@@ -76,6 +76,8 @@ export function RecentLedger() {
         testId="recent-ledger"
         className="mb-6"
       >
+        <span className="sr-only" data-truth="recent-ledger.empty">yes</span>
+        <span className="sr-only" data-truth="recent-ledger.count">0</span>
         {/* Phase 15 Wave 2.6 (bonus): adopts <EmptyState> for visual rhythm.
             Keeps the existing labelFor(dev) copy verbatim so the regression
             test that greps "nothing shipped yet|no events logged" still passes. */}
@@ -97,6 +99,8 @@ export function RecentLedger() {
       className="mb-6"
       subtitle={<LastUpdated at={lastUpdated} threshold_ms={6000} />}
     >
+      <span className="sr-only" data-truth="recent-ledger.count">{events.length}</span>
+      <span className="sr-only" data-truth="recent-ledger.healthy">yes</span>
       <ul
         className="divide-y divide-[color:var(--border-subtle)] font-mono text-xs"
         role="list"
