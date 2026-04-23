@@ -129,3 +129,75 @@ describe("EmptyStateActions", () => {
     expect(container).toBeTruthy();
   });
 });
+
+// ── Wave 2.6 alias-prop API + EMPTY_COPY adoption ──────────────────────────
+describe("EmptyState — Wave 2.6 alias API", () => {
+  it("renders title as the <h3> heading (alias for heading)", () => {
+    render(<EmptyState title="Queue is clear" />);
+    const h3 = screen.getByRole("heading", { level: 3 });
+    expect(h3.textContent).toBe("Queue is clear");
+  });
+
+  it("renders description as the body paragraph (alias for body)", () => {
+    render(
+      <EmptyState
+        title="No data"
+        description="Nothing to render right now."
+      />
+    );
+    expect(screen.getByText("Nothing to render right now.").tagName.toLowerCase()).toBe("p");
+  });
+
+  it("original heading/body win over title/description when both provided", () => {
+    render(
+      <EmptyState
+        heading="Original heading"
+        body="Original body"
+        title="Aliased title"
+        description="Aliased description"
+      />
+    );
+    expect(screen.getByRole("heading", { level: 3 }).textContent).toBe("Original heading");
+    expect(screen.getByText("Original body")).toBeTruthy();
+    // Aliased copy must NOT appear when originals are present
+    expect(screen.queryByText("Aliased title")).toBeNull();
+    expect(screen.queryByText("Aliased description")).toBeNull();
+  });
+
+  it("renders cta as an <a> with href + label when actions slot is empty", () => {
+    render(
+      <EmptyState
+        title="No workflows defined"
+        description="Define one."
+        cta={{ label: "Create workflow", href: "/build/workflows/new" }}
+      />
+    );
+    const link = screen.getByRole("link", { name: "Create workflow" });
+    expect(link.getAttribute("href")).toBe("/build/workflows/new");
+  });
+
+  it("does NOT render cta when an actions slot is provided (back-compat priority)", () => {
+    render(
+      <EmptyState
+        title="Has actions"
+        actions={<button type="button">From actions slot</button>}
+        cta={{ label: "From cta", href: "/x" }}
+      />
+    );
+    expect(screen.getByRole("button", { name: "From actions slot" })).toBeTruthy();
+    // cta link must be suppressed when actions takes precedence
+    expect(screen.queryByRole("link", { name: "From cta" })).toBeNull();
+  });
+
+  it("renders tip text as a small <p> below the CTA when provided", () => {
+    render(
+      <EmptyState
+        title="No agents have run yet"
+        description="Spin one up."
+        tip="Agents appear after their first event."
+      />
+    );
+    const tip = screen.getByText("Agents appear after their first event.");
+    expect(tip.tagName.toLowerCase()).toBe("p");
+  });
+});

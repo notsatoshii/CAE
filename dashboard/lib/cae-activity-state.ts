@@ -29,11 +29,11 @@ import type { AuditEntry } from "./cae-types"
 /**
  * Default audit log path.
  *
- * Per build-home spec the panel surfaces activity for the dashboard project
- * itself. The audit-hook is registered under CAE_ROOT, so the dashboard's
- * own .cae/metrics directory mirrors the file we want to read.
+ * The audit-hook (tools/audit-hook.sh) writes to `${CAE_ROOT}/.cae/metrics/tool-calls.jsonl`
+ * — at CAE_ROOT, NOT under dashboard/. The activity panel surfaces activity for
+ * the whole CAE workspace, not just the dashboard subdir.
  */
-const DEFAULT_AUDIT_PATH = join(CAE_ROOT, "dashboard", ".cae", "metrics", "tool-calls.jsonl")
+const DEFAULT_AUDIT_PATH = join(CAE_ROOT, ".cae", "metrics", "tool-calls.jsonl")
 
 /** How many JSONL lines to consider — covers ~30 minutes of heavy activity comfortably. */
 const TAIL_LIMIT = 5000
