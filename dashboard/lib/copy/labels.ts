@@ -455,6 +455,32 @@ export interface Labels {
     memory: string;
     metrics: string;
   };
+
+  // === Left rail (C2 fix-wave Class 7) ===
+  // One label per sidebar tab. Surfaces both as inline copy (expanded
+  // mode) and as the Tooltip string (collapsed mode). Founder-speak
+  // prioritises verbs over nouns where meaningful.
+  rail: {
+    home: string;
+    agents: string;
+    queue: string;
+    workflows: string;
+    schedule: string;
+    skills: string;
+    security: string;
+    memory: string;
+    metrics: string;
+    floor: string;
+    changes: string;
+    plan: string;
+    // Section headings
+    sectionBuild: string;
+    sectionInsights: string;
+    sectionPlan: string;
+    // Collapse toggle
+    collapseAria: string;
+    expandAria: string;
+  };
 }
 
 const FOUNDER: Labels = {
@@ -882,6 +908,27 @@ const FOUNDER: Labels = {
     floor: "booting the isometric engine…",
     memory: "loading the graph…",
     metrics: "counting the events…",
+  },
+
+  // === Left rail (C2 fix-wave Class 7) — FOUNDER ===
+  rail: {
+    home: "Home",
+    agents: "Agents",
+    queue: "Queue",
+    workflows: "Workflows",
+    schedule: "Schedule",
+    skills: "Skills",
+    security: "Security",
+    memory: "Memory",
+    metrics: "Metrics",
+    floor: "Live Floor",
+    changes: "Changes",
+    plan: "Plan",
+    sectionBuild: "Build",
+    sectionInsights: "Insights",
+    sectionPlan: "Plan",
+    collapseAria: "Hide the menu labels",
+    expandAria: "Show the menu labels",
   },
 };
 
@@ -1314,6 +1361,28 @@ const DEV: Labels = {
     floor: "booting pixi stage…",
     memory: "fetching graph.json…",
     metrics: "aggregating token_usage…",
+  },
+
+  // === Left rail (C2 fix-wave Class 7) — DEV ===
+  // Dev labels match the route slugs for trace-friendliness.
+  rail: {
+    home: "Home",
+    agents: "Agents",
+    queue: "Queue",
+    workflows: "Workflows",
+    schedule: "Schedule",
+    skills: "Skills",
+    security: "Security",
+    memory: "Memory",
+    metrics: "Metrics",
+    floor: "Floor",
+    changes: "Changes",
+    plan: "Plan",
+    sectionBuild: "Build",
+    sectionInsights: "Insights",
+    sectionPlan: "Plan",
+    collapseAria: "Collapse sidebar",
+    expandAria: "Expand sidebar",
   },
 };
 

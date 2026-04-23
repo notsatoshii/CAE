@@ -15,15 +15,19 @@ export const SIDEBAR_COOKIE_NAME = "cae-sidebar-state" as const
 
 export type SidebarState = "collapsed" | "expanded"
 
-const DEFAULT_STATE: SidebarState = "collapsed"
+// C2 fix-wave Class 7 flipped the default from "collapsed" to "expanded".
+// Eric: "current left side tab and other icons have no labels so I can't
+// know WTF they are." First-time visitors now see labels; collapsed is
+// opt-in (chevron / ⌘\).
+const DEFAULT_STATE: SidebarState = "expanded"
 
 /**
  * parseSidebarState — coerce arbitrary cookie value (or undefined) into the
- * union. Anything other than "expanded" returns the default ("collapsed"),
- * matching the spec's "collapsed by default" requirement.
+ * union. Explicit "collapsed" honored; anything else — including missing,
+ * corrupt, or "expanded" — resolves to the default ("expanded").
  */
 export function parseSidebarState(raw: string | undefined | null): SidebarState {
-  if (raw === "expanded") return "expanded"
+  if (raw === "collapsed") return "collapsed"
   return DEFAULT_STATE
 }
 

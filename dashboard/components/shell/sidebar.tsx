@@ -57,6 +57,11 @@ import {
   sidebarCookieValue,
   type SidebarState,
 } from "@/lib/sidebar-cookie"
+import {
+  RAIL_COLLAPSED_STORAGE_KEY,
+  writeRailCollapsedToStorage,
+  readRailCollapsedFromStorage,
+} from "@/lib/hooks/use-rail-collapsed"
 
 // ---------------------------------------------------------------------------
 // Item definitions (exported so tests can assert order without copy-paste).
@@ -380,10 +385,40 @@ export interface SidebarProps {
   initialCollapsed?: boolean
 }
 
-export function Sidebar({ initialCollapsed = true }: SidebarProps) {
+/**
+ * Sidebar default: expanded (labels visible). C2 fix-wave Class 7 flipped
+ * this from the prior `true` — Eric complained that icon-only mode left him
+ * unable to tell what the rail items were. Collapsed mode is opt-in now
+ * (chevron or ⌘\) and persisted via localStorage `cae.rail.collapsed` + the
+ * legacy `cae-sidebar-state` cookie (for SSR).
+ */
+export function Sidebar({ initialCollapsed = false }: SidebarProps) {
   const pathname = usePathname() ?? "/build"
   const [collapsed, setCollapsed] = React.useState<boolean>(initialCollapsed)
   const reduceMotion = useReducedMotion() ?? false
+
+  // After mount, prefer localStorage if the user previously chose a state.
+  // The server can't read localStorage, so the cookie-seeded initial state
+  // may disagree; reconcile once here.
+  React.useEffect(() => {
+    const stored = readRailCollapsedFromStorage()
+    if (stored !== undefined && stored !== collapsed) {
+      setCollapsed(stored)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // Cross-tab sync: if another tab flips the pref, mirror here.
+  React.useEffect(() => {
+    if (typeof window === "undefined") return
+    function onStorage(e: StorageEvent) {
+      if (e.key !== RAIL_COLLAPSED_STORAGE_KEY) return
+      if (e.newValue === "true") setCollapsed(true)
+      else if (e.newValue === "false") setCollapsed(false)
+    }
+    window.addEventListener("storage", onStorage)
+    return () => window.removeEventListener("storage", onStorage)
+  }, [])
 
   // Track focused item for keyboard nav (ArrowUp/Down between items).
   // focusedIndex lives in a ref (not state) so cursor moves never trigger a
@@ -406,9 +441,42 @@ export function Sidebar({ initialCollapsed = true }: SidebarProps) {
     setCollapsed((prev) => {
       const next = !prev
       writeSidebarCookie(next ? "collapsed" : "expanded")
+      // C2 Class 7: also mirror to localStorage so the hook-based source of
+      // truth stays in sync across tabs + survives cookie rotation.
+      writeRailCollapsedToStorage(next)
       return next
     })
   }, [])
+
+  // Global keyboard shortcut: ⌘\ (mac) / Ctrl+\ (others) toggles collapse.
+  // VSCode convention. Registered once at the sidebar level — this is the
+  // only place where the sidebar exists, so there's no scope mismatch.
+  React.useEffect(() => {
+    if (typeof window === "undefined") return
+    function onKeyDown(e: KeyboardEvent) {
+      // Ignore when the user is typing in an input / textarea / contentEditable.
+      const target = e.target as HTMLElement | null
+      const activeEl = document.activeElement as HTMLElement | null
+      const isEditable = (el: HTMLElement | null): boolean => {
+        if (!el) return false
+        if (el instanceof HTMLInputElement) return true
+        if (el instanceof HTMLTextAreaElement) return true
+        if (el.isContentEditable) return true
+        return false
+      }
+      if (isEditable(target) || isEditable(activeEl)) return
+      // Key must be Backslash; exactly one of meta/ctrl must be held (mac vs
+      // PC); shift/alt must NOT be held.
+      if (e.key !== "\\") return
+      const modPressed = e.metaKey || e.ctrlKey
+      if (!modPressed) return
+      if (e.shiftKey || e.altKey) return
+      e.preventDefault()
+      handleToggle()
+    }
+    window.addEventListener("keydown", onKeyDown)
+    return () => window.removeEventListener("keydown", onKeyDown)
+  }, [handleToggle])
 
   const handleKeyDown = React.useCallback(
     (event: React.KeyboardEvent<HTMLElement>) => {

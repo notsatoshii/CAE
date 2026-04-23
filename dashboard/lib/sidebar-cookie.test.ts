@@ -15,20 +15,24 @@ import {
 } from "./sidebar-cookie"
 
 describe("sidebar-cookie", () => {
-  it("defaults to collapsed when cookie is absent", () => {
-    expect(parseSidebarState(undefined)).toBe("collapsed")
-    expect(parseSidebarState(null)).toBe("collapsed")
-    expect(parseSidebarState("")).toBe("collapsed")
+  it("defaults to expanded when cookie is absent (C2 Class 7 flip)", () => {
+    expect(parseSidebarState(undefined)).toBe("expanded")
+    expect(parseSidebarState(null)).toBe("expanded")
+    expect(parseSidebarState("")).toBe("expanded")
+  })
+
+  it('parses "collapsed" exactly', () => {
+    expect(parseSidebarState("collapsed")).toBe("collapsed")
   })
 
   it('parses "expanded" exactly', () => {
     expect(parseSidebarState("expanded")).toBe("expanded")
   })
 
-  it("treats unknown values as collapsed", () => {
-    expect(parseSidebarState("garbage")).toBe("collapsed")
-    expect(parseSidebarState("EXPANDED")).toBe("collapsed")
-    expect(parseSidebarState("collapsed")).toBe("collapsed")
+  it("treats unknown values as expanded (the new default)", () => {
+    expect(parseSidebarState("garbage")).toBe("expanded")
+    expect(parseSidebarState("EXPANDED")).toBe("expanded")
+    expect(parseSidebarState("COLLAPSED")).toBe("expanded")
   })
 
   it("round-trips serialize → parse", () => {

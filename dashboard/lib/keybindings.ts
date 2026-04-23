@@ -50,6 +50,16 @@ export const KEYBINDINGS: readonly Keybinding[] = [
     founderLabel: "Advanced mode",
     devLabel: "Toggle DevMode",
   },
+  {
+    // C2 fix-wave Class 7 — Eric: "current left side tab and other icons have
+    // no labels… there should be minimizable menu but there currently isn't."
+    // VSCode convention: Cmd/Ctrl + \ hides the side bar.
+    id: "rail.toggle",
+    keys: ["⌘", "\\"],
+    area: "global",
+    founderLabel: "Hide or show the left menu",
+    devLabel: "Toggle sidebar collapse",
+  },
   // --- sheets / drawers ---
   {
     id: "sheet.close",

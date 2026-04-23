@@ -49,6 +49,7 @@ describe("KEYBINDINGS registry", () => {
       "shortcuts.open",   // ?
       "explain.toggle",   // Ctrl+E
       "devmode.toggle",   // ⌘Shift+D
+      "rail.toggle",      // ⌘\  (C2 fix-wave Class 7)
       "sheet.close",      // Esc
       "task.pause",       // Ctrl+.
       "task.abort",       // Ctrl+Shift+.

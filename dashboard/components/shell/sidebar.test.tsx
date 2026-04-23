@@ -128,43 +128,79 @@ beforeEach(() => {
   mockPathname.mockReturnValue("/build")
   mockReduceMotion.mockReturnValue(false)
   clearCookies()
+  // C2 Class 7: clear localStorage so the rail-collapse pref doesn't leak
+  // between tests. Some tests assert the exact stored value.
+  try {
+    window.localStorage.clear()
+  } catch {
+    // ignore
+  }
 })
 
 // --- tests ----------------------------------------------------------------
 
 describe("Sidebar", () => {
-  it("renders collapsed by default (no initialCollapsed prop)", () => {
+  it("renders expanded by default (C2 Class 7: no more icon-only fallback)", () => {
     render(<Sidebar />)
     const aside = screen.getByTestId("sidebar")
-    expect(aside.getAttribute("data-collapsed")).toBe("true")
-    // collapsed width = 56px
-    expect((aside as HTMLElement).style.width).toBe("56px")
-  })
-
-  it("renders expanded when initialCollapsed=false", () => {
-    render(<Sidebar initialCollapsed={false} />)
-    const aside = screen.getByTestId("sidebar")
     expect(aside.getAttribute("data-collapsed")).toBe("false")
+    // expanded width = 224px
     expect((aside as HTMLElement).style.width).toBe("224px")
   })
 
-  it("clicking the chevron toggle expands the sidebar and sets the cookie", () => {
+  it("renders collapsed when initialCollapsed=true (cookie seed)", () => {
+    render(<Sidebar initialCollapsed={true} />)
+    const aside = screen.getByTestId("sidebar")
+    expect(aside.getAttribute("data-collapsed")).toBe("true")
+    expect((aside as HTMLElement).style.width).toBe("56px")
+  })
+
+  it("clicking the chevron toggle collapses the sidebar + sets cookie + localStorage", () => {
     render(<Sidebar />)
     const toggle = screen.getByTestId("sidebar-toggle")
-    expect(toggle.getAttribute("aria-expanded")).toBe("false")
+    expect(toggle.getAttribute("aria-expanded")).toBe("true")
 
     fireEvent.click(toggle)
 
     const aside = screen.getByTestId("sidebar")
-    expect(aside.getAttribute("data-collapsed")).toBe("false")
-    expect(toggle.getAttribute("aria-expanded")).toBe("true")
-    // Cookie persisted with new state
-    expect(document.cookie).toContain("cae-sidebar-state=expanded")
-
-    // Toggle back: re-collapses + cookie flips
-    fireEvent.click(toggle)
     expect(aside.getAttribute("data-collapsed")).toBe("true")
+    expect(toggle.getAttribute("aria-expanded")).toBe("false")
+    // Cookie + localStorage persisted with new state
     expect(document.cookie).toContain("cae-sidebar-state=collapsed")
+    expect(window.localStorage.getItem("cae.rail.collapsed")).toBe("true")
+
+    // Toggle back: re-expands + cookie flips
+    fireEvent.click(toggle)
+    expect(aside.getAttribute("data-collapsed")).toBe("false")
+    expect(document.cookie).toContain("cae-sidebar-state=expanded")
+    expect(window.localStorage.getItem("cae.rail.collapsed")).toBe("false")
+  })
+
+  it("⌘\\ keyboard shortcut toggles collapse", () => {
+    render(<Sidebar />)
+    const aside = screen.getByTestId("sidebar")
+    expect(aside.getAttribute("data-collapsed")).toBe("false")
+
+    // Fire a synthetic keydown on window — the sidebar's global listener
+    // picks it up. metaKey=true simulates mac ⌘.
+    fireEvent.keyDown(window, { key: "\\", metaKey: true })
+    expect(aside.getAttribute("data-collapsed")).toBe("true")
+
+    // Ctrl+\ (non-mac) also toggles
+    fireEvent.keyDown(window, { key: "\\", ctrlKey: true })
+    expect(aside.getAttribute("data-collapsed")).toBe("false")
+  })
+
+  it("⌘\\ ignored when focus is in an input (typing bash path)", () => {
+    render(<Sidebar />)
+    const aside = screen.getByTestId("sidebar")
+    const input = document.createElement("input")
+    document.body.appendChild(input)
+    input.focus()
+    fireEvent.keyDown(input, { key: "\\", metaKey: true })
+    // Still expanded — shortcut was suppressed because focus was editable.
+    expect(aside.getAttribute("data-collapsed")).toBe("false")
+    document.body.removeChild(input)
   })
 
   it("active route shows the accent rail and aria-current=page", () => {
@@ -192,7 +228,7 @@ describe("Sidebar", () => {
   })
 
   it("renders a tooltip popup for every nav item when collapsed", () => {
-    render(<Sidebar />)
+    render(<Sidebar initialCollapsed={true} />)
     // Each item gets a sibling popup containing the same label text.
     for (const section of SIDEBAR_SECTIONS) {
       for (const item of section.items) {
@@ -235,7 +271,7 @@ describe("Sidebar", () => {
   })
 
   it("section labels are aria-hidden when collapsed", () => {
-    render(<Sidebar />)
+    render(<Sidebar initialCollapsed={true} />)
     const buildSection = screen.getByTestId("sidebar-section-build")
     const heading = buildSection.querySelector("[aria-hidden='true']")
     expect(heading).not.toBeNull()
@@ -292,7 +328,7 @@ describe("Sidebar", () => {
   })
 
   it("collapsed link carries aria-label (icon-only) for screen readers", () => {
-    render(<Sidebar />)
+    render(<Sidebar initialCollapsed={true} />)
     expect(screen.getByTestId("sidebar-item-agents").getAttribute("aria-label")).toBe(
       "Agents",
     )
