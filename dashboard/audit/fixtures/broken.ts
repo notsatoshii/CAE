@@ -17,6 +17,20 @@
 import { mkdir, writeFile } from "node:fs/promises"
 import { join } from "node:path"
 
+// caveman: expected-truth for broken fixture. Parser rejects every
+// malformed row — only 1 valid begin + 1 valid end survive, active=0.
+// Scorer should find "error" / "stale" states surfaced without white
+// screen. Keep this tight: broken fixture's job is showing resilient
+// copy, not accurate numbers.
+export function readExpectedTruth(): Record<string, string> {
+  return {
+    "mission-control.active-count": "0",
+    "mission-control.error-state": "parse-errors-present",
+    "metrics.total-events": "1", // 1 begin + 1 end pair → 1 completion
+    "build-queue.count": "0",
+  }
+}
+
 export async function seed(root: string): Promise<void> {
   const now = Date.now()
   const metricsDir = join(root, ".cae", "metrics")

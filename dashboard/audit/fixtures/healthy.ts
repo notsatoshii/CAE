@@ -26,6 +26,20 @@
 import { mkdir, writeFile } from "node:fs/promises"
 import { join } from "node:path"
 
+// caveman: expected-truth for healthy fixture. Active=5 (25/30 ended,
+// 5 still in flight); sparkline should reflect a dense tool-call stream.
+// Values here are the exact strings product code should render into
+// `[data-truth]` when this fixture is seeded — scorer diffs these.
+export function readExpectedTruth(): Record<string, string> {
+  return {
+    "mission-control.active-count": "5",
+    "mission-control.empty": "false",
+    "metrics.total-events": "85", // 30 begin + 25 end + 30 token_usage
+    "build-queue.count": "0",
+    "tool-calls.last-60s": "60",
+  }
+}
+
 // caveman: 3 agent names match cae-agents-state default roster
 const AGENTS = ["forge", "sentinel", "phantom"] as const
 const MODELS = ["sonnet", "opus", "haiku"] as const

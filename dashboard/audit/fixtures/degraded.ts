@@ -12,6 +12,19 @@
 import { mkdir, writeFile } from "node:fs/promises"
 import { join } from "node:path"
 
+// caveman: expected-truth for degraded fixture. All events 1-30min old
+// so active_count=0; 5 of 30 ended with failure; budget bar should
+// read "above 80%" because each event burns 40-50k input tokens.
+export function readExpectedTruth(): Record<string, string> {
+  return {
+    "mission-control.active-count": "0",
+    "mission-control.degraded": "true",
+    "mission-control.failure-count": "5",
+    "metrics.budget-warning": "true",
+    "tool-calls.last-60s": "3", // only 3 entries in last minute at 20s cadence
+  }
+}
+
 const AGENTS = ["forge", "sentinel", "phantom"] as const
 const MODELS = ["sonnet", "opus", "haiku"] as const
 const TOOLS = ["Bash", "Read", "Edit", "Write", "Grep"] as const
