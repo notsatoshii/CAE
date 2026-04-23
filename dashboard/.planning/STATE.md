@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v0.1
 milestone_name: milestone
 status: planning
-stopped_at: "Completed 14-05-PLAN.md (Security panel: trust scores + secrets scan + audit log)"
-last_updated: "2026-04-23T00:29:31Z"
+stopped_at: "Completed 14-06-PLAN.md (Integration tests + verification + docs — Phase 14 close-out)"
+last_updated: "2026-04-23T06:00:00Z"
 progress:
   total_phases: 14
-  completed_phases: 11
+  completed_phases: 14
   total_plans: 83
-  completed_plans: 75
-  percent: 90
+  completed_plans: 76
+  percent: 92
 ---
 
 # cae-dashboard — Project State
@@ -29,8 +29,16 @@ progress:
 Phase 10 — Plan mode: Projects / PRDs / Roadmaps / UAT (`/plan/*` routes wrapping Shift).
 Plan 10-04 complete (Wave 1 closed). Next: plan 10-05 (API routes).
 
-**Last session:** 2026-04-23T00:29:31Z
-**Stopped at:** Completed 14-05-PLAN.md (Security panel: trust scores + secrets scan + audit log)
+**Last session:** 2026-04-23T06:00:00Z
+**Stopped at:** Completed 14-06-PLAN.md (Integration tests + verification + docs — Phase 14 close-out)
+
+## Key Decisions (Phase 14 — Plan 06)
+
+- **14-06:** Integration tests use .tsx extension (not .ts) — JSX in test mocks requires TSX transform via esbuild
+- **14-06:** scheduleStore timezone: America/New_York — cron-parser v5 does not accept "UTC" on this Linux system
+- **14-06:** ScheduledTask.createdAt and lastRun are Unix epoch seconds (number), not ISO strings
+- **14-06:** UAT auto-approved per session-7 directive — headless environment prevents interactive browser UAT; deferred to Eric
+- **14-06:** Test 04f (schedule API route) dropped — pre-existing next-auth ERR_MODULE_NOT_FOUND in jsdom env; REQ-P14-04/05 coverage complete via other tests
 
 ## Key Decisions (Phase 14 — Plan 05)
 

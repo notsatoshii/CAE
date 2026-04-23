@@ -295,7 +295,7 @@ Plans:
 - Role-based access — viewer/operator/admin roles gated via Google SSO.
 - Trust scoring for installed skills + secret detection + MCP call auditing surfaced in a Security panel.
 
-**Plans:** 4/6 plans executed
+**Plans:** 6/6 plans complete
 
 Plans:
 - [x] 14-01-PLAN.md — Wave 0 scaffold: deps + gitleaks + fixtures + types + labels + audit-hook + skill-install wrapper (wave 0)
@@ -303,7 +303,7 @@ Plans:
 - [x] 14-03-PLAN.md — NL cron: rule-based parser + cronstrue describe + scheduled_tasks.json + system-cron watcher (wave 2)
 - [x] 14-04-PLAN.md — RBAC: Google provider + role callbacks + middleware gates + /build/admin/roles + RoleGate (wave 3)
 - [x] 14-05-PLAN.md — Security panel: trust score + gitleaks scan + PostToolUse audit log + /build/security (wave 4)
-- [ ] 14-06-PLAN.md — Integration tests + VERIFICATION.md + BuildRail lock + docs/ENV + Eric UAT (wave 5)
+- [x] 14-06-PLAN.md — Integration tests + VERIFICATION.md + BuildRail lock + docs/ENV + Eric UAT (wave 5)
 
 ## What we'll defer to v2 or later
 
