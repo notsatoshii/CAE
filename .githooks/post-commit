@@ -1,0 +1,81 @@
+#!/usr/bin/env bash
+# post-commit — fire Herald to keep README/ARCHITECTURE/CHANGELOG current
+# after material commits. Debounced + background so commits never block.
+#
+# Session 10 directive (Eric): every material change triggers a herald
+# run so docs stay live without manual upkeep.
+#
+# Rules:
+#   - Skip if last commit only touched .planning/, docs/, audit/reports,
+#     audit/shots, or lockfiles. Docs-only commits don't need a refresh.
+#   - Debounce: if a Herald run happened in the last 900s, skip.
+#   - Herald runs in background (nohup + &) so commit returns instantly.
+#   - Output goes to .planning/herald/logs/herald-post-commit-<ts>.log so
+#     stale runs are reviewable.
+#   - Opt-out: export CAE_SKIP_HERALD=1 before commit.
+
+set -u
+
+if [[ "${CAE_SKIP_HERALD:-0}" == "1" ]]; then
+  exit 0
+fi
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+cd "$REPO_ROOT" || exit 0
+
+# ── Material-change gate ──────────────────────────────────────────────
+# Look at files changed in the just-landed commit.
+CHANGED="$(git diff-tree --no-commit-id --name-only -r HEAD 2>/dev/null)"
+[[ -z "$CHANGED" ]] && exit 0
+
+MATERIAL=0
+while IFS= read -r f; do
+  [[ -z "$f" ]] && continue
+  case "$f" in
+    .planning/*|\
+    docs/*|\
+    dashboard/audit/reports/*|\
+    dashboard/audit/shots/*|\
+    *.lock|*lockfile*|\
+    *.original.md)
+      ;;
+    *)
+      MATERIAL=1
+      break
+      ;;
+  esac
+done <<< "$CHANGED"
+
+[[ "$MATERIAL" == "0" ]] && exit 0
+
+# ── Debounce ──────────────────────────────────────────────────────────
+STATE_DIR="$REPO_ROOT/.planning/herald"
+mkdir -p "$STATE_DIR/logs"
+LAST_FILE="$STATE_DIR/.last-post-commit-run"
+NOW="$(date +%s)"
+DEBOUNCE_S=900
+if [[ -f "$LAST_FILE" ]]; then
+  LAST="$(cat "$LAST_FILE" 2>/dev/null || echo 0)"
+  if (( NOW - LAST < DEBOUNCE_S )); then
+    exit 0
+  fi
+fi
+echo "$NOW" > "$LAST_FILE"
+
+# ── Dispatch ──────────────────────────────────────────────────────────
+TS="$(date +%Y%m%d-%H%M%S)"
+LOG="$STATE_DIR/logs/herald-post-commit-$TS.log"
+# `cae herald changelog --auto --fast` keeps the changelog current. README
+# + ARCHITECTURE run monthly via cron (separate concern) — this hook is
+# per-commit only.
+(
+  {
+    echo "=== herald post-commit $(date -u +%FT%TZ) ==="
+    echo "=== commit: $(git log -1 --format='%h %s') ==="
+    echo "=== changed: $(echo "$CHANGED" | tr '\n' ' ') ==="
+    cae herald changelog --auto --fast
+  } > "$LOG" 2>&1
+) < /dev/null > /dev/null 2>&1 &
+disown 2>/dev/null || true
+
+exit 0
