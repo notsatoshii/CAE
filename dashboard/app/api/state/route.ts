@@ -11,6 +11,7 @@ import {
 } from "@/lib/cae-state"
 import { CAE_ROOT } from "@/lib/cae-config"
 import { getHomeState, type HomeState } from "@/lib/cae-home-state"
+import { getActivityFeed, type ActivityFeedRow } from "@/lib/cae-activity-feed"
 import type { CbEvent } from "@/lib/cae-types"
 import { log } from "@/lib/log"
 import { withLog } from "@/lib/with-log"
@@ -32,6 +33,7 @@ async function getHandler(req: NextRequest) {
     compactionEntries,
     approvalsEntries,
     home,
+    activityFeed,
   ] = await Promise.all([
     getCircuitBreakerState(project),
     listPhases(project),
@@ -50,6 +52,12 @@ async function getHandler(req: NextRequest) {
         needs_you: [],
         live_ops_line: "Idle right now.",
       }
+    }),
+    // Class 15A: canonical + legacy stream union. Last 20 is plenty for the
+    // /build home feed card; /api/tail/activity handles live tailing.
+    getActivityFeed({ root: project }).catch((err): ActivityFeedRow[] => {
+      l.error({ err }, "getActivityFeed failed")
+      return []
     }),
   ])
 
@@ -94,6 +102,9 @@ async function getHandler(req: NextRequest) {
     events_recent: home.events_recent,
     needs_you: home.needs_you,
     live_ops_line: home.live_ops_line,
+    // Class 15A: canonical activity feed, last 20 rows for the build-home
+    // ActivityFeed card. Consumers that need more call /api/tail/activity.
+    recent_activity: activityFeed.slice(0, 20),
   })
 }
 
