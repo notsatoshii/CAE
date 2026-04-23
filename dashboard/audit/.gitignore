@@ -1,7 +1,14 @@
 # Audit harness artifacts (regenerable; large)
 shots/
-reports/
 .tmp/
 .cache/
 test-results/
 playwright-report/
+
+# Cap.7 scratch dir — seed-fixture writes into audit/.cae-run/ by default
+# so fixture seeds don't pollute the real project root.
+.cae-run/
+
+# Reports are the permanent record — SCORES/FINDINGS/SUMMARY/DELTA stay
+# in git so cycle deltas are reviewable across sessions.
+# (do NOT add reports/ here)
