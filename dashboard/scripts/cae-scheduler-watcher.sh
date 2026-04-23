@@ -5,6 +5,11 @@
 # Reads scheduled_tasks.json at CAE_ROOT, computes next-run per task,
 # dispatches cae execute-buildplan for tasks that are due AND enabled.
 #
+# F6 (Wave 1.5): also runs an hourly skill-scan refresh — gated by
+# `[[ $(date +%M) == 00 ]]` so it fires once per hour. Output goes to the
+# scheduler.jsonl as a single completion event so the UI knows when the
+# .cae/metrics/skill-scans.jsonl was last refreshed.
+#
 # Security:
 #   - Task id validated at write-time (^[a-z0-9-]+$); watcher trusts registry.
 #   - buildplan validated at write-time (BUILDPLAN_RE); no shell metacharacters.
@@ -32,7 +37,8 @@ mkdir -p "$(dirname "$LOG")"
 # Auto-create empty registry if missing
 if [[ ! -f "$TASKS_FILE" ]]; then
   echo "[]" > "$TASKS_FILE"
-  exit 0
+  # NOTE: we still want to fall through to the F6 skill-scan check below even
+  # when there's no registry — bail only after that work has had a chance.
 fi
 
 NOW=$(date +%s)
@@ -51,6 +57,50 @@ fi
 if [[ -z "$NODE_BIN" ]]; then
   echo "{\"ts\":$NOW,\"event\":\"error\",\"msg\":\"node not found on PATH\"}" >> "$LOG"
   exit 1
+fi
+
+# ─────────────────────────────────────────────────────────────────────────
+# F6 (Wave 1.5): hourly skill-scan refresh
+# ─────────────────────────────────────────────────────────────────────────
+# Cron fires us every minute; gate the skill-scan refresh to once per hour
+# so we don't burn CPU on gitleaks every 60 seconds. Minute 00 is the safest
+# choice — coincides with the natural top-of-hour boundary.
+#
+# Run via flock so two overlapping watcher invocations don't double-fire if
+# the previous refresh is still mid-flight (gitleaks can take 10s+ on a fat
+# skill collection).
+if [[ "$(date +%M)" == "00" ]]; then
+  REFRESH_SCRIPT="$DASHBOARD_DIR/scripts/refresh-skill-scans.ts"
+  REFRESH_LOCK="$LOCK_DIR/cae-skill-scan-refresh.lock"
+  if [[ -f "$REFRESH_SCRIPT" ]]; then
+    (
+      exec 8>"$REFRESH_LOCK"
+      if flock -n 8; then
+        echo "{\"ts\":$NOW,\"event\":\"skill_scan_refresh_start\"}" >> "$LOG"
+        # Prefer tsx if installed (fastest TS runner). Fall back to ts-node, then
+        # to a node --import tsx invocation. We do not block the watcher on the
+        # outcome — gitleaks is invoked per-skill and may take seconds.
+        if command -v tsx >/dev/null 2>&1; then
+          tsx "$REFRESH_SCRIPT" >> "$LOG" 2>&1
+        elif [[ -x "$DASHBOARD_DIR/node_modules/.bin/tsx" ]]; then
+          "$DASHBOARD_DIR/node_modules/.bin/tsx" "$REFRESH_SCRIPT" >> "$LOG" 2>&1
+        elif [[ -x "$DASHBOARD_DIR/node_modules/.bin/ts-node" ]]; then
+          "$DASHBOARD_DIR/node_modules/.bin/ts-node" --transpile-only "$REFRESH_SCRIPT" >> "$LOG" 2>&1
+        else
+          echo "{\"ts\":$NOW,\"event\":\"skill_scan_refresh_skip\",\"reason\":\"no_ts_runner\"}" >> "$LOG"
+        fi
+        echo "{\"ts\":$(date +%s),\"event\":\"skill_scan_refresh_done\"}" >> "$LOG"
+      else
+        echo "{\"ts\":$NOW,\"event\":\"skill_scan_refresh_skip_locked\"}" >> "$LOG"
+      fi
+    ) &
+  fi
+fi
+
+# Bail early if no scheduled tasks (the F6 work above still ran in background).
+if [[ ! -s "$TASKS_FILE" ]] || ! jq -e 'length > 0' "$TASKS_FILE" >/dev/null 2>&1; then
+  wait
+  exit 0
 fi
 
 # Resolve cae binary
