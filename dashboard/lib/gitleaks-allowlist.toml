@@ -1,0 +1,21 @@
+# CAE dashboard gitleaks allowlist config.
+# Suppresses common doc-example and placeholder patterns that appear in SKILL.md files.
+# Referenced by cae-secrets-scan.ts via --config flag.
+
+[allowlist]
+  description = "CAE dashboard doc-example allowlist"
+  regexes = [
+    '''your-api-key-here''',
+    '''REDACTED''',
+    '''sk-proj-example''',
+    '''xxxx+''',
+    '''example-key''',
+    '''\{\{[a-z_]+\}\}''',
+    '''<your-[a-z-]+>''',
+  ]
+  paths = [
+    '''.*\.test\.(ts|tsx|js|jsx|sh)$''',
+    '''tests/fixtures/.*''',
+    '''.*\.example$''',
+    '''docs/.*''',
+  ]
