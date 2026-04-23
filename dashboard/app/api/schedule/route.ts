@@ -20,6 +20,13 @@ export const runtime = "nodejs"
 const BUILDPLAN_RE = /^[A-Za-z0-9_./-]+$/
 
 /**
+ * WR-03: Maximum length for the natural-language schedule input.
+ * Limits LLM prompt injection surface — a 200-char input cannot carry a full
+ * instruction-override payload while still describing a schedule.
+ */
+const NL_MAX_LEN = 200
+
+/**
  * GET /api/schedule
  * Returns all scheduled tasks from the registry.
  */
@@ -58,6 +65,7 @@ function generateId(nl: string): string {
  *
  * Security:
  *   - operator role required (T-14-04 defense-in-depth)
+ *   - nl length-limited to 200 chars (WR-03: limits LLM prompt injection surface)
  *   - buildplan is an absolute path under CAE_ROOT (T-14-03-01)
  *   - buildplan must match BUILDPLAN_RE (CR-04: no shell metacharacters)
  *   - WR-01: caeRoot check uses trailing separator to prevent prefix-escape
@@ -79,6 +87,15 @@ export async function POST(req: NextRequest) {
   if (typeof body.nl !== "string" || !body.nl.trim()) {
     return NextResponse.json({ error: "nl required" }, { status: 400 })
   }
+
+  // WR-03: length-limit nl to reduce LLM prompt injection surface
+  if (body.nl.length > NL_MAX_LEN) {
+    return NextResponse.json(
+      { error: `nl must be ${NL_MAX_LEN} characters or fewer` },
+      { status: 400 }
+    )
+  }
+
   if (typeof body.buildplan !== "string" || !body.buildplan) {
     return NextResponse.json({ error: "buildplan required" }, { status: 400 })
   }

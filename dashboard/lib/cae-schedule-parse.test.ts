@@ -54,3 +54,53 @@ describe("parseSchedule — LLM fallback", () => {
     await expect(parseSchedule("unclear", mockLlm)).rejects.toThrow("LLM timeout")
   })
 })
+
+// ─── WR-03 regression: LLM cadence guard ──────────────────────────────────────
+describe("WR-03: parseSchedule — LLM cadence guard rejects sub-5-minute intervals", () => {
+  // All tests use nl phrases that do NOT match any rule, so the mock LLM is called.
+
+  it("WR-03a: LLM returns '* * * * *' (every minute) → throws cadence error", async () => {
+    const mockLlm = vi.fn().mockResolvedValue({ cron: "* * * * *" })
+    await expect(parseSchedule("run constantly please", mockLlm)).rejects.toThrow(/minimum interval/)
+  })
+
+  it("WR-03b: LLM returns '*/2 * * * *' (every 2 minutes) → throws cadence error", async () => {
+    const mockLlm = vi.fn().mockResolvedValue({ cron: "*/2 * * * *" })
+    await expect(parseSchedule("very frequently please", mockLlm)).rejects.toThrow(/minimum interval/)
+  })
+
+  it("WR-03c: LLM returns '*/4 * * * *' (every 4 minutes) → throws cadence error", async () => {
+    const mockLlm = vi.fn().mockResolvedValue({ cron: "*/4 * * * *" })
+    await expect(parseSchedule("almost every five minutes please", mockLlm)).rejects.toThrow(/minimum interval/)
+  })
+
+  it("WR-03d: LLM returns '*/5 * * * *' (every 5 minutes, exactly at floor) → allowed", async () => {
+    // Uses nl that won't match rule table ("quinquennial" is not in rules)
+    const mockLlm = vi.fn().mockResolvedValue({ cron: "*/5 * * * *" })
+    const result = await parseSchedule("quinquennial interval check", mockLlm)
+    expect(result.cron).toBe("*/5 * * * *")
+    expect(result.source).toBe("llm")
+  })
+
+  it("WR-03e: LLM returns '0 * * * *' (every hour) → allowed", async () => {
+    const mockLlm = vi.fn().mockResolvedValue({ cron: "0 * * * *" })
+    const result = await parseSchedule("once an hour please", mockLlm)
+    expect(result.cron).toBe("0 * * * *")
+    expect(result.source).toBe("llm")
+  })
+
+  it("WR-03f: rule-matched 'every minute' bypasses cadence guard (rule-path, not LLM)", async () => {
+    // Rule-matched crons don't go through the LLM cadence check — intentional.
+    // The user explicitly typed "every minute" and the rule table matched deterministically.
+    const result = await parseSchedule("every minute")
+    expect(result.cron).toBe("* * * * *")
+    expect(result.source).toBe("rule")
+  })
+
+  it("WR-03g: rule-matched 'every 15 minutes' bypasses cadence guard (rule-path)", async () => {
+    // Rule-table matches are deterministic user intent, not LLM output.
+    const result = await parseSchedule("every 15 minutes")
+    expect(result.cron).toBe("*/15 * * * *")
+    expect(result.source).toBe("rule")
+  })
+})

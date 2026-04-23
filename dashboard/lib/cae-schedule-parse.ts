@@ -110,12 +110,45 @@ const RULES: Array<[RegExp, RuleHandler | string]> = [
 ]
 
 /**
+ * WR-03: Minimum interval floor for LLM-returned cron expressions.
+ *
+ * Rule-matched crons (e.g. "every minute") are trusted — the rules table is
+ * deterministic and the user explicitly asked for that cadence. LLM-returned
+ * crons are not trusted: a prompt-injected response could force `* * * * *`
+ * (every minute), burning Anthropic quota and wedging the watcher's subshells.
+ *
+ * Floor: 5 minutes (300 seconds). If two consecutive next-run times computed
+ * from the LLM cron are less than 300s apart, the cron is rejected.
+ */
+const LLM_MIN_INTERVAL_SECONDS = 300
+
+/**
+ * Compute the interval in seconds between the first two firings of a cron
+ * expression, starting from the current time.
+ *
+ * Returns Infinity if computation fails (safe default — won't reject).
+ */
+function cronMinInterval(cron: string): number {
+  try {
+    const iter = CronExpressionParser.parse(cron, {
+      currentDate: new Date(),
+    })
+    const t1 = iter.next().getTime()
+    const t2 = iter.next().getTime()
+    return (t2 - t1) / 1000
+  } catch {
+    return Infinity
+  }
+}
+
+/**
  * Parse a natural-language schedule string into a cron expression.
  *
  * Strategy (§Pattern 2 from research):
  * 1. Try each rule in RULES table (deterministic, zero cost).
  * 2. If no rule matches, call llmImpl (defaults to claude shell-out).
  * 3. Validate LLM output via CronExpressionParser.parse(); throw if invalid.
+ * 4. WR-03: Validate LLM output cadence — reject if interval < 5 minutes.
  *
  * @param nl    Natural-language schedule, e.g. "every morning at 9am"
  * @param llmImpl  Injectable LLM implementation (mock in tests)
@@ -142,6 +175,16 @@ export async function parseSchedule(
     CronExpressionParser.parse(llmResult.cron)
   } catch {
     throw new Error(`Could not parse: "${nl}"`)
+  }
+
+  // WR-03: reject LLM-returned cron if interval is below the minimum floor.
+  // This prevents prompt-injection forcing `* * * * *` (every-minute DoS).
+  // Rule-matched crons bypass this check — they are deterministic, not LLM output.
+  const interval = cronMinInterval(llmResult.cron)
+  if (interval < LLM_MIN_INTERVAL_SECONDS) {
+    throw new Error(
+      `Schedule is too frequent (minimum interval is ${LLM_MIN_INTERVAL_SECONDS / 60} minutes for LLM-parsed schedules)`
+    )
   }
 
   return { cron: llmResult.cron, source: "llm", confidence: "medium" }
