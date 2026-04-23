@@ -429,6 +429,94 @@ territory; this is the "final polish" wave once bones are correct.
 
 ---
 
+### Class 18 — Chat with CAE broken (root-user claude CLI refusal)
+
+**Cells affected:** all chat surfaces (`/chat`, `/build/*` right rail,
+ConfirmActionDialog Nexus explainers). Plus every other dashboard
+function that shells out to `claude` CLI (workflows Run-now, queue
+delegate, Nexus gate).
+**Eric verbatim:** "the chat with CAE doesnt work at all. … more than
+that none of the functions there work at all."
+**Root cause:** Claude CLI ≥2.1.117 refuses to run under root/sudo.
+Dashboard dev server is rooted; every spawn gets blocked. Same gate as
+Class 12 Herald. Memory detail: `bug_cae_dashboard_chat_broken_under_root.md`.
+
+**Fix landed this session (pre-overnight):**
+- `/usr/local/bin/cae-creds-resync.sh` installed (mirrors
+  `/root/.claude/.credentials.json` → `/home/cae/.claude/.credentials.json`)
+- `/etc/cron.d/cae-creds-resync` every 3h
+- `/etc/sudoers.d/cae-claude` grants `root ALL=(cae) NOPASSWD:
+  /usr/bin/claude`
+- Creds mirrored once manually; `sudo -u cae claude --print …` validated
+  returning "OK"
+
+**Pending (overnight cascade):**
+- `lib/chat-spawn.ts` — swap `spawn("claude", args)` for
+  `spawn("sudo", ["-u", "cae", "claude", ...args])`; add
+  `HOME=/home/cae` override.
+- Same for `adapters/claude-code.sh`, `lib/workflow-run.ts`,
+  `lib/queue-delegate.ts`, any other claude shellout site.
+- Unit test expectation updates (mock remains valid — just different spawn args).
+
+**Expected behavior post-fix:** chat stream returns live text; Nexus
+confirm dialogs summarize actions; workflow Run-now produces output.
+
+**Severity:** P0 — primary interactive surface. User has no way to
+talk to CAE at all.
+
+---
+
+### Class 19 — Functionality audit: every button, first-principles
+
+**Cells affected:** entire dashboard UX surface, all interactive elements.
+**Eric's mandate (session 12):** "test all functionality for every button
+as well. Also critically question why/how/if something works and what
+features were meant or intended for what and whether it works as intended."
+
+**Discipline (codified in feedback memory
+`feedback_first_principles_functionality_audit.md`):**
+For EVERY interactive element —
+1. **Claim:** what does the label/docs/spec say it does?
+2. **Intent:** why does this feature exist? User need? (Read ROADMAP,
+   UI-SPEC, phase plans.)
+3. **Actual:** click it. What happens?
+4. **Diff:** actual vs claim + intent?
+5. **Residual:** works across all personas + viewports + states?
+
+**Failure classification:**
+- non-functional (dead button) — P0
+- partial (sometimes works) — P1
+- wrong behavior — P0
+- no feedback — P2
+- intent drift (works but not as intended) — P1
+- redundant (confusing with other control) — P2
+
+**Fix path:**
+- **19A — Run clickwalk.** Class 6 harness run was deferred; Eric's ask
+  escalates. Execute `AUDIT_CLICKWALK=1 audit/run-cycle.sh C4 healthy
+  --prior C3`. Produces per-button expected-vs-actual + orphan-route
+  report. Output feeds sub-waves 19B+.
+- **19B — Manual user-flow walkthroughs.** Persona × route matrix:
+  founder-first-time opens /build, tries each CTA, tracks what works.
+  Output: `C3-UX-WALKTHROUGH.md` with per-flow pass/fail + screenshots.
+- **19C — Intent audit.** Cross-reference each component's label with
+  ROADMAP/UI-SPEC/phase plans. Flag any feature whose live behavior
+  doesn't match its stated intent.
+- **19D — Batch fixes.** Group failures from 19A+B+C by root cause,
+  execute as ordinary fix-wave sub-classes.
+
+**Expected output:** explicit functionality registry. Every button on
+every surface annotated: works ✅ / partial ⚠ / broken ❌ / missing ⬛.
+
+**Severity:** P0 — Eric says "none of the functions there work at all."
+If even 30% of that is literal, the dashboard is non-usable as product.
+All craft/depth/liveness polish is secondary to this.
+
+**Slot:** tied P0 with Class 14 + 15. Execute in parallel. Class 19
+findings will spawn sub-classes that supersede Class 5 craft sub-waves.
+
+---
+
 ## Invariants / traps
 
 - **Do not** chase per-cell bugs until vision completes. Vision surfaces craft issues that will restructure components — fixing a cell-specific hierarchy thing pre-vision risks re-fix after vision recs land.
