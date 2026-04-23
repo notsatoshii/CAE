@@ -199,11 +199,25 @@ Being honest about what's unique vs what competitors also have:
 
 **Phase 1 complete** — orchestrator, safety layer, wrapped GSD agents, cross-provider Sentinel, automated Scribe, Phantom integration, Telegram gate, compaction cascade, acceptance gate 23 pass / 0 fail / 4 Gemini-extension tests TODO on `scripts/t14-acceptance.sh`. Gemini CLI is installed + authed + headless-tested — the 4 skipped tests are acceptance-script extensions, not missing functionality. See [`PHASE_1_TASKS.md`](./PHASE_1_TASKS.md).
 
-**Phase 2 landing** — Herald (user-facing doc writer, imminent), Timmy bridge (external orchestration via Hermes `/delegate`), Shift (normie-facing project genesis). See [`PHASE_2_PLAN.md`](./PHASE_2_PLAN.md).
+**Phase 2 landing** — Herald (user-facing doc writer, shipped v0.2), Timmy bridge (external orchestration via Hermes `/delegate`), Shift (normie-facing project genesis). See [`PHASE_2_PLAN.md`](./PHASE_2_PLAN.md).
+
+**Phase 3+ landing (`cae-dashboard/`)** — a Next.js 16 founder-facing dashboard over the CAE runtime. As of session 7: phases 10–14 shipped (Plan-mode `/plan/*` wrapping Shift v3, Live Floor isometric overlay, ⌘K palette + empty states, UI/UX polish loop with data-correctness + liveness + pino logging + MC-IA adoption + 6-pillar visual audit, and orchestration depth — Skills Hub + NL cron + Google-SSO RBAC + Security panel with gitleaks + audit log).
 
 **Roadmap** — multi-project orchestration, metrics UI, real job queue (upgrade from file-lock semaphore), Slack/email notifications, rollback automation.
 
-Honest positioning: **early**. Phase 1 passed a toy workload (markdown-to-JSON converter, calc CLI). Not yet proven on production-scale projects. Star the repo if you want to follow; issues welcome if you try it.
+Honest positioning: **early**. Phase 1 passed a toy workload (markdown-to-JSON converter, calc CLI). The dashboard is a much larger exercise (13 shipped phases, ~900 passing tests) and is the first serious dogfood of the CAE + GSD pipeline end to end. Not yet proven on third-party production projects. Star the repo if you want to follow; issues welcome if you try it.
+
+## Research + audit tooling (added in session 6–7)
+
+Two global CLIs ship with CAE so every agent in the roster can reach for the web, the DOM, and pixels when it plans or audits:
+
+- **`/usr/local/bin/scrape-url <url> [--text|--json|--selector CSS|--stealth]`** — [scrapling](https://github.com/D4Vinci/Scrapling) + curl_cffi + browserforge. HTTP fetch with optional headless-browser fallback. Stealth-mode bypasses most bot walls. Used by `gsd-project-researcher` / `gsd-phase-researcher` for competitor scans.
+- **`/usr/local/bin/screenshot-url <url> [-o out.png] [--viewport WxH|--mobile] [--full-page] [--wait-selector CSS] [--theme]`** — [Playwright](https://playwright.dev/) + Chromium. Writes a deterministic PNG. Claude reads the file back through native vision (no separate OCR). This is what `gsd-ui-auditor` and phase-13's 6-pillar rubric are built on.
+- **System-wide Python deps** — `scrapling`, `playwright`, `patchright`, `browserforge`, `anthropic`, `msgspec`, `curl_cffi`. Chromium is preinstalled at `/usr/local/share/playwright-browsers` so every agent gets the same browser without repeated `playwright install` races.
+
+Six agent definitions gained a `<research_tools>` block describing these CLIs so the research-class agents (`gsd-phase-researcher`, `gsd-ui-researcher`, `gsd-project-researcher`, `gsd-advisor-researcher`) and the audit-class agents (`gsd-ui-checker`, `gsd-ui-auditor`) default to `screenshot-url + Read PNG` over any third-party vision wrapper.
+
+**Per-phase `ui_audit_gate` in `execute-phase.md`.** Any phase that ships frontend code now auto-fires two audit agents after execute-plan completes and before `verify_phase_goal`: a `gsd-ui-auditor` (scoped to the files this phase touched, producing `{PHASE}-UI-AUDIT.md`) and a parallel `gsd-ui-auditor` running a founder-persona walkthrough (producing `{PHASE}-UX-WALKTHROUGH.md`). Both are advisory — they never block execution, but P0 findings route into a `/gsd-ui-fix` or gap-closure plan. This closes the hole Eric flagged in session 6 where UX debt only surfaced at a retroactive audit phase.
 
 ## Requirements
 

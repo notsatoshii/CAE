@@ -320,3 +320,86 @@ to `config/dangerous-actions.yaml`. No code changes needed.
 **New specialist (auto-detect):** Add glob patterns to `auto_activate_on` in
 `config/agent-models.yaml` (see `aegis` for example). Add matching detection logic in
 `scripts/cae-init.sh` and `detect_smart_contract_mode()` in `bin/cae`.
+
+## 11. Research + Audit Tooling (session 6 addition)
+
+CAE agents that research (before planning) and audit (before shipping) need access to the
+real web and to rendered pixels. Two global CLIs plus a Python dependency layer give every
+agent the same toolbox — no bespoke per-agent wrappers.
+
+### The two CLIs
+
+| Binary | Purpose | Under the hood |
+|--------|---------|----------------|
+| `/usr/local/bin/scrape-url` | HTTP / stealth HTML fetch, `--text` / `--json` / `--selector CSS` modes | `scrapling` + `curl_cffi` + `browserforge` |
+| `/usr/local/bin/screenshot-url` | Deterministic PNG capture, `--viewport WxH` / `--mobile` / `--full-page` / `--wait-selector` / `--theme` | `playwright` + Chromium |
+
+Both are shell scripts that shell out to Python. They are idempotent and safe to fire from
+multiple agents concurrently.
+
+### Browser + Python environment
+
+- Chromium installed globally at `/usr/local/share/playwright-browsers` (via `PLAYWRIGHT_BROWSERS_PATH` env
+  exported from the `screenshot-url` wrapper). Every agent uses the same build — no race on
+  `playwright install`, no version drift between runs.
+- Python deps installed **system-wide** so agents running as the `timmy` daemon, the `eric`
+  dev user, or inside a Next.js server all resolve to the same packages:
+  `scrapling`, `playwright`, `patchright`, `browserforge`, `anthropic`, `msgspec`, `curl_cffi`.
+
+### Agent contract
+
+Six agent definitions gained a `<research_tools>` block describing these CLIs:
+
+- `gsd-phase-researcher` — plans a phase; runs competitor scans via `scrape-url`, reference
+  screenshots via `screenshot-url + Read PNG`.
+- `gsd-ui-researcher` — produces UI-SPEC.md; captures design-system references.
+- `gsd-project-researcher` — per-project research at new-project time.
+- `gsd-advisor-researcher` — general research mode.
+- `gsd-ui-checker` — validates UI-SPEC against 6 quality dimensions.
+- `gsd-ui-auditor` — dual-mode: per-phase audit (fired by `execute-phase.md`) and retroactive
+  full-app audit (fired by `/gsd-ui-review`). Claude-native vision over `screenshot-url`
+  PNGs is the canonical path (no third-party vision wrapper).
+
+### Per-phase `ui_audit_gate` in `execute-phase.md`
+
+Any phase that ships FE files (detected via git diff across phase-start → phase-complete)
+auto-fires two `gsd-ui-auditor` invocations in parallel after all plan waves finish and
+**before** `verify_phase_goal`:
+
+```
+1. gsd-ui-auditor (audit mode)
+   scope: files this phase touched, against 6 UI pillars
+   output: {phase}-UI-AUDIT.md (frontmatter status: clean|issues|skipped)
+
+2. gsd-ui-auditor (walkthrough mode)
+   persona: non-technical founder seeing the app cold
+   output: {phase}-UX-WALKTHROUGH.md (frontmatter status: clean|issues|skipped)
+```
+
+Both are **advisory — they never block execution**. If either returns `status: issues` with
+P0 findings, the orchestrator surfaces a `/gsd-ui-fix {phase}` / `/gsd-add-phase {phase}.1`
+suggestion to the user. Config gate: `workflow.ui_audit` (default true); set false to
+opt out. This gate fixes the hole Eric flagged in session 6 where UX debt was only caught
+at a retroactive Phase 13 audit — now every FE phase closes with audit evidence.
+
+### File layout
+
+```
+/usr/local/bin/
+├── scrape-url              # Python shell-out, idempotent
+└── screenshot-url          # Python shell-out, idempotent
+
+/usr/local/share/
+└── playwright-browsers/    # Chromium build shared by all agents
+
+~/.claude/agents/            # Six agent defs with <research_tools> block:
+├── gsd-phase-researcher.md
+├── gsd-ui-researcher.md
+├── gsd-project-researcher.md
+├── gsd-advisor-researcher.md
+├── gsd-ui-checker.md
+└── gsd-ui-auditor.md
+
+~/.claude/get-shit-done/workflows/
+└── execute-phase.md         # ui_audit_gate step invokes the two agents in parallel
+```
