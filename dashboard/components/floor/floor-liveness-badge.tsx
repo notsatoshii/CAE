@@ -92,6 +92,9 @@ export function FloorLivenessBadge({
       data-stale={stale ? "true" : "false"}
       className="absolute bottom-2 left-2 z-10 flex items-center gap-2 rounded-md border border-[color:var(--border-subtle)] bg-[color:var(--surface)]/90 px-2 py-1 text-xs text-[color:var(--text-muted)] backdrop-blur"
     >
+      <span className="sr-only" data-truth={stale ? "floor.stale" : "floor.liveness-ok"}>
+        yes
+      </span>
       <span aria-hidden="true" className={dotClass} />
       <span>{label}</span>
     </div>

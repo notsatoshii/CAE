@@ -88,8 +88,45 @@ export default function FloorClient({ cbPath, projectPath, popout }: FloorClient
     authDrifted: metrics.authDrifted,
   };
 
+  // Liveness state for truth scoring — "loading" when heartbeat never arrived,
+  // "healthy" once we have a heartbeat (even stale).
+  const floorLoading = metrics.lastHeartbeatMs === null && metrics.effectsCount === 0;
+
   return (
     <div className="relative h-full w-full bg-[color:var(--bg)]">
+      <span
+        className="sr-only"
+        data-truth={floorLoading ? "floor.loading" : "floor.healthy"}
+      >
+        yes
+      </span>
+      <span className="sr-only" data-truth="floor.effects-count">
+        {metrics.effectsCount}
+      </span>
+      <span className="sr-only" data-truth="floor.queue-size">
+        {metrics.queueSize}
+      </span>
+      <span className="sr-only" data-truth="floor.last-heartbeat-ms">
+        {metrics.lastHeartbeatMs ?? 0}
+      </span>
+      <span className="sr-only" data-truth="floor.paused">
+        {paused ? "true" : "false"}
+      </span>
+      <span className="sr-only" data-truth="floor.minimized">
+        {minimized ? "true" : "false"}
+      </span>
+      <span className="sr-only" data-truth="floor.popout">
+        {popout ? "true" : "false"}
+      </span>
+      <span className="sr-only" data-truth="floor.explain">
+        {explain ? "on" : "off"}
+      </span>
+      <span className="sr-only" data-truth="floor.auth-drifted">
+        {metrics.authDrifted ? "true" : "false"}
+      </span>
+      {metrics.authDrifted && (
+        <span className="sr-only" data-truth="floor.error">auth-drift</span>
+      )}
       <FloorCanvas cbPath={cbPath} paused={paused} onMetrics={setMetrics} />
 
       {!(popout && minimized) && (
