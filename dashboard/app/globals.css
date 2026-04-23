@@ -372,3 +372,48 @@ body {
   .card-base { transition: none; }
   .card-base--interactive:active { transform: none; }
 }
+
+/* ---------------------------------------------------------------------------
+ * Shared shimmer primitive (ROADMAP backlog → loading wave).
+ *
+ * `.cae-shimmer`: CSS-only diagonal sweep used by the <Shimmer /> React
+ * component (components/ui/shimmer.tsx). Mirrors the Linear / Vercel loading
+ * treatment — an opaque placeholder surface with a soft highlight band that
+ * slides diagonally across it.
+ *
+ * Implementation:
+ *   - Base layer is opaque --surface-hover so the rect reads as a placeholder.
+ *   - Overlay is a 110deg linear-gradient that slides via background-position.
+ *   - `background-size: 200% 100%` lets us sweep off-screen then back on.
+ *   - Reduced motion: stops the sweep and holds the gradient at 50%, preserving
+ *     the "something's coming" visual cue without motion.
+ * ------------------------------------------------------------------------- */
+@keyframes cae-shimmer-sweep {
+  0%   { background-position: -100% 0, 0 0; }
+  100% { background-position:  200% 0, 0 0; }
+}
+.cae-shimmer {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  background:
+    linear-gradient(
+      110deg,
+      transparent 30%,
+      var(--border-strong) 50%,
+      transparent 70%
+    ),
+    var(--surface-hover);
+  background-size: 200% 100%, 100% 100%;
+  background-repeat: no-repeat, no-repeat;
+  background-position: -100% 0, 0 0;
+  animation: cae-shimmer-sweep 1800ms linear infinite;
+  will-change: background-position;
+}
+@media (prefers-reduced-motion: reduce) {
+  .cae-shimmer {
+    animation: none !important;
+    /* Mid-sweep freeze — still reads as a placeholder, no motion. */
+    background-position: 50% 0, 0 0 !important;
+  }
+}
