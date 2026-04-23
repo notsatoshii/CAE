@@ -183,12 +183,22 @@ not photo, to preserve PNG). Wire into the shell chrome once they land.
 4. **Pixel-agents root-cause agent** (backlog item). Deferred in session 10
    due to file-collision risk with annotation agent (floor-client.tsx).
    Now safe to dispatch — annotation is done.
-5. **Wire logo PNGs** into sidebar / brand mark (once Eric drops them in
-   `dashboard/public/`).
+5. **Logo PNGs landed in session 10** — `dashboard/public/brand/` has 8
+   variants (icon + full logo + wordmark × black/white, plus source JPGs).
+   White icon wired into TopNav + signin already. Sidebar mark is still
+   the text wordmark; swap to PNG if desired.
 6. **Iterate cycles until close-out criteria** (7 pillars × 6 personas ≥4
    on every route, 0 console errors, all 15 visualisations E1–E15 shipped,
    Eric live-walkthrough). See
    `.planning/phases/15-screenshot-truth-harness/CLOSE-OUT-CRITERIA.md`.
+7. **Herald docs as we go** — Eric's session-10 directive: every material
+   change should trigger a `cae herald <doc>` run so README / ARCHITECTURE /
+   CHANGELOG stay current without manual upkeep. Install a Herald post-
+   commit hook OR add Herald to the per-phase close-out loop. Tracking as
+   backlog.
+8. **Push on handoff** — session 10 ended with `git push origin main` per
+   directive. Session 11 should do the same once its work lands so remote
+   mirrors the local state.
 
 ---
 

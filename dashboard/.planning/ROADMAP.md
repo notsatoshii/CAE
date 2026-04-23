@@ -398,3 +398,12 @@ Quick-capture. Promote with `/gsd-review-backlog` when ready.
   - Console errors in `/floor` vs `/build`?
 - Blocker for Wave 3 acceptance. Bumps Phase 15 Wave 3 to re-test.
 - Source: Eric session-10, 2026-04-23.
+
+### Herald auto-docs + git-push on handoff
+- Every material change should trigger `cae herald <doc-type>` so
+  README / ARCHITECTURE / CHANGELOG stay fresh without manual upkeep.
+- Options: post-commit hook that runs Herald, or per-phase close-out
+  loop that runs Herald, or a pre-push hook that refreshes docs.
+- Bundle with a `git push origin main` at session end so remote
+  mirrors local after every handoff (currently done manually).
+- Source: Eric session-10, 2026-04-23.
