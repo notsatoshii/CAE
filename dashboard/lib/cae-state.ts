@@ -60,11 +60,13 @@ export async function listPhases(projectRoot: string): Promise<Phase[]> {
       const cbLines = await tailJsonl(cbPath, 50)
       const phaseTag = entry.name
       const isActive = cbLines.some(
-        (l) =>
-          typeof l === "object" &&
-          l !== null &&
-          (l as Record<string, unknown>).phaseId === phaseTag &&
-          (l as Record<string, unknown>).event === "forge_start",
+        (l) => {
+          if (typeof l !== "object" || l === null) return false
+          const rec = l as Record<string, unknown>
+          if (rec.phaseId !== phaseTag) return false
+          const ev = rec.event
+          return ev === "forge_begin" || ev === "forge_start"
+        },
       )
       if (isActive) status = "active"
     }
@@ -226,16 +228,30 @@ export async function getCircuitBreakerState(projectRoot: string): Promise<CbSta
     if (typeof entry !== "object" || entry === null) continue
     const e = entry as Record<string, unknown>
     const event = e.event as string | undefined
-    const taskId = e.taskId as string | undefined
+    // Real adapter emits snake_case task_id; older drafts used camelCase.
+    const taskId = (e.task_id ?? e.taskId) as string | undefined
+    const success = e.success as boolean | undefined
 
     switch (event) {
+      // Canonical vocabulary — real CAE adapter, fixtures, and every other
+      // aggregator (cae-agents-state, cae-changes-state, cae-activity-feed,
+      // cae-mission-control-state) all speak forge_begin/forge_end.
+      case "forge_begin":
       case "forge_start":
         if (taskId) activeTaskIds.add(taskId)
         break
+      case "forge_end":
+        if (taskId) activeTaskIds.delete(taskId)
+        if (success === false) recentFailures++
+        break
+      // Legacy vocabulary — keep handling for back-compat with any
+      // stored jsonl predating the rename.
       case "forge_done":
+        if (taskId) activeTaskIds.delete(taskId)
+        break
       case "forge_fail":
         if (taskId) activeTaskIds.delete(taskId)
-        if (event === "forge_fail") recentFailures++
+        recentFailures++
         break
       case "phantom_escalation":
         recentPhantomEscalations++

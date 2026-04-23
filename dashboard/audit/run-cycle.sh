@@ -75,9 +75,32 @@ emit_step() {
 
 emit_step "start" "cycle start: ${LABEL} (${FIXTURE})"
 
-echo "[cycle] STEP 1/7 — seed fixture ${FIXTURE}"
+# Class-14 fix (2026-04-23 session 12): the dev server reads from the
+# live CAE root (/home/cae/ctrl-alt-elite/.cae/metrics), but seed-fixture
+# defaulted to the scratch dir audit/.cae-run. Result: dashboard never
+# saw the seeded state — truth pillar stuck at 1.00 across all cycles.
+# Seed into live dir + snapshot the live metrics dir first so we can
+# restore it after the cycle.
+LIVE_ROOT="/home/cae/ctrl-alt-elite"
+LIVE_METRICS="${LIVE_ROOT}/.cae/metrics"
+BACKUP_DIR="${LIVE_ROOT}/.cae/metrics.pre-cycle-${LABEL}"
+restore_live_metrics() {
+  if [[ -d "${BACKUP_DIR}" ]]; then
+    echo "[cycle] restoring live metrics ← ${BACKUP_DIR}"
+    rm -rf "${LIVE_METRICS}"
+    mv "${BACKUP_DIR}" "${LIVE_METRICS}"
+  fi
+}
+trap restore_live_metrics EXIT INT TERM
+if [[ -d "${LIVE_METRICS}" ]]; then
+  echo "[cycle] snapshotting live metrics → ${BACKUP_DIR}"
+  rm -rf "${BACKUP_DIR}"
+  cp -a "${LIVE_METRICS}" "${BACKUP_DIR}"
+fi
+
+echo "[cycle] STEP 1/7 — seed fixture ${FIXTURE} → live root"
 emit_step "seed-fixture" "seed fixture ${FIXTURE}"
-npx tsx audit/seed-fixture.ts "${FIXTURE}"
+CAE_ROOT="${LIVE_ROOT}" npx tsx audit/seed-fixture.ts "${FIXTURE}" --root "${LIVE_ROOT}"
 
 echo "[cycle] STEP 2/7 — mint session cookie"
 emit_step "mint-session" "mint session cookie"
@@ -113,3 +136,4 @@ done
 
 echo "[cycle] STEP 7/7 — cycle complete: ${LABEL} (${FIXTURE})"
 emit_step "complete" "cycle complete: ${LABEL} (${FIXTURE})"
+# trap restore_live_metrics at top of file handles restore on EXIT

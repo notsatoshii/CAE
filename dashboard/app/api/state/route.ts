@@ -19,7 +19,12 @@ import { withLog } from "@/lib/with-log"
 const l = log("api.state")
 
 async function getHandler(req: NextRequest) {
-  const project = req.nextUrl.searchParams.get("project") ?? CAE_ROOT
+  // `||` (not `??`) so an empty string from `?project=` falls back to CAE_ROOT.
+  // useStatePoll always sends `?project=${encodeURIComponent("")}`, which made
+  // the previous `??` operator pass through the empty string — and then
+  // `join("", ".cae/metrics/...")` resolves to `/.cae/metrics/...`, a
+  // nonexistent root-filesystem path. Every breaker reading got zeroed out.
+  const project = req.nextUrl.searchParams.get("project") || CAE_ROOT
   const metricsDir = join(project, ".cae", "metrics")
   const today = new Date().toISOString().slice(0, 10)
 
