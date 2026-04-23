@@ -8,7 +8,17 @@
 
 ## TL;DR
 
-Phase 15 capture harness shipped **end-to-end**. C1 baseline captured (408 cells, 13.2min). Real bugs found + fixed. `data-truth` annotations landed across all high-impact routes. Loading screens in-flight. Vision scoring **blocked on `ANTHROPIC_API_KEY`** — drop key into `dashboard/.env.local`, run C2.
+Phase 15 capture harness shipped **end-to-end**. C1 baseline captured (408 cells, 13.2min). Real bugs found + fixed. `data-truth` annotations landed across all high-impact routes. Loading screens landed (generic build). Vision scoring **blocked on `ANTHROPIC_API_KEY`** — drop key into `dashboard/.env.local`, run C2.
+
+**Eric's session-10 ask (unfinished — inherit in session 11):**
+Replace the generic loading screens with the CodePen pattern at
+https://codepen.io/raudaschl/pen/JzRKqN. Source couldn't be fetched in
+session 10 (Cloudflare JS challenge blocks curl/WebFetch). Plan for
+session 11: Eric pastes the pen HTML+CSS+JS, or open in browser and
+read-through to extract the effect, then port into
+`components/loading/<name>.tsx` + replace the current `app/loading.tsx`
+root-level loader. Keep the rotating voice copy layer on top; swap only
+the visual effect.
 
 ---
 
