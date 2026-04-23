@@ -69,7 +69,18 @@ export default async function RootLayout({
                     <ShortcutOverlayProvider>
                       {session && <TopNav session={session} />}
                       {session && <AlertBanner />}
-                      {children}
+                      {/* Class 13D: #main-content is the subtree that gets
+                          dimmed + blurred when a modal/sheet/dialog opens.
+                          Putting the id at this layer (not only in
+                          /build/layout.tsx) means the focus-dim rule fires
+                          on every route (/metrics, /memory, /chat, /floor,
+                          /plan) without per-layout plumbing.
+                          NB: `display: contents` is INTENTIONALLY avoided —
+                          `filter` doesn't cascade across contents boxes, so
+                          the wrapper must be a real flow-level element. */}
+                      <div id="main-content">
+                        {children}
+                      </div>
                       {session && <ChatRail />}
                       {session && <CommandPalette />}
                       {session && <ShortcutOverlay />}

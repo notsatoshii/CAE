@@ -55,6 +55,7 @@ export function ReliabilityPanel() {
       <Panel
         title={L.metricsWellHeading}
         headingId="reliability-heading"
+        elevation={1}
         testId="reliability-panel-error"
         dataLiveness="error"
       >
@@ -74,6 +75,7 @@ export function ReliabilityPanel() {
       <Panel
         title={L.metricsWellHeading}
         headingId="reliability-heading"
+        elevation={1}
         testId="reliability-panel-loading"
         dataLiveness="loading"
       >
@@ -98,6 +100,7 @@ export function ReliabilityPanel() {
       <Panel
         title={L.metricsWellHeading}
         headingId="reliability-heading"
+        elevation={1}
         testId="reliability-panel-empty"
         dataLiveness="empty"
       >
@@ -142,6 +145,7 @@ export function ReliabilityPanel() {
     <Panel
       title={L.metricsWellHeading}
       headingId="reliability-heading"
+      elevation={1}
       testId="reliability-panel"
       className="flex flex-col gap-6"
       dataLiveness={liveness}

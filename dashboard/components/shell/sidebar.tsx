@@ -539,7 +539,10 @@ export function Sidebar({ initialCollapsed = false }: SidebarProps) {
           id="sidebar-nav"
           aria-label="Build navigation"
           onKeyDown={handleKeyDown}
-          className="flex-1 overflow-y-auto overflow-x-hidden p-1.5"
+          // Class 13D: scroll-vignette-y fades the top+bottom 8% of the
+          // sidebar nav to bg so long rail lists feel like they continue
+          // in depth instead of hard-clipping at the frame edges.
+          className="flex-1 overflow-y-auto overflow-x-hidden p-1.5 scroll-vignette-y"
         >
           {SIDEBAR_SECTIONS.reduce<{ acc: React.ReactNode[]; offset: number }>(
             ({ acc, offset }, section) => {

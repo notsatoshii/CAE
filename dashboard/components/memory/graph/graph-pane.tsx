@@ -130,7 +130,9 @@ export function GraphPane({ onOpenGitTimeline }: GraphPaneProps = {}) {
 
   return (
     <div
-      className="flex h-full min-h-[500px] w-full flex-col"
+      // Class 13D — graph-pane frame reads as an elevated surface: rounded
+      // corners + elevation-1 shadow so the canvas feels inset, not painted.
+      className="flex h-full min-h-[500px] w-full flex-col rounded-lg border border-[color:var(--border)] bg-[color:var(--surface)] shadow-elevation-1 overflow-hidden"
       data-testid="memory-graph-pane"
       data-liveness={graphLiveness}
     >

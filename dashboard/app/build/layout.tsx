@@ -21,6 +21,9 @@ export default async function BuildLayout({
   return (
     <div className="flex min-h-[calc(100vh-40px)] w-full">
       <SidebarServer />
+      {/* Class 13D focus-dim anchor lives on the root layout's
+          #main-content wrapper — do NOT add another id here (duplicate IDs
+          would make the :has() selector ambiguous). */}
       <div className="flex-1 min-w-0 overflow-auto">{children}</div>
     </div>
   )

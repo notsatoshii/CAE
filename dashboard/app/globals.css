@@ -300,6 +300,86 @@ body {
 @utility shadow-elevation-3 { box-shadow: var(--elevation-3); }
 @utility shadow-elevation-4 { box-shadow: var(--elevation-4); }
 
+/* ---------------------------------------------------------------------------
+ * Class 13D — Focus-dim: when a modal/sheet/dialog/alertdialog is open
+ * anywhere in the tree, dim + slightly blur the #main-content subtree so the
+ * open overlay reads as foreground and the page recedes. Pattern matches
+ * Linear / Arc / Things.
+ *
+ * Implementation notes:
+ *   - Uses `:has()` — Safari 15.4+, Chrome 105+, FF 121+. No polyfill.
+ *     On older browsers the rule silently no-ops; overlay still works.
+ *   - base-ui and Radix both set `data-open` (shadcn Dialog below already
+ *     uses `data-open:animate-in`) + role=dialog on the Popup. We select
+ *     on both to catch either convention.
+ *   - 150ms ease-out matches the dialog open animation so the dim happens
+ *     in lockstep with the modal fading in.
+ *   - prefers-reduced-motion: keep the dim (visual depth cue) but drop the
+ *     blur animation transition — users opted out of motion, not of depth.
+ * ------------------------------------------------------------------------- */
+body:has([role="dialog"][data-open]) #main-content,
+body:has([role="alertdialog"][data-open]) #main-content,
+body:has([data-slot="dialog-content"][data-open]) #main-content,
+body:has([data-slot="sheet-content"][data-open]) #main-content {
+  filter: brightness(0.7) blur(2px);
+  transition: filter 150ms ease-out;
+  pointer-events: none;
+}
+/* Interactive chrome (top-bar, rail, chat-rail) sits outside #main-content
+   so it stays sharp and usable while the dim is active. No additional rule
+   needed — they're siblings, not descendants, of #main-content. */
+
+@media (prefers-reduced-motion: reduce) {
+  body:has([role="dialog"][data-open]) #main-content,
+  body:has([role="alertdialog"][data-open]) #main-content,
+  body:has([data-slot="dialog-content"][data-open]) #main-content,
+  body:has([data-slot="sheet-content"][data-open]) #main-content {
+    transition: none;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+ * Class 13D — Gradient vignettes: long scrollable surfaces fade to the
+ * background at top/bottom so content "continues in depth" instead of
+ * getting abruptly clipped. Apply via `.scroll-vignette-y` utility on a
+ * overflow-y:auto container; mask-image preserves opaque middle, fades
+ * the first/last 8%.
+ *
+ * Horizontal variant mirrors for edge-fade on timelines / changes rows.
+ * ------------------------------------------------------------------------- */
+.scroll-vignette-y {
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0,
+    black 8%,
+    black 92%,
+    transparent 100%
+  );
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent 0,
+    black 8%,
+    black 92%,
+    transparent 100%
+  );
+}
+.scroll-vignette-x {
+  mask-image: linear-gradient(
+    to right,
+    transparent 0,
+    black 6%,
+    black 94%,
+    transparent 100%
+  );
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent 0,
+    black 6%,
+    black 94%,
+    transparent 100%
+  );
+}
+
 @keyframes cae-shake {
   0%, 100% { transform: translate3d(0, 0, 0); }
   20%      { transform: translate3d(-3px, 0, 0); }

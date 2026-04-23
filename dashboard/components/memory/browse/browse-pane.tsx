@@ -137,7 +137,9 @@ export function BrowsePane({
 
   return (
     <div
-      className="flex h-full min-h-0 flex-row overflow-hidden border border-[color:var(--border)] bg-[color:var(--bg)]"
+      // Class 13D — browse-pane matches graph-pane (rounded + elevation-1)
+      // so the memory tab's two surfaces read as peers at the same z-layer.
+      className="flex h-full min-h-0 flex-row overflow-hidden rounded-lg border border-[color:var(--border)] bg-[color:var(--bg)] shadow-elevation-1"
       data-testid="browse-pane"
       data-liveness={browseLiveness}
     >

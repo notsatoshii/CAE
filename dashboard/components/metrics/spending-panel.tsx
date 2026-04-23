@@ -68,6 +68,7 @@ export function SpendingPanel() {
       <Panel
         title={L.metricsSpendingHeading}
         headingId="spending-heading"
+        elevation={1}
         testId="spending-panel-error"
         dataLiveness="error"
       >
@@ -87,6 +88,7 @@ export function SpendingPanel() {
       <Panel
         title={L.metricsSpendingHeading}
         headingId="spending-heading"
+        elevation={1}
         testId="spending-panel-loading"
         dataLiveness="loading"
       >
@@ -112,6 +114,7 @@ export function SpendingPanel() {
       <Panel
         title={L.metricsSpendingHeading}
         headingId="spending-heading"
+        elevation={1}
         testId="spending-panel-empty"
         dataLiveness="empty"
       >
@@ -143,6 +146,7 @@ export function SpendingPanel() {
     <Panel
       title={L.metricsSpendingHeading}
       headingId="spending-heading"
+      elevation={1}
       testId="spending-panel"
       subtitle={
         <span className="flex items-center gap-2">

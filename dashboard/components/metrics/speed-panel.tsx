@@ -50,6 +50,7 @@ export function SpeedPanel() {
       <Panel
         title={L.metricsFastHeading}
         headingId="speed-heading"
+        elevation={1}
         testId="speed-panel-error"
         dataLiveness="error"
       >
@@ -69,6 +70,7 @@ export function SpeedPanel() {
       <Panel
         title={L.metricsFastHeading}
         headingId="speed-heading"
+        elevation={1}
         testId="speed-panel-loading"
         dataLiveness="loading"
       >
@@ -94,6 +96,7 @@ export function SpeedPanel() {
       <Panel
         title={L.metricsFastHeading}
         headingId="speed-heading"
+        elevation={1}
         testId="speed-panel-empty"
         dataLiveness="empty"
       >
@@ -135,6 +138,7 @@ export function SpeedPanel() {
     <Panel
       title={L.metricsFastHeading}
       headingId="speed-heading"
+      elevation={1}
       testId="speed-panel"
       className="flex flex-col gap-6"
       dataLiveness={liveness}

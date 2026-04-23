@@ -94,20 +94,23 @@ export function NodeDrawer({
       aria-label={title}
       data-testid="memory-node-drawer"
     >
-      {/* Backdrop — click to close. */}
+      {/* Backdrop — click to close. Class 13D: backdrop-blur-md + stronger
+          50% tint matches shadcn Dialog/Sheet scrim so the drawer reads
+          as a z-3 glass layer over dimmed content. */}
       <button
         type="button"
         aria-label="Close drawer backdrop"
         onClick={onClose}
-        className="absolute inset-0 bg-black/50"
+        className="absolute inset-0 bg-black/50 supports-backdrop-filter:backdrop-blur-md"
         tabIndex={-1}
       />
 
-      {/* Drawer panel — slides in from right. */}
+      {/* Drawer panel — slides in from right.
+          Class 13D: swap invisible-on-dark shadow-xl for shadow-elevation-3. */}
       <div
         ref={drawerRef}
         tabIndex={-1}
-        className="absolute right-0 top-0 flex h-full w-full max-w-md translate-x-0 flex-col overflow-y-auto border-l border-[color:var(--border)] bg-[color:var(--surface)] p-4 shadow-xl transition-transform duration-200 focus:outline-none"
+        className="absolute right-0 top-0 flex h-full w-full max-w-md translate-x-0 flex-col overflow-y-auto border-l border-[color:var(--border)] bg-[color:var(--surface)] p-4 shadow-elevation-3 transition-transform duration-200 focus:outline-none"
       >
         {/* Header */}
         <div className="mb-3 flex items-start justify-between gap-3">
