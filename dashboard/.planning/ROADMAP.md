@@ -376,6 +376,19 @@ Quick-capture. Promote with `/gsd-review-backlog` when ready.
   (chat, floor, memory, metrics — slowest routes).
 - Source: Eric session-10, 2026-04-23.
 
+### Chat hydration mismatch (admin · mobile + wide only)
+- C1 captures logged "A tree hydrated but some attributes of the server
+  rendered HTML didn't match the client properties" on `/chat` at
+  admin persona, mobile + wide viewports (not laptop). Laptop OK.
+- Likely cause: `useDevMode()` in `app/chat/chat-layout.tsx` reads a
+  client-only state (localStorage / cookie mismatch) that flips aria
+  labels between server + client render. Narrow, non-fatal — React
+  patches the text but logs the warning.
+- 2 cells affected. Fix by gating `labelFor(dev)` behind a mount
+  effect, or by reading the dev-mode cookie on the server and passing
+  it as a prop.
+- Source: C1 baseline 2026-04-23.
+
 ### Pixel agents broken on FE
 - `/floor` isometric view + Build-home FloorPin (Wave 3.2) are not
   rendering agents as of session 10. Repro + root-cause:
