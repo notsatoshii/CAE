@@ -59,6 +59,13 @@ export function StatePollProvider({
       try {
         const res = await fetch(url);
         if (!mounted.current) return;
+        if (res.status === 401) {
+          // Unauthenticated (e.g. /signin page) — stop polling; shell pages
+          // remount the provider on nav into authed routes.
+          setError(new Error(`/api/state 401`));
+          window.clearInterval(id);
+          return;
+        }
         if (!res.ok) {
           setError(new Error(`/api/state ${res.status}`));
           return;
@@ -74,8 +81,8 @@ export function StatePollProvider({
       }
     }
 
-    poll();
     let id = window.setInterval(poll, intervalMs);
+    poll();
 
     const onVisibility = () => {
       if (document.hidden) {

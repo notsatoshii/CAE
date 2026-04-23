@@ -28,8 +28,17 @@ import type { Role } from "@/lib/cae-types"
 export function middlewareHandler(
   req: NextRequest & { auth: { user?: { role?: Role } } | null },
 ): NextResponse {
-  // ── Unauthenticated → redirect to /signin ──────────────────────────────────
+  // ── Unauthenticated → redirect page routes to /signin; return 401 JSON for API ─
+  // API routes must return structured 401. Cross-origin redirects to the
+  // signin HTML page trigger CORS failures in fetch() (see audit C2
+  // signin·founder-first-time reliability regression).
   if (!req.auth) {
+    if (req.nextUrl.pathname.startsWith("/api/")) {
+      return NextResponse.json(
+        { error: "unauthenticated" },
+        { status: 401 },
+      )
+    }
     const from = req.nextUrl.pathname
     const signinUrl = new URL("/signin", req.nextUrl.origin)
     signinUrl.searchParams.set("from", from)
