@@ -60,7 +60,18 @@ export function middlewareHandler(
     [/^\/api\/workflows\/[^/]+\/run(\/|$)/, ["POST"]],
     [/^\/api\/skills\/install(\/|$)/, ["POST"]],
     [/^\/api\/schedule(\/[^/]+)?(\/|$)/, ["POST", "PATCH", "DELETE", "PUT"]],
+    // Security panel mutations: rescan (operator+), audit (operator+ read)
+    [/^\/api\/security\/scan(\/|$)/, ["POST"]],
+    [/^\/api\/security\/scans(\/|$)/, ["GET"]],
+    [/^\/api\/security\/audit(\/|$)/, ["GET"]],
   ]
+
+  // ── Security sub-page: /build/security/audit requires operator ──────────────
+  if (path.startsWith("/build/security/audit")) {
+    if (!role || !isAtLeast(role, "operator")) {
+      return NextResponse.redirect(new URL("/403", req.nextUrl.origin))
+    }
+  }
 
   for (const [re, methods] of operatorMutations) {
     if (re.test(path) && methods.includes(method)) {
@@ -94,5 +105,6 @@ export const config = {
     "/api/skills/:path*",
     "/api/schedule/:path*",
     "/api/admin/:path*",
+    "/api/security/:path*",
   ],
 }

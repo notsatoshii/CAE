@@ -15,6 +15,14 @@
 
 set -euo pipefail
 
+# Plan 14-05: double-gate filter — only log mutation tools.
+# The settings.json matcher is the primary filter; this is defense-in-depth
+# so accidental matcher removal doesn't flood the log with Read events.
+case "${CLAUDE_TOOL_NAME:-}" in
+  Bash|Write|Edit|MultiEdit|Agent|Task) ;;
+  *) exit 0 ;;
+esac
+
 : "${CAE_TASK_ID:=unknown}"
 : "${CAE_ROOT:=/home/cae/ctrl-alt-elite}"
 TOOL="${CLAUDE_TOOL_NAME:-unknown}"

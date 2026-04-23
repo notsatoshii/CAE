@@ -3,6 +3,9 @@ import { installSkill } from "@/lib/cae-skills-install"
 import { auth } from "@/auth"
 import { requireRole } from "@/lib/cae-rbac"
 import type { Role } from "@/lib/cae-types"
+import { scanSkill, appendScan } from "@/lib/cae-secrets-scan"
+import path from "node:path"
+import os from "node:os"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
@@ -54,14 +57,21 @@ export async function POST(req: NextRequest) {
     )
   }
 
+  // Derive the skill directory name from repo slug (e.g. "vercel-labs/deploy" → "deploy")
+  const skillName = body.repo.replace(/^https?:\/\/github\.com\//, "").split("/").pop() ?? body.repo
+
   const enc = new TextEncoder()
   const body_ = new ReadableStream({
     async start(controller) {
+      let installSucceeded = false
       try {
         for await (const ev of stream) {
           controller.enqueue(
             enc.encode(`event: ${ev.type}\ndata: ${JSON.stringify(ev.data)}\n\n`)
           )
+          if (ev.type === "done" && ev.data === "0") {
+            installSucceeded = true
+          }
         }
       } catch (err) {
         controller.enqueue(
@@ -69,6 +79,15 @@ export async function POST(req: NextRequest) {
         )
       } finally {
         controller.close()
+        // T-14-05-06: Fire-and-forget scan after successful install.
+        // Does NOT block the SSE response. Scan failure is logged but never surfaced here.
+        if (installSucceeded) {
+          const skillsDir = process.env.CAE_SKILLS_DIR ?? path.join(os.homedir(), ".claude", "skills")
+          const skillDir = path.join(skillsDir, skillName)
+          scanSkill(skillDir)
+            .then((result) => appendScan(skillName, result))
+            .catch(() => undefined)
+        }
       }
     },
   })

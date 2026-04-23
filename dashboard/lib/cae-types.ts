@@ -228,4 +228,9 @@ export interface TrustScore {
   total: number
   /** Individual factors that make up the total */
   factors: TrustFactor[]
+  /**
+   * True when an admin has manually marked this skill as trusted.
+   * When true, total is always 100 and factors contains a single admin_override factor.
+   */
+  overridden?: boolean
 }

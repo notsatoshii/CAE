@@ -3,9 +3,10 @@
 import React, { useEffect, useState } from "react"
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
-import type { CatalogSkill, Role } from "@/lib/cae-types"
+import type { CatalogSkill, Role, TrustScore } from "@/lib/cae-types"
 import type { SkillFrontmatter } from "@/lib/cae-skills-parse"
 import { InstallButton } from "./install-button"
+import { TrustBadge } from "@/components/security/trust-badge"
 
 type Props = {
   skill: CatalogSkill | null
@@ -18,6 +19,11 @@ type Props = {
 type DetailData = {
   md: string
   frontmatter: SkillFrontmatter
+} | null
+
+type TrustData = {
+  skill: CatalogSkill
+  trust: TrustScore
 } | null
 
 /**
@@ -34,25 +40,41 @@ type DetailData = {
 export function SkillDetailDrawer({ skill, onClose, onInstalled, currentRole }: Props) {
   const [detail, setDetail] = useState<DetailData>(null)
   const [loading, setLoading] = useState(false)
+  const [trustData, setTrustData] = useState<TrustData>(null)
+  const [trustLoading, setTrustLoading] = useState(false)
 
   useEffect(() => {
     if (!skill) {
       setDetail(null)
+      setTrustData(null)
       return
     }
     if (skill.source !== "local") {
       setDetail(null)
-      return
+    } else {
+      setLoading(true)
+      fetch(`/api/skills/${encodeURIComponent(skill.name)}`)
+        .then((r) => (r.ok ? r.json() : null))
+        .then((data) => {
+          if (data) setDetail({ md: data.md, frontmatter: data.frontmatter })
+        })
+        .catch(() => setDetail(null))
+        .finally(() => setLoading(false))
     }
 
-    setLoading(true)
-    fetch(`/api/skills/${encodeURIComponent(skill.name)}`)
+    // Fetch trust score for any skill (local or external)
+    setTrustLoading(true)
+    fetch("/api/security/trust")
       .then((r) => (r.ok ? r.json() : null))
-      .then((data) => {
-        if (data) setDetail({ md: data.md, frontmatter: data.frontmatter })
+      .then((data: Array<{ skill: CatalogSkill; trust: TrustScore }> | null) => {
+        if (!data) return
+        const match = data.find(
+          (e) => e.skill.name === skill.name && e.skill.owner === skill.owner
+        )
+        if (match) setTrustData(match)
       })
-      .catch(() => setDetail(null))
-      .finally(() => setLoading(false))
+      .catch(() => setTrustData(null))
+      .finally(() => setTrustLoading(false))
   }, [skill])
 
   if (!skill) return null
@@ -98,9 +120,17 @@ export function SkillDetailDrawer({ skill, onClose, onInstalled, currentRole }: 
 
         {/* Body */}
         <div className="flex-1 overflow-y-auto px-6 py-4">
-          {/* Trust score placeholder — ships in Plan 14-05 */}
-          <div className="trust-slot-placeholder mb-4 rounded border border-dashed border-zinc-700 px-3 py-2 text-xs text-zinc-500">
-            Trust score coming in the Security panel.
+          {/* Trust score — fetched from /api/security/trust */}
+          <div className="mb-4">
+            {trustLoading && (
+              <span className="text-xs text-zinc-500">Loading trust score…</span>
+            )}
+            {!trustLoading && trustData && (
+              <TrustBadge trust={trustData.trust} size="sm" />
+            )}
+            {!trustLoading && !trustData && (
+              <span className="text-xs text-zinc-500">Trust score unavailable</span>
+            )}
           </div>
 
           {loading && (
