@@ -32,7 +32,7 @@ export function TrustGridClient({
     }
   }
 
-  const trustedCount = entries.filter((e) => e.trust?.trusted).length
+  const trustedCount = entries.filter((e) => e.trust?.overridden).length
 
   return (
     <>
