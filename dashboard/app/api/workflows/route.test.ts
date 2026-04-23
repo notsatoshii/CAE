@@ -74,7 +74,7 @@ const VALID_YAML_B = [
 ].join("\n");
 
 test("GET /api/workflows on empty dir → { workflows: [] }", async () => {
-  const res = await listGET();
+  const res = await listGET(mkReq("http://localhost/api/workflows"));
   assert.equal(res.status, 200);
   const body = (await readJson(res)) as { workflows: unknown[] };
   assert.ok(Array.isArray(body.workflows));
@@ -112,7 +112,7 @@ test("GET /api/workflows after POSTs → sorted by mtime desc, multiple entries"
     body: { yaml: VALID_YAML_B },
   });
   await listPOST(reqPost);
-  const res = await listGET();
+  const res = await listGET(mkReq("http://localhost/api/workflows"));
   const body = (await readJson(res)) as { workflows: Array<{ slug: string; mtime: number }> };
   assert.ok(body.workflows.length >= 2);
   for (let i = 0; i < body.workflows.length - 1; i++) {

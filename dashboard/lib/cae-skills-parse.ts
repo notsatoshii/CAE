@@ -3,6 +3,7 @@ import * as yaml from "yaml"
 export type SkillFrontmatter = {
   name?: string
   description?: string
+  version?: string
   disableModelInvocation: boolean
   allowedTools: string[]
 }

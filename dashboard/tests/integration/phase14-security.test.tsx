@@ -86,7 +86,7 @@ describe("REQ-P14-10: Trust override — admin marks skill as trusted", () => {
     const { computeTrustScore } = await import("@/lib/cae-skills-trust")
     const score = computeTrustScore({
       skill: { name: "test", owner: "unknown-org" },
-      frontmatter: { name: "test", description: "", version: "0.1", allowedTools: [] },
+      frontmatter: { name: "test", description: "", version: "0.1", allowedTools: [], disableModelInvocation: false },
       secretsCount: 5,
       overridden: true,
     })

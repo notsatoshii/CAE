@@ -43,7 +43,7 @@ const EMPTY_STATE   = { data: null, error: null, loading: false };
 // ── ReliabilityPanel ────────────────────────────────────────────────────────
 
 describe("ReliabilityPanel — WR-02 loading vs empty distinction", () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => { vi.clearAllMocks(); });
 
   it("renders loading copy (not EmptyState) while loading=true and data=null", () => {
     mockUseMetricsPoll.mockReturnValue(LOADING_STATE);
@@ -67,7 +67,7 @@ describe("ReliabilityPanel — WR-02 loading vs empty distinction", () => {
 // ── SpeedPanel ───────────────────────────────────────────────────────────────
 
 describe("SpeedPanel — WR-02 loading vs empty distinction", () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => { vi.clearAllMocks(); });
 
   it("renders loading copy (not EmptyState) while loading=true and data=null", () => {
     mockUseMetricsPoll.mockReturnValue(LOADING_STATE);
@@ -89,7 +89,7 @@ describe("SpeedPanel — WR-02 loading vs empty distinction", () => {
 // ── SpendingPanel ────────────────────────────────────────────────────────────
 
 describe("SpendingPanel — WR-02 loading vs empty distinction", () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => { vi.clearAllMocks(); });
 
   it("renders loading copy (not EmptyState) while loading=true and data=null", () => {
     mockUseMetricsPoll.mockReturnValue(LOADING_STATE);

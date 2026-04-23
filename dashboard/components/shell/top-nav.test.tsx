@@ -92,7 +92,7 @@ vi.mock("@/lib/hooks/use-command-palette", () => ({
 import { TopNav } from "./top-nav";
 
 const mockSession: Session = {
-  user: { name: "Test User", email: "test@example.com", image: null },
+  user: { name: "Test User", email: "test@example.com", image: null, role: "viewer" },
   expires: "2099-01-01",
 };
 

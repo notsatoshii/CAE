@@ -95,7 +95,7 @@ describe("REQ-P14-04: NL parse → CronPreview shows english description", () =>
 
   it("Test 04d: describeCron converts '0 9 * * *' to human text", async () => {
     const { describeCron } = await import("@/lib/cae-schedule-describe")
-    const result = await describeCron("0 9 * * *")
+    const result = await describeCron("0 9 * * *", "UTC")
     expect(result.english).toContain("09:00")
   })
 

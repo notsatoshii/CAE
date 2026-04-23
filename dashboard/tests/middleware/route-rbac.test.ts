@@ -54,16 +54,16 @@ function makeSession(role: Role | null) {
 }
 
 function makeReq(url: string, method: string, body?: unknown): NextRequest {
-  const init: RequestInit = { method }
+  const init: RequestInit & { signal?: AbortSignal } = { method }
   if (body) {
     init.body = JSON.stringify(body)
     init.headers = { "Content-Type": "application/json" }
   }
-  return new NextRequest(`http://localhost:3000${url}`, init)
+  return new NextRequest(`http://localhost:3000${url}`, init as ConstructorParameters<typeof NextRequest>[1])
 }
 
 describe("POST /api/skills/install — defense-in-depth role check", () => {
-  beforeEach(() => vi.resetModules())
+  beforeEach(() => { vi.resetModules() })
 
   it("Test 8a: viewer session → 403", async () => {
     mockAuthSession.mockResolvedValue(makeSession("viewer"))
@@ -84,7 +84,7 @@ describe("POST /api/skills/install — defense-in-depth role check", () => {
 })
 
 describe("POST /api/schedule — defense-in-depth role check", () => {
-  beforeEach(() => vi.resetModules())
+  beforeEach(() => { vi.resetModules() })
 
   it("viewer session → 403", async () => {
     mockAuthSession.mockResolvedValue(makeSession("viewer"))
@@ -111,7 +111,7 @@ describe("POST /api/schedule — defense-in-depth role check", () => {
 })
 
 describe("PATCH /api/schedule/[id] — defense-in-depth role check", () => {
-  beforeEach(() => vi.resetModules())
+  beforeEach(() => { vi.resetModules() })
 
   it("viewer session → 403 on PATCH", async () => {
     mockAuthSession.mockResolvedValue(makeSession("viewer"))

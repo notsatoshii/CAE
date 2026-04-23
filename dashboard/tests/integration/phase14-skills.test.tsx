@@ -228,8 +228,8 @@ describe("REQ-P14-02: Install flow — SSE streams progress", () => {
   it("Test 02d: skills/installed route returns installed skills array", async () => {
     const { GET } = await import("@/app/api/skills/installed/route")
 
-    const req = new NextRequest("http://localhost/api/skills/installed")
-    const res = await GET(req)
+    void new NextRequest("http://localhost/api/skills/installed")
+    const res = await GET()
     expect(res.status).toBeLessThan(500)
     const json = await res.json()
     expect(Array.isArray(json)).toBe(true)
@@ -319,6 +319,7 @@ describe("REQ-P14-03: Detail drawer renders SKILL.md + trust badge", () => {
         description: "Test skill",
         version: "1.0.0",
         allowedTools: ["Bash(git *)"],
+        disableModelInvocation: false,
       },
       secretsCount: 0,
       overridden: false,

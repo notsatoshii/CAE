@@ -2,7 +2,7 @@
  * Tests for GET /api/admin/roles
  * Phase 14 Plan 04 — Task 3, Tests 1+2
  */
-import { describe, it, expect, vi, beforeEach } from "vitest"
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
 import { NextRequest } from "next/server"
 import type { Role } from "@/lib/cae-types"
 

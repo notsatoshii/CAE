@@ -97,7 +97,7 @@ describe("ghAuthStatus", () => {
 });
 
 describe("writeEnvLocal — newline injection guard (WR-02)", () => {
-  const fakeProj = { path: "/tmp/wr02-test-" + Date.now(), name: "wr02-test", slug: "wr02-test", shiftPhase: "idea" as const, createdAt: "" };
+  const fakeProj = { path: "/tmp/wr02-test-" + Date.now(), name: "wr02-test", slug: "wr02-test", shiftPhase: "idea" as const, createdAt: "", hasPlanning: false };
 
   it("rejects a value containing \\n (newline injection)", async () => {
     await expect(
