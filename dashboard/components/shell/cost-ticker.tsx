@@ -14,15 +14,20 @@ const TOOLTIP = "Token usage from local logs. OAuth subscription — not billed 
 export function CostTicker() {
   const { data, lastUpdated } = useStatePoll();
 
+  // Class 5B: on < sm the suffix words ("tok today" / "est.") were what
+  // got clipped by the vision scorer ("tok today", "— tok EST. today").
+  // We render a compact numeric-only form on mobile and the full labelled
+  // form on sm+. Both share the same data-testid so tests are stable.
   if (!data) {
     return (
       <span
         data-testid="cost-ticker"
-        className="inline-flex items-center gap-1.5 font-mono text-xs text-[color:var(--text-muted)]"
+        className="inline-flex min-w-0 items-center gap-1.5 font-mono text-xs text-[color:var(--text-muted)]"
         title={TOOLTIP}
       >
-        <span>— tok today</span>
-        <span className="uppercase text-[10px] tracking-wider opacity-70">est.</span>
+        <span className="truncate">—</span>
+        <span className="hidden sm:inline">tok today</span>
+        <span className="hidden uppercase text-[10px] tracking-wider opacity-70 sm:inline">est.</span>
         <LastUpdated at={lastUpdated} threshold_ms={6000} />
       </span>
     );
@@ -37,11 +42,12 @@ export function CostTicker() {
   return (
     <span
       data-testid="cost-ticker"
-      className="inline-flex items-center gap-1.5 font-mono text-xs text-[color:var(--text)]"
+      className="inline-flex min-w-0 items-center gap-1.5 font-mono text-xs text-[color:var(--text)]"
       title={TOOLTIP}
     >
-      <span>{formatTokens(totalTokens)} tok today</span>
-      <span className="uppercase text-[10px] tracking-wider text-[color:var(--text-muted)]">est.</span>
+      <span className="truncate">{formatTokens(totalTokens)}</span>
+      <span className="hidden sm:inline">tok today</span>
+      <span className="hidden uppercase text-[10px] tracking-wider text-[color:var(--text-muted)] sm:inline">est.</span>
       <LastUpdated at={lastUpdated} threshold_ms={6000} />
     </span>
   );
