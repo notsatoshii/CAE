@@ -31,15 +31,36 @@
  */
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import dynamic from "next/dynamic";
 import { useSearchParams } from "next/navigation";
 import { Tabs } from "@base-ui/react/tabs";
 import { useDevMode } from "@/lib/providers/dev-mode";
 import { labelFor } from "@/lib/copy/labels";
 import { BrowsePane } from "@/components/memory/browse/browse-pane";
-import { GraphPane } from "@/components/memory/graph/graph-pane";
 import { WhyDrawer } from "@/components/memory/why-drawer";
 import { GitTimelineDrawer } from "@/components/memory/git-timeline-drawer";
 import { ExplainTooltip } from "@/components/ui/explain-tooltip";
+import { Skeleton } from "@/components/ui/skeleton";
+
+// Lazy-load GraphPane to defer the heavy @xyflow/react bundle.
+// ssr:false prevents SSR serialisation of react-flow (browser-only APIs).
+const GraphPane = dynamic(
+  () => import("@/components/memory/graph/graph-pane").then((m) => ({ default: m.GraphPane })),
+  {
+    ssr: false,
+    loading: () => (
+      <div
+        className="flex min-h-0 flex-1 flex-col gap-3 p-4"
+        aria-busy="true"
+        data-testid="graph-pane-loading"
+      >
+        <span className="sr-only" data-truth="memory.loading">yes</span>
+        <Skeleton className="h-6 w-40 rounded" />
+        <Skeleton className="flex-1 w-full rounded-lg" />
+      </div>
+    ),
+  }
+);
 
 type View = "browse" | "graph";
 

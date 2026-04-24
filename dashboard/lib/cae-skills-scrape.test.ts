@@ -60,6 +60,24 @@ describe("fetchSkillsSh", () => {
     const skills = await fetchSkillsSh(undefined, mockFetch as typeof fetch)
     expect(skills).toEqual([])
   })
+
+  it("Test 1d: returns [] when fetch throws AbortError (timeout path)", async () => {
+    const abortErr = Object.assign(new Error("The operation was aborted."), { name: "AbortError" })
+    const mockFetch = vi.fn().mockRejectedValue(abortErr)
+    const skills = await fetchSkillsSh(undefined, mockFetch as typeof fetch)
+    expect(skills).toEqual([])
+  })
+
+  it("Test 1e: passes AbortSignal to fetchImpl so timeout fires", async () => {
+    let capturedSignal: AbortSignal | undefined
+    const mockFetch = vi.fn().mockImplementation((_url: string, opts?: RequestInit) => {
+      capturedSignal = opts?.signal as AbortSignal | undefined
+      return Promise.resolve({ ok: true, status: 200, text: () => Promise.resolve("") })
+    })
+    await fetchSkillsSh(undefined, mockFetch as typeof fetch)
+    expect(capturedSignal).toBeDefined()
+    expect(capturedSignal).toBeInstanceOf(AbortSignal)
+  })
 })
 
 describe("fetchClawHub", () => {
@@ -99,5 +117,23 @@ describe("fetchClawHub", () => {
     })
     const skills = await fetchClawHub(undefined, mockFetch as typeof fetch)
     expect(skills).toEqual([])
+  })
+
+  it("Test 2d: returns [] when fetch throws AbortError (timeout path)", async () => {
+    const abortErr = Object.assign(new Error("The operation was aborted."), { name: "AbortError" })
+    const mockFetch = vi.fn().mockRejectedValue(abortErr)
+    const skills = await fetchClawHub(undefined, mockFetch as typeof fetch)
+    expect(skills).toEqual([])
+  })
+
+  it("Test 2e: passes AbortSignal to fetchImpl so timeout fires", async () => {
+    let capturedSignal: AbortSignal | undefined
+    const mockFetch = vi.fn().mockImplementation((_url: string, opts?: RequestInit) => {
+      capturedSignal = opts?.signal as AbortSignal | undefined
+      return Promise.resolve({ ok: true, status: 200, text: () => Promise.resolve("") })
+    })
+    await fetchClawHub(undefined, mockFetch as typeof fetch)
+    expect(capturedSignal).toBeDefined()
+    expect(capturedSignal).toBeInstanceOf(AbortSignal)
   })
 })

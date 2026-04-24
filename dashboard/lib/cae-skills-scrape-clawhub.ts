@@ -26,7 +26,7 @@ export async function fetchClawHub(
 
   let html: string
   try {
-    const res = await fetchImpl(url)
+    const res = await fetchImpl(url, { signal: AbortSignal.timeout(8_000) })
     if (!res.ok) {
       console.warn(`[cae-skills-scrape-clawhub] clawhub.ai returned ${res.status}`)
       return []
