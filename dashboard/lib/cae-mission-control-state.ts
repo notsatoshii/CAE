@@ -14,8 +14,12 @@
  *                      (last 5 minutes, count forge_begin without matching
  *                       forge_end)
  *   - Token burn      → tail of `.cae/metrics/circuit-breakers.jsonl`
- *                      (last 60 seconds of token_usage events, summed raw
- *                       input+output — no USD math, Eric runs on Max)
+ *                      (last 7 days of token_usage events, summed raw
+ *                       input+output — no USD math, Eric runs on Max.
+ *                       Eric session-14: "burn is supposed to show total
+ *                       tokens in the last week." tok/min was unreadable
+ *                       at a glance; 7-day total is the at-a-glance fuel
+ *                       gauge.)
  *   - 60s sparkline  → tail of `.cae/metrics/tool-calls.jsonl`
  *                      (per-second buckets)
  *   - Since-you-left → `.cae/sessions/last-seen.json` (touched on every
@@ -50,8 +54,12 @@ const ONE_MINUTE_MS = 60_000
 const FIVE_MINUTES_MS = 5 * ONE_MINUTE_MS
 const ONE_HOUR_MS = 60 * ONE_MINUTE_MS
 const ONE_DAY_MS = 24 * ONE_HOUR_MS
+const SEVEN_DAYS_MS = 7 * ONE_DAY_MS
 
-const TAIL_LIMIT_CB = 5_000
+// 7-day window — bumped from 5k to 20k per session-14 scope change.
+// A week of circuit-breaker events (token_usage + forge_begin/end) can
+// easily exceed the old 5k tail on active days.
+const TAIL_LIMIT_CB = 20_000
 const TAIL_LIMIT_TOOLS = 5_000
 
 const SPARKLINE_BUCKETS = 60
@@ -93,11 +101,13 @@ export interface MissionControlState {
   active_count: number
 
   /**
-   * Tokens per minute (raw input+output sum), projected from the last 60
-   * seconds of token_usage events. 0 when no events found in window. No
+   * Total tokens (raw input+output sum) consumed over the last 7 days.
+   * This is the at-a-glance "fuel gauge" — Eric session-14 asked for the
+   * weekly total instead of the previous last-60s tok/min, which was
+   * unreadable at a glance. 0 when no token_usage events in window. No
    * USD conversion — Max subscription has no real per-request cost.
    */
-  tokens_burn_per_min: number
+  tokens_burn_7d: number
 
   /** Total tokens (input+output) consumed today (UTC midnight rollover). */
   tokens_today: number
@@ -127,7 +137,7 @@ export function emptyMissionControl(now: number = Date.now()): MissionControlSta
   }
   return {
     active_count: 0,
-    tokens_burn_per_min: 0,
+    tokens_burn_7d: 0,
     tokens_today: 0,
     sparkline_60s: sparkline,
     since_you_left: {
@@ -409,9 +419,11 @@ function projectMissionControl(args: ProjectArgs): MissionControlState {
 
   const activeCount = countActiveAgents(cbEvents, now)
 
-  // Token burn rate — last 60 seconds of token_usage events, already
-  // normalized to per-minute because the window itself is 60 seconds.
-  const tokensBurnPerMin = tokensFromTokenUsage(cbEvents, now - ONE_MINUTE_MS, now)
+  // Token burn — total tokens over the last 7 days. Eric session-14:
+  // "burn is supposed to show total tokens in the last week." The old
+  // 60-second tok/min reading was unreadable at a glance; the 7-day
+  // total is the at-a-glance fuel gauge.
+  const tokensBurn7d = tokensFromTokenUsage(cbEvents, now - SEVEN_DAYS_MS, now)
 
   const dayStart = todayStartMs(now)
   const tokensToday = tokensFromTokenUsage(cbEvents, dayStart, now)
@@ -430,7 +442,7 @@ function projectMissionControl(args: ProjectArgs): MissionControlState {
 
   return {
     active_count: activeCount,
-    tokens_burn_per_min: tokensBurnPerMin,
+    tokens_burn_7d: tokensBurn7d,
     tokens_today: tokensToday,
     sparkline_60s: spark,
     since_you_left: syl,

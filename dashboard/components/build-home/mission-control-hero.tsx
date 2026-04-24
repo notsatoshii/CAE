@@ -41,12 +41,13 @@ import type { MissionControlState } from "@/lib/cae-mission-control-state";
 const POLL_INTERVAL_MS = 5_000;
 
 /**
- * "Hot burn" reference used to scale the TokenBurnBar fill. 100k tok/min
- * (~6M tok/hr) corresponds to heavy Opus-driven work across 3-4 parallel
- * forge agents; the bar saturates at that rate so normal load stays
- * visibly varied instead of pinning at 1%.
+ * "Hot burn" reference used to scale the TokenBurnBar fill against a
+ * 7-day window. 50M tokens/week corresponds to heavy Opus-driven work
+ * across many parallel forge agents; the bar saturates at that rate so
+ * normal weekly load stays visibly varied instead of pinning at 1%.
+ * Replaces the previous per-minute reference (session-14 scope change).
  */
-const HOT_BURN_REF_PER_MIN = 100_000;
+const HOT_BURN_REF_7D = 50_000_000;
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -117,19 +118,19 @@ function AnimatedNumber({
 }
 
 // ---------------------------------------------------------------------------
-// Token burn — small bar scaled to the HOT_BURN_REF_PER_MIN reference.
+// Token burn — small bar scaled to the HOT_BURN_REF_7D reference.
 // ---------------------------------------------------------------------------
 
 function TokenBurnBar({
-  burnPerMin,
+  burn7d,
   tokensToday,
 }: {
-  burnPerMin: number;
+  burn7d: number;
   tokensToday: number;
 }) {
   // Scale bar fill against a "hot burn" reference so normal traffic stays
   // visibly varied. Past-reference saturates at 100%.
-  const fillPct = Math.max(0, Math.min(100, (burnPerMin / HOT_BURN_REF_PER_MIN) * 100));
+  const fillPct = Math.max(0, Math.min(100, (burn7d / HOT_BURN_REF_7D) * 100));
   return (
     <div className="w-full" data-testid="mc-token-burn-bar">
       <div className="relative h-2 w-full overflow-hidden rounded-full bg-[color:var(--surface-hover)]">
@@ -144,16 +145,16 @@ function TokenBurnBar({
       </div>
       <div className="mt-1.5 flex items-center justify-between text-[10px] text-[color:var(--text-dim)]">
         <span>
-          <span className="sr-only" data-truth="mission-control.tokens-burn-per-min">
-            {burnPerMin}
+          <span className="sr-only" data-truth="mission-control.tokens-burn-7d">
+            {burn7d}
           </span>
-          {formatTokens(burnPerMin)} tok/min
+          {formatTokens(burn7d)} tok · 7d
         </span>
         <span>
           <span className="sr-only" data-truth="mission-control.tokens-today">
             {tokensToday}
           </span>
-          {formatTokens(tokensToday)} tok today
+          {formatTokens(tokensToday)} tok · today
         </span>
       </div>
     </div>
@@ -427,7 +428,7 @@ export function MissionControlHero({
 
   // Resolve display values up-front so empty-state checks read clearly.
   const activeCount = data?.active_count ?? 0;
-  const burnRate = data?.tokens_burn_per_min ?? 0;
+  const burn7d = data?.tokens_burn_7d ?? 0;
   const tokensToday = data?.tokens_today ?? 0;
   const sparkline = data?.sparkline_60s ?? [];
   const syl = data?.since_you_left ?? {
@@ -513,13 +514,13 @@ export function MissionControlHero({
         <Tile
           testId="mc-tile-burn"
           href="/metrics"
-          ariaLabel={"Token burn rate: " + formatTokens(burnRate) + " tokens per minute."}
+          ariaLabel={"Token burn over last 7 days: " + formatTokens(burn7d) + " tokens."}
           Icon={Flame}
-          label="burn"
-          empty={!isLoading && burnRate === 0}
+          label="burn · 7d"
+          empty={!isLoading && burn7d === 0}
           emptyTip="appears when tokens start flowing"
         >
-          <TokenBurnBar burnPerMin={burnRate} tokensToday={tokensToday} />
+          <TokenBurnBar burn7d={burn7d} tokensToday={tokensToday} />
         </Tile>
 
         <Tile

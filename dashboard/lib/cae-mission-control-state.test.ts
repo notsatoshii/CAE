@@ -13,6 +13,8 @@
  *      counts; recent visit -> show=false.
  *   8. Process-level cache returns same projection within TTL.
  *   9. Last-seen file is created on the first call when touchLastSeen=true.
+ *  10. tokens_burn_7d sums token_usage events inside the 7-day window only
+ *      (events older than 7 days are excluded).
  */
 
 import { mkdtempSync, readFileSync, rmSync, writeFileSync, existsSync } from "node:fs"
@@ -64,7 +66,7 @@ describe("getMissionControlState", () => {
       touchLastSeen: false,
     })
     expect(data.active_count).toBe(0)
-    expect(data.tokens_burn_per_min).toBe(0)
+    expect(data.tokens_burn_7d).toBe(0)
     expect(data.tokens_today).toBe(0)
     expect(data.sparkline_60s).toHaveLength(60)
     expect(data.sparkline_60s.every((b) => b.count === 0)).toBe(true)
@@ -112,7 +114,7 @@ describe("getMissionControlState", () => {
 
   it("4. token_usage events sum raw input+output tokens (no USD math)", async () => {
     const p = paths()
-    // 1.2M input + 800k output = 2.0M total tokens — burn (last 60s) and
+    // 1.2M input + 800k output = 2.0M total tokens — burn (last 7d) and
     // today (since UTC midnight) both include this event.
     writeLines(p.cb, [
       JSON.stringify({
@@ -132,17 +134,18 @@ describe("getMissionControlState", () => {
       noCache: true,
       touchLastSeen: false,
     })
-    expect(data.tokens_burn_per_min).toBe(2_000_000)
+    expect(data.tokens_burn_7d).toBe(2_000_000)
     expect(data.tokens_today).toBe(2_000_000)
     // Integer sum, not a fractional USD amount.
-    expect(Number.isInteger(data.tokens_burn_per_min)).toBe(true)
+    expect(Number.isInteger(data.tokens_burn_7d)).toBe(true)
     expect(Number.isInteger(data.tokens_today)).toBe(true)
   })
 
   it("5. tokens_today accumulates across the full UTC day", async () => {
     const p = paths()
-    // Two token_usage events earlier today — one near midnight, one 10m ago.
-    // Burn window (last 60s) should only see the 30s-ago event.
+    // Two token_usage events earlier today — one near midnight, one 10m ago,
+    // one 30s ago. All three fall inside both the 7-day burn window and the
+    // today window.
     writeLines(p.cb, [
       JSON.stringify({
         ts: tsAgo(11 * 60 * 60 * 1000 + 30 * 60 * 1000), // 11.5h ago
@@ -174,8 +177,8 @@ describe("getMissionControlState", () => {
     })
     // tokens_today = 400k + 75k + 15k = 490k
     expect(data.tokens_today).toBe(490_000)
-    // burn window (last 60s) = 15k only
-    expect(data.tokens_burn_per_min).toBe(15_000)
+    // 7-day burn window includes all three events = 490k total
+    expect(data.tokens_burn_7d).toBe(490_000)
   })
 
   it("6. sparkline has 60 1s buckets, populated where events fall", async () => {
@@ -343,6 +346,49 @@ describe("getMissionControlState", () => {
     expect(existsSync(p.lastSeen)).toBe(true)
     expect(body?.last_seen_at).toBe(NOW)
   })
+
+  it("10. tokens_burn_7d sums events inside the 7-day window only", async () => {
+    const p = paths()
+    const ONE_MIN = 60_000
+    const ONE_DAY = 24 * 60 * ONE_MIN
+    // Three token_usage events:
+    //   - 10 minutes ago  -> inside 7d window, inside today  (100k tok)
+    //   - 5 days ago      -> inside 7d window, NOT today     (200k tok)
+    //   - 8 days ago      -> OUTSIDE 7d window               (999k tok, should be excluded)
+    writeLines(p.cb, [
+      JSON.stringify({
+        ts: new Date(NOW - 8 * ONE_DAY).toISOString(),
+        event: "token_usage",
+        input_tokens: 500_000,
+        output_tokens: 499_000,
+      }),
+      JSON.stringify({
+        ts: new Date(NOW - 5 * ONE_DAY).toISOString(),
+        event: "token_usage",
+        input_tokens: 120_000,
+        output_tokens: 80_000,
+      }),
+      JSON.stringify({
+        ts: new Date(NOW - 10 * ONE_MIN).toISOString(),
+        event: "token_usage",
+        input_tokens: 60_000,
+        output_tokens: 40_000,
+      }),
+    ])
+    writeLines(p.tools, [])
+    const data = await getMissionControlState({
+      cbPath: p.cb,
+      toolsPath: p.tools,
+      lastSeenPath: p.lastSeen,
+      now: NOW,
+      noCache: true,
+      touchLastSeen: false,
+    })
+    // 10m-ago (100k) + 5d-ago (200k) = 300k; 8d-ago (999k) excluded.
+    expect(data.tokens_burn_7d).toBe(300_000)
+    // today only captures the 10m-ago event = 100k.
+    expect(data.tokens_today).toBe(100_000)
+  })
 })
 
 describe("emptyMissionControl", () => {
@@ -356,7 +402,7 @@ describe("emptyMissionControl", () => {
 
   it("returns token-only fields with zeros (no USD fields)", () => {
     const data = emptyMissionControl(NOW)
-    expect(data.tokens_burn_per_min).toBe(0)
+    expect(data.tokens_burn_7d).toBe(0)
     expect(data.tokens_today).toBe(0)
     expect(data.since_you_left.tokens_since).toBe(0)
     // The old USD fields are gone from the contract.

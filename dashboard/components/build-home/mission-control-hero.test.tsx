@@ -4,7 +4,7 @@
  * Coverage:
  *   1. Loading state -> aria-busy + heading present.
  *   2. Active count tile renders the count.
- *   3. Token burn tile renders the bar + per-minute token label.
+ *   3. Token burn tile renders the bar + "· 7d" token label + 7d tile label.
  *   4. Tokens-today tile renders the "X tok" string.
  *   5. Sparkline tile renders.
  *   6. Since-you-left tile shows ONLY when syl.show=true.
@@ -64,15 +64,22 @@ describe("MissionControlHero", () => {
     expect(tile.textContent).toMatch(/agents working/i);
   });
 
-  it("3. token burn tile renders the bar + per-minute token label", () => {
-    const data = makeState({ tokens_burn_per_min: 42_000, tokens_today: 500_000 });
+  it("3. token burn tile renders the bar + 7d token label + 7d tile label", () => {
+    const data = makeState({ tokens_burn_7d: 12_500_000, tokens_today: 500_000 });
     render(<MissionControlHero initialData={data} disablePolling />);
     expect(screen.getByTestId("mc-token-burn-bar")).toBeInTheDocument();
     expect(screen.getByTestId("mc-burn-fill")).toBeInTheDocument();
     const tile = screen.getByTestId("mc-tile-burn");
-    // "42k tok/min" expected — tokens-only string, no $ sign.
-    expect(tile.textContent).toMatch(/tok\/min/);
+    // "12.5M tok · 7d" expected — tokens-only string, no $ sign.
+    expect(tile.textContent).toMatch(/tok · 7d/);
+    expect(tile.textContent).toMatch(/12\.5M/);
+    // Tile label itself now reads "burn · 7d" so the 7-day scope is clear.
+    expect(tile.textContent?.toLowerCase()).toMatch(/burn · 7d/);
+    // aria-label mentions "last 7 days".
+    expect(tile.getAttribute("aria-label")?.toLowerCase()).toMatch(/last 7 days/);
     expect(tile.textContent).not.toMatch(/\$/);
+    // old "tok/min" copy is gone.
+    expect(tile.textContent).not.toMatch(/tok\/min/);
   });
 
   it("4. tokens-today tile renders the 'X tok' string", () => {

@@ -45,7 +45,7 @@ describe("fixtures", () => {
       const state = await getMissionControlState(mcOpts(root))
       expect(state.active_count).toBe(0)
       expect(state.tokens_today).toBe(0)
-      expect(state.tokens_burn_per_min).toBe(0)
+      expect(state.tokens_burn_7d).toBe(0)
       expect(state.sparkline_60s).toHaveLength(60)
       expect(state.last_event_at).toBeNull()
     } finally {

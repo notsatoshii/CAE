@@ -77,7 +77,7 @@ describe("GET /api/mission-control", () => {
     const body = await res.json()
     expect(body.active_count).toBe(0)
     expect(body.tokens_today).toBe(0)
-    expect(body.tokens_burn_per_min).toBe(0)
+    expect(body.tokens_burn_7d).toBe(0)
     expect(body.sparkline_60s).toHaveLength(60)
   })
 
@@ -93,7 +93,7 @@ describe("GET /api/mission-control", () => {
     const body = await res.json()
     for (const key of [
       "active_count",
-      "tokens_burn_per_min",
+      "tokens_burn_7d",
       "tokens_today",
       "sparkline_60s",
       "since_you_left",
@@ -102,6 +102,8 @@ describe("GET /api/mission-control", () => {
     ]) {
       expect(body).toHaveProperty(key)
     }
+    // Old per-minute burn field is gone from the contract (session-14 swap).
+    expect(body).not.toHaveProperty("tokens_burn_per_min")
     // USD fields are gone from the contract.
     for (const key of [
       "token_burn_usd_per_min",
