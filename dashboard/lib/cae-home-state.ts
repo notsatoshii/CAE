@@ -190,7 +190,38 @@ async function buildRollup(
     // ignore
   }
 
-  // Fallback: count merged forge/* commits today if outbox gave zero
+  // Class 20C (data-feed recovery): the outbox path is rarely populated in
+  // this repo because agents commit directly to main, not via `forge/`
+  // merge branches. Count canonical activity.jsonl `type:"commit"` rows for
+  // today — the git post-commit hook writes one row per commit, so this is
+  // the ground truth for "shipped today". We union this with the outbox
+  // path rather than gating on `shipped_today === 0`, so a repo with both
+  // signals never under-counts.
+  const countedShaToday = new Set<string>()
+  for (const p of projects) {
+    const actPath = join(p.path, ".cae", "metrics", "activity.jsonl")
+    const rows = await tailJsonl(actPath, 2000)
+    for (const raw of rows) {
+      if (typeof raw !== "object" || raw === null) continue
+      const r = raw as Record<string, unknown>
+      if (r.type !== "commit") continue
+      const ts = typeof r.ts === "string" ? r.ts : null
+      if (!ts || !ts.startsWith(today)) continue
+      const meta = r.meta as Record<string, unknown> | undefined
+      const sha =
+        meta && typeof meta.sha === "string"
+          ? meta.sha
+          : meta && typeof meta.short_sha === "string"
+            ? meta.short_sha
+            : `${p.path}:${ts}`
+      countedShaToday.add(sha as string)
+    }
+  }
+  shipped_today += countedShaToday.size
+
+  // Legacy fallback: count merged forge/* commits today only when neither
+  // outbox nor activity produced any hits. Kept for forward-compat with a
+  // future Shift flow that actually merges from forge branches.
   if (shipped_today === 0) {
     for (const p of projects) {
       try {
@@ -475,6 +506,47 @@ async function buildEventsRecent(projects: Project[]): Promise<RecentEvent[]> {
       })
     }
   }
+
+  // Class 20D (data-feed recovery): union real git commits from activity.jsonl.
+  // Outbox + forge_end feed are mostly-empty on this repo; the RecentLedger
+  // was showing fixture data from last session's test run. Surfacing real
+  // commits means the card reflects actual shipped work.
+  for (const p of projects) {
+    const actPath = join(p.path, ".cae", "metrics", "activity.jsonl")
+    const rows = await tailJsonl(actPath, 500)
+    for (const raw of rows) {
+      if (typeof raw !== "object" || raw === null) continue
+      const r = raw as Record<string, unknown>
+      if (r.type !== "commit") continue
+      const ts = typeof r.ts === "string" ? r.ts : null
+      if (!ts) continue
+      const meta = (r.meta as Record<string, unknown> | undefined) ?? {}
+      const shortSha = typeof meta.short_sha === "string" ? meta.short_sha : null
+      const subject = typeof meta.subject === "string" ? meta.subject : null
+      const actorRaw = typeof r.actor === "string" ? r.actor : null
+      const summary = typeof r.summary === "string" ? r.summary : null
+      // Plan id = short sha + subject gist so RecentLedger rows are human-
+      // readable in the ledger's middle column.
+      const planId = shortSha
+        ? subject
+          ? `${shortSha} ${subject}`
+          : shortSha
+        : summary ?? "commit"
+      out.push({
+        ts,
+        project: p.path,
+        projectName: toProjectName(p.path),
+        phase: "",
+        plan: planId,
+        status: "shipped",
+        commits: 1,
+        agent: actorRaw ?? "git",
+        model: "",
+        tokens: 0,
+      })
+    }
+  }
+
   out.sort((a, b) => (a.ts < b.ts ? 1 : a.ts > b.ts ? -1 : 0))
   return out.slice(0, 20)
 }
@@ -678,6 +750,55 @@ async function buildGlobalActiveAgents(
           if (existing.count <= 0) openStarts.delete(key)
         }
       }
+    }
+  }
+
+  // Class 20E (data-feed recovery): also count recent activity.jsonl rows as
+  // an "active" signal. When cb events stop firing but the agent is still
+  // running (git commit stream, workflow_step, audit cycle_step, etc.), the
+  // Live Ops line used to collapse to "Idle right now." even while the
+  // dashboard was visibly receiving events. Broaden the window to 120s for
+  // activity rows since those arrive at a lower cadence than cb events.
+  const activityWindowMs = 120_000
+  for (const p of projects) {
+    const actPath = join(p.path, ".cae", "metrics", "activity.jsonl")
+    const rows = await tailJsonl(actPath, 500)
+    for (const raw of rows) {
+      if (typeof raw !== "object" || raw === null) continue
+      const r = raw as Record<string, unknown>
+      const ts = typeof r.ts === "string" ? r.ts : null
+      if (!ts) continue
+      const tsMs = Date.parse(ts)
+      if (Number.isNaN(tsMs) || nowMs - tsMs > activityWindowMs) continue
+
+      const type = typeof r.type === "string" ? r.type : ""
+      // Infer an agent label from the row. Source=git-post-commit etc.
+      const actor = typeof r.actor === "string" ? r.actor : null
+      const source = typeof r.source === "string" ? r.source : null
+      const agent =
+        actor && actor.trim().length > 0
+          ? actor
+          : source === "git-post-commit"
+            ? "git"
+            : type === "cycle_step"
+              ? "audit"
+              : type === "chat_turn"
+                ? "chat"
+                : "activity"
+      const meta = (r.meta as Record<string, unknown> | undefined) ?? {}
+      const taskId =
+        typeof meta.task_id === "string"
+          ? meta.task_id
+          : typeof meta.label === "string"
+            ? meta.label
+            : typeof r.summary === "string"
+              ? r.summary
+              : type
+
+      const key = `${agent}::activity::${taskId}`
+      const existing = openStarts.get(key)
+      if (existing) existing.count++
+      else openStarts.set(key, { agent, taskId, count: 1 })
     }
   }
 

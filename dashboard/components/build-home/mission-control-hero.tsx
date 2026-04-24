@@ -21,6 +21,13 @@
  * Both respect prefers-reduced-motion via Framer Motion's useReducedMotion.
  *
  * No dollar signs in this file (lint-no-dollar.sh guard).
+ *
+ * Class 20F (data-feed recovery): the "cost vs budget" tile now renders an
+ * explicit "unbounded" state when the user has never configured a daily
+ * budget (CAE_DAILY_BUDGET_USD env unset). The tile used to coerce 0 into
+ * a phantom $50 and show "1% of budget" for a budget that didn't exist —
+ * which is what Eric called out. The burn tile still shows the raw spend-
+ * today total, so no information is lost.
  */
 
 import { useEffect, useRef, useState } from "react";
@@ -108,6 +115,7 @@ function TokenBurnBar({
   // Anything beyond that fills the bar fully.
   const fillPct = Math.max(0, Math.min(100, (burnUsdPerMin / 1) * 100));
   const todayPct = budgetUsd > 0 ? Math.min(100, (costTodayUsd / budgetUsd) * 100) : 0;
+  const budgetUnbounded = budgetUsd <= 0;
   return (
     <div className="w-full" data-testid="mc-token-burn-bar">
       <div className="relative h-2 w-full overflow-hidden rounded-full bg-[color:var(--surface-hover)]">
@@ -119,13 +127,15 @@ function TokenBurnBar({
           data-testid="mc-burn-fill"
           aria-hidden="true"
         />
-        {/* Daily-budget marker */}
-        <span
-          aria-hidden="true"
-          className="absolute top-0 h-full w-px bg-[color:var(--text-muted)]/60"
-          style={{ left: todayPct + "%" }}
-          data-testid="mc-budget-marker"
-        />
+        {/* Daily-budget marker — hidden when there's no budget to mark. */}
+        {!budgetUnbounded && (
+          <span
+            aria-hidden="true"
+            className="absolute top-0 h-full w-px bg-[color:var(--text-muted)]/60"
+            style={{ left: todayPct + "%" }}
+            data-testid="mc-budget-marker"
+          />
+        )}
       </div>
       <div className="mt-1.5 flex items-center justify-between text-[10px] text-[color:var(--text-dim)]">
         <span>
@@ -141,7 +151,9 @@ function TokenBurnBar({
           <span className="sr-only" data-truth="mission-control.daily-budget-usd">
             {budgetUsd.toFixed(2)}
           </span>
-          {formatUsd(costTodayUsd)} / {formatUsd(budgetUsd)} today
+          {budgetUnbounded
+            ? formatUsd(costTodayUsd) + " today"
+            : formatUsd(costTodayUsd) + " / " + formatUsd(budgetUsd) + " today"}
         </span>
       </div>
     </div>
@@ -243,6 +255,30 @@ function CostRadial({ pct }: { pct: number }) {
         </span>
         <span className="text-[10px] text-[color:var(--text-dim)]">of budget</span>
       </div>
+    </div>
+  );
+}
+
+/**
+ * CostUnbounded — rendered in the Cost tile when no daily budget is set.
+ * Shows the raw spend today + an "unbounded" hint rather than a gauge
+ * against a phantom budget. Class 20F.
+ */
+function CostUnbounded({ costTodayUsd }: { costTodayUsd: number }) {
+  return (
+    <div className="flex w-full flex-col leading-tight" data-testid="mc-cost-unbounded">
+      <span
+        className="font-mono text-lg font-semibold tabular-nums text-[color:var(--text)]"
+        data-truth="mission-control.cost-today-usd"
+      >
+        {formatUsd(costTodayUsd)}
+      </span>
+      <span className="text-[10px] text-[color:var(--text-dim)]">
+        today · unbounded
+      </span>
+      <span className="sr-only" data-truth="mission-control.budget-unbounded">
+        yes
+      </span>
     </div>
   );
 }
@@ -497,8 +533,12 @@ export function MissionControlHero({
   const activeCount = data?.active_count ?? 0;
   const burnRate = data?.token_burn_usd_per_min ?? 0;
   const costToday = data?.cost_today_usd ?? 0;
-  const budget = data?.daily_budget_usd ?? 50;
+  // Class 20F: when CAE_DAILY_BUDGET_USD env is unset, the aggregator
+  // returns 0. Render that as "unbounded" below rather than coerce to a
+  // phantom $50 and show "1% of budget" for a budget that doesn't exist.
+  const budget = data?.daily_budget_usd ?? 0;
   const pct = data?.cost_pct_of_budget ?? 0;
+  const budgetUnbounded = budget <= 0;
   const sparkline = data?.sparkline_60s ?? [];
   const syl = data?.since_you_left ?? {
     show: false,
@@ -594,20 +634,33 @@ export function MissionControlHero({
           testId="mc-tile-cost"
           href="/metrics"
           ariaLabel={
-            "Cost today is " +
-            formatUsd(costToday) +
-            " of " +
-            formatUsd(budget) +
-            " budget — " +
-            Math.round(pct * 100) +
-            " percent."
+            budgetUnbounded
+              ? "Cost today is " +
+                formatUsd(costToday) +
+                ". No daily budget set."
+              : "Cost today is " +
+                formatUsd(costToday) +
+                " of " +
+                formatUsd(budget) +
+                " budget — " +
+                Math.round(pct * 100) +
+                " percent."
           }
           Icon={Coins}
           label="budget"
+          subLabel={budgetUnbounded ? "unbounded" : undefined}
           empty={!isLoading && costToday === 0}
-          emptyTip="appears when token usage is recorded"
+          emptyTip={
+            budgetUnbounded
+              ? "set CAE_DAILY_BUDGET_USD to enable"
+              : "appears when token usage is recorded"
+          }
         >
-          <CostRadial pct={pct} />
+          {budgetUnbounded ? (
+            <CostUnbounded costTodayUsd={costToday} />
+          ) : (
+            <CostRadial pct={pct} />
+          )}
         </Tile>
 
         <Tile

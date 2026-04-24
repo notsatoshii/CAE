@@ -26,6 +26,12 @@
  * re-walks the JSONL on every request.
  *
  * No dollar signs in this file (lint-no-dollar.sh guard).
+ *
+ * Class 20F (data-feed recovery): `daily_budget_usd` now returns 0 when the
+ * CAE_DAILY_BUDGET_USD env var is unset. The UI renders that as "unbounded"
+ * so a user who never configured a budget no longer sees the Mission
+ * Control gauge sitting at a phantom "1% of budget" — the hero tile was
+ * rendering a lie about a budget the user never set.
  */
 
 import { mkdir, readFile, writeFile } from "node:fs/promises"
@@ -57,7 +63,11 @@ const SPARKLINE_BUCKET_MS = ONE_SECOND_MS
 
 const SINCE_YOU_LEFT_THRESHOLD_MS = ONE_HOUR_MS
 
-const DEFAULT_DAILY_BUDGET_USD = 50
+// Reserved: previous hard-coded fallback when no env was set. No longer used
+// — the aggregator now returns 0 to signal "unbounded" and the UI renders
+// accordingly. Kept as a documented default for any future caller that
+// explicitly wants a budget.
+const DEFAULT_DAILY_BUDGET_USD_REFERENCE = 50
 
 export const MISSION_CONTROL_CACHE_TTL_MS = 5_000
 
@@ -101,10 +111,17 @@ export interface MissionControlState {
   /** Total USD spent today (UTC midnight rollover). */
   cost_today_usd: number
 
-  /** Daily budget in USD (env CAE_DAILY_BUDGET_USD ?? 50). */
+  /**
+   * Daily budget in USD. 0 means no budget is set — the UI should render
+   * this as "unbounded" (see mission-control-hero.tsx). Read from
+   * CAE_DAILY_BUDGET_USD when present and positive, else 0.
+   */
   daily_budget_usd: number
 
-  /** cost_today_usd / daily_budget_usd, clamped 0..2 (over-budget = >1). */
+  /**
+   * cost_today_usd / daily_budget_usd, clamped 0..2 (over-budget = >1).
+   * 0 when no budget is set.
+   */
   cost_pct_of_budget: number
 
   /** Last 60 seconds of tool-call activity, oldest-first, 1s buckets. */
@@ -429,7 +446,10 @@ function projectMissionControl(args: ProjectArgs): MissionControlState {
   const dayStart = todayStartMs(now)
   const costTodayUsd = costFromTokenUsage(cbEvents, dayStart, now)
 
-  const budget = args.budget > 0 ? args.budget : DEFAULT_DAILY_BUDGET_USD
+  // Class 20F (data-feed recovery): preserve 0 when no budget is configured.
+  // Do NOT coerce back up to DEFAULT_DAILY_BUDGET_USD_REFERENCE — a user who
+  // never set a budget shouldn't see a phantom "1%" on the Cost tile.
+  const budget = args.budget > 0 ? args.budget : 0
   const pct = budget > 0 ? Math.min(2, costTodayUsd / budget) : 0
 
   const spark = sparkline60s(toolEvents, now)
@@ -489,14 +509,20 @@ async function writeLastSeen(path: string, ts: number): Promise<void> {
 }
 
 // ---------------------------------------------------------------------------
-// Daily-budget helper — env-driven, defaults to $50.
+// Daily-budget helper — env-driven, 0 (unbounded) when unset.
 // ---------------------------------------------------------------------------
 
+/**
+ * Read CAE_DAILY_BUDGET_USD from env. Returns 0 ("unbounded") when the env
+ * var is unset or not a positive number. The UI renders 0 as "unbounded"
+ * rather than computing a bogus percentage against a hardcoded $50 wall.
+ * Class 20F.
+ */
 function dailyBudget(): number {
   const raw = process.env.CAE_DAILY_BUDGET_USD
-  if (!raw) return DEFAULT_DAILY_BUDGET_USD
+  if (!raw) return 0
   const n = Number(raw)
-  if (!Number.isFinite(n) || n <= 0) return DEFAULT_DAILY_BUDGET_USD
+  if (!Number.isFinite(n) || n <= 0) return 0
   return n
 }
 

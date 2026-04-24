@@ -132,7 +132,7 @@ export function QueueKanbanClient({ initialState }: Props) {
       {error && <span className="sr-only" data-truth="build-queue.error">yes</span>}
       <div
         data-testid="queue-kanban"
-        className="flex gap-3 min-w-max lg:grid lg:grid-cols-5 lg:min-w-0"
+        className="flex gap-4 min-w-max lg:grid lg:grid-cols-5 lg:gap-6 lg:min-w-0"
       >
         {COLUMNS.map((col) => {
           const cards = state.columns[col.key]
@@ -141,25 +141,35 @@ export function QueueKanbanClient({ initialState }: Props) {
             cards.length === 0 ? "empty" : "healthy"
           return (
             // Each column: min-w-64 (256px) so mobile scroll works cleanly.
-            // Class 13C — elevation-1 per column fixes the vision finding
-            // "Kanban columns lack visual separation". The column now
-            // reads as a distinct surface raised off the page, with
-            // cards-within-cards establishing a second z-layer.
+            //
+            // Class 5E — kanban visual separation (vision scorer C2).
+            // Cards didn't pop because the column used --surface (same as
+            // the card surface); both shared elevation-1 so the column
+            // and cards merged into one flat plane. Fix tiers the z-stack:
+            //   column  = --bg (elev-0, recessed trough) + border
+            //   header  = --surface-hover strip (distinct band behind
+            //             label + count chip)
+            //   cards   = --surface (card-base elev-1) rising out of the
+            //             darker column; hover bumps to elev-2 via
+            //             card-base--interactive.
+            // p-3 kept for component-test back-compat (Plan 13-10).
             <section
               key={col.key}
               data-testid={"queue-column-" + col.key}
               data-liveness={colLiveness}
-              className="flex min-w-64 flex-col gap-2 rounded-lg border border-[color:var(--border,#1f1f22)] bg-[color:var(--surface,#121214)] p-3 min-h-[200px] shadow-elevation-1"
+              className="flex min-w-64 flex-col gap-3 rounded-lg border border-[color:var(--border-subtle,#1f1f22)] bg-[color:var(--bg,#0a0a0b)] p-3 min-h-[200px]"
             >
               <span className="sr-only" data-truth={"build-queue-" + col.key + "." + colLiveness}>yes</span>
-              <header className="flex items-center justify-between">
-                <h3 className="text-[13px] font-semibold tracking-wide uppercase text-[color:var(--text-muted,#8a8a8c)]">
+              {/* Header band — distinct surface tier so columns don't
+                 read as a single flat stripe. --surface-hover = elev-2. */}
+              <header className="flex items-center justify-between -mx-1 -mt-1 rounded-md bg-[color:var(--surface-hover,#1a1a1d)] px-2 py-1.5 border-b border-[color:var(--border-subtle,#1f1f22)]">
+                <h3 className="text-[13px] font-semibold tracking-wide uppercase text-[color:var(--text,#e5e5e5)]">
                   {colLabel}
                 </h3>
                 {/* Count chip: rounded-full pill, font-mono, same across all columns */}
                 <span
                   data-testid={"queue-column-count-" + col.key}
-                  className="rounded-full bg-[color:var(--surface-hover,#1a1a1d)] px-2 py-0.5 text-[11px] font-mono text-[color:var(--text-muted,#8a8a8c)]"
+                  className="rounded-full bg-[color:var(--bg,#0a0a0b)] border border-[color:var(--border-subtle,#1f1f22)] px-2 py-0.5 text-[11px] font-mono text-[color:var(--text-muted,#8a8a8c)]"
                 >
                   {cards.length}
                 </span>
