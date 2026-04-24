@@ -279,12 +279,14 @@ function StepStatusLabel({ status }: { status: WorkflowStepStatus }) {
 
 function StatusBadge({ status }: { status: WorkflowInstanceStatus }) {
   if (status === "passed") {
+    // Class 5G: use the shared `success` semantic variant instead of the
+    // hardcoded emerald tailwind class so badge saturation stays unified
+    // across the dashboard.
     return (
       <Badge
-        variant="secondary"
+        variant="success"
         data-testid="workflow-instance-status"
         data-status="passed"
-        className="bg-emerald-500/15 text-emerald-500"
       >
         passed
       </Badge>
@@ -293,7 +295,7 @@ function StatusBadge({ status }: { status: WorkflowInstanceStatus }) {
   if (status === "failed") {
     return (
       <Badge
-        variant="destructive"
+        variant="danger"
         data-testid="workflow-instance-status"
         data-status="failed"
       >
@@ -303,10 +305,9 @@ function StatusBadge({ status }: { status: WorkflowInstanceStatus }) {
   }
   return (
     <Badge
-      variant="outline"
+      variant="info"
       data-testid="workflow-instance-status"
       data-status="running"
-      className="border-[color:var(--accent,#00d4ff)] text-[color:var(--accent,#00d4ff)]"
     >
       running
     </Badge>

@@ -10,14 +10,18 @@ import { useDevMode } from "@/lib/providers/dev-mode"
 import { labelFor, type Labels } from "@/lib/copy/labels"
 import type { PhaseDetail, TaskStatus } from "@/lib/cae-phase-detail"
 
+// Class 5G (2026-04-24): map task status → desaturated semantic badge variant.
+// Pre-fix used the shadcn default/secondary/destructive variants which were
+// filled-vivid and clashed with Linear-style muted content. New variants use
+// the soft-tint pattern (10% bg, 30% border, colour text).
 const STATUS_VARIANT: Record<
   TaskStatus,
-  "default" | "secondary" | "destructive" | "outline"
+  "neutral" | "info" | "success" | "danger"
 > = {
-  pending: "outline",
-  running: "default",
-  merged: "secondary",
-  failed: "destructive",
+  pending: "neutral",
+  running: "info",
+  merged: "success",
+  failed: "danger",
 }
 
 interface WavesViewProps {
