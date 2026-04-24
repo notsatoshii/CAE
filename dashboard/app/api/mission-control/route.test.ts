@@ -6,7 +6,7 @@
  *   2. 401 when unauthenticated.
  *   3. 200 zero-shape (not 500) when getMissionControlState throws.
  *   4. Sets the 5-second Cache-Control header.
- *   5. Shape contains all required keys.
+ *   5. Shape contains all required (tokens-only) keys.
  */
 
 import { describe, it, expect, vi, beforeEach } from "vitest"
@@ -53,14 +53,14 @@ describe("GET /api/mission-control", () => {
   it("returns 200 + correct shape on happy path", async () => {
     const fixture = emptyMissionControl(Date.parse("2026-04-23T12:00:00Z"))
     fixture.active_count = 4
-    fixture.cost_today_usd = 12.34
+    fixture.tokens_today = 1_234_000
     mockGetMc.mockResolvedValue(fixture)
 
     const res = await GET(makeReq())
     expect(res.status).toBe(200)
     const body = await res.json()
     expect(body.active_count).toBe(4)
-    expect(body.cost_today_usd).toBeCloseTo(12.34, 4)
+    expect(body.tokens_today).toBe(1_234_000)
   })
 
   it("returns 401 when unauthenticated", async () => {
@@ -76,7 +76,8 @@ describe("GET /api/mission-control", () => {
     expect(res.status).toBe(200)
     const body = await res.json()
     expect(body.active_count).toBe(0)
-    expect(body.cost_today_usd).toBe(0)
+    expect(body.tokens_today).toBe(0)
+    expect(body.tokens_burn_per_min).toBe(0)
     expect(body.sparkline_60s).toHaveLength(60)
   })
 
@@ -86,16 +87,14 @@ describe("GET /api/mission-control", () => {
     expect(res.headers.get("cache-control")).toMatch(/max-age=5/)
   })
 
-  it("shape contains all required keys", async () => {
+  it("shape contains all required (tokens-only) keys", async () => {
     mockGetMc.mockResolvedValue(emptyMissionControl())
     const res = await GET(makeReq())
     const body = await res.json()
     for (const key of [
       "active_count",
-      "token_burn_usd_per_min",
-      "cost_today_usd",
-      "daily_budget_usd",
-      "cost_pct_of_budget",
+      "tokens_burn_per_min",
+      "tokens_today",
       "sparkline_60s",
       "since_you_left",
       "last_event_at",
@@ -103,5 +102,16 @@ describe("GET /api/mission-control", () => {
     ]) {
       expect(body).toHaveProperty(key)
     }
+    // USD fields are gone from the contract.
+    for (const key of [
+      "token_burn_usd_per_min",
+      "cost_today_usd",
+      "daily_budget_usd",
+      "cost_pct_of_budget",
+    ]) {
+      expect(body).not.toHaveProperty(key)
+    }
+    expect(body.since_you_left).toHaveProperty("tokens_since")
+    expect(body.since_you_left).not.toHaveProperty("usd_since")
   })
 })

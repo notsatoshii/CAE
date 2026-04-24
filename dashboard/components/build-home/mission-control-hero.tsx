@@ -4,14 +4,14 @@
  * MissionControlHero — full-bleed banner at the top of /build (Phase 15
  * Wave 3.1).
  *
- * Five tiles in a single row on desktop, collapsing to a 2-up grid on
- * tablet/mobile. Each tile is keyboard-reachable, drillable, and renders a
- * subtle dim placeholder when its data slot is empty so the banner never
- * looks broken.
+ * Four tiles in a single row on desktop (five when since-you-left shows),
+ * collapsing to a 2-up grid on tablet/mobile. Each tile is keyboard-reachable,
+ * drillable, and renders a subtle dim placeholder when its data slot is
+ * empty so the banner never looks broken.
  *
  *   1. Active count       -> /build/agents
  *   2. Token burn rate    -> /metrics
- *   3. Cost vs budget     -> /metrics
+ *   3. Tokens today       -> /metrics
  *   4. 60s sparkline      -> /build/changes
  *   5. Since-you-left     -> expanded inline (or /build/history)
  *
@@ -20,14 +20,8 @@
  * Motion: animated number on the active count + pulsing sparkline polyline.
  * Both respect prefers-reduced-motion via Framer Motion's useReducedMotion.
  *
- * No dollar signs in this file (lint-no-dollar.sh guard).
- *
- * Class 20F (data-feed recovery): the "cost vs budget" tile now renders an
- * explicit "unbounded" state when the user has never configured a daily
- * budget (CAE_DAILY_BUDGET_USD env unset). The tile used to coerce 0 into
- * a phantom $50 and show "1% of budget" for a budget that didn't exist —
- * which is what Eric called out. The burn tile still shows the raw spend-
- * today total, so no information is lost.
+ * Tokens-only display — no USD (D-07). Eric runs CAE on Claude Max so any
+ * derived USD figure is misleading; we render raw token counts.
  */
 
 import { useEffect, useRef, useState } from "react";
@@ -42,10 +36,17 @@ import {
 import { Activity, Coins, Flame, History, LineChart } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { LastUpdated } from "@/components/ui/last-updated";
-import { formatUsd } from "@/lib/cae-cost-table";
 import type { MissionControlState } from "@/lib/cae-mission-control-state";
 
 const POLL_INTERVAL_MS = 5_000;
+
+/**
+ * "Hot burn" reference used to scale the TokenBurnBar fill. 100k tok/min
+ * (~6M tok/hr) corresponds to heavy Opus-driven work across 3-4 parallel
+ * forge agents; the bar saturates at that rate so normal load stays
+ * visibly varied instead of pinning at 1%.
+ */
+const HOT_BURN_REF_PER_MIN = 100_000;
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -56,6 +57,23 @@ function formatRelativeAgo(ms: number): string {
   if (ms < 3_600_000) return Math.floor(ms / 60_000) + "m";
   if (ms < 86_400_000) return Math.floor(ms / 3_600_000) + "h";
   return Math.floor(ms / 86_400_000) + "d";
+}
+
+/**
+ * formatTokens — compact human token count. `<1000 -> "N"`,
+ * `<1M -> "12.3k"`, `<1B -> "1.23M"`. No leading currency sign.
+ */
+function formatTokens(n: number): string {
+  if (!Number.isFinite(n) || n <= 0) return "0";
+  const rounded = Math.round(n);
+  if (rounded < 1_000) return rounded.toString();
+  if (rounded < 1_000_000) {
+    return (rounded / 1_000).toFixed(1).replace(/\.0$/, "") + "k";
+  }
+  if (rounded < 1_000_000_000) {
+    return (rounded / 1_000_000).toFixed(2).replace(/\.?0+$/, "") + "M";
+  }
+  return (rounded / 1_000_000_000).toFixed(2).replace(/\.?0+$/, "") + "B";
 }
 
 // ---------------------------------------------------------------------------
@@ -99,23 +117,19 @@ function AnimatedNumber({
 }
 
 // ---------------------------------------------------------------------------
-// Token burn — small bar over a daily-budget line.
+// Token burn — small bar scaled to the HOT_BURN_REF_PER_MIN reference.
 // ---------------------------------------------------------------------------
 
 function TokenBurnBar({
-  burnUsdPerMin,
-  costTodayUsd,
-  budgetUsd,
+  burnPerMin,
+  tokensToday,
 }: {
-  burnUsdPerMin: number;
-  costTodayUsd: number;
-  budgetUsd: number;
+  burnPerMin: number;
+  tokensToday: number;
 }) {
-  // Burn rate scaled to a "fast burn" reference of $1/min for the bar.
-  // Anything beyond that fills the bar fully.
-  const fillPct = Math.max(0, Math.min(100, (burnUsdPerMin / 1) * 100));
-  const todayPct = budgetUsd > 0 ? Math.min(100, (costTodayUsd / budgetUsd) * 100) : 0;
-  const budgetUnbounded = budgetUsd <= 0;
+  // Scale bar fill against a "hot burn" reference so normal traffic stays
+  // visibly varied. Past-reference saturates at 100%.
+  const fillPct = Math.max(0, Math.min(100, (burnPerMin / HOT_BURN_REF_PER_MIN) * 100));
   return (
     <div className="w-full" data-testid="mc-token-burn-bar">
       <div className="relative h-2 w-full overflow-hidden rounded-full bg-[color:var(--surface-hover)]">
@@ -127,33 +141,19 @@ function TokenBurnBar({
           data-testid="mc-burn-fill"
           aria-hidden="true"
         />
-        {/* Daily-budget marker — hidden when there's no budget to mark. */}
-        {!budgetUnbounded && (
-          <span
-            aria-hidden="true"
-            className="absolute top-0 h-full w-px bg-[color:var(--text-muted)]/60"
-            style={{ left: todayPct + "%" }}
-            data-testid="mc-budget-marker"
-          />
-        )}
       </div>
       <div className="mt-1.5 flex items-center justify-between text-[10px] text-[color:var(--text-dim)]">
         <span>
-          <span className="sr-only" data-truth="mission-control.token-burn-usd-per-min">
-            {burnUsdPerMin.toFixed(2)}
+          <span className="sr-only" data-truth="mission-control.tokens-burn-per-min">
+            {burnPerMin}
           </span>
-          {formatUsd(burnUsdPerMin)}/min
+          {formatTokens(burnPerMin)} tok/min
         </span>
         <span>
-          <span className="sr-only" data-truth="mission-control.cost-today-usd">
-            {costTodayUsd.toFixed(2)}
+          <span className="sr-only" data-truth="mission-control.tokens-today">
+            {tokensToday}
           </span>
-          <span className="sr-only" data-truth="mission-control.daily-budget-usd">
-            {budgetUsd.toFixed(2)}
-          </span>
-          {budgetUnbounded
-            ? formatUsd(costTodayUsd) + " today"
-            : formatUsd(costTodayUsd) + " / " + formatUsd(budgetUsd) + " today"}
+          {formatTokens(tokensToday)} tok today
         </span>
       </div>
     </div>
@@ -161,124 +161,20 @@ function TokenBurnBar({
 }
 
 // ---------------------------------------------------------------------------
-// Radial gauge — semi-circle SVG. Color band by % of daily budget.
+// Tokens-today tile body — big number + "today" caption. Replaces the old
+// CostRadial / CostUnbounded components entirely.
 // ---------------------------------------------------------------------------
 
-function CostRadial({ pct }: { pct: number }) {
-  // Clamp to 0..1.5 — display 100% as full and 100-150% as overshoot red.
-  const clamped = Math.max(0, Math.min(1.5, pct));
-  const sweep = Math.min(1, clamped); // primary fill 0..1
-  const overshoot = Math.max(0, clamped - 1); // overflow ring
-
-  // Semi-circle: 180-degree arc from (-1,0) to (1,0).
-  // We use a 100x55 viewBox; outer radius 45, inner 35 -> 10px ring width.
-  const r = 45;
-  const cx = 50;
-  const cy = 50;
-
-  function arcPath(progress: number): string {
-    if (progress <= 0) return "";
-    const angle = Math.PI * progress; // 0..PI
-    const endX = cx - r * Math.cos(angle);
-    const endY = cy - r * Math.sin(angle);
-    const largeArc = angle > Math.PI ? 1 : 0;
-    return [
-      "M",
-      cx - r,
-      cy,
-      "A",
-      r,
-      r,
-      0,
-      largeArc,
-      1,
-      endX.toFixed(2),
-      endY.toFixed(2),
-    ].join(" ");
-  }
-
-  // Color band: green <60, amber 60..80, red >=80
-  const color =
-    clamped < 0.6
-      ? "var(--success)"
-      : clamped < 0.8
-        ? "var(--warning)"
-        : "var(--danger)";
-
+function TokensTodayBody({ tokensToday }: { tokensToday: number }) {
   return (
-    <div className="flex w-full items-center gap-3" data-testid="mc-cost-radial">
-      <svg
-        viewBox="0 0 100 55"
-        width="64"
-        height="36"
-        role="img"
-        aria-label={"Cost is " + Math.round(clamped * 100) + " percent of daily budget"}
-        className="shrink-0"
-      >
-        {/* Track */}
-        <path
-          d={arcPath(1)}
-          fill="none"
-          stroke="var(--surface-hover)"
-          strokeWidth={10}
-          strokeLinecap="round"
-        />
-        {/* Fill */}
-        {sweep > 0 && (
-          <path
-            d={arcPath(sweep)}
-            fill="none"
-            stroke={color}
-            strokeWidth={10}
-            strokeLinecap="round"
-            data-testid="mc-radial-fill"
-          />
-        )}
-        {/* Overshoot ring */}
-        {overshoot > 0 && (
-          <path
-            d={arcPath(Math.min(0.5, overshoot))}
-            fill="none"
-            stroke="var(--danger)"
-            strokeWidth={4}
-            strokeLinecap="round"
-            data-testid="mc-radial-overshoot"
-          />
-        )}
-      </svg>
-      <div className="flex flex-col leading-tight">
-        <span
-          className="font-mono text-lg font-semibold tabular-nums text-[color:var(--text)]"
-          data-truth="mission-control.cost-pct-of-budget"
-        >
-          {Math.round(clamped * 100)}%
-        </span>
-        <span className="text-[10px] text-[color:var(--text-dim)]">of budget</span>
-      </div>
-    </div>
-  );
-}
-
-/**
- * CostUnbounded — rendered in the Cost tile when no daily budget is set.
- * Shows the raw spend today + an "unbounded" hint rather than a gauge
- * against a phantom budget. Class 20F.
- */
-function CostUnbounded({ costTodayUsd }: { costTodayUsd: number }) {
-  return (
-    <div className="flex w-full flex-col leading-tight" data-testid="mc-cost-unbounded">
+    <div className="flex w-full flex-col leading-tight" data-testid="mc-tokens-today-body">
       <span
         className="font-mono text-lg font-semibold tabular-nums text-[color:var(--text)]"
-        data-truth="mission-control.cost-today-usd"
+        data-truth="mission-control.tokens-today"
       >
-        {formatUsd(costTodayUsd)}
+        {formatTokens(tokensToday)} tok
       </span>
-      <span className="text-[10px] text-[color:var(--text-dim)]">
-        today · unbounded
-      </span>
-      <span className="sr-only" data-truth="mission-control.budget-unbounded">
-        yes
-      </span>
+      <span className="text-[10px] text-[color:var(--text-dim)]">today</span>
     </div>
   );
 }
@@ -443,7 +339,7 @@ function SinceYouLeftBody({
         {syl.tasks_touched} tasks
       </div>
       <div className="text-[11px] text-[color:var(--text-muted)]">
-        {syl.tool_calls_since} tool calls · {formatUsd(syl.usd_since)} ·{" "}
+        {syl.tool_calls_since} tool calls · {formatTokens(syl.tokens_since)} tok ·{" "}
         {ago > 0 ? formatRelativeAgo(ago) + " ago" : "moments ago"}
       </div>
       {expanded ? (
@@ -531,20 +427,14 @@ export function MissionControlHero({
 
   // Resolve display values up-front so empty-state checks read clearly.
   const activeCount = data?.active_count ?? 0;
-  const burnRate = data?.token_burn_usd_per_min ?? 0;
-  const costToday = data?.cost_today_usd ?? 0;
-  // Class 20F: when CAE_DAILY_BUDGET_USD env is unset, the aggregator
-  // returns 0. Render that as "unbounded" below rather than coerce to a
-  // phantom $50 and show "1% of budget" for a budget that doesn't exist.
-  const budget = data?.daily_budget_usd ?? 0;
-  const pct = data?.cost_pct_of_budget ?? 0;
-  const budgetUnbounded = budget <= 0;
+  const burnRate = data?.tokens_burn_per_min ?? 0;
+  const tokensToday = data?.tokens_today ?? 0;
   const sparkline = data?.sparkline_60s ?? [];
   const syl = data?.since_you_left ?? {
     show: false,
     last_seen_at: null,
     tool_calls_since: 0,
-    usd_since: 0,
+    tokens_since: 0,
     tasks_touched: 0,
   };
 
@@ -594,7 +484,7 @@ export function MissionControlHero({
         <LastUpdated at={lastUpdated} threshold_ms={POLL_INTERVAL_MS + 1_000} />
       </header>
 
-      {/* 5-tile grid — collapses to 2-up on tablet, full row on desktop. */}
+      {/* 4-tile grid (5 when SYL visible) — collapses to 2-up on tablet. */}
       <div
         className={
           "grid gap-3 " +
@@ -623,50 +513,25 @@ export function MissionControlHero({
         <Tile
           testId="mc-tile-burn"
           href="/metrics"
-          ariaLabel={"Token burn rate: " + formatUsd(burnRate) + " per minute."}
+          ariaLabel={"Token burn rate: " + formatTokens(burnRate) + " tokens per minute."}
           Icon={Flame}
           label="burn"
           empty={!isLoading && burnRate === 0}
           emptyTip="appears when tokens start flowing"
         >
-          <TokenBurnBar
-            burnUsdPerMin={burnRate}
-            costTodayUsd={costToday}
-            budgetUsd={budget}
-          />
+          <TokenBurnBar burnPerMin={burnRate} tokensToday={tokensToday} />
         </Tile>
 
         <Tile
-          testId="mc-tile-cost"
+          testId="mc-tile-tokens-today"
           href="/metrics"
-          ariaLabel={
-            budgetUnbounded
-              ? "Cost today is " +
-                formatUsd(costToday) +
-                ". No daily budget set."
-              : "Cost today is " +
-                formatUsd(costToday) +
-                " of " +
-                formatUsd(budget) +
-                " budget — " +
-                Math.round(pct * 100) +
-                " percent."
-          }
+          ariaLabel={"Tokens today: " + formatTokens(tokensToday) + " tokens consumed since UTC midnight."}
           Icon={Coins}
-          label="budget"
-          subLabel={budgetUnbounded ? "unbounded" : undefined}
-          empty={!isLoading && costToday === 0}
-          emptyTip={
-            budgetUnbounded
-              ? "set CAE_DAILY_BUDGET_USD to enable"
-              : "appears when token usage is recorded"
-          }
+          label="tokens today"
+          empty={!isLoading && tokensToday === 0}
+          emptyTip="appears when token usage is recorded"
         >
-          {budgetUnbounded ? (
-            <CostUnbounded costTodayUsd={costToday} />
-          ) : (
-            <CostRadial pct={pct} />
-          )}
+          <TokensTodayBody tokensToday={tokensToday} />
         </Tile>
 
         <Tile
@@ -690,8 +555,8 @@ export function MissionControlHero({
               "Since you left, " +
               syl.tool_calls_since +
               " tool calls and " +
-              formatUsd(syl.usd_since) +
-              " spent."
+              formatTokens(syl.tokens_since) +
+              " tokens consumed."
             }
             Icon={History}
             label="since you left"

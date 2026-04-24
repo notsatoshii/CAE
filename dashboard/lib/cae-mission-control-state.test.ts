@@ -6,8 +6,8 @@
  *   1. Empty: missing files -> empty zero-shape with last_event_at=null.
  *   2. Three forge_begin without forge_end in last 5 min -> active_count=3.
  *   3. forge_end inside the window decrements (only "begin" entries count).
- *   4. token_usage events project to USD via cae-cost-table rates.
- *   5. cost_pct_of_budget reflects today's spend / daily budget.
+ *   4. token_usage events sum raw input+output tokens (no USD).
+ *   5. tokens_today accumulates across the full UTC day.
  *   6. Sparkline buckets last 60 seconds at 1s resolution, aligned.
  *   7. since-you-left: first visit -> show=false; >1h gap -> show=true with
  *      counts; recent visit -> show=false.
@@ -62,13 +62,10 @@ describe("getMissionControlState", () => {
       now: NOW,
       noCache: true,
       touchLastSeen: false,
-      dailyBudgetUsd: 50,
     })
     expect(data.active_count).toBe(0)
-    expect(data.token_burn_usd_per_min).toBe(0)
-    expect(data.cost_today_usd).toBe(0)
-    expect(data.daily_budget_usd).toBe(50)
-    expect(data.cost_pct_of_budget).toBe(0)
+    expect(data.tokens_burn_per_min).toBe(0)
+    expect(data.tokens_today).toBe(0)
     expect(data.sparkline_60s).toHaveLength(60)
     expect(data.sparkline_60s.every((b) => b.count === 0)).toBe(true)
     expect(data.since_you_left.show).toBe(false)
@@ -113,16 +110,16 @@ describe("getMissionControlState", () => {
     expect(data.active_count).toBe(1)
   })
 
-  it("4. token_usage events project to USD via per-model rates", async () => {
+  it("4. token_usage events sum raw input+output tokens (no USD math)", async () => {
     const p = paths()
-    // Sonnet @ $3 input + $15 output per Mtok
-    // 1M input + 1M output = $3 + $15 = $18
+    // 1.2M input + 800k output = 2.0M total tokens — burn (last 60s) and
+    // today (since UTC midnight) both include this event.
     writeLines(p.cb, [
       JSON.stringify({
         ts: tsAgo(30_000),
         event: "token_usage",
-        input_tokens: 1_000_000,
-        output_tokens: 1_000_000,
+        input_tokens: 1_200_000,
+        output_tokens: 800_000,
         model: "claude-sonnet-4-6",
       }),
     ])
@@ -135,20 +132,35 @@ describe("getMissionControlState", () => {
       noCache: true,
       touchLastSeen: false,
     })
-    expect(data.token_burn_usd_per_min).toBeCloseTo(18, 4)
-    expect(data.cost_today_usd).toBeCloseTo(18, 4)
+    expect(data.tokens_burn_per_min).toBe(2_000_000)
+    expect(data.tokens_today).toBe(2_000_000)
+    // Integer sum, not a fractional USD amount.
+    expect(Number.isInteger(data.tokens_burn_per_min)).toBe(true)
+    expect(Number.isInteger(data.tokens_today)).toBe(true)
   })
 
-  it("5. cost_pct_of_budget = today_usd / daily_budget", async () => {
+  it("5. tokens_today accumulates across the full UTC day", async () => {
     const p = paths()
-    // 1M sonnet input = $3, budget $10 -> 0.3
+    // Two token_usage events earlier today — one near midnight, one 10m ago.
+    // Burn window (last 60s) should only see the 30s-ago event.
     writeLines(p.cb, [
       JSON.stringify({
-        ts: tsAgo(60_000),
+        ts: tsAgo(11 * 60 * 60 * 1000 + 30 * 60 * 1000), // 11.5h ago
         event: "token_usage",
-        input_tokens: 1_000_000,
-        output_tokens: 0,
-        model: "sonnet",
+        input_tokens: 300_000,
+        output_tokens: 100_000,
+      }),
+      JSON.stringify({
+        ts: tsAgo(10 * 60 * 1000), // 10m ago
+        event: "token_usage",
+        input_tokens: 50_000,
+        output_tokens: 25_000,
+      }),
+      JSON.stringify({
+        ts: tsAgo(30_000),
+        event: "token_usage",
+        input_tokens: 10_000,
+        output_tokens: 5_000,
       }),
     ])
     writeLines(p.tools, [])
@@ -159,9 +171,11 @@ describe("getMissionControlState", () => {
       now: NOW,
       noCache: true,
       touchLastSeen: false,
-      dailyBudgetUsd: 10,
     })
-    expect(data.cost_pct_of_budget).toBeCloseTo(0.3, 4)
+    // tokens_today = 400k + 75k + 15k = 490k
+    expect(data.tokens_today).toBe(490_000)
+    // burn window (last 60s) = 15k only
+    expect(data.tokens_burn_per_min).toBe(15_000)
   })
 
   it("6. sparkline has 60 1s buckets, populated where events fall", async () => {
@@ -224,14 +238,13 @@ describe("getMissionControlState", () => {
       JSON.stringify({ ts: tsAgo(60 * 60 * 1000), task: "t-1", tool: "Bash", cwd: "/" }),
       JSON.stringify({ ts: tsAgo(30 * 60 * 1000), task: "t-2", tool: "Edit", cwd: "/" }),
     ])
-    // One token-usage event = $3 (1M sonnet input)
+    // One token-usage event = 1.5M tokens (1M input + 500k output)
     writeLines(p.cb, [
       JSON.stringify({
         ts: tsAgo(45 * 60 * 1000),
         event: "token_usage",
         input_tokens: 1_000_000,
-        output_tokens: 0,
-        model: "sonnet",
+        output_tokens: 500_000,
       }),
     ])
 
@@ -246,7 +259,7 @@ describe("getMissionControlState", () => {
     expect(data.since_you_left.show).toBe(true)
     expect(data.since_you_left.tool_calls_since).toBe(2)
     expect(data.since_you_left.tasks_touched).toBe(2)
-    expect(data.since_you_left.usd_since).toBeCloseTo(3, 4)
+    expect(data.since_you_left.tokens_since).toBe(1_500_000)
   })
 
   it("7c. since-you-left: recent visit (<1h) -> show=false", async () => {
@@ -339,5 +352,18 @@ describe("emptyMissionControl", () => {
     const first = data.sparkline_60s[0]
     const last = data.sparkline_60s[data.sparkline_60s.length - 1]
     expect(last.ts - first.ts).toBe(59 * 1000)
+  })
+
+  it("returns token-only fields with zeros (no USD fields)", () => {
+    const data = emptyMissionControl(NOW)
+    expect(data.tokens_burn_per_min).toBe(0)
+    expect(data.tokens_today).toBe(0)
+    expect(data.since_you_left.tokens_since).toBe(0)
+    // The old USD fields are gone from the contract.
+    expect("token_burn_usd_per_min" in data).toBe(false)
+    expect("cost_today_usd" in data).toBe(false)
+    expect("daily_budget_usd" in data).toBe(false)
+    expect("cost_pct_of_budget" in data).toBe(false)
+    expect("usd_since" in data.since_you_left).toBe(false)
   })
 })

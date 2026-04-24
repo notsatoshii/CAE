@@ -4,8 +4,8 @@
  * Coverage:
  *   1. Loading state -> aria-busy + heading present.
  *   2. Active count tile renders the count.
- *   3. Token burn tile renders the bar + per-minute label.
- *   4. Cost radial renders the percent.
+ *   3. Token burn tile renders the bar + per-minute token label.
+ *   4. Tokens-today tile renders the "X tok" string.
  *   5. Sparkline tile renders.
  *   6. Since-you-left tile shows ONLY when syl.show=true.
  *   7. Empty-state placeholders render when their slot is zero (active=0).
@@ -64,25 +64,27 @@ describe("MissionControlHero", () => {
     expect(tile.textContent).toMatch(/agents working/i);
   });
 
-  it("3. token burn tile renders the bar + per-minute label", () => {
-    const data = makeState({ token_burn_usd_per_min: 0.42, cost_today_usd: 5, daily_budget_usd: 50 });
+  it("3. token burn tile renders the bar + per-minute token label", () => {
+    const data = makeState({ tokens_burn_per_min: 42_000, tokens_today: 500_000 });
     render(<MissionControlHero initialData={data} disablePolling />);
     expect(screen.getByTestId("mc-token-burn-bar")).toBeInTheDocument();
     expect(screen.getByTestId("mc-burn-fill")).toBeInTheDocument();
     const tile = screen.getByTestId("mc-tile-burn");
-    expect(tile.textContent).toMatch(/\/min/);
+    // "42k tok/min" expected — tokens-only string, no $ sign.
+    expect(tile.textContent).toMatch(/tok\/min/);
+    expect(tile.textContent).not.toMatch(/\$/);
   });
 
-  it("4. cost radial tile renders the percent + svg", () => {
+  it("4. tokens-today tile renders the 'X tok' string", () => {
     const data = makeState({
-      cost_today_usd: 25,
-      daily_budget_usd: 50,
-      cost_pct_of_budget: 0.5,
+      tokens_today: 1_200_000,
     });
     render(<MissionControlHero initialData={data} disablePolling />);
-    const radial = screen.getByTestId("mc-cost-radial");
-    expect(radial).toBeInTheDocument();
-    expect(radial.textContent).toMatch(/50%/);
+    const tile = screen.getByTestId("mc-tile-tokens-today");
+    expect(tile).toBeInTheDocument();
+    // 1.2M tokens -> "1.2M tok"
+    expect(tile.textContent).toMatch(/1\.2M tok/);
+    expect(tile.textContent).not.toMatch(/\$/);
   });
 
   it("5. sparkline tile renders the SVG", () => {
@@ -104,7 +106,7 @@ describe("MissionControlHero", () => {
         show: true,
         last_seen_at: Date.now() - 2 * 60 * 60 * 1000,
         tool_calls_since: 12,
-        usd_since: 1.5,
+        tokens_since: 750_000,
         tasks_touched: 3,
       },
     });
@@ -113,6 +115,8 @@ describe("MissionControlHero", () => {
     expect(tile).toBeInTheDocument();
     expect(tile.textContent).toMatch(/3 tasks/);
     expect(tile.textContent).toMatch(/12 tool calls/);
+    expect(tile.textContent).toMatch(/tok/);
+    expect(tile.textContent).not.toMatch(/\$/);
   });
 
   it("7. empty-state placeholder renders when active_count=0", () => {
@@ -126,7 +130,7 @@ describe("MissionControlHero", () => {
   it("8. all tiles are anchors with hrefs + aria-labels", () => {
     const data = makeState({ active_count: 1 });
     render(<MissionControlHero initialData={data} disablePolling />);
-    for (const id of ["mc-tile-active", "mc-tile-burn", "mc-tile-cost", "mc-tile-sparkline"]) {
+    for (const id of ["mc-tile-active", "mc-tile-burn", "mc-tile-tokens-today", "mc-tile-sparkline"]) {
       const tile = screen.getByTestId(id);
       expect(tile.tagName.toLowerCase()).toBe("a");
       expect(tile.getAttribute("href")).toBeTruthy();

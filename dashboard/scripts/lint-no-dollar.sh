@@ -1,68 +1,66 @@
 #!/usr/bin/env bash
-# USD-guard: Phase 7 locks metrics copy to tokens-only (D-07).
-# This script exits 1 if any literal `$` appears in metrics-owned files,
-# excluding template-expression uses (`${...}`).
+# USD-guard: CAE runs on Claude Max subscription — no per-request USD cost,
+# so any $ in the dashboard FE is a derived lie.
 #
-# Scope (explicit — expand carefully):
-#   - app/metrics/**
-#   - components/metrics/**
-#   - lib/copy/labels.ts (metrics.* keys only)
+# Fails on any of:
+#   - `formatUsd(` or `costUsd(` call (imported from cae-cost-table)
+#   - literal `"$..."` / `'$...'` string (dollar glyph in quoted copy)
+#   - template ``${...}$`` WHERE the `$` appears OUTSIDE `${...}` interpolation,
+#     i.e. a literal dollar glyph in a template string.
 #
-# Out-of-scope (allowed to contain $ — not metrics copy):
-#   - Everything else in the repo.
+# Regex-end-of-string `/^.*$/` is NOT matched — regex `$` is a metachar, not
+# currency.
 #
-# Rationale: CONTEXT D-07 + D-12 — COST IS TOKENS ONLY, no currency anywhere
-# in the metrics surface. The `est.` disclaimer is about token-to-cost
-# *estimation*, NOT a dollar sign. This script runs in Wave 4 verification
-# and is intended to be hooked into CI later.
+# Scope (session-14 expansion — was metrics-only, now whole FE surface):
+#   - app/**        (routes + API handlers)
+#   - components/** (all UI)
+#   - lib/**        (aggregators, helpers, types)
 #
-# Usage:
-#   cd dashboard && ./scripts/lint-no-dollar.sh
+# Explicit allow-list:
+#   - lib/cae-cost-table.ts — kept only until the last caller is removed.
+#     Delete this allow-list entry + the file when no caller remains.
 #
-# Exit codes:
-#   0 — PASS (no literal `$` found in metrics copy)
-#   1 — FAIL (literal `$` found; offending files printed to stderr)
+# Out-of-scope: scripts/, tests/, node_modules, .next, public.
+#
+# Exit 0 = PASS, 1 = FAIL (offenders printed to stderr).
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
 FOUND=0
 
-# Negative-lookbehind `(?<!\\)` keeps escaped `\$` out of the match; the
-# negative-lookahead `(?!\{)` keeps template expressions `${…}` out.
-# -P = Perl regex (required for lookaround).
-# Include only .ts / .tsx / .md files.
+# Pattern:
+#   (formatUsd|costUsd)\(    — USD helper call
+#   OR ["']\$                — quoted literal dollar glyph
+# -P = Perl regex (required for alternation + groups across lines).
 check() {
   local target="$1"
-  if [[ -e "$target" ]]; then
-    if grep -rnP --include='*.ts' --include='*.tsx' --include='*.md' '(?<!\\)\$(?!\{)' "$target" 2>/dev/null; then
-      echo "FAIL: literal \$ found in $target (D-07: metrics copy is tokens-only)" >&2
-      FOUND=1
-    fi
+  [[ -e "$target" ]] || return 0
+  local hits
+  # (formatUsd|costUsd)\(   — USD helper call
+  # ["']\$(?!\{)            — quoted literal `$` NOT starting a ${...} expr
+  hits=$(grep -rnP \
+    --include='*.ts' --include='*.tsx' --include='*.md' \
+    --exclude='*.test.ts' --exclude='*.test.tsx' \
+    --exclude-dir=node_modules \
+    --exclude-dir=.next \
+    '(formatUsd|costUsd)\(|["'"'"']\$(?!\{)' \
+    "$target" 2>/dev/null || true)
+  # Allow-list: drop cae-cost-table.ts (deprecated, kept for definitions).
+  hits=$(echo "$hits" | grep -v '^$' | grep -v '/cae-cost-table\.ts:' || true)
+  if [[ -n "$hits" ]]; then
+    echo "$hits" >&2
+    echo "FAIL: USD reference found in $target (D-07: FE is tokens-only)" >&2
+    FOUND=1
   fi
 }
 
-check app/metrics
-check components/metrics
-
-# For labels.ts, restrict the scan to the Phase 7 Metrics block only
-# (other phases may legitimately use `$` in cost-related copy).
-if [[ -f lib/copy/labels.ts ]]; then
-  # Use awk to extract the block between the two Phase 7 markers
-  # (the `// === Phase 7: Metrics ===` comments flank the metrics.* keys).
-  METRICS_BLOCK=$(awk '
-    /=== Phase 7: Metrics ===/ { inblock = !inblock; next }
-    inblock { print }
-  ' lib/copy/labels.ts)
-  if echo "$METRICS_BLOCK" | grep -nP '(?<!\\)\$(?!\{)' >/dev/null 2>&1; then
-    echo "FAIL: literal \$ found in Phase 7 metrics.* block in lib/copy/labels.ts (D-07)" >&2
-    echo "$METRICS_BLOCK" | grep -nP '(?<!\\)\$(?!\{)' >&2 || true
-    FOUND=1
-  fi
-fi
+check app
+check components
+check lib
 
 if [[ $FOUND -eq 0 ]]; then
-  echo "lint-no-dollar: PASS (no literal \$ in metrics copy)"
+  echo "lint-no-dollar: PASS (no USD references in FE surface)"
 fi
 
 exit $FOUND

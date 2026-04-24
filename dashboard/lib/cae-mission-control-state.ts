@@ -5,7 +5,7 @@
  * Eric P15: "dashboard shows nothing active when actively running" — the
  * Mission Control banner exists so a user landing on /build sees, in one
  * glance: how many agents are working, how fast tokens are being burned,
- * how much of today's budget is gone, what the last 60 seconds of activity
+ * how many tokens got spent today, what the last 60 seconds of activity
  * looked like, and (when returning after >1h) what's changed while they
  * were away.
  *
@@ -13,10 +13,11 @@
  *   - Active count   → tail of `.cae/metrics/circuit-breakers.jsonl`
  *                      (last 5 minutes, count forge_begin without matching
  *                       forge_end)
- *   - Token burn      → tail of `.cae/metrics/tool-calls.jsonl`
- *                      (last 60 seconds, summed via lib/cae-cost-table.ts
- *                       per-model rates)
- *   - 60s sparkline  → same source, per-second buckets
+ *   - Token burn      → tail of `.cae/metrics/circuit-breakers.jsonl`
+ *                      (last 60 seconds of token_usage events, summed raw
+ *                       input+output — no USD math, Eric runs on Max)
+ *   - 60s sparkline  → tail of `.cae/metrics/tool-calls.jsonl`
+ *                      (per-second buckets)
  *   - Since-you-left → `.cae/sessions/last-seen.json` (touched on every
  *                      Mission Control fetch); diff via STATE.md / git log
  *                      isn't available in this layer so we surface the
@@ -25,20 +26,15 @@
  * Caching: 5-second process-level cache so the 5-second client poll never
  * re-walks the JSONL on every request.
  *
- * No dollar signs in this file (lint-no-dollar.sh guard).
- *
- * Class 20F (data-feed recovery): `daily_budget_usd` now returns 0 when the
- * CAE_DAILY_BUDGET_USD env var is unset. The UI renders that as "unbounded"
- * so a user who never configured a budget no longer sees the Mission
- * Control gauge sitting at a phantom "1% of budget" — the hero tile was
- * rendering a lie about a budget the user never set.
+ * Tokens-only display — no USD (D-07). Eric runs CAE on Claude Max
+ * subscription so per-request USD is always a derived lie; we surface raw
+ * token counts and let the UI format them.
  */
 
 import { mkdir, readFile, writeFile } from "node:fs/promises"
 import { dirname, join } from "node:path"
 import { CAE_ROOT } from "./cae-config"
 import { tailJsonl } from "./cae-state"
-import { rateFor } from "./cae-cost-table"
 import type { CbEvent } from "./cae-types"
 
 // ---------------------------------------------------------------------------
@@ -63,12 +59,6 @@ const SPARKLINE_BUCKET_MS = ONE_SECOND_MS
 
 const SINCE_YOU_LEFT_THRESHOLD_MS = ONE_HOUR_MS
 
-// Reserved: previous hard-coded fallback when no env was set. No longer used
-// — the aggregator now returns 0 to signal "unbounded" and the UI renders
-// accordingly. Kept as a documented default for any future caller that
-// explicitly wants a budget.
-const DEFAULT_DAILY_BUDGET_USD_REFERENCE = 50
-
 export const MISSION_CONTROL_CACHE_TTL_MS = 5_000
 
 // ---------------------------------------------------------------------------
@@ -89,8 +79,8 @@ export interface MissionControlSinceYouLeft {
   last_seen_at: number | null
   /** Tool-call count since last_seen_at (capped to 24h). */
   tool_calls_since: number
-  /** Estimated USD spent since last_seen_at (token-weighted). */
-  usd_since: number
+  /** Tokens (input+output) consumed since last_seen_at. */
+  tokens_since: number
   /** Distinct task IDs touched since last_seen_at. */
   tasks_touched: number
 }
@@ -103,26 +93,14 @@ export interface MissionControlState {
   active_count: number
 
   /**
-   * USD per minute, projected from the last 60 seconds of token usage.
-   * 0 when no token usage events found in window.
+   * Tokens per minute (raw input+output sum), projected from the last 60
+   * seconds of token_usage events. 0 when no events found in window. No
+   * USD conversion — Max subscription has no real per-request cost.
    */
-  token_burn_usd_per_min: number
+  tokens_burn_per_min: number
 
-  /** Total USD spent today (UTC midnight rollover). */
-  cost_today_usd: number
-
-  /**
-   * Daily budget in USD. 0 means no budget is set — the UI should render
-   * this as "unbounded" (see mission-control-hero.tsx). Read from
-   * CAE_DAILY_BUDGET_USD when present and positive, else 0.
-   */
-  daily_budget_usd: number
-
-  /**
-   * cost_today_usd / daily_budget_usd, clamped 0..2 (over-budget = >1).
-   * 0 when no budget is set.
-   */
-  cost_pct_of_budget: number
+  /** Total tokens (input+output) consumed today (UTC midnight rollover). */
+  tokens_today: number
 
   /** Last 60 seconds of tool-call activity, oldest-first, 1s buckets. */
   sparkline_60s: MissionControlSparkBucket[]
@@ -149,16 +127,14 @@ export function emptyMissionControl(now: number = Date.now()): MissionControlSta
   }
   return {
     active_count: 0,
-    token_burn_usd_per_min: 0,
-    cost_today_usd: 0,
-    daily_budget_usd: dailyBudget(),
-    cost_pct_of_budget: 0,
+    tokens_burn_per_min: 0,
+    tokens_today: 0,
     sparkline_60s: sparkline,
     since_you_left: {
       show: false,
       last_seen_at: null,
       tool_calls_since: 0,
-      usd_since: 0,
+      tokens_since: 0,
       tasks_touched: 0,
     },
     last_event_at: null,
@@ -202,8 +178,6 @@ export interface GetMissionControlOpts {
    * pass false to keep assertions deterministic between runs.
    */
   touchLastSeen?: boolean
-  /** Override the daily budget (tests). */
-  dailyBudgetUsd?: number
 }
 
 export async function getMissionControlState(
@@ -213,7 +187,6 @@ export async function getMissionControlState(
   const toolsPath = opts.toolsPath ?? DEFAULT_TOOLS_PATH
   const lastSeenPath = opts.lastSeenPath ?? DEFAULT_LAST_SEEN_PATH
   const now = opts.now ?? Date.now()
-  const budget = opts.dailyBudgetUsd ?? dailyBudget()
   const touchLastSeen = opts.touchLastSeen !== false
 
   const cacheKey = cbPath + "|" + toolsPath + "|" + lastSeenPath
@@ -234,7 +207,6 @@ export async function getMissionControlState(
     cbRows,
     toolRows,
     now,
-    budget,
     previousLastSeen,
   })
 
@@ -259,7 +231,6 @@ interface ProjectArgs {
   cbRows: unknown[]
   toolRows: unknown[]
   now: number
-  budget: number
   previousLastSeen: number | null
 }
 
@@ -347,20 +318,20 @@ function countActiveAgents(events: ParsedCbEvent[], now: number): number {
 }
 
 /**
- * costFromTokenUsage — sum USD across token_usage events in [start, now]
- * using rateFor(model). Returns 0 when no events.
+ * tokensFromTokenUsage — sum raw input+output tokens across token_usage
+ * events in [start, now]. Returns 0 when no events. No USD conversion —
+ * Max subscription means derived USD is a lie; tokens are the real unit.
  */
-function costFromTokenUsage(events: ParsedCbEvent[], start: number, now: number): number {
-  let usd = 0
+function tokensFromTokenUsage(events: ParsedCbEvent[], start: number, now: number): number {
+  let tokens = 0
   for (const ev of events) {
     if (ev.event !== "token_usage") continue
     if (ev.ts_ms < start || ev.ts_ms > now) continue
-    const rate = rateFor(ev.model ?? null)
-    const inputUsd = (ev.input_tokens ?? 0) * (rate.input_per_mtok / 1_000_000)
-    const outputUsd = (ev.output_tokens ?? 0) * (rate.output_per_mtok / 1_000_000)
-    usd += Math.max(0, inputUsd) + Math.max(0, outputUsd)
+    const input = Math.max(0, ev.input_tokens ?? 0)
+    const output = Math.max(0, ev.output_tokens ?? 0)
+    tokens += input + output
   }
-  return usd
+  return tokens
 }
 
 /**
@@ -398,7 +369,7 @@ function sinceYouLeft(
       show: false,
       last_seen_at: previousLastSeen,
       tool_calls_since: 0,
-      usd_since: 0,
+      tokens_since: 0,
       tasks_touched: 0,
     }
   }
@@ -414,13 +385,13 @@ function sinceYouLeft(
     toolCalls++
     if (ev.task) taskSet.add(ev.task)
   }
-  const usd = costFromTokenUsage(cbEvents, start, now)
+  const tokens = tokensFromTokenUsage(cbEvents, start, now)
 
   return {
     show: true,
     last_seen_at: previousLastSeen,
     tool_calls_since: toolCalls,
-    usd_since: usd,
+    tokens_since: tokens,
     tasks_touched: taskSet.size,
   }
 }
@@ -438,19 +409,12 @@ function projectMissionControl(args: ProjectArgs): MissionControlState {
 
   const activeCount = countActiveAgents(cbEvents, now)
 
-  // Token burn rate — last 60 seconds of token_usage events, projected to
-  // a per-minute rate. Already 60 seconds so no extrapolation needed.
-  const tokenBurnUsd = costFromTokenUsage(cbEvents, now - ONE_MINUTE_MS, now)
-  const tokenBurnUsdPerMin = tokenBurnUsd
+  // Token burn rate — last 60 seconds of token_usage events, already
+  // normalized to per-minute because the window itself is 60 seconds.
+  const tokensBurnPerMin = tokensFromTokenUsage(cbEvents, now - ONE_MINUTE_MS, now)
 
   const dayStart = todayStartMs(now)
-  const costTodayUsd = costFromTokenUsage(cbEvents, dayStart, now)
-
-  // Class 20F (data-feed recovery): preserve 0 when no budget is configured.
-  // Do NOT coerce back up to DEFAULT_DAILY_BUDGET_USD_REFERENCE — a user who
-  // never set a budget shouldn't see a phantom "1%" on the Cost tile.
-  const budget = args.budget > 0 ? args.budget : 0
-  const pct = budget > 0 ? Math.min(2, costTodayUsd / budget) : 0
+  const tokensToday = tokensFromTokenUsage(cbEvents, dayStart, now)
 
   const spark = sparkline60s(toolEvents, now)
 
@@ -466,10 +430,8 @@ function projectMissionControl(args: ProjectArgs): MissionControlState {
 
   return {
     active_count: activeCount,
-    token_burn_usd_per_min: tokenBurnUsdPerMin,
-    cost_today_usd: costTodayUsd,
-    daily_budget_usd: budget,
-    cost_pct_of_budget: pct,
+    tokens_burn_per_min: tokensBurnPerMin,
+    tokens_today: tokensToday,
     sparkline_60s: spark,
     since_you_left: syl,
     last_event_at: lastEventAt,
@@ -506,24 +468,6 @@ async function writeLastSeen(path: string, ts: number): Promise<void> {
   } catch {
     // non-fatal; surface nothing
   }
-}
-
-// ---------------------------------------------------------------------------
-// Daily-budget helper — env-driven, 0 (unbounded) when unset.
-// ---------------------------------------------------------------------------
-
-/**
- * Read CAE_DAILY_BUDGET_USD from env. Returns 0 ("unbounded") when the env
- * var is unset or not a positive number. The UI renders 0 as "unbounded"
- * rather than computing a bogus percentage against a hardcoded $50 wall.
- * Class 20F.
- */
-function dailyBudget(): number {
-  const raw = process.env.CAE_DAILY_BUDGET_USD
-  if (!raw) return 0
-  const n = Number(raw)
-  if (!Number.isFinite(n) || n <= 0) return 0
-  return n
 }
 
 // Re-export the parsed-event shapes so tests that want to assemble fixtures
