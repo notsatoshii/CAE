@@ -26,6 +26,8 @@ import type { Scene } from "@/lib/floor/scene";
 import type { CbEvent } from "@/lib/cae-types";
 import { parseEvent, mapEvent } from "@/lib/floor/event-adapter";
 import { usePrefersReducedMotion } from "@/lib/hooks/use-prefers-reduced-motion";
+import { getPixelAgentRegistry } from "@/lib/floor/renderer";
+import { applyToolCall, animStateForTool } from "@/lib/floor/pixel-agent-state";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -234,6 +236,72 @@ export function useFloorEvents(opts: UseFloorEventsOpts): UseFloorEventsResult {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [opts.cbPath, drain]);
+
+  // -------------------------------------------------------------------------
+  // Activity poll (pixel-agents v1): maps tool_call rows from
+  // .cae/metrics/activity.jsonl into sprite-registry anim updates so seated
+  // characters show typing/reading animation for the right tool kind.
+  //
+  // Uses fetch-polling rather than a 2nd EventSource so the canvas test
+  // suite's "exactly one SSE stream opened" assertion still holds. Polling
+  // cadence matches the /api/activity/live Cache-Control (5s).
+  //
+  // Best-effort: failures are swallowed (the endpoint may not exist).
+  // Never mutates Scene.agents[] — only the auxiliary sprite registry.
+  // -------------------------------------------------------------------------
+  useEffect(() => {
+    if (!opts.cbPath) return;
+    const projectPath = cbPathToProject(opts.cbPath);
+    let cancelled = false;
+    let lastEventTs = "";
+
+    const pollActivity = async () => {
+      try {
+        const res = await fetch(
+          "/api/activity/live?project=" + encodeURIComponent(projectPath),
+        );
+        if (cancelled || !res.ok) return;
+        const body = (await res.json()) as { events?: Array<Record<string, unknown>> };
+        if (cancelled) return;
+        const events = Array.isArray(body.events) ? body.events : [];
+        for (const e of events) {
+          const ts = typeof e.ts === "string" ? e.ts : "";
+          if (ts && ts <= lastEventTs) continue;
+          if (ts) lastEventTs = ts;
+          if (e.type !== "tool_call") continue;
+          const meta = (e.meta ?? {}) as Record<string, unknown>;
+          const taskId =
+            typeof e.task_id === "string"
+              ? e.task_id
+              : typeof meta.task_id === "string"
+                ? meta.task_id
+                : null;
+          if (!taskId) continue;
+          const tool =
+            typeof e.tool === "string"
+              ? e.tool
+              : typeof meta.tool === "string"
+                ? meta.tool
+                : "Bash";
+          const registry = getPixelAgentRegistry();
+          const sprite = registry.get(taskId);
+          if (!sprite) continue;
+          registry.set(taskId, applyToolCall(sprite, tool, Date.now()));
+          void animStateForTool; // keep import alive for future inline mapping
+        }
+      } catch {
+        // Best-effort — swallow. Sprites stay on their last anim state.
+      }
+    };
+
+    void pollActivity();
+    const id = setInterval(pollActivity, 5000);
+    return () => {
+      cancelled = true;
+      clearInterval(id);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [opts.cbPath]);
 
   // Auth-drift probe: poll /api/state every 30s while SSE is open (T-11-05)
   useEffect(() => {

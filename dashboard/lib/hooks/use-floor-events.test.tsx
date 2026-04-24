@@ -399,10 +399,10 @@ describe("useFloorEvents", () => {
     const fetchAfterInterval = (fetch as ReturnType<typeof vi.fn>).mock.calls.length;
     expect(fetchAfterInterval).toBeGreaterThan(fetchAfterMount);
 
-    // Every call must target /api/state
+    // Every call must target /api/state OR /api/activity/live (pixel-agents v1 poll)
     const calls = (fetch as ReturnType<typeof vi.fn>).mock.calls;
     for (const call of calls) {
-      expect(call[0] as string).toMatch(/\/api\/state/);
+      expect(call[0] as string).toMatch(/\/api\/(state|activity\/live)/);
     }
   });
 

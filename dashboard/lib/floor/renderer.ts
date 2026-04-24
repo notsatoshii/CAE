@@ -1,25 +1,49 @@
 /**
- * Pure Canvas 2D draw routine for the Live Floor scene (D-01, D-03, D-09).
+ * Canvas 2D draw routine for the Live Floor scene (D-01, D-03, D-09).
  *
  * Design contract:
  * - NO React imports
- * - NO window / document / performance / requestAnimationFrame access
- * - Pure function of (ctx, scene, viewport) only — fully unit-testable with a stub ctx
- * - Never throws; every branch has a default fill
- * - Animation state is driven by effect.ttl / entity positions mutated by step()
+ * - NO window/document/RAF *scheduling* — ctx/scene/viewport are the inputs
+ *   and the scene mutation happens through event-adapter, not here.
+ * - performance.now() / Date.now() are used internally to advance pixel-agent
+ *   sprite-animation frames; this is a RAF-observable side-effect of render()
+ *   but doesn't affect test determinism (dt~0 under jsdom).
+ * - Never throws; every branch has a default fill.
  *
  * Draw order (z-layers):
  *   1. Dark background fill
+ *   1b. Pixel-office floor — dimmed diamonds under the whole scene
  *   2. Stations — z-sorted by (tx + ty) ascending so back stations paint first
  *      Each station: filled diamond + text label below center
  *   3. Effects — in scene.effects array order (newest last = on top)
  *   4. Entities — phantoms drawn on top of their current position
+ *   5. Pixel-agent character sprites (pablodelucca MIT port) at desks
  */
 
 import { mapToScreen, TILE_W, TILE_H } from "./iso";
-import type { Scene, StationName } from "./scene";
+import type { Scene, StationName, PixelAgent } from "./scene";
 import type { Effect } from "./state";
 import { labelFor } from "@/lib/copy/labels";
+import {
+  drawCharacter,
+  drawBubble,
+  getSpriteSet,
+  loadPixelAgentSprites,
+  BUBBLE_WAITING,
+  BUBBLE_PERMISSION,
+  type Direction,
+} from "./pixel-agent-sprite";
+import {
+  createSpriteRegistry,
+  ensureSprite,
+  removeSprite,
+  tickSprite,
+  facingForTravel,
+  animStateForTool,
+  type SpriteRegistry,
+  type SpriteAnimState,
+} from "./pixel-agent-state";
+import { tileToCharacterPixel } from "./office-layout";
 
 // ---------------------------------------------------------------------------
 // Viewport
@@ -52,6 +76,11 @@ const SUCCESS = "#22c55e";
 const PHANTOM = "#8b5cf6";
 const BORDER = "#1f1f22";
 const TEXT = "#8a8a8c";
+
+/** Dimmed floor-tile colors for the static office floor layer. */
+const FLOOR_A = "#15151a";
+const FLOOR_B = "#18181e";
+const FLOOR_ACCENT = "#1f1f28";
 
 const STATUS_FILL: Record<string, string> = {
   idle: IDLE,
@@ -243,6 +272,78 @@ function drawPhantomWalk(
 }
 
 // ---------------------------------------------------------------------------
+// Pixel-agent sprite registry — module-level, keyed by taskId.
+// Kept here (rather than in scene) because it's an animation-layer concern
+// that the RAF loop advances; the Scene.agents[] contract (v0.1) stays pure
+// data for the SSE drain to mutate.
+// ---------------------------------------------------------------------------
+
+const spriteRegistry: SpriteRegistry = createSpriteRegistry();
+let spriteLoadKicked = false;
+let lastTickMs: number | null = null;
+
+/** Reset the registry. Testing only. */
+export function __resetRenderer(): void {
+  spriteRegistry.clear();
+  spriteLoadKicked = false;
+  lastTickMs = null;
+}
+
+/**
+ * Advance sprite-animation timers. Called once per RAF tick from the canvas
+ * host, *after* step() has run on the scene. Pure with respect to DOM —
+ * only touches the sprite registry.
+ *
+ * Sprite records are also reconciled against Scene.agents[]:
+ *   - Any taskId in Scene.agents[] but not in the registry → new record.
+ *   - Any taskId in the registry but not in Scene.agents[] → removed.
+ *   - Direction is recomputed from travel vector if the agent is traveling.
+ */
+export function tickPixelAgents(scene: Scene, dt: number, nowMs: number): void {
+  const agents = scene.agents ?? [];
+  const seen = new Set<string>();
+
+  for (const ag of agents) {
+    seen.add(ag.taskId);
+    let sprite = spriteRegistry.get(ag.taskId);
+    if (!sprite) {
+      sprite = ensureSprite(spriteRegistry, ag.taskId, "forge", nowMs);
+    }
+    // Reconcile phase/direction against the v0.1 PixelAgent contract.
+    if (ag.phase === "traveling") {
+      sprite = {
+        ...sprite,
+        phase: "departing",
+        state: "walk",
+        direction: facingForTravel(ag.tx, ag.ty, ag.targetTx, ag.targetTy),
+      };
+    } else if (sprite.phase === "spawning") {
+      // The SSE agent_spawn currently drops the agent at its source station
+      // with tx/ty already set (no interpolation). Treat that as "arrived".
+      sprite = {
+        ...sprite,
+        phase: "seated",
+        state: sprite.currentTool ? animStateForTool(sprite.currentTool) : "idle",
+        direction: "up",
+      };
+    }
+    // Always advance animation frame.
+    sprite = tickSprite(sprite, dt, nowMs);
+    spriteRegistry.set(ag.taskId, sprite);
+  }
+
+  // Garbage-collect sprites whose agent has been removed from the scene.
+  for (const taskId of spriteRegistry.keys()) {
+    if (!seen.has(taskId)) removeSprite(spriteRegistry, taskId);
+  }
+}
+
+/** Expose the registry for tests + optional external consumers. */
+export function getPixelAgentRegistry(): SpriteRegistry {
+  return spriteRegistry;
+}
+
+// ---------------------------------------------------------------------------
 // Main render function
 // ---------------------------------------------------------------------------
 
@@ -269,6 +370,12 @@ export function render(
   // ------------------------------------------------------------------
   ctx.fillStyle = BG;
   ctx.fillRect(0, 0, width, height);
+
+  // ------------------------------------------------------------------
+  // 1b. Pixel-office floor — dimmed diamond tiles under the whole scene.
+  //     Characters are the star; the floor is just "there".
+  // ------------------------------------------------------------------
+  drawOfficeFloor(ctx, cx, cy);
 
   // ------------------------------------------------------------------
   // 2. Stations — z-sorted ascending by (tx + ty)
@@ -330,35 +437,170 @@ export function render(
   }
 
   // ------------------------------------------------------------------
-  // 5. Pixel agents — colored squares, one per in-flight forge task
-  //    Working: subtle bob offset at source station.
-  //    Traveling: linear interpolation from source to target.
+  // 5. Pixel agents — pablodelucca-style character sprites at desks.
+  //    Fallback to colored squares when the sprite sheet hasn't loaded
+  //    yet (first frames after mount, or SSR).
   // ------------------------------------------------------------------
+  // Kick off sprite loading on the first render — safe no-op in SSR.
+  if (!spriteLoadKicked) {
+    spriteLoadKicked = true;
+    // Fire-and-forget; no await. The draw below probes getSpriteSet() per frame.
+    void loadPixelAgentSprites();
+  }
+
+  // Advance sprite animations using wall-clock delta. Safe in jsdom / SSR:
+  // when Date.now() is called in tests the delta is ~0 so nothing animates
+  // unexpectedly.
+  {
+    const now =
+      typeof performance !== "undefined" && typeof performance.now === "function"
+        ? performance.now()
+        : Date.now();
+    const dt =
+      lastTickMs == null ? 0 : Math.min(0.1, (now - lastTickMs) / 1000);
+    lastTickMs = now;
+    tickPixelAgents(scene, dt, now);
+  }
+
   const agents = scene.agents ?? [];
   if (agents.length > 0) {
-    const now = performance.now();
+    const set = getSpriteSet();
+    // Disable smoothing once for crisp pixel art — safe if ctx doesn't
+    // implement it (test stubs use vi.fn property setters that swallow
+    // the assignment).
+    ctx.imageSmoothingEnabled = false;
+
     for (let i = 0; i < agents.length; i++) {
       const ag = agents[i];
-      let tx: number;
-      let ty: number;
-      if (ag.phase === "traveling") {
-        const t = Math.min(1, Math.max(0, ag.progress));
-        tx = ag.tx + (ag.targetTx - ag.tx) * t;
-        ty = ag.ty + (ag.targetTy - ag.ty) * t;
+      const tx = ag.phase === "traveling"
+        ? ag.tx + (ag.targetTx - ag.tx) * Math.min(1, Math.max(0, ag.progress))
+        : ag.tx;
+      const ty = ag.phase === "traveling"
+        ? ag.ty + (ag.targetTy - ag.ty) * Math.min(1, Math.max(0, ag.progress))
+        : ag.ty;
+
+      if (set && set.ready) {
+        drawCharacterForAgent(ctx, ag, tx, ty, cx, cy, i);
       } else {
-        const bob = Math.sin((now + i * 170) / 260) * 0.12;
-        const bobX = Math.cos((now + i * 170) / 310) * 0.09;
-        tx = ag.tx + bobX;
-        ty = ag.ty + bob;
+        drawColoredSquareFallback(ctx, ag, tx, ty, cx, cy, i);
       }
+    }
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Character-sprite draw (pablodelucca port)
+// ---------------------------------------------------------------------------
+
+/**
+ * Draw a single agent as a 16×32 pixel-art character. The sprite's frame
+ * is taken from the module-level registry (ticked via tickPixelAgents).
+ */
+function drawCharacterForAgent(
+  ctx: CanvasRenderingContext2D,
+  agent: PixelAgent,
+  tx: number,
+  ty: number,
+  cx: number,
+  cy: number,
+  idx: number,
+): void {
+  const { x, y } = tileToCharacterPixel(tx, ty, cx, cy);
+  const stackOffset = (idx % 4) * 4; // cluster-friendly vertical nudge
+
+  const sprite = spriteRegistry.get(agent.taskId);
+  const direction: Direction = sprite?.direction ?? "right";
+  const step = sprite?.animStep ?? 0;
+  // While traveling: always "walk". Sitting: state-driven. If no registry
+  // entry exists yet (race between drain + tick), default to walk.
+  const state =
+    agent.phase === "traveling"
+      ? "walk"
+      : sprite?.state ?? "idle";
+
+  const drawn = drawCharacter(ctx, getSpriteSet(), {
+    paletteIndex: sprite?.paletteIndex ?? (agent.hue % 6),
+    direction,
+    state,
+    step,
+    dx: x,
+    dy: y - stackOffset,
+    scale: 2,
+    hueShift: 0,
+  });
+
+  if (!drawn) {
+    drawColoredSquareFallback(ctx, agent, tx, ty, cx, cy, idx);
+    return;
+  }
+
+  // Speech bubble overlay — only for seated agents with either flag set.
+  if (sprite && (sprite.showWaitingBubble || sprite.showPermissionBubble)) {
+    const bubble = sprite.showPermissionBubble ? BUBBLE_PERMISSION : BUBBLE_WAITING;
+    // Bubble drawn above head — 16px over the sprite, 2× scale so it
+    // matches character zoom.
+    const bubbleX = x + 2;
+    const bubbleY = y - bubble.height * 2 - 2 - stackOffset;
+    drawBubble(ctx, bubble, bubbleX, bubbleY, 2);
+  }
+}
+
+/**
+ * Fallback when the sprite sheet hasn't loaded yet. Matches v0.1 behavior
+ * so the scene is never blank.
+ */
+function drawColoredSquareFallback(
+  ctx: CanvasRenderingContext2D,
+  agent: PixelAgent,
+  tx: number,
+  ty: number,
+  cx: number,
+  cy: number,
+  idx: number,
+): void {
+  const { x, y } = mapToScreen(tx, ty, cx, cy);
+  const fill = `hsl(${agent.hue} 80% 58%)`;
+  const glow = `hsla(${agent.hue} 80% 58% / 0.35)`;
+  const stackOffset = (idx % 4) * 3;
+  ctx.fillStyle = glow;
+  ctx.fillRect(x - 6, y - 6 - stackOffset, 12, 12);
+  ctx.fillStyle = fill;
+  ctx.fillRect(x - 3, y - 3 - stackOffset, 6, 6);
+}
+
+/**
+ * Paint the pixel-office floor as dimmed isometric diamonds under the
+ * entire scene. We don't blit the floor PNG tiles here (they'd require
+ * an additional image-load gate) — dim diamonds read as "tiled floor"
+ * at this zoom and never make the station diamonds disappear.
+ */
+function drawOfficeFloor(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+): void {
+  // Floor spans from a bit beyond the station grid (0..15) so there's no
+  // visible edge at a normal 960×720 viewport.
+  const MIN = -2;
+  const MAX = 18;
+  for (let ty = MIN; ty <= MAX; ty++) {
+    for (let tx = MIN; tx <= MAX; tx++) {
       const { x, y } = mapToScreen(tx, ty, cx, cy);
-      const fill = `hsl(${ag.hue} 80% 58%)`;
-      const glow = `hsla(${ag.hue} 80% 58% / 0.35)`;
-      const stackOffset = (i % 4) * 3;
-      ctx.fillStyle = glow;
-      ctx.fillRect(x - 6, y - 6 - stackOffset, 12, 12);
-      ctx.fillStyle = fill;
-      ctx.fillRect(x - 3, y - 3 - stackOffset, 6, 6);
+      const color =
+        (tx + ty) % 5 === 0
+          ? FLOOR_ACCENT
+          : (tx + ty) % 2 === 0
+            ? FLOOR_A
+            : FLOOR_B;
+      // Filled diamond without stroke — border would make it too noisy.
+      ctx.beginPath();
+      ctx.moveTo(x, y - HALF_H);
+      ctx.lineTo(x + HALF_W, y);
+      ctx.lineTo(x, y + HALF_H);
+      ctx.lineTo(x - HALF_W, y);
+      ctx.closePath();
+      ctx.fillStyle = color;
+      ctx.fill();
     }
   }
 }
