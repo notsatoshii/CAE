@@ -71,6 +71,15 @@ beforeEach(() => {
   // Ensure visible state between tests
   Object.defineProperty(document, "hidden", { value: false, configurable: true, writable: true });
   Object.defineProperty(document, "visibilityState", { value: "visible", configurable: true, writable: true });
+
+  // Class 2B session-cookie gate: useStatePoll short-circuits (no fetch)
+  // when there's no authjs session cookie. Set a fake one so tests
+  // exercise the fetch path.
+  Object.defineProperty(document, "cookie", {
+    value: "authjs.session-token=test-session-token",
+    configurable: true,
+    writable: true,
+  });
 });
 
 afterEach(() => {
