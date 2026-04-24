@@ -2,10 +2,13 @@ import { readdir, readFile, stat } from "fs/promises"
 import { join } from "path"
 import { parse as parseYaml } from "yaml"
 import { CAE_ROOT, INBOX_ROOT, OUTBOX_ROOT } from "./cae-config"
+import { log } from "./log"
 import type { CbState, InboxTask, OutboxTask, Phase, Project } from "./cae-types"
 
 // Phase 10 D-02: Scan this directory for Shift-managed projects.
 const SHIFT_PROJECTS_HOME = process.env.SHIFT_PROJECTS_HOME ?? "/home/cae"
+
+const lState = log("cae-state")
 
 async function exists(p: string): Promise<boolean> {
   try {
@@ -146,18 +149,40 @@ export async function listProjects(): Promise<Project[]> {
   }
 
   // 3. Enrich each with Shift state (when present) and existence checks.
+  //
+  // Session-14 hardening: CAE_ROOT is the canonical ecosystem root. Every
+  // rollup aggregator (buildRollup, buildPhases, buildEventsRecent) unions
+  // across the list this function returns — if CAE_ROOT ever falls out of
+  // the list, top-of-funnel tiles silently read 0 even though commits are
+  // landing in /home/cae/ctrl-alt-elite/.cae/metrics/activity.jsonl.
+  //
+  // Guarantee: if the CAE_ROOT candidate fails an exists() check (unusual —
+  // only happens when the fs is mis-mounted or CAE_ROOT env points at a
+  // non-existent path), log a warning and INCLUDE it anyway with
+  // hasPlanning=false. Readers already no-op on missing files via
+  // tailJsonl → readLines, so an invalid path degrades to "0 contribution"
+  // not "loop early-exit".
   const projects: Project[] = []
   for (const c of byPath.values()) {
-    if (!(await exists(c.path))) continue
-    const hasPlanning = await exists(join(c.path, ".planning"))
+    const pathExists = await exists(c.path)
+    if (!pathExists) {
+      if (c.path === CAE_ROOT) {
+        lState.warn({ path: c.path }, "CAE_ROOT missing from filesystem — including in listProjects anyway so rollup unions don't silently drop it")
+      } else {
+        continue
+      }
+    }
+    const hasPlanning = pathExists ? await exists(join(c.path, ".planning")) : false
     let shiftPhase: string | null = null
     let shiftUpdated: string | null = null
-    try {
-      const raw = await readFile(join(c.path, ".shift", "state.json"), "utf8")
-      const state = JSON.parse(raw)
-      shiftPhase = typeof state?.phase === "string" ? state.phase : null
-      shiftUpdated = typeof state?.updated === "string" ? state.updated : null
-    } catch { /* not a Shift project or malformed — leave null */ }
+    if (pathExists) {
+      try {
+        const raw = await readFile(join(c.path, ".shift", "state.json"), "utf8")
+        const state = JSON.parse(raw)
+        shiftPhase = typeof state?.phase === "string" ? state.phase : null
+        shiftUpdated = typeof state?.updated === "string" ? state.updated : null
+      } catch { /* not a Shift project or malformed — leave null */ }
+    }
     projects.push({ name: c.name, path: c.path, hasPlanning, shiftPhase, shiftUpdated })
   }
 

@@ -6,9 +6,11 @@ import { listPhases, listProjects, tailJsonl, listOutbox } from "./cae-state"
 import { getPhaseDetail, type TaskStatus } from "./cae-phase-detail"
 import { OUTBOX_ROOT } from "./cae-config"
 import { agentMetaFor } from "./copy/agent-meta"
+import { log } from "./log"
 import type { Project, CbEvent } from "./cae-types"
 
 const execAsync = promisify(exec)
+const lHome = log("cae-home-state")
 
 // === Types ===
 export interface Rollup {
@@ -83,6 +85,16 @@ const STATUS_FAILED: TaskStatus = "failed"
 // === 1-second result cache to survive 3s polling without FS thrash ===
 let CACHE: { ts: number; value: HomeState } | null = null
 const CACHE_TTL_MS = 1000
+
+/**
+ * Test-only: drop the in-memory cache so consecutive getHomeState() calls
+ * with different mocked state in the same Vitest module don't read a stale
+ * value. Not exported via the route — production code has no reason to
+ * bypass the 1s TTL.
+ */
+export function __resetHomeStateCacheForTests(): void {
+  CACHE = null
+}
 
 // === Utility helpers ===
 function toProjectName(projectPath: string): string {
@@ -845,11 +857,24 @@ async function buildGlobalActiveAgents(
 }
 
 // === Main aggregator ===
+//
+// Signature is intentionally zero-arg: the rollup/phases/events-recent tiles
+// describe the entire CAE ecosystem, not a single project. The `project=`
+// query on /api/state scopes the route-level `breakers.*` fields (legacy
+// cost-ticker) and nothing else — home.rollup unions across every project
+// in listProjects(). If a future refactor adds a `project` parameter here,
+// the ecosystem contract breaks and lib/cae-home-state.test.ts catches it.
 export async function getHomeState(): Promise<HomeState> {
   const now = Date.now()
   if (CACHE && now - CACHE.ts < CACHE_TTL_MS) return CACHE.value
 
   const projects = await listProjects()
+  if (projects.length === 0) {
+    lHome.warn(
+      {},
+      "listProjects returned empty — rollup tiles will read 0. Verify SHIFT_PROJECTS_HOME + CAE_ROOT are mounted.",
+    )
+  }
 
   const [phases, events_recent, { agents: activeAgents, taskLabels }] = await Promise.all([
     buildPhases(projects),
