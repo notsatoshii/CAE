@@ -62,9 +62,11 @@ export interface PanelProps {
    */
   interactive?: boolean;
   /**
-   * Class 5H — when true, replaces opaque surface + solid border with the
-   * `.glass-surface` utility (translucent fill + backdrop-blur + top-edge-
-   * brighter border gradient). Perf guard drops blur <768px. Default off.
+   * Class 5H / session-14 sweep — when true, replaces opaque surface +
+   * solid border with the `.glass-surface` utility (translucent fill +
+   * backdrop-blur + top-edge-brighter border gradient). Perf guard drops
+   * blur <768px. Default ON since session 14 — opt out with glass={false}
+   * for panels that need opaque treatment (e.g., dense data tables).
    */
   glass?: boolean;
 }
@@ -88,7 +90,7 @@ export function Panel({
   dataLiveness,
   elevation = 0,
   interactive = false,
-  glass = false,
+  glass = true,
 }: PanelProps) {
   // Derive a stable id from the title when not provided.
   const id =

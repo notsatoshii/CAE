@@ -100,20 +100,9 @@ describe("Panel", () => {
     expect(root?.getAttribute("data-interactive")).toBeNull();
   });
 
-  // Class 5H — glassmorphic prop
-  it("glass=false (default) renders opaque surface + solid border", () => {
+  // Class 5H / session-14 — glassmorphic default ON
+  it("glass=true (default) applies .glass-surface utility", () => {
     const { container } = render(<Panel title="Test">content</Panel>);
-    const root = container.querySelector("section");
-    expect(root?.className).not.toContain("glass-surface");
-    expect(root?.className).toContain("bg-[color:var(--surface)]");
-    expect(root?.className).toContain("border border-[color:var(--border)]");
-    expect(root?.getAttribute("data-glass")).toBeNull();
-  });
-
-  it("glass=true swaps opaque surface for .glass-surface utility", () => {
-    const { container } = render(
-      <Panel title="Test" glass>content</Panel>,
-    );
     const root = container.querySelector("section");
     expect(root?.className).toContain("glass-surface");
     // Opaque surface + solid border are omitted when glass mode is on —
@@ -121,6 +110,17 @@ describe("Panel", () => {
     expect(root?.className).not.toContain("bg-[color:var(--surface)]");
     expect(root?.className).not.toContain("border border-[color:var(--border)]");
     expect(root?.getAttribute("data-glass")).toBe("true");
+  });
+
+  it("glass={false} opts out — renders opaque surface + solid border", () => {
+    const { container } = render(
+      <Panel title="Test" glass={false}>content</Panel>,
+    );
+    const root = container.querySelector("section");
+    expect(root?.className).not.toContain("glass-surface");
+    expect(root?.className).toContain("bg-[color:var(--surface)]");
+    expect(root?.className).toContain("border border-[color:var(--border)]");
+    expect(root?.getAttribute("data-glass")).toBeNull();
   });
 
   it("glass=true preserves rounded-lg + p-6 padding", () => {

@@ -672,12 +672,19 @@ body:has([data-slot="sheet-content"][data-open]) #main-content {
   padding: var(--density-card-pad);
   gap: var(--density-card-gap);
   border-radius: var(--radius);
-  background-color: var(--surface);
-  border: 1px solid var(--border-subtle);
+  /* Session-14 glass sweep: card surfaces now render with the glass panel
+     fill + backdrop blur + gradient border. Replaces opaque --surface so
+     rollup-strip tiles, agent cards, changes rows etc. match the hero
+     aesthetic. Fallbacks below restore opaque --surface for mobile /
+     prefers-reduced-transparency / no-backdrop-filter contexts. */
+  background-color: var(--glass-panel-bg);
+  border: 1px solid transparent;
+  border-image: var(--glass-border-gradient) 1;
+  backdrop-filter: blur(var(--glass-blur)) saturate(140%);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(140%);
   /* Class 13C (Eric session 12 "UI lacks depth"): layer elevation-1 on
-     the resting card surface. Border stays for definition; shadow adds
-     the z-cue Linear/Vercel use. Transition covers box-shadow too so
-     the hover bump animates. */
+     the resting card surface. Shadow stays for the z-cue Linear/Vercel
+     use. Transition covers box-shadow too so the hover bump animates. */
   box-shadow: var(--elevation-1);
   transition: border-color var(--dur-quick) var(--ease-default),
               background-color var(--dur-quick) var(--ease-default),
@@ -685,8 +692,34 @@ body:has([data-slot="sheet-content"][data-open]) #main-content {
               transform var(--dur-quick) var(--ease-default);
 }
 .card-base:hover {
-  border-color: var(--border-strong);
-  background-color: var(--surface-hover);
+  background-color: var(--glass-panel-bg-strong);
+}
+/* Perf guard — drop backdrop-filter on mobile; translucent fill stays. */
+@media (max-width: 767.98px) {
+  .card-base {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}
+/* a11y — opaque fallback when OS prefers reduced transparency. */
+@media (prefers-reduced-transparency: reduce) {
+  .card-base {
+    background-color: var(--surface);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+  .card-base:hover {
+    background-color: var(--surface-hover);
+  }
+}
+/* Browsers without backdrop-filter support → opaque surface fallback. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .card-base {
+    background-color: var(--surface);
+  }
+  .card-base:hover {
+    background-color: var(--surface-hover);
+  }
 }
 .card-base:focus-visible {
   outline: 2px solid var(--accent);
