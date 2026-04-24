@@ -20,12 +20,18 @@ import { listWorkflows } from "@/lib/cae-workflows"
 import { labelFor } from "@/lib/copy/labels"
 import { auth } from "@/auth"
 import { WorkflowsListClient } from "./workflows-list-client"
+import { LiveWorkflows } from "@/components/workflows/live-workflows"
+import { getLiveInstances } from "@/lib/workflows/live-instances"
 import type { Role } from "@/lib/cae-types"
 
 export const metadata = { title: "Workflows" }
 
 export default async function WorkflowsPage() {
-  const [workflows, session] = await Promise.all([listWorkflows(), auth()])
+  const [workflows, session, liveInstances] = await Promise.all([
+    listWorkflows(),
+    auth(),
+    getLiveInstances().catch(() => []),
+  ])
   workflows.sort((a, b) => b.mtime - a.mtime)
   const currentRole: Role = (session?.user?.role as Role | undefined) ?? "viewer"
   // Server-render founder copy for the heading; interactive bits live
@@ -44,6 +50,8 @@ export default async function WorkflowsPage() {
           {t.workflowsCreateButton}
         </Link>
       </div>
+      {/* Class 19D: live workflow instances above the recipes list. */}
+      <LiveWorkflows initialInstances={liveInstances} />
       <WorkflowsListClient initialWorkflows={workflows} currentRole={currentRole} />
     </main>
   )
