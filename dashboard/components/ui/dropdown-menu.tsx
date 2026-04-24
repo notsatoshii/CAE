@@ -38,6 +38,10 @@ function DropdownMenuContent({
         alignOffset={alignOffset}
         side={side}
         sideOffset={sideOffset}
+        // Class 5D: keep menu clear of viewport edges (and of other
+        // fixed panels like the 48px ChatRail) so base-ui flips sides
+        // instead of clipping/overlapping.
+        collisionPadding={8}
       >
         <MenuPrimitive.Popup
           data-slot="dropdown-menu-content"

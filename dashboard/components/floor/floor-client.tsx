@@ -194,7 +194,13 @@ export default function FloorClient({ cbPath, projectPath, popout }: FloorClient
       )}
 
       {explain && (
-        <aside className="absolute bottom-4 right-4 w-60 rounded-md border border-[color:var(--border-subtle)] bg-[color:var(--surface)]/90 p-3 backdrop-blur">
+        // Class 5D: constrain legend to the floor container so it never
+        // escapes the parent card. max-w and max-h hard-cap the popover
+        // inside the relative wrapper. z-20 raises it above the
+        // FloorLivenessBadge (z-10) when they share a corner, and
+        // overflow-y-auto keeps long legend lists scrollable instead of
+        // bleeding out.
+        <aside className="absolute bottom-4 right-4 z-20 w-60 max-w-[calc(100%-2rem)] max-h-[calc(100%-2rem)] overflow-y-auto rounded-md border border-[color:var(--border-subtle)] bg-[color:var(--surface)]/90 p-3 backdrop-blur">
           <FloorLegend />
         </aside>
       )}

@@ -78,7 +78,14 @@ export default async function RootLayout({
                           NB: `display: contents` is INTENTIONALLY avoided —
                           `filter` doesn't cascade across contents boxes, so
                           the wrapper must be a real flow-level element. */}
-                      <div id="main-content">
+                      {/* Class 5D: reserve 48px of right padding on sm+
+                          when authed so the fixed ChatRail (right-0 w-12)
+                          never covers page content. Unauthed pages (signin)
+                          have session=null so the rail is not rendered and
+                          no padding is applied. Mobile (<sm) hides the rail
+                          via ChatRail's own `hidden sm:flex`, so skipping
+                          padding there matches the rail's own breakpoint. */}
+                      <div id="main-content" className={session ? "sm:pr-12" : undefined}>
                         {children}
                       </div>
                       {session && <ChatRail />}

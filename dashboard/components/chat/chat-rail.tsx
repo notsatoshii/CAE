@@ -9,8 +9,18 @@
  *
  * Hidden:
  *   - on /chat (D-16 — full-page chat surface replaces the rail there),
+ *   - on /signin and /403 — auth-shell pages have no rail chrome; rail
+ *     would otherwise overlay/clip the centered auth card (Class 5D).
  *   - when !sessionAuthed (gotcha #10 — no provider state means unauth; the
  *     provider itself exposes a no-op default context in that case).
+ *
+ * Mobile:
+ *   - Below `sm` (640px) the collapsed rail is hidden (`hidden sm:flex`)
+ *     because a 48px fixed rail covers ~13% of a 360px viewport and has no
+ *     safe-area offset — fix for Class 5D vision finding "Floating chat
+ *     icon… overlap content area with no safe-area respect."
+ *   - Expanded rail stays available on mobile (rare-click surface) but is
+ *     full-width-capped to avoid breaking below 320px.
  *
  * No base-ui polymorphic render prop (gotcha #5); we use className +
  * Link/button directly. Positioned `fixed top-10 right-0 bottom-0 z-40`
@@ -32,7 +42,11 @@ export function ChatRail() {
   const pathname = usePathname() ?? "/";
 
   if (!rail.sessionAuthed) return null;
+  // Class 5D: hide rail on auth-shell routes where it would overlay the
+  // centered auth/forbidden card with no safe-area offset.
   if (pathname === "/chat") return null;
+  if (pathname === "/signin") return null;
+  if (pathname === "/403") return null;
 
   // C2-wave/Class 3: lightweight liveness marker — rail is healthy iff
   // authed + either has unread or an idle placeholder preview; empty
@@ -55,7 +69,7 @@ export function ChatRail() {
           }
         }}
         tabIndex={0}
-        className="fixed top-10 right-0 bottom-0 w-12 z-40 bg-[color:var(--surface,#121214)] border-l border-[color:var(--border,#1f1f22)] shadow-elevation-1 flex flex-col items-center py-3 gap-3 cursor-pointer hover:bg-[color:var(--surface-hover,#1a1a1d)] focus:outline-none focus-visible:outline-2 focus-visible:outline-[color:var(--accent,#00d4ff)]"
+        className="fixed top-10 right-0 bottom-0 w-12 z-40 bg-[color:var(--surface,#121214)] border-l border-[color:var(--border,#1f1f22)] shadow-elevation-1 hidden sm:flex flex-col items-center py-3 gap-3 cursor-pointer hover:bg-[color:var(--surface-hover,#1a1a1d)] focus:outline-none focus-visible:outline-2 focus-visible:outline-[color:var(--accent,#00d4ff)]"
       >
         <span className="sr-only" data-truth={`chat-rail.${railLiveness}`}>yes</span>
         <span
@@ -95,7 +109,7 @@ export function ChatRail() {
       aria-label={t.chatRailExpandedTitle}
       // Class 13D — expanded rail bumps to elevation-2 so the wider panel
       // reads as a raised layer versus the collapsed icon-bar (elevation-1).
-      className="fixed top-10 right-0 bottom-0 w-[300px] z-40 bg-[color:var(--surface,#121214)] border-l border-[color:var(--border,#1f1f22)] shadow-elevation-2 flex flex-col"
+      className="fixed top-10 right-0 bottom-0 w-full sm:w-[300px] max-w-[300px] z-40 bg-[color:var(--surface,#121214)] border-l border-[color:var(--border,#1f1f22)] shadow-elevation-2 flex flex-col"
     >
       <span className="sr-only" data-truth={`chat-rail.${railLiveness}`}>yes</span>
       <header className="flex items-center justify-between px-3 py-2 border-b border-[color:var(--border,#1f1f22)] shrink-0">

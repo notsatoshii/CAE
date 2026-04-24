@@ -84,6 +84,24 @@ describe("ChatRail", () => {
     expect(container.firstChild).toBeNull();
   });
 
+  it("returns null on /signin (Class 5D — auth-shell exclusion)", () => {
+    mockPathname.mockReturnValue("/signin");
+    const { container } = render(<ChatRail />);
+    expect(container.firstChild).toBeNull();
+  });
+
+  it("returns null on /403 (Class 5D — auth-shell exclusion)", () => {
+    mockPathname.mockReturnValue("/403");
+    const { container } = render(<ChatRail />);
+    expect(container.firstChild).toBeNull();
+  });
+
+  it("collapsed rail is hidden on mobile (Class 5D — hidden sm:flex)", () => {
+    render(<ChatRail />);
+    const rail = screen.getByTestId("chat-rail");
+    expect(rail.className).toMatch(/hidden sm:flex/);
+  });
+
   it("returns null when !sessionAuthed (gotcha #10)", () => {
     mockRail.sessionAuthed = false;
     const { container } = render(<ChatRail />);
