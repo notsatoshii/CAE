@@ -47,13 +47,13 @@ describe("TopNavOverflowMenu — Class 5B mobile overflow menu", () => {
     const trigger = screen.getByTestId("top-nav-overflow-trigger");
     await user.click(trigger);
 
-    // base-ui renders into a portal — but the dropdown-menu impl uses
-    // MenuPrimitive.Portal which still attaches to document.body; the
-    // items carry data-testids so we can find them globally.
-    expect(screen.getByTestId("top-nav-overflow-floor")).toBeTruthy();
-    expect(screen.getByTestId("top-nav-overflow-memory")).toBeTruthy();
-    expect(screen.getByTestId("top-nav-overflow-metrics")).toBeTruthy();
-    expect(screen.getByTestId("top-nav-overflow-chat")).toBeTruthy();
-    expect(screen.getByTestId("top-nav-overflow-shortcuts")).toBeTruthy();
+    // base-ui renders into a portal attached to document.body. Items
+    // mount async after the open animation; use findBy* (polling +
+    // built-in waitFor) rather than getBy* which throws synchronously.
+    expect(await screen.findByTestId("top-nav-overflow-floor")).toBeTruthy();
+    expect(await screen.findByTestId("top-nav-overflow-memory")).toBeTruthy();
+    expect(await screen.findByTestId("top-nav-overflow-metrics")).toBeTruthy();
+    expect(await screen.findByTestId("top-nav-overflow-chat")).toBeTruthy();
+    expect(await screen.findByTestId("top-nav-overflow-shortcuts")).toBeTruthy();
   });
 });
