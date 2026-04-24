@@ -32,6 +32,58 @@ export async function listPhases(projectRoot: string): Promise<Phase[]> {
   const entries = await readdir(phasesDir, { withFileTypes: true })
   const phaseDirs = entries.filter((e) => e.isDirectory() && /^\d{2}-.+/.test(e.name))
 
+  // Class 20B (data-feed recovery): the circuit-breakers.jsonl event schema
+  // carries `task_id` (e.g. "p15-pl01-t1"), never `phaseId`. The prior
+  // check — `rec.phaseId !== phaseTag` — compared `undefined !== "15-…"`
+  // which was always truthy, so every phase without a CAE-SUMMARY.md was
+  // silently marked "idle". buildPhases() in cae-home-state.ts filtered them
+  // all out, leaving ActivePhaseCards empty on /build. Fix: derive phase
+  // number from the `task_id` prefix (matches cae-home-state's own
+  // `eventPhasePrefix`) and also accept rows from activity.jsonl so the
+  // "active" signal survives gaps in cb events.
+  const cbPath = join(projectRoot, ".cae", "metrics", "circuit-breakers.jsonl")
+  const activityPath = join(projectRoot, ".cae", "metrics", "activity.jsonl")
+  const [cbLines, activityLines] = await Promise.all([
+    tailJsonl(cbPath, 200),
+    tailJsonl(activityPath, 500),
+  ])
+  const nowMs = Date.now()
+  const activeWindowMs = 24 * 60 * 60 * 1000 // 24h — intra-day work
+
+  function rowPhaseNumber(rec: Record<string, unknown>): number | null {
+    const tid = typeof rec.task_id === "string" ? rec.task_id : undefined
+    if (tid) {
+      const m = tid.match(/^p(\d+)-/)
+      if (m) return parseInt(m[1], 10)
+    }
+    const meta = rec.meta
+    if (meta && typeof meta === "object") {
+      const mp = (meta as Record<string, unknown>).phase
+      if (typeof mp === "string") {
+        const m = mp.match(/^p?(\d+)/)
+        if (m) return parseInt(m[1], 10)
+      }
+    }
+    return null
+  }
+
+  function rowTs(rec: Record<string, unknown>): number | null {
+    if (typeof rec.ts !== "string") return null
+    const n = Date.parse(rec.ts)
+    return Number.isNaN(n) ? null : n
+  }
+
+  const activePhaseNumbers = new Set<number>()
+  for (const l of [...cbLines, ...activityLines]) {
+    if (typeof l !== "object" || l === null) continue
+    const rec = l as Record<string, unknown>
+    const ts = rowTs(rec)
+    if (ts === null || nowMs - ts > activeWindowMs) continue
+    const n = rowPhaseNumber(rec)
+    if (n === null || Number.isNaN(n)) continue
+    activePhaseNumbers.add(n)
+  }
+
   const phases: Phase[] = []
   for (const entry of phaseDirs) {
     const match = entry.name.match(/^(\d+)-(.+)$/)
@@ -55,20 +107,8 @@ export async function listPhases(projectRoot: string): Promise<Phase[]> {
       } else {
         status = "done"
       }
-    } else {
-      const cbPath = join(projectRoot, ".cae", "metrics", "circuit-breakers.jsonl")
-      const cbLines = await tailJsonl(cbPath, 50)
-      const phaseTag = entry.name
-      const isActive = cbLines.some(
-        (l) => {
-          if (typeof l !== "object" || l === null) return false
-          const rec = l as Record<string, unknown>
-          if (rec.phaseId !== phaseTag) return false
-          const ev = rec.event
-          return ev === "forge_begin" || ev === "forge_start"
-        },
-      )
-      if (isActive) status = "active"
+    } else if (activePhaseNumbers.has(number)) {
+      status = "active"
     }
 
     phases.push({ number, name, planFiles, status })
