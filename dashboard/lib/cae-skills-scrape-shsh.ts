@@ -27,7 +27,7 @@ export async function fetchSkillsSh(
 
   let html: string
   try {
-    const res = await fetchImpl(url)
+    const res = await fetchImpl(url, { signal: AbortSignal.timeout(8_000) })
     if (!res.ok) {
       console.warn(`[cae-skills-scrape-shsh] skills.sh returned ${res.status}`)
       return []

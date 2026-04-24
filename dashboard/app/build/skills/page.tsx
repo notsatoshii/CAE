@@ -1,4 +1,4 @@
-import React from "react"
+import React, { Suspense } from "react"
 import { getCatalog } from "@/lib/cae-skills-catalog"
 import { auth } from "@/auth"
 import { SkillsClient } from "./skills-client"
@@ -9,34 +9,20 @@ import {
 } from "@/lib/skills/last-updated"
 import { enrichSkillsWithLastUpdated } from "@/lib/skills/enrich"
 import { RecentEditsTimeline } from "@/components/skills/recent-edits-timeline"
+import { Skeleton } from "@/components/ui/skeleton"
 
 /**
  * /build/skills — Skills Hub landing page.
  *
- * Server component: SSR-loads the initial catalog from 3 sources (skills.sh,
- * ClawHub, local) then hands off to SkillsClient for tab switching, detail
- * drawer, and install UX.
+ * Shell renders immediately; slow catalog/git fetches are deferred into a
+ * <Suspense> boundary so DOMContentLoaded fires on the shell HTML rather than
+ * waiting for network calls to skills.sh and clawhub.ai.
  *
- * Phase 14 Plan 04: passes currentRole to SkillsClient so InstallButton
- * can be disabled for viewer-role users.
- *
- * Skills/class19c: enriches catalog with per-skill last-updated sourced from
- * git log, and renders a "Recent edits" timeline panel of the last 20 commits
- * touching any skill directory. Both memoized 60s server-side.
- *
- * REQ-P14-01, REQ-P14-02, REQ-P14-03.
+ * Each external fetch has an 8 s AbortSignal.timeout (cae-skills-scrape-*.ts)
+ * so the Suspense boundary resolves in ≤8 s even when external services are
+ * unreachable.
  */
-export default async function SkillsPage() {
-  const [catalog, session, lastUpdatedMap, recentCommits] = await Promise.all([
-    getCatalog().catch(() => []),
-    auth(),
-    getSkillsLastUpdatedMap().catch(() => ({})),
-    getRecentSkillsCommits(20).catch(() => []),
-  ])
-  const currentRole: Role = (session?.user?.role as Role | undefined) ?? "viewer"
-
-  const enriched = enrichSkillsWithLastUpdated(catalog, lastUpdatedMap)
-
+export default function SkillsPage() {
   return (
     <div className="flex flex-col gap-6 p-6">
       <div>
@@ -46,9 +32,48 @@ export default async function SkillsPage() {
         </p>
       </div>
 
-      <SkillsClient catalog={enriched} currentRole={currentRole} />
+      <Suspense fallback={<SkillsLoadingSkeleton />}>
+        <SkillsContent />
+      </Suspense>
+    </div>
+  )
+}
 
+async function SkillsContent() {
+  const [catalog, session, lastUpdatedMap, recentCommits] = await Promise.all([
+    getCatalog().catch(() => []),
+    auth(),
+    getSkillsLastUpdatedMap().catch(() => ({})),
+    getRecentSkillsCommits(20).catch(() => []),
+  ])
+  const currentRole: Role = (session?.user?.role as Role | undefined) ?? "viewer"
+  const enriched = enrichSkillsWithLastUpdated(catalog, lastUpdatedMap)
+
+  return (
+    <>
+      <SkillsClient catalog={enriched} currentRole={currentRole} />
       <RecentEditsTimeline commits={recentCommits} />
+    </>
+  )
+}
+
+function SkillsLoadingSkeleton() {
+  return (
+    <div
+      aria-busy="true"
+      aria-label="Loading skills catalog"
+      data-testid="skills-loading-skeleton"
+    >
+      <span className="sr-only" data-truth="build-skills.loading">yes</span>
+      <div className="flex gap-2 mb-4">
+        <Skeleton className="h-8 w-24 rounded-md" />
+        <Skeleton className="h-8 w-24 rounded-md" />
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <Skeleton key={i} className="h-28 w-full rounded-lg" />
+        ))}
+      </div>
     </div>
   )
 }

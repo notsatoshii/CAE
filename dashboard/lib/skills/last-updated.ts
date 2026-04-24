@@ -60,6 +60,7 @@ export async function getRepoRoot(): Promise<string> {
   try {
     const { stdout } = await execFileP("git", ["rev-parse", "--show-toplevel"], {
       cwd: process.cwd(),
+      timeout: 5_000,
     });
     _repoRootCache = stdout.trim();
   } catch {
@@ -89,7 +90,7 @@ export interface LastUpdatedOpts {
 }
 
 async function defaultExecGit(args: string[], cwd: string): Promise<string> {
-  const { stdout } = await execFileP("git", args, { cwd });
+  const { stdout } = await execFileP("git", args, { cwd, timeout: 5_000 });
   return stdout;
 }
 

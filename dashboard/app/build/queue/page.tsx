@@ -16,6 +16,9 @@
  * for abort/retry/approve/deny and hides the 4 controls without a backend).
  * StatePollProvider removed from here — it was only needed by the old
  * phase-oriented sheet.
+ *
+ * P17-W1: getQueueState() moved into a Suspense boundary so the page shell
+ * (heading + NewJobModal) renders immediately regardless of queue FS latency.
  */
 
 export const dynamic = "force-dynamic"
@@ -26,28 +29,50 @@ import { labelFor } from "@/lib/copy/labels"
 import { QueueKanbanClient } from "./queue-kanban-client"
 import { NewJobModal } from "./new-job-modal"
 import { QueueItemSheet } from "./queue-item-sheet"
+import { Skeleton } from "@/components/ui/skeleton"
 
 export const metadata = { title: "Queue" }
 
-export default async function QueuePage() {
-  const initialState = await getQueueState()
-  const t = labelFor(false)
+const t = labelFor(false)
+
+export default function QueuePage() {
   return (
     <main data-testid="queue-page" className="p-8 max-w-7xl">
       <div className="flex items-center justify-between mb-8">
-        {/* Class 5F — page-title tier. Shared with all top-level /build/* surfaces. */}
         <h1 className="type-hero" data-testid="queue-page-heading">{t.queueHeading}</h1>
         <NewJobModal />
       </div>
-      <QueueKanbanClient initialState={initialState} />
-      {/* class19b — queue-item-shaped sheet. Wires abort/retry/approve/deny
-          to /api/queue/item/[taskId]/action and reads details from
-          /api/queue/item/[taskId]. The 4 controls without backend support
-          (pause / abandon / reassign / edit-plan) are HIDDEN, tracked in
-          docs/queue-backend-gaps.md. */}
+      <Suspense fallback={<QueueLoadingSkeleton />}>
+        <QueueContent />
+      </Suspense>
       <Suspense fallback={null}>
         <QueueItemSheet />
       </Suspense>
     </main>
+  )
+}
+
+async function QueueContent() {
+  const initialState = await getQueueState()
+  return <QueueKanbanClient initialState={initialState} />
+}
+
+function QueueLoadingSkeleton() {
+  return (
+    <div
+      aria-busy="true"
+      aria-label="Loading queue"
+      data-testid="queue-loading-skeleton"
+    >
+      <span className="sr-only" data-truth="build-queue.loading">yes</span>
+      <div className="grid grid-cols-5 gap-4">
+        {Array.from({ length: 5 }).map((_, i) => (
+          <div key={i} className="flex flex-col gap-2">
+            <Skeleton className="h-6 w-full rounded" />
+            <Skeleton className="h-20 w-full rounded-lg" />
+          </div>
+        ))}
+      </div>
+    </div>
   )
 }

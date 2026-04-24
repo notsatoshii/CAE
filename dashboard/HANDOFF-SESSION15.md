@@ -1,8 +1,8 @@
 # HANDOFF — Session 15 → 16
 
-**Date**: 2026-04-24 (KST).
-**HEAD at write**: `e5405eb` on `main` (local; not pushed yet).
-**Session disposition**: CAE machinery retooled end-to-end; first real auto-audit → forge → commit loop is running. One systemic hydration class shipped. CAE wave 1 in flight at handoff.
+**Date**: 2026-04-25 01:32 KST (rev 2).
+**HEAD at write**: `eb70fbf` on `main` (local; not pushed yet).
+**Session disposition**: CAE machinery retooled end-to-end, 3 FE fixes shipped autonomously, CAE still running in background working through remaining queue. Session 16 can cold-start; CAE will not need intervention unless something breaks.
 
 ---
 
@@ -30,13 +30,25 @@ Also on-disk but *not* committed: `dashboard/AUDIT-GATE.md` (was part of `97bad8
 
 ## What CAE is doing RIGHT NOW (background)
 
-CAE run 10 is live, `nohup cae execute-phase 17 > /tmp/cae-phase17-run10.log 2>&1 & disown`.
+CAE run 11 is live: `pid 2120682`, `/tmp/cae-phase17-run11.log`. Started 00:38 KST. Serialized, max_concurrent_forge=1.
 
-**Completed cleanly (handoff observation window):**
-- task 1 `p17-plW1-hydration-mismatch-t1-eb2791`: exit=0, 333s → no-op short-circuit (files already fixed on main from `e5405eb`)
-- task 2 `p17-plW1-menu-group-context-t1-e59f72`: exit=0, 831s (13.8m), 111 turns, $2.32. Identified `components/shell/user-menu.tsx` as sole offender; wrapped `<DropdownMenuLabel>` in `<DropdownMenuGroup>`; 3 new regression tests; 1701 suite pass. **Auto-commit worked** (`0aeeabd` on forge branch). Gemini Sentinel reviewing at handoff write time.
+**Merged to main so far (3 fixes):**
+- `e5405eb` — hydration mismatches on `/`, `/build/security/audit`, `/build/workflows` (manual merge from run 9's work)
+- `eb70fbf` — hydration + metrics resilience bundle (auto-merged via Sentinel approval on hydration-mismatch forge branch; claude pulled in metrics work too)
+- `144f4b0` + `6d59f96` — metrics resilience + backend-resilience tests (on the merged forge branch)
 
-**Queued (not yet run):** 3 remaining W1 plans (metrics-backend, page-timeouts, router-action-init), 4 W2 plans, 1 W3 plan.
+**Live task state at handoff write:**
+
+```
+p17-plW1-hydration-mismatch-t1-c199da    DONE exit=0 dur=1415s  merged → main
+p17-plW1-menu-group-context-t1-0078f0    DONE exit=0 dur=836s   no-op (already merged f222daa)
+p17-plW1-metrics-backend-t1-91d39b       DONE exit=0 dur=455s   no-op (merged via eb70fbf)
+p17-plW1-page-timeouts-t1-62ceaa         RUNNING  ← current
+```
+
+**Queued (W1 remaining + W2 + W3):** router-action-init, rollup-strip-b1, pixel-agents-b2, build-security-page, audit-coverage, liveness-markers. ~6 tasks × ~25-40min each = 2-4h autonomous runtime.
+
+**Sentinel parser was broken on run 10** — gemini's JSON failed parse (raw_len=0), claude fallback returned correct verdict but CAE's `_extract_json` returned the claude --print envelope instead of the nested verdict JSON. Every task scored `approve=false` regardless of actual verdict. Fixed in `f222daa` (`bin/sentinel.py` now unwraps via `_unwrap` on all extraction paths). Run 11 proves the fix: `sentinel.jsonl` now logs `claude_fallback_verdict_ok approve=true`.
 
 ---
 
@@ -58,15 +70,17 @@ CAE run 10 is live, `nohup cae execute-phase 17 > /tmp/cae-phase17-run10.log 2>&
 
 ---
 
-## The 5 things that failed, and the fix you inherit
+## The 7 things that failed, and the fix you inherit
 
-These are all patched in `main`. You shouldn't hit them. But when someone asks "why is CAE so tangled", the story:
+All patched in `main`. You shouldn't hit them. History of why CAE is so tangled:
 
 1. **Parallel forges → working tree race.** Every task calls `git checkout -b forge/<id>` on the shared tree. Fixed by serializing to 1 (`0b793ba`). Real fix owed: per-task `git worktree add` (filed as phase 18).
-2. **Headless claude permission prompts.** Sonnet-4.6 forge default permission mode expects interactive approval; tmux+sudo has no answerer. Edit/Write/Bash all silently denied. Fixed by `--permission-mode bypassPermissions` (`fd5472c`). Memory note: the old `bug_herald_root_permissions.md` warned about `--dangerously-skip-permissions` under root — we sidestep that because adapter already `sudo -u cae`s, and we use `bypassPermissions` (a different flag).
-3. **Creds rotation.** 401s hit forge because creds-resync cron only runs every 3h and single-use refresh tokens invalidated between cron runs. Keepalive now propagates creds to cae/timmy mirrors inline after every root refresh.
-4. **File ownership.** Dashboard source was root-owned 644; cae couldn't touch it. `chown -R` fixed.
+2. **Headless claude permission prompts.** Sonnet-4.6 forge default permission mode expects interactive approval; tmux+sudo has no answerer. Edit/Write/Bash all silently denied. Fixed by `--permission-mode bypassPermissions` (`fd5472c`). The old `bug_herald_root_permissions.md` warned about `--dangerously-skip-permissions` under root — we sidestep that because adapter already `sudo -u cae`s, and we use `bypassPermissions` (a different flag).
+3. **Creds rotation.** 401s hit forge because creds-resync cron only runs every 3h and single-use refresh tokens invalidated between cron runs. Keepalive now propagates creds to cae/timmy mirrors inline after every root refresh (`/usr/local/bin/claude-creds-keepalive.sh` + `/etc/cron.d/claude-creds-keepalive`).
+4. **File ownership.** Dashboard source was root-owned 644; cae couldn't touch it. `chown -R cae:cae /home/cae/ctrl-alt-elite/dashboard /home/cae/ctrl-alt-elite/.planning` fixed.
 5. **Forge refuses `git commit`.** Sonnet-4.6 at `--effort max` treats commits as an orchestrator concern and leaves changes staged. Sentinel's empty-diff reject then infinite-loops retries. CAE now auto-commits after forge exit 0 + skips merge on empty diff (`aa57b54`).
+6. **Cae user had no git identity.** Set `CAE Forge <forge@cae.local>` in the repo's local git config so forge commits + auto-commits have a valid author.
+7. **Sentinel parser couldn't read claude fallback verdicts.** `_extract_json` returned claude's outer `{type:"result",result:"..."}` envelope instead of the nested verdict JSON (which lives inside `result` often wrapped in ```json fences). Every sentinel call returned `approve=false` regardless of the actual verdict. Fixed in `f222daa` with a `_unwrap` helper on all three extraction paths (happy path, brace scan, fenced JSON).
 
 ---
 
@@ -124,6 +138,9 @@ If not met, examine the C6 DELTA + FINDINGS and spawn a phase 18 audit-fix cycle
 ## Resume at
 
 - **This file**: `dashboard/HANDOFF-SESSION15.md`
-- **HEAD**: `e5405eb` on `main` (local; `git push origin main` after you verify).
-- **CAE log**: `/tmp/cae-phase17-run10.log`
-- **First action**: check CAE status (don't restart if alive). If dead, verify no zombie claude/gemini/tmux. If phase 17 completed, re-audit + decide merge.
+- **HEAD**: `eb70fbf` on `main` (local; `git push origin main` after you verify — 13+ commits ahead).
+- **CAE log**: `/tmp/cae-phase17-run11.log`
+- **CAE pid to check**: `pgrep -f 'python3.*cae execute-phase 17'` (was 2120682 at write; may be new if restarted).
+- **First action**: check CAE status (`pgrep -f 'python3.*cae execute-phase 17'`). If alive, **leave it alone** — it's autonomous. Tail `/tmp/cae-phase17-run11.log` + `dashboard/.cae/metrics/sentinel.jsonl` for progress. If dead with some tasks remaining, re-launch: `cd /home/cae/ctrl-alt-elite/dashboard && nohup cae execute-phase 17 > /tmp/cae-phase17-runN.log 2>&1 & disown`.
+- **When queue empties**: re-audit with `npx tsx audit/score-run.ts C6-session15 --fixture healthy --prior C5-session15`. Verify merge gate per `dashboard/AUDIT-GATE.md`. Close phase 17.
+- **Then**: push to origin, start phase 18 (per-task git worktree isolation so parallel forges work).
