@@ -4,12 +4,18 @@
  * Replaces the Phase 2 inbox/outbox tables with a 5-column KANBAN powered by
  * /api/queue (from 06-02). The Phase 2 `createDelegation` server action in
  * `./actions.ts` is UNTOUCHED; its form is reused verbatim inside a modal
- * opened by the "New job" button. Card clicks open the Phase 4
- * TaskDetailSheet via URL state (?sheet=open&task=...).
+ * opened by the "New job" button. Card clicks open the class19b
+ * QueueItemSheet via URL state (?sheet=open&task=...).
  *
  * Phase 2 legacy sub-routes at `/build/queue/inbox/[taskId]` and
  * `/build/queue/outbox/[taskId]` are left alone — this plan only rewrites
  * the root page.
+ *
+ * class19b — swapped TaskDetailSheet (phase-shaped, 8 toast.info stubs) for
+ * the new QueueItemSheet (queue-item-shaped, wires real backend endpoints
+ * for abort/retry/approve/deny and hides the 4 controls without a backend).
+ * StatePollProvider removed from here — it was only needed by the old
+ * phase-oriented sheet.
  */
 
 export const dynamic = "force-dynamic"
@@ -19,8 +25,7 @@ import { getQueueState } from "@/lib/cae-queue-state"
 import { labelFor } from "@/lib/copy/labels"
 import { QueueKanbanClient } from "./queue-kanban-client"
 import { NewJobModal } from "./new-job-modal"
-import { TaskDetailSheet } from "@/components/build-home/task-detail-sheet"
-import { StatePollProvider } from "@/lib/hooks/use-state-poll"
+import { QueueItemSheet } from "./queue-item-sheet"
 
 export const metadata = { title: "Queue" }
 
@@ -34,17 +39,13 @@ export default async function QueuePage() {
         <NewJobModal />
       </div>
       <QueueKanbanClient initialState={initialState} />
-      {/*
-        TaskDetailSheet reads phaseSummary via useStatePoll, which requires
-        StatePollProvider in the tree. Queue cards don't supply a phase
-        number, so the sheet's `Number.isNaN(phaseNumber)` guard kicks in and
-        renders "Phase ?" gracefully — acceptable for Phase 6. Full queue-
-        task detail rendering is a later polish.
-      */}
+      {/* class19b — queue-item-shaped sheet. Wires abort/retry/approve/deny
+          to /api/queue/item/[taskId]/action and reads details from
+          /api/queue/item/[taskId]. The 4 controls without backend support
+          (pause / abandon / reassign / edit-plan) are HIDDEN, tracked in
+          docs/queue-backend-gaps.md. */}
       <Suspense fallback={null}>
-        <StatePollProvider>
-          <TaskDetailSheet />
-        </StatePollProvider>
+        <QueueItemSheet />
       </Suspense>
     </main>
   )
