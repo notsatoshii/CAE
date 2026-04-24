@@ -11,7 +11,11 @@ per_task:
   max_retries: 3                 # Forge re-spawns on same task before escalation
 
 parallelism:
-  max_concurrent_forge: 4        # Simultaneous Forge tmux sessions
+  max_concurrent_forge: 1        # Temporarily serialized (2026-04-24 session 15):
+                                 # CAE currently runs all forge claude procs in the
+                                 # same working tree, which races when >1 are live.
+                                 # Fix owed: git-worktree-per-task isolation, then
+                                 # bump back to 4. Tracked in phase 18 plan.
 
 escalation:
   forge_failures_spawn_phantom: 3   # Failed Forge attempts before Phantom wakes up
