@@ -144,7 +144,11 @@ export function tileToCharacterPixel(
   cy: number,
 ): { x: number; y: number } {
   const base = mapToScreen(tx, ty, cx, cy);
-  // Lift the sprite so its bottom-center sits on the diamond top.
-  // Character frame is 16×32 at scale=2 → 32×64. Feet at dy+64.
-  return { x: base.x - 16, y: base.y - 56 };
+  // Lift the sprite so its bottom-center sits ~8px below the diamond top.
+  // Character frame is 16×32 at scale=CHAR_RENDER_SCALE (renderer.ts).
+  // At scale=3 that's 48×96 → half-width 24, feet at dy+96 → dy = base.y+8-96.
+  const SCALE = 3;
+  const frameW = 16 * SCALE;
+  const frameH = 32 * SCALE;
+  return { x: base.x - frameW / 2, y: base.y + 8 - frameH };
 }

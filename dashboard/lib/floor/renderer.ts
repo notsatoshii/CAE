@@ -33,6 +33,11 @@ import {
   BUBBLE_PERMISSION,
   type Direction,
 } from "./pixel-agent-sprite";
+
+// Character render scale — upstream native is 16×32. 2× read too small on
+// 4K monitors (Eric session-14 "pixel agents look like trash"); 3× gives
+// 48×96 draw size which reads clearly while still fitting the 64×32 tile.
+const CHAR_RENDER_SCALE = 3;
 import {
   createSpriteRegistry,
   ensureSprite,
@@ -525,7 +530,7 @@ function drawCharacterForAgent(
     step,
     dx: x,
     dy: y - stackOffset,
-    scale: 2,
+    scale: CHAR_RENDER_SCALE,
     hueShift: 0,
   });
 
@@ -537,11 +542,10 @@ function drawCharacterForAgent(
   // Speech bubble overlay — only for seated agents with either flag set.
   if (sprite && (sprite.showWaitingBubble || sprite.showPermissionBubble)) {
     const bubble = sprite.showPermissionBubble ? BUBBLE_PERMISSION : BUBBLE_WAITING;
-    // Bubble drawn above head — 16px over the sprite, 2× scale so it
-    // matches character zoom.
+    // Bubble drawn above head; scale matches character zoom.
     const bubbleX = x + 2;
-    const bubbleY = y - bubble.height * 2 - 2 - stackOffset;
-    drawBubble(ctx, bubble, bubbleX, bubbleY, 2);
+    const bubbleY = y - bubble.height * CHAR_RENDER_SCALE - 2 - stackOffset;
+    drawBubble(ctx, bubble, bubbleX, bubbleY, CHAR_RENDER_SCALE);
   }
 }
 
