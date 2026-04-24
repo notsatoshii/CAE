@@ -67,6 +67,23 @@ export interface FloorEntity {
   speed: number;
 }
 
+/**
+ * Live pixel agent — one per in-flight forge task. Spawned on forge_begin,
+ * transitions to "traveling" on forge_end, removed after reaching target.
+ * Multiple agents visible simultaneously when multiple forges run.
+ */
+export interface PixelAgent {
+  id: string;
+  taskId: string;
+  tx: number;
+  ty: number;
+  targetTx: number;
+  targetTy: number;
+  progress: number;
+  hue: number;
+  phase: "working" | "traveling";
+}
+
 /** Full mutable scene — lives in useRef, never in React state (D-05). */
 export interface Scene {
   stations: Record<
@@ -75,6 +92,8 @@ export interface Scene {
   >;
   effects: Effect[];
   entities: FloorEntity[];
+  /** Pixel agents — forge tasks rendered as colored squares traveling between stations. */
+  agents: PixelAgent[];
   queueDepth: number;
   paused: boolean;
   /** ms epoch; used for loadingBay pulse-on-recent-change (D-12). */
@@ -101,6 +120,7 @@ export function createScene(): Scene {
     stations,
     effects: [],
     entities: [],
+    agents: [],
     queueDepth: 0,
     paused: false,
     lastDelegationTs: 0,

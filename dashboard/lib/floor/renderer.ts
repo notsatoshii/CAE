@@ -328,4 +328,37 @@ export function render(
       ctx.fillRect(x - 5, y - 5, 10, 10);
     }
   }
+
+  // ------------------------------------------------------------------
+  // 5. Pixel agents — colored squares, one per in-flight forge task
+  //    Working: subtle bob offset at source station.
+  //    Traveling: linear interpolation from source to target.
+  // ------------------------------------------------------------------
+  const agents = scene.agents ?? [];
+  if (agents.length > 0) {
+    const now = performance.now();
+    for (let i = 0; i < agents.length; i++) {
+      const ag = agents[i];
+      let tx: number;
+      let ty: number;
+      if (ag.phase === "traveling") {
+        const t = Math.min(1, Math.max(0, ag.progress));
+        tx = ag.tx + (ag.targetTx - ag.tx) * t;
+        ty = ag.ty + (ag.targetTy - ag.ty) * t;
+      } else {
+        const bob = Math.sin((now + i * 170) / 260) * 0.12;
+        const bobX = Math.cos((now + i * 170) / 310) * 0.09;
+        tx = ag.tx + bobX;
+        ty = ag.ty + bob;
+      }
+      const { x, y } = mapToScreen(tx, ty, cx, cy);
+      const fill = `hsl(${ag.hue} 80% 58%)`;
+      const glow = `hsla(${ag.hue} 80% 58% / 0.35)`;
+      const stackOffset = (i % 4) * 3;
+      ctx.fillStyle = glow;
+      ctx.fillRect(x - 6, y - 6 - stackOffset, 12, 12);
+      ctx.fillStyle = fill;
+      ctx.fillRect(x - 3, y - 3 - stackOffset, 6, 6);
+    }
+  }
 }

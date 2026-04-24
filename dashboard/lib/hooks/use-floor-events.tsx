@@ -120,17 +120,52 @@ export function useFloorEvents(opts: UseFloorEventsOpts): UseFloorEventsResult {
   // Drain queue into scene (apply MappedEffects, enforce caps)
   const drain = useCallback(() => {
     const scene = sceneRefRef.current.current;
+    if (!scene.agents) scene.agents = [];
     while (queueRef.current.length > 0 && !pausedRef.current) {
       const e = queueRef.current.shift()!;
       const mapped = mapEvent(e, { reducedMotion: reducedMotionRef.current });
       for (const m of mapped) {
         if (m.kind === "status") {
           scene.stations[m.station].status = m.status;
-        } else {
+        } else if (m.kind === "effect") {
           scene.effects.push(m.effect);
-          // Drop oldest when effects exceed cap (D-14)
           while (scene.effects.length > EFFECTS_CAP) {
             scene.effects.shift();
+          }
+        } else if (m.kind === "agent_spawn") {
+          const st = scene.stations[m.atStation];
+          let hue = 0;
+          for (let k = 0; k < m.taskId.length; k++) {
+            hue = (hue * 31 + m.taskId.charCodeAt(k)) | 0;
+          }
+          hue = ((hue % 360) + 360) % 360;
+          scene.agents.push({
+            id: m.taskId,
+            taskId: m.taskId,
+            tx: st.tx,
+            ty: st.ty,
+            targetTx: st.tx,
+            targetTy: st.ty,
+            progress: 0,
+            hue,
+            phase: "working",
+          });
+        } else if (m.kind === "agent_travel") {
+          const target = scene.stations[m.toStation];
+          for (const ag of scene.agents) {
+            if (ag.taskId !== m.taskId) continue;
+            ag.targetTx = target.tx;
+            ag.targetTy = target.ty;
+            ag.progress = 0;
+            ag.phase = "traveling";
+            break;
+          }
+        } else if (m.kind === "agent_remove") {
+          let idx = scene.agents.length;
+          while (idx-- > 0) {
+            if (scene.agents[idx].taskId === m.taskId) {
+              scene.agents.splice(idx, 1);
+            }
           }
         }
       }

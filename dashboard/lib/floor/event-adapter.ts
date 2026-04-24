@@ -112,6 +112,9 @@ export function mapEvent(e: CbEvent, opts: FloorMapEventOpts): MappedEffect[] {
         },
       });
       full.push({ kind: "status", station: "forge", status: "active" });
+      if (typeof e.task_id === "string" && e.task_id.length > 0) {
+        full.push({ kind: "agent_spawn", taskId: e.task_id, atStation: "forge" });
+      }
       break;
 
     case "forge_end":
@@ -126,6 +129,9 @@ export function mapEvent(e: CbEvent, opts: FloorMapEventOpts): MappedEffect[] {
           },
         });
         full.push({ kind: "status", station: "forge", status: "idle" });
+        if (typeof e.task_id === "string" && e.task_id.length > 0) {
+          full.push({ kind: "agent_travel", taskId: e.task_id, toStation: "hub" });
+        }
       } else {
         full.push({
           kind: "effect",
@@ -137,6 +143,9 @@ export function mapEvent(e: CbEvent, opts: FloorMapEventOpts): MappedEffect[] {
           },
         });
         full.push({ kind: "status", station: "forge", status: "warning" });
+        if (typeof e.task_id === "string" && e.task_id.length > 0) {
+          full.push({ kind: "agent_travel", taskId: e.task_id, toStation: "shadow" });
+        }
       }
       break;
 
