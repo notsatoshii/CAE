@@ -157,12 +157,17 @@ export function QueueKanbanClient({ initialState }: Props) {
               key={col.key}
               data-testid={"queue-column-" + col.key}
               data-liveness={colLiveness}
+              // Inset shadow reinforces "recessed trough" reading so
+              // the column bg reads below the page surface and cards
+              // visibly rise out of it. Kept inline because the token
+              // set ships drop shadows only (--elevation-*), no inset.
+              style={{ boxShadow: "inset 0 1px 2px rgba(0,0,0,0.35)" }}
               className="flex min-w-64 flex-col gap-3 rounded-lg border border-[color:var(--border-subtle,#1f1f22)] bg-[color:var(--bg,#0a0a0b)] p-3 min-h-[200px]"
             >
               <span className="sr-only" data-truth={"build-queue-" + col.key + "." + colLiveness}>yes</span>
               {/* Header band — distinct surface tier so columns don't
                  read as a single flat stripe. --surface-hover = elev-2. */}
-              <header className="flex items-center justify-between -mx-1 -mt-1 rounded-md bg-[color:var(--surface-hover,#1a1a1d)] px-2 py-1.5 border-b border-[color:var(--border-subtle,#1f1f22)]">
+              <header className="flex items-center justify-between -mx-1 -mt-1 rounded-md bg-[color:var(--surface-hover,#1a1a1d)] px-2 py-1.5 border-b border-[color:var(--border-subtle,#1f1f22)] shadow-elevation-1">
                 <h3 className="text-[13px] font-semibold tracking-wide uppercase text-[color:var(--text,#e5e5e5)]">
                   {colLabel}
                 </h3>
