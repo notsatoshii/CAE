@@ -44,29 +44,40 @@ async function handler(req: Request) {
 
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
-      const close = await tailJsonl(logFile, {
-        filter: filterLevel("warn"),
-        historyLimit: 50,
-        signal: abort.signal,
-        onLine: (line) => {
-          try {
-            controller.enqueue(enc.encode(`data: ${JSON.stringify(line)}\n\n`));
-          } catch {
-            // controller already closed (e.g., client disconnected mid-frame)
-            abort.abort();
-          }
-        },
-        onClose: () => {
-          try {
-            controller.close();
-          } catch {
-            // Already closed — safe to ignore
-          }
-        },
-      });
+      try {
+        const close = await tailJsonl(logFile, {
+          filter: filterLevel("warn"),
+          historyLimit: 50,
+          signal: abort.signal,
+          onLine: (line) => {
+            try {
+              controller.enqueue(enc.encode(`data: ${JSON.stringify(line)}\n\n`));
+            } catch {
+              // controller already closed (e.g., client disconnected mid-frame)
+              abort.abort();
+            }
+          },
+          onClose: () => {
+            try {
+              controller.close();
+            } catch {
+              // Already closed — safe to ignore
+            }
+          },
+        });
 
-      // Ensure watcher is torn down if stream is cancelled via back-pressure
-      abort.signal.addEventListener("abort", close, { once: true });
+        // Ensure watcher is torn down if stream is cancelled via back-pressure
+        abort.signal.addEventListener("abort", close, { once: true });
+      } catch (err) {
+        // Unexpected tailJsonl failure — terminate stream cleanly so the client
+        // gets a proper response end rather than ERR_INCOMPLETE_CHUNKED_ENCODING.
+        abort.abort();
+        try {
+          controller.error(err);
+        } catch {
+          // Stream already terminated
+        }
+      }
     },
     cancel() {
       abort.abort();

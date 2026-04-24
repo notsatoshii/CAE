@@ -166,3 +166,36 @@ describe("IncidentStream", () => {
     expect(closeSpy).toHaveBeenCalledOnce();
   });
 });
+
+// ---------------------------------------------------------------------------
+// Reconnect exhaustion
+// ---------------------------------------------------------------------------
+
+describe("IncidentStream — reconnect exhausted", () => {
+  // Outer beforeEach already stubs EventSource + resets globalEventSource.
+  // This block only adds fake timers on top of that.
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.runAllTimers(); // drain any pending reconnect timers
+    vi.useRealTimers();
+  });
+
+  it("renders 'connection lost' state after 5 failed reconnect attempts", async () => {
+    render(<IncidentStream />);
+
+    // MAX_RETRIES = 5: need 6 total errors (5 retried, 6th triggers "lost").
+    // Between each error (except the last), advance timers to fire the reconnect.
+    for (let i = 0; i <= 5; i++) {
+      await act(async () => {
+        globalEventSource?.onerror?.({});
+        if (i < 5) vi.runAllTimers();
+      });
+    }
+
+    expect(screen.getByTestId("incident-stream-lost")).toBeInTheDocument();
+    expect(screen.queryByTestId("incident-stream-empty")).not.toBeInTheDocument();
+  });
+});

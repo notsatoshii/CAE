@@ -54,8 +54,10 @@ export function MetricsPollProvider({
       ) {
         return;
       }
+      const ac = new AbortController();
+      const timeoutId = window.setTimeout(() => ac.abort(), 5_000);
       try {
-        const res = await fetch("/api/metrics");
+        const res = await fetch("/api/metrics", { signal: ac.signal });
         if (!mounted.current) return;
         if (!res.ok) {
           setError(new Error("/api/metrics returned " + res.status));
@@ -80,6 +82,7 @@ export function MetricsPollProvider({
         if (!mounted.current) return;
         setError(err instanceof Error ? err : new Error(String(err)));
       } finally {
+        window.clearTimeout(timeoutId);
         // Clear loading after first attempt regardless of success/error.
         if (mounted.current) setLoading(false);
       }
