@@ -115,7 +115,7 @@ export function ChangesClient() {
         <span className="sr-only" data-truth="build-changes.loading">no</span>
         <span className="sr-only" data-truth="build-changes.project-count">0</span>
         <span className="sr-only" data-truth="build-changes.event-count">0</span>
-        <h1 className="mb-4 flex items-center gap-2 text-2xl font-medium text-[color:var(--text,#e5e5e5)]">
+        <h1 className="type-hero mb-4 flex items-center gap-2">
           {L.changesPageHeading}
           <ExplainTooltip text={L.changesExplainTimeline} />
         </h1>
@@ -159,7 +159,7 @@ export function ChangesClient() {
       <span className="sr-only" data-truth="build-changes.events-today">
         {totalToday}
       </span>
-      <h1 className="mb-1 flex items-center gap-2 text-2xl font-medium text-[color:var(--text,#e5e5e5)]">
+      <h1 className="type-hero mb-1 flex items-center gap-2">
         {L.changesPageHeading}
         <ExplainTooltip text={L.changesExplainTimeline} />
       </h1>
@@ -169,7 +169,7 @@ export function ChangesClient() {
        * contradicting the visibly-populated list below). Show 30-day total
        * instead so the copy is always consistent with the accordion.
        */}
-      <p className="mb-6 text-sm text-[color:var(--text-muted,#8a8a8c)]">
+      <p className="type-meta mb-6">
         {totalToday > 0
           ? L.changesPageLede(totalToday)
           : totalEvents +

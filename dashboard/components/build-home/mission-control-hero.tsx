@@ -581,7 +581,7 @@ export function MissionControlHero({
       <header className="mb-3 flex items-center justify-between">
         <h2
           id="mission-control-heading"
-          className="text-[12px] font-semibold uppercase tracking-wide text-[color:var(--text-muted)]"
+          className="type-section"
         >
           Mission Control
         </h2>

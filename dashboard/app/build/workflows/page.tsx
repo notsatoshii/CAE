@@ -41,7 +41,8 @@ export default async function WorkflowsPage() {
   return (
     <main data-testid="workflows-page" className="p-8 max-w-4xl">
       <div className="flex items-center justify-between mb-8">
-        <h1 className="text-[20px] font-semibold">{t.workflowsPageHeading}</h1>
+        {/* Class 5F — page-title tier. */}
+        <h1 className="type-hero" data-testid="workflows-page-heading">{t.workflowsPageHeading}</h1>
         <Link
           href="/build/workflows/new"
           data-testid="workflows-create-button"

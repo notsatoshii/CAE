@@ -23,7 +23,7 @@ export default function NewWorkflowPage() {
       <span className="sr-only" data-truth="build-workflows-new.healthy">yes</span>
       <span className="sr-only" data-truth="build-workflows-new.loading">no</span>
       <span className="sr-only" data-truth="build-workflows-new.empty">no</span>
-      <h1 className="text-2xl font-medium mb-6">
+      <h1 className="type-hero mb-6">
         {t.workflowsNewPageHeading}
       </h1>
       <WorkflowForm mode="create" />

@@ -295,6 +295,65 @@ body {
 }
 
 /* ---------------------------------------------------------------------------
+ * Class 5F — Typography hierarchy (fix wave 2026-04-24).
+ *
+ * C2 vision scorer flagged ~40 cells as "flat — no clear hierarchy, headers
+ * don't dominate, body blurs with labels". Class 13 (elevation) and 5G
+ * (badge desaturation) shipped; typography is the last piece of the craft-
+ * pillar gap.
+ *
+ * Four tiers, used consistently across /build, /build/queue, /build/workflows,
+ * /build/skills, /build/changes:
+ *
+ *   .type-hero      — page title / primary dominant number.
+ *                     text-2xl sm:text-3xl, semibold, leading-tight,
+ *                     tracking-tight, --text.
+ *   .type-section   — card title / panel header / column label.
+ *                     text-xs, semibold (600), uppercase, wide tracking,
+ *                     --text-muted. Intentional weight asymmetry against
+ *                     body: sets rhythm as the eye scans the page.
+ *   .type-body      — default reading text.
+ *                     text-sm, regular (400), leading-normal, --text.
+ *   .type-meta      — timestamps, secondary labels, small counts.
+ *                     text-xs, regular (400), --text-muted.
+ *
+ * Weight tiers: 400 / 500 / 600 only. 700 (bold) is banned — on a dark
+ * surface it renders chunky/tacky; semibold (600) is as loud as we go.
+ * ------------------------------------------------------------------------- */
+.type-hero {
+  font-size: 1.5rem;           /* text-2xl */
+  line-height: 1.15;           /* leading-tight */
+  font-weight: 600;            /* semibold */
+  letter-spacing: -0.02em;     /* tracking-tight */
+  color: var(--text);
+}
+@media (min-width: 640px) {
+  .type-hero {
+    font-size: 1.875rem;       /* sm:text-3xl */
+  }
+}
+.type-section {
+  font-size: 0.75rem;          /* text-xs */
+  line-height: 1.2;
+  font-weight: 600;            /* semibold */
+  letter-spacing: 0.06em;      /* tracking-wide */
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.type-body {
+  font-size: 0.875rem;         /* text-sm */
+  line-height: 1.5;            /* leading-normal */
+  font-weight: 400;            /* regular */
+  color: var(--text);
+}
+.type-meta {
+  font-size: 0.75rem;          /* text-xs */
+  line-height: 1.4;
+  font-weight: 400;            /* regular */
+  color: var(--text-muted);
+}
+
+/* ---------------------------------------------------------------------------
  * Class 5G — Badge soft-tint palette (fix wave 2026-04-24).
  *
  * Matches the StatusPill convention used at components/ui/status-pill.tsx:

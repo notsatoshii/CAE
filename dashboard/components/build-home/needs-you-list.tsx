@@ -29,11 +29,12 @@ export function NeedsYouList() {
       <section data-testid="needs-you-list" className="mb-6">
         <span className="sr-only" data-truth="needs-you.empty">yes</span>
         <span className="sr-only" data-truth="needs-you.count">0</span>
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-[color:var(--text-muted)] mb-3">
+        {/* Class 5F — section tier (card/panel heading). */}
+        <h2 className="type-section mb-3">
           {t.needsYouHeading}
         </h2>
         <Card elevation={1}>
-          <CardContent className="py-6 flex items-center gap-2 text-sm text-[color:var(--text-muted)]">
+          <CardContent className="py-6 flex items-center gap-2 type-body text-[color:var(--text-muted)]">
             <CheckCircle2 size={16} className="text-[color:var(--success)] shrink-0" aria-hidden />
             <span>{t.needsYouEmpty}</span>
           </CardContent>
@@ -45,7 +46,7 @@ export function NeedsYouList() {
   return (
     <section data-testid="needs-you-list" className="mb-6">
       <span className="sr-only" data-truth="needs-you.count">{items.length}</span>
-      <h2 className="text-sm font-semibold uppercase tracking-wide text-[color:var(--text-muted)] mb-3">
+      <h2 className="type-section mb-3">
         {t.needsYouHeading} ({items.length})
       </h2>
       <Card elevation={1}>
@@ -83,7 +84,7 @@ function NeedsYouRow({ item, index, t, dev }: RowProps) {
     <li
       data-testid={"needs-you-row-" + index}
       data-type={item.type}
-      className="flex items-center gap-3 py-2 text-sm"
+      className="flex items-center gap-3 py-2 type-body"
     >
       {React.createElement(ICON_COMPONENT[item.type], {
         size: 16,
@@ -96,7 +97,8 @@ function NeedsYouRow({ item, index, t, dev }: RowProps) {
       })}
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2 flex-wrap">
-          <span className="font-mono text-xs text-[color:var(--text-muted)]">
+          {/* Class 5F — meta tier: compact id-shaped breadcrumb in mono. */}
+          <span className="type-meta font-mono">
             {breadcrumb}
           </span>
           <span className="text-[color:var(--text-dim)]" aria-hidden="true">·</span>

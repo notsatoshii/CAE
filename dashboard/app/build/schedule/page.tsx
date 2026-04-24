@@ -20,7 +20,7 @@ export default async function SchedulePage() {
   return (
     <div className="flex flex-col gap-6 p-6">
       <div>
-        <h1 className="text-xl font-semibold text-[color:var(--text,#e5e5e5)]">
+        <h1 className="type-hero">
           Schedules
         </h1>
         <p className="mt-1 text-sm text-[color:var(--text-muted,#8a8a8c)]">

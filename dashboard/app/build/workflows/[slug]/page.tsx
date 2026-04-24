@@ -37,7 +37,7 @@ export default async function EditWorkflowPage({
       <span className="sr-only" data-truth="build-workflows-edit.healthy">yes</span>
       <span className="sr-only" data-truth="build-workflows-edit.loading">no</span>
       <span className="sr-only" data-truth="build-workflows-edit.empty">no</span>
-      <h1 className="text-2xl font-medium mb-6">
+      <h1 className="type-hero mb-6">
         {t.workflowsEditPageHeading(record.spec.name)}
       </h1>
       <WorkflowForm mode="edit" initial={record} />

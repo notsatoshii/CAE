@@ -316,7 +316,7 @@ export function LiveActivityPanel({ initialData, disablePolling }: PanelProps = 
         <div className="flex items-center gap-2">
           <h2
             id="live-activity-heading"
-            className="text-[15px] font-semibold text-[color:var(--text)]"
+            className="type-section"
           >
             Live activity
           </h2>
@@ -390,7 +390,7 @@ export function LiveActivityPanel({ initialData, disablePolling }: PanelProps = 
           </div>
 
           <div className="mt-4">
-            <div className="mb-1.5 text-[11px] uppercase tracking-wide text-[color:var(--text-dim)]">
+            <div className="type-section mb-1.5 text-[color:var(--text-dim)]">
               Last 5 minutes
             </div>
             <ToolBreakdown counts={data.tool_breakdown_5m} />

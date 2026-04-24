@@ -105,12 +105,12 @@ export function Panel({
       <header className="mb-4 flex items-baseline justify-between gap-2">
         <h2
           id={id}
-          className="text-[15px] font-semibold text-[color:var(--text)]"
+          className="type-section"
         >
           {title}
         </h2>
         {subtitle != null && (
-          <span className="text-[12px] text-[color:var(--text-muted)]">
+          <span className="type-meta">
             {subtitle}
           </span>
         )}

@@ -23,6 +23,7 @@ import { Panel } from "@/components/ui/panel"
 import { EmptyState } from "@/components/ui/empty-state"
 import { LastUpdated } from "@/components/ui/last-updated"
 import { Skeleton } from "@/components/ui/skeleton"
+import { Timestamp } from "@/components/ui/timestamp"
 
 interface CommitRow {
   sha: string
@@ -40,28 +41,6 @@ interface CommitsResponse {
 }
 
 const POLL_MS = 30_000
-
-/**
- * Render an ISO timestamp as a human-friendly relative string.
- * Inline impl avoids pulling date-fns into the build — we already hand-
- * roll relative-time formatting elsewhere (recent-ledger pattern).
- */
-function relativeTime(iso: string, now = Date.now()): string {
-  const then = Date.parse(iso)
-  if (Number.isNaN(then)) return iso
-  const delta = Math.max(0, now - then)
-  if (delta < 60_000) return "just now"
-  if (delta < 3_600_000) {
-    const m = Math.round(delta / 60_000)
-    return `${m}m ago`
-  }
-  if (delta < 86_400_000) {
-    const h = Math.round(delta / 3_600_000)
-    return `${h}h ago`
-  }
-  const d = Math.round(delta / 86_400_000)
-  return `${d}d ago`
-}
 
 export function RecentCommits() {
   const [data, setData] = useState<CommitsResponse | null>(null)
@@ -188,7 +167,8 @@ export function RecentCommits() {
 }
 
 function CommitLi({ c }: { c: CommitRow }) {
-  const rel = relativeTime(c.ts)
+  // Class 5F: render through shared <Timestamp> so Eric's "never fuzzy"
+  // rule holds (no more bespoke relativeTime with "just now" copy).
   const body = (
     <>
       <span
@@ -200,9 +180,10 @@ function CommitLi({ c }: { c: CommitRow }) {
       </span>
       <span className="text-[color:var(--text)] flex-1 truncate">{c.subject}</span>
       <span className="text-[color:var(--text-muted)] shrink-0">{c.author}</span>
-      <span className="text-[color:var(--text-dim)] shrink-0" style={{ width: "6ch", textAlign: "right" }}>
-        {rel}
-      </span>
+      <Timestamp
+        iso={c.ts}
+        className="type-meta shrink-0 text-right"
+      />
       {c.url && (
         <ExternalLink
           aria-hidden="true"

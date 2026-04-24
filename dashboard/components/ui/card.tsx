@@ -70,14 +70,28 @@ function CardHeader({ className, ...props }: React.ComponentProps<"div">) {
   )
 }
 
-function CardTitle({ className, ...props }: React.ComponentProps<"div">) {
+interface CardTitleProps extends React.ComponentProps<"div"> {
+  /**
+   * Class 5F typography hierarchy:
+   *   - "hero"    → .type-hero (page-dominant card, e.g. the primary KPI).
+   *   - "section" → .type-section (uppercase muted; card/panel header).
+   *   - undefined → legacy base-size title, preserved for back-compat.
+   */
+  level?: "hero" | "section"
+}
+
+function CardTitle({ className, level, ...props }: CardTitleProps) {
+  const tierClass =
+    level === "hero"
+      ? "type-hero"
+      : level === "section"
+        ? "type-section"
+        : "font-heading text-base leading-snug font-medium group-data-[size=sm]/card:text-sm"
   return (
     <div
       data-slot="card-title"
-      className={cn(
-        "font-heading text-base leading-snug font-medium group-data-[size=sm]/card:text-sm",
-        className
-      )}
+      data-level={level}
+      className={cn(tierClass, className)}
       {...props}
     />
   )

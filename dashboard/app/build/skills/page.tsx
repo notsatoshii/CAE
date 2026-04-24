@@ -40,8 +40,8 @@ export default async function SkillsPage() {
   return (
     <div className="flex flex-col gap-6 p-6">
       <div>
-        <h1 className="text-xl font-semibold text-zinc-100">Skills</h1>
-        <p className="mt-1 text-sm text-zinc-400">
+        <h1 className="type-hero" data-testid="skills-page-heading">Skills</h1>
+        <p className="type-body mt-1 text-[color:var(--text-muted)]">
           Browse, install, and manage Claude Code skills from the community.
         </p>
       </div>

@@ -197,7 +197,7 @@ export function ActivityFeed() {
 function DayGroup({ day, rows }: { day: string; rows: ActivityFeedRow[] }) {
   return (
     <section data-testid={`activity-day-${day}`} className="flex flex-col gap-1">
-      <h3 className="text-[11px] uppercase tracking-wide text-[color:var(--text-dim)]">
+      <h3 className="type-section text-[color:var(--text-dim)]">
         {formatDay(day)}
       </h3>
       <ul className="divide-y divide-[color:var(--border-subtle)] font-mono text-xs" role="list">

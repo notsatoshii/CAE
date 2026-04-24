@@ -35,7 +35,8 @@ export default async function QueuePage() {
   return (
     <main data-testid="queue-page" className="p-8 max-w-7xl">
       <div className="flex items-center justify-between mb-8">
-        <h1 className="text-[20px] font-semibold">{t.queueHeading}</h1>
+        {/* Class 5F — page-title tier. Shared with all top-level /build/* surfaces. */}
+        <h1 className="type-hero" data-testid="queue-page-heading">{t.queueHeading}</h1>
         <NewJobModal />
       </div>
       <QueueKanbanClient initialState={initialState} />
