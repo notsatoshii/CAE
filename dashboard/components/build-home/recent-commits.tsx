@@ -127,8 +127,18 @@ export function RecentCommits() {
           aria-busy="true"
           className="flex flex-col gap-2"
         >
-          {Array.from({ length: 4 }).map((_, i) => (
-            <Skeleton key={i} className="h-6 w-full" />
+          {/*
+            Class 5C — 3 visually-distinct skeleton rows (not 9+ look-alike
+            placeholders). Varying widths so the shimmer reads as "loading"
+            rather than "fabricated identical rows".
+          */}
+          {[100, 88, 72].map((pct, i) => (
+            <Skeleton
+              key={i}
+              className="h-6"
+              width={`${pct}%`}
+              testId={`recent-commits-skeleton-${i}`}
+            />
           ))}
         </div>
       )}

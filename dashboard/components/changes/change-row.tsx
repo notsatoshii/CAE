@@ -5,8 +5,15 @@
  *
  * One row in the Changes timeline. Default render = founder-speak prose line
  * from `event.prose` (pre-templated by `proseForEvent` in Wave 1; D-02 —
- * zero LLM tokens). A small `[technical]` toggle button flips open the
- * DevModeDetail panel.
+ * zero LLM tokens) PLUS a per-event meta-row (local time · short sha · lead
+ * commit subject) so rows in the same bucket never read identically.
+ *
+ * Class 5C fix: without this meta, events sharing the same
+ * (project, weekday, commit-count) tuple rendered identical prose — e.g.
+ * 9 rows of "CAE shipped 2 changes to dashboard Monday." — reading like a
+ * fake template leak.
+ *
+ * A small `[technical]` toggle button flips open the DevModeDetail panel.
  *
  * Open-state rule:
  *   - Initial open state === useDevMode().dev (auto-expanded when Dev-mode
@@ -28,6 +35,33 @@ import { ExplainTooltip } from "@/components/ui/explain-tooltip";
 import { DevModeDetail } from "./dev-mode-detail";
 import type { ChangeEvent } from "@/lib/cae-changes-state";
 
+/**
+ * HH:MM formatter in viewer-local tz. Falls back to the ISO string's
+ * time slice if Date parsing fails (defensive — the aggregator yields
+ * ISO strings but belt-and-braces keeps the row renderable).
+ */
+function formatLocalTime(iso: string): string {
+  const ms = Date.parse(iso);
+  if (!Number.isFinite(ms)) return iso.slice(11, 16);
+  try {
+    return new Date(ms).toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    });
+  } catch {
+    return iso.slice(11, 16);
+  }
+}
+
+/** First commit subject or the merge subject as fallback. */
+function leadSubject(event: ChangeEvent): string {
+  const first = event.commits[0]?.subject?.trim();
+  if (first) return first;
+  const m = event.mergeSubject?.trim();
+  return m || "";
+}
+
 export function ChangeRow({ event }: { event: ChangeEvent }) {
   const { dev } = useDevMode();
   const L = labelFor(dev);
@@ -38,6 +72,9 @@ export function ChangeRow({ event }: { event: ChangeEvent }) {
   useEffect(() => {
     setOpenTech(dev);
   }, [dev]);
+
+  const localTime = formatLocalTime(event.ts);
+  const subject = leadSubject(event);
 
   return (
     <li
@@ -59,6 +96,38 @@ export function ChangeRow({ event }: { event: ChangeEvent }) {
           {L.changesDevToggleLabel}
         </button>
         <ExplainTooltip text={L.changesExplainDevToggle} />
+      </div>
+      {/* Class 5C — per-row identity line so same-bucket rows never collide. */}
+      <div
+        data-testid="change-row-meta"
+        className="flex flex-wrap items-center gap-2 text-xs text-[color:var(--text-muted,#8a8a8c)]"
+      >
+        <span
+          className="font-mono tabular-nums"
+          data-testid="change-row-time"
+        >
+          {localTime}
+        </span>
+        <span aria-hidden className="text-[color:var(--text-dim,#555559)]">·</span>
+        <span
+          className="font-mono text-[color:var(--text-dim,#777)]"
+          title={event.sha}
+          data-testid="change-row-sha"
+        >
+          {event.shaShort}
+        </span>
+        {subject ? (
+          <>
+            <span aria-hidden className="text-[color:var(--text-dim,#555559)]">·</span>
+            <span
+              className="min-w-0 truncate"
+              title={subject}
+              data-testid="change-row-subject"
+            >
+              {subject}
+            </span>
+          </>
+        ) : null}
       </div>
       {openTech ? <DevModeDetail event={event} /> : null}
     </li>

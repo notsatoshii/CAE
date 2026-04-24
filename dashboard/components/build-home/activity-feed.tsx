@@ -149,8 +149,17 @@ export function ActivityFeed() {
           aria-busy="true"
           className="flex flex-col gap-2"
         >
-          {Array.from({ length: 4 }).map((_, i) => (
-            <Skeleton key={i} className="h-5 w-full" />
+          {/*
+            Class 5C — 3 staggered-width skeleton rows (not 9+ identical
+            placeholders). Shimmer reads unambiguously as "loading".
+          */}
+          {[100, 82, 64].map((pct, i) => (
+            <Skeleton
+              key={i}
+              className="h-5"
+              width={`${pct}%`}
+              testId={`activity-feed-skeleton-${i}`}
+            />
           ))}
         </div>
       )}

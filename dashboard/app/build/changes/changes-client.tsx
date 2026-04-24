@@ -8,24 +8,24 @@
  *
  * Renders:
  *   - Page heading + ExplainTooltip (D-15).
- *   - Lede: count of events whose `ts` falls on "today" (local calendar,
- *     matching founder mental model for "today"), formatted via
- *     `changesPageLede(n)`.
+ *   - Lede: founder copy calibrated against totals. When today > 0 we lead
+ *     with "N change(s) today." — otherwise we lead with the 30-day total so
+ *     the copy never contradicts the list below ("Nothing today — yet" was
+ *     flagged by C2 vision as contradicting the visibly-populated accordion).
  *   - One base-ui Accordion.Root wrapping ProjectGroups. `multiple={true}` +
  *     `defaultValue={allProjectIds}` per D-12 (every project expanded by
  *     default). No `asChild` anywhere (gotcha #5).
  *
  * States:
- *   - Pre-fetch → founder-speak loading copy (changesEmpty placeholder is
- *     re-used as the neutral resting state).
- *   - Error → `changesFailedToLoad`.
- *   - Zero projects → heading + empty copy.
+ *   - Pre-fetch  → loading copy (liveness=loading).
+ *   - Error      → `changesFailedToLoad`.
+ *   - Zero projects → EmptyState with `changesEmpty` copy + refresh CTA.
  *
  * All strings flow through `labelFor(useDevMode().dev)`; no literal `$`.
  */
 
 import { useEffect, useState } from "react";
-import { Filter } from "lucide-react";
+import { GitMerge } from "lucide-react";
 import { Accordion } from "@base-ui/react/accordion";
 import { useDevMode } from "@/lib/providers/dev-mode";
 import { labelFor } from "@/lib/copy/labels";
@@ -119,10 +119,15 @@ export function ChangesClient() {
           {L.changesPageHeading}
           <ExplainTooltip text={L.changesExplainTimeline} />
         </h1>
+        {/*
+         * Class 5C — EmptyState replaces any phantom-row fallback. A single
+         * friendly empty message + refresh CTA; no fabricated rows, no
+         * repeating placeholder copy.
+         */}
         <EmptyState
           testId="changes-empty"
-          icon={Filter}
-          heading={L.emptyChangesHeading}
+          icon={GitMerge}
+          heading={L.changesEmpty}
           body={L.emptyChangesBody}
           actions={
             <EmptyStateActions>
@@ -158,8 +163,19 @@ export function ChangesClient() {
         {L.changesPageHeading}
         <ExplainTooltip text={L.changesExplainTimeline} />
       </h1>
+      {/*
+       * Class 5C — when today=0 but older events exist we avoid the
+       * "Nothing's shipped today — yet" lede (C2 vision flagged it as
+       * contradicting the visibly-populated list below). Show 30-day total
+       * instead so the copy is always consistent with the accordion.
+       */}
       <p className="mb-6 text-sm text-[color:var(--text-muted,#8a8a8c)]">
-        {L.changesPageLede(totalToday)}
+        {totalToday > 0
+          ? L.changesPageLede(totalToday)
+          : totalEvents +
+            " " +
+            (totalEvents === 1 ? "change" : "changes") +
+            " in the last 30 days."}
       </p>
       <Accordion.Root
         multiple
