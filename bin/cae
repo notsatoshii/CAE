@@ -203,6 +203,11 @@ def spawn_forge(task_id: str, prompt_path: Path, model: str, system_prompt_file:
         model,
         task_id,
         "--timeout", str(timeout),
+        # Forge MUST write code. Headless claude defaults to interactive
+        # permission prompts that have no answerer under tmux+sudo and
+        # silently deny Edit/Write. `acceptEdits` auto-approves file
+        # mutations without needing interactive input. (2026-04-24 session 15)
+        "--permission-mode", "acceptEdits",
     ]
     if agent_wrap:
         cmd.extend(["--agent", agent_wrap])
