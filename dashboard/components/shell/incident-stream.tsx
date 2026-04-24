@@ -43,6 +43,7 @@ export interface IncidentEntry {
 // ---------------------------------------------------------------------------
 
 const MAX_ENTRIES = 200;
+const MAX_RETRIES = 5;
 const SSE_ENDPOINT = "/api/incidents";
 
 // ---------------------------------------------------------------------------
@@ -88,9 +89,11 @@ export function IncidentStream() {
   const [entries, setEntries] = useState<IncidentEntry[]>([]);
   const [selected, setSelected] = useState<IncidentEntry | null>(null);
   const [mountTime, setMountTime] = useState<Date | null>(null);
-  const [connState, setConnState] = useState<"connecting" | "open" | "errored">(
+  const [connState, setConnState] = useState<"connecting" | "open" | "lost">(
     "connecting"
   );
+  const retryCountRef = useRef(0);
+  const retryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
     setMountTime(new Date());
   }, []);
@@ -105,34 +108,55 @@ export function IncidentStream() {
   }, []);
 
   useEffect(() => {
-    const es = new EventSource(SSE_ENDPOINT);
-    esRef.current = es;
+    function connect() {
+      const es = new EventSource(SSE_ENDPOINT);
+      esRef.current = es;
 
-    es.addEventListener("open", () => {
-      setConnState("open");
-    });
+      es.addEventListener("open", () => {
+        retryCountRef.current = 0;
+        setConnState("open");
+      });
 
-    es.addEventListener("message", (ev: MessageEvent) => {
-      setConnState("open");
-      try {
-        const line = JSON.parse(ev.data) as IncidentEntry;
-        setEntries((prev) => {
-          const next = [line, ...prev];
-          return next.length > MAX_ENTRIES ? next.slice(0, MAX_ENTRIES) : next;
-        });
-        scrollToTop();
-      } catch {
-        // Malformed frame — skip silently
-      }
-    });
+      es.addEventListener("message", (ev: MessageEvent) => {
+        retryCountRef.current = 0;
+        setConnState("open");
+        try {
+          const line = JSON.parse(ev.data) as IncidentEntry;
+          setEntries((prev) => {
+            const next = [line, ...prev];
+            return next.length > MAX_ENTRIES ? next.slice(0, MAX_ENTRIES) : next;
+          });
+          scrollToTop();
+        } catch {
+          // Malformed frame — skip silently
+        }
+      });
 
-    es.addEventListener("error", () => {
-      setConnState("errored");
-      // Connection dropped; browser will auto-retry on EventSource
-    });
+      es.addEventListener("error", () => {
+        es.close();
+        esRef.current = null;
+
+        if (retryCountRef.current >= MAX_RETRIES) {
+          setConnState("lost");
+          return;
+        }
+
+        const attempt = retryCountRef.current;
+        retryCountRef.current += 1;
+        const delay = Math.min(1000 * Math.pow(2, attempt), 10_000);
+        setConnState("connecting");
+        retryTimerRef.current = setTimeout(connect, delay);
+      });
+    }
+
+    connect();
 
     return () => {
-      es.close();
+      if (retryTimerRef.current) {
+        clearTimeout(retryTimerRef.current);
+        retryTimerRef.current = null;
+      }
+      esRef.current?.close();
       esRef.current = null;
     };
   }, [scrollToTop]);
@@ -152,19 +176,21 @@ export function IncidentStream() {
   // Render
   // ---------------------------------------------------------------------------
 
-  const subtitle = entries.length === 0
-    ? "Waiting for events…"
-    : `${entries.length} event${entries.length === 1 ? "" : "s"}`;
+  const subtitle = connState === "lost"
+    ? "Connection lost"
+    : entries.length === 0
+      ? "Waiting for events…"
+      : `${entries.length} event${entries.length === 1 ? "" : "s"}`;
 
   // C2-wave/Class 3: compute liveness state for SSE-backed panel.
   //  - connecting  → loading
-  //  - errored     → error
+  //  - lost        → error (retries exhausted)
   //  - open + 0 rows → empty
   //  - open + rows → healthy (SSE: freshness ties to connection, not wall time)
   const liveness: "loading" | "error" | "empty" | "healthy" =
     connState === "connecting"
       ? "loading"
-      : connState === "errored"
+      : connState === "lost"
         ? "error"
         : entries.length === 0
           ? "empty"
@@ -179,8 +205,20 @@ export function IncidentStream() {
       dataLiveness={liveness}
     >
       <span className="sr-only" data-truth={`incident-stream.${liveness}`}>yes</span>
+      {/* Connection lost state (retries exhausted) */}
+      {connState === "lost" && (
+        <div
+          data-testid="incident-stream-lost"
+          className="flex flex-col items-center gap-2 rounded-lg border border-[color:var(--border)] bg-[color:var(--bg-elev)] px-4 py-6 text-center"
+        >
+          <p className="text-sm font-medium text-[color:var(--text)]">
+            Connection lost. Refresh to retry.
+          </p>
+        </div>
+      )}
+
       {/* Empty state */}
-      {entries.length === 0 && (
+      {connState !== "lost" && entries.length === 0 && (
         <div
           data-testid="incident-stream-empty"
           className="flex flex-col items-center gap-2 rounded-lg border border-[color:var(--border)] bg-[color:var(--bg-elev)] px-4 py-6 text-center"
@@ -207,7 +245,7 @@ export function IncidentStream() {
       )}
 
       {/* Event list */}
-      {entries.length > 0 && (
+      {connState !== "lost" && entries.length > 0 && (
         <div
           ref={listRef}
           onMouseEnter={handleMouseEnter}
