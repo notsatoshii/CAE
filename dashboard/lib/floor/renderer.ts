@@ -44,6 +44,7 @@ export interface Viewport {
 
 const BG = "#0a0a0a";
 const SURFACE = "#121214";
+const IDLE = "#3a3a42";
 const ACCENT = "#00d4ff";
 const WARNING = "#f59e0b";
 const DANGER = "#ef4444";
@@ -52,9 +53,8 @@ const PHANTOM = "#8b5cf6";
 const BORDER = "#1f1f22";
 const TEXT = "#8a8a8c";
 
-/** Station status → fill color. */
 const STATUS_FILL: Record<string, string> = {
-  idle: SURFACE,
+  idle: IDLE,
   active: ACCENT,
   warning: WARNING,
   alarm: DANGER,
