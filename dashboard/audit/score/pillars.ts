@@ -157,16 +157,70 @@ function getExpectedTruth(
 }
 
 // ── Pillar: truth ──────────────────────────────────────────────────────
+// Route → data-truth key prefixes. Expected truth keys are namespaced by
+// surface (e.g. "mission-control.*" for /build, "floor.*" for /floor).
+// Without this filter, every route is scored against ALL 46 expected
+// keys → truth locked at 1.00 across the board (C2-C4 observed).
+const ROUTE_TRUTH_PREFIXES: Record<string, readonly string[]> = {
+  build: [
+    "mission-control.",
+    "live-activity.",
+    "rollup.",
+    "active-phases.",
+    "needs-you.",
+    "recent-ledger.",
+  ],
+  metrics: ["metrics."],
+  floor: ["floor."],
+  "floor-popout": ["floor."],
+  plan: ["plan."],
+  memory: ["memory."],
+  chat: ["chat."],
+  "build-queue": ["build-queue."],
+  "build-admin-roles": ["build-admin-roles."],
+  "build-skills": ["build-skills."],
+  "build-skills-installed": ["build-skills."],
+  "build-schedule": ["build-schedule."],
+  "build-schedule-new": ["build-schedule."],
+}
+
+function filterExpectedForRoute(
+  expected: Record<string, string>,
+  routeSlug: string,
+): Record<string, string> {
+  const prefixes = ROUTE_TRUTH_PREFIXES[routeSlug]
+  if (!prefixes || prefixes.length === 0) return expected
+  const out: Record<string, string> = {}
+  for (const [k, v] of Object.entries(expected)) {
+    if (prefixes.some((p) => k.startsWith(p))) out[k] = v
+  }
+  return out
+}
+
 async function scoreTruth(cell: CaptureCell): Promise<ScoreResult> {
-  const expected = getExpectedTruth(cell.expectedFixture)
+  const expectedAll = getExpectedTruth(cell.expectedFixture)
   const rows = await readTruthRows(cell.truthPath)
 
-  if (!expected || Object.keys(expected).length === 0) {
+  if (!expectedAll || Object.keys(expectedAll).length === 0) {
     return {
       score: 3,
       evidence: ["fixture missing readExpectedTruth(); skipping diff"],
       recommendations: [
         "add readExpectedTruth() to the fixture so truth can be verified",
+      ],
+    }
+  }
+
+  const expected = filterExpectedForRoute(expectedAll, cell.slug)
+  if (Object.keys(expected).length === 0) {
+    return {
+      score: 3,
+      na: true,
+      evidence: [
+        `no truth keys mapped to route "${cell.slug}" — add entry to ROUTE_TRUTH_PREFIXES`,
+      ],
+      recommendations: [
+        `map route "${cell.slug}" to its data-truth prefix in ROUTE_TRUTH_PREFIXES`,
       ],
     }
   }
