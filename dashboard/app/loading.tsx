@@ -46,10 +46,10 @@ export default function RootLoading() {
       className="cae-pikachu-loader relative w-full min-h-[calc(100vh-40px)] flex flex-col items-center justify-center gap-3 bg-[color:var(--bg)] overflow-hidden"
     >
       <h1 className="text-2xl font-semibold text-[color:var(--text)]">
-        Running Pikachu
+        Loading...
       </h1>
-      <p className="text-sm text-[color:var(--text-muted)]">
-        Use left and right arrow keys to move.
+      <p className="text-sm tracking-[0.2em] font-medium text-[color:var(--text-muted)]">
+        CTRL + ALT + ELITE
       </p>
 
       <div
@@ -59,7 +59,7 @@ export default function RootLoading() {
       >
         <Image
           src="/pikachu-loading.gif"
-          alt="running pikachu"
+          alt="loading"
           width={200}
           height={209}
           priority
@@ -68,8 +68,11 @@ export default function RootLoading() {
         />
       </div>
 
-      <span id="loadingText" className="text-[color:var(--text)] text-base font-medium">
-        Loading...
+      <span id="loadingText" className="sr-only">
+        Loading
+      </span>
+      <span className="mt-1 text-xs text-[color:var(--text-muted)] opacity-60">
+        ← → to move
       </span>
 
     </div>

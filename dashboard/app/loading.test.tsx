@@ -26,12 +26,12 @@ describe("RootLoading — arrow-key pikachu", () => {
     expect(root.getAttribute("aria-live")).toBe("polite");
   });
 
-  it("shows pikachu gif + heading + loading text", () => {
+  it("shows pikachu gif + heading + brand subtitle", () => {
     render(<RootLoading />);
-    const img = screen.getByAltText("running pikachu") as HTMLImageElement;
+    const img = screen.getByAltText("loading") as HTMLImageElement;
     expect(img.src).toContain("pikachu-loading.gif");
-    expect(screen.getByText("Running Pikachu")).toBeTruthy();
     expect(screen.getByText("Loading...")).toBeTruthy();
+    expect(screen.getByText("CTRL + ALT + ELITE")).toBeTruthy();
   });
 
   it("right arrow translates pikachu by +25px", () => {
