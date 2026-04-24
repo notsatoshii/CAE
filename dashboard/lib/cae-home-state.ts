@@ -98,6 +98,24 @@ function todayPrefix(): string {
   return new Date().toISOString().slice(0, 10)
 }
 
+/**
+ * Local-midnight boundaries for "today" in the server's local timezone.
+ * Session-14 fix: activity.jsonl timestamps are +09:00 (JST). Using UTC-day
+ * via todayPrefix().startsWith() dropped JST-today commits whenever the
+ * current server UTC day lagged the JST day. Compare in ms-since-epoch
+ * against local-midnight bounds instead.
+ */
+function todayBoundsMs(): { start: number; end: number } {
+  const now = new Date()
+  const start = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate(),
+    0, 0, 0, 0,
+  ).getTime()
+  return { start, end: start + 24 * 60 * 60 * 1000 }
+}
+
 function msPerDay(): number {
   return 24 * 60 * 60 * 1000
 }
@@ -169,6 +187,7 @@ async function buildRollup(
   needsYou: NeedsYouItem[],
 ): Promise<Rollup> {
   const today = todayPrefix()
+  const { start: todayStartMs, end: todayEndMs } = todayBoundsMs()
   let shipped_today = 0
   let tokens_today = 0
   let warnings = 0
@@ -181,7 +200,8 @@ async function buildRollup(
       const donePath = join(OUTBOX_ROOT, o.taskId, "DONE.md")
       try {
         const st = await stat(donePath)
-        if (st.mtime.toISOString().slice(0, 10) === today) shipped_today++
+        const mtimeMs = st.mtime.getTime()
+        if (mtimeMs >= todayStartMs && mtimeMs < todayEndMs) shipped_today++
       } catch {
         // ignore
       }
@@ -190,13 +210,10 @@ async function buildRollup(
     // ignore
   }
 
-  // Class 20C (data-feed recovery): the outbox path is rarely populated in
-  // this repo because agents commit directly to main, not via `forge/`
-  // merge branches. Count canonical activity.jsonl `type:"commit"` rows for
-  // today — the git post-commit hook writes one row per commit, so this is
-  // the ground truth for "shipped today". We union this with the outbox
-  // path rather than gating on `shipped_today === 0`, so a repo with both
-  // signals never under-counts.
+  // Class 20C (data-feed recovery): count canonical activity.jsonl
+  // `type:"commit"` rows for today. Session-14 fix: compare parsed ts_ms
+  // against local-midnight bounds instead of UTC-prefix match, so JST
+  // (+09:00) timestamps don't get dropped when server UTC day lags local.
   const countedShaToday = new Set<string>()
   for (const p of projects) {
     const actPath = join(p.path, ".cae", "metrics", "activity.jsonl")
@@ -206,7 +223,9 @@ async function buildRollup(
       const r = raw as Record<string, unknown>
       if (r.type !== "commit") continue
       const ts = typeof r.ts === "string" ? r.ts : null
-      if (!ts || !ts.startsWith(today)) continue
+      if (!ts) continue
+      const tsMs = Date.parse(ts)
+      if (Number.isNaN(tsMs) || tsMs < todayStartMs || tsMs >= todayEndMs) continue
       const meta = r.meta as Record<string, unknown> | undefined
       const sha =
         meta && typeof meta.sha === "string"
@@ -238,11 +257,10 @@ async function buildRollup(
   }
 
   // tokens_today + warnings across all projects' circuit-breakers.jsonl.
-  // Tokens now come from real snake_case input_tokens/output_tokens fields
-  // (primarily on `token_usage` events emitted by the Phase-7-Wave-0
-  // adapter patch, but sum any event that carries them — a future
-  // Python-side logger could add tokens to forge_end rows without breaking
-  // the dashboard).
+  // Tokens come from snake_case input_tokens/output_tokens fields (on
+  // token_usage events but any event carrying them is summed).
+  // Session-14 fix: parse ts→ms and compare against todayStartMs/EndMs
+  // instead of UTC-prefix string match, so JST timestamps aren't dropped.
   const nowMs = Date.now()
   for (const p of projects) {
     const cbPath = join(p.path, ".cae", "metrics", "circuit-breakers.jsonl")
@@ -252,21 +270,31 @@ async function buildRollup(
       const e = raw as CbEvent
       const ts = eventTs(e)
       if (!ts) continue
-      if (ts.startsWith(today)) {
+      const tsMs = Date.parse(ts)
+      if (!Number.isNaN(tsMs) && tsMs >= todayStartMs && tsMs < todayEndMs) {
         if (typeof e.input_tokens === "number") tokens_today += e.input_tokens
         if (typeof e.output_tokens === "number") tokens_today += e.output_tokens
       }
       // Phase 7 Wave 0 (D-02): real event name is escalate-to-phantom.
       if (e.event === "escalate_to_phantom") {
-        const tsMs = Date.parse(ts)
         if (!Number.isNaN(tsMs) && nowMs - tsMs <= msPerDay()) warnings++
       }
     }
   }
 
-  const in_flight = phases.filter(
-    (ph) => ph.progress_pct > 0 && ph.progress_pct < 100,
-  ).length
+  // in_flight: a phase is live if progress is strictly between 0 and 100
+  // OR if any agent is currently running on it (per circuit-breaker
+  // forge_begin/forge_end window in agents_active). Session-14 fix: the
+  // old filter missed phases where progress_pct rounds to 0 or 100 while
+  // agents are actively mid-wave.
+  const in_flight = phases.filter((ph) => {
+    if (ph.progress_pct > 0 && ph.progress_pct < 100) return true
+    const activeConcurrent = ph.agents_active.reduce(
+      (acc, a) => acc + Math.max(0, a.concurrent),
+      0,
+    )
+    return activeConcurrent > 0
+  }).length
   const blocked = needsYou.filter((n) => n.type === "blocked").length
 
   return { shipped_today, tokens_today, in_flight, blocked, warnings }
