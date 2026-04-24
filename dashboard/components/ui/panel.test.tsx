@@ -99,4 +99,45 @@ describe("Panel", () => {
     expect(root?.className).not.toContain("hover:scale-[1.01]");
     expect(root?.getAttribute("data-interactive")).toBeNull();
   });
+
+  // Class 5H — glassmorphic prop
+  it("glass=false (default) renders opaque surface + solid border", () => {
+    const { container } = render(<Panel title="Test">content</Panel>);
+    const root = container.querySelector("section");
+    expect(root?.className).not.toContain("glass-surface");
+    expect(root?.className).toContain("bg-[color:var(--surface)]");
+    expect(root?.className).toContain("border border-[color:var(--border)]");
+    expect(root?.getAttribute("data-glass")).toBeNull();
+  });
+
+  it("glass=true swaps opaque surface for .glass-surface utility", () => {
+    const { container } = render(
+      <Panel title="Test" glass>content</Panel>,
+    );
+    const root = container.querySelector("section");
+    expect(root?.className).toContain("glass-surface");
+    // Opaque surface + solid border are omitted when glass mode is on —
+    // the utility provides both fill and border-gradient.
+    expect(root?.className).not.toContain("bg-[color:var(--surface)]");
+    expect(root?.className).not.toContain("border border-[color:var(--border)]");
+    expect(root?.getAttribute("data-glass")).toBe("true");
+  });
+
+  it("glass=true preserves rounded-lg + p-6 padding", () => {
+    const { container } = render(
+      <Panel title="Test" glass>content</Panel>,
+    );
+    const root = container.querySelector("section");
+    expect(root?.className).toContain("rounded-lg");
+    expect(root?.className).toContain("p-6");
+  });
+
+  it("glass=true composes with elevation={1}", () => {
+    const { container } = render(
+      <Panel title="Test" glass elevation={1}>content</Panel>,
+    );
+    const root = container.querySelector("section");
+    expect(root?.className).toContain("glass-surface");
+    expect(root?.className).toContain("shadow-elevation-1");
+  });
 });

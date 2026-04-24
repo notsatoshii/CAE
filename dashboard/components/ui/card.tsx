@@ -12,6 +12,12 @@ import { cn } from "@/lib/utils"
  *     that act as a single clickable surface (agent tiles, rollup slots,
  *     phase cards). Pair with `role="button"` / `tabIndex={0}` at the call
  *     site for a11y.
+ *
+ * Class 5H (glassmorphic pass — Eric session 13 P2 directive):
+ *   - `glass` replaces the opaque `bg-card` + `ring-1 ring-foreground/10`
+ *     with the `.glass-surface` utility (translucent fill + backdrop-blur
+ *     + top-edge-brighter border gradient). Default off for Kanban/queue
+ *     cards (perf concern on long lists); opt in per surface.
  */
 export type CardElevation = 0 | 1 | 2 | 3 | 4
 
@@ -27,6 +33,12 @@ interface CardExtraProps {
   size?: "default" | "sm"
   elevation?: CardElevation
   interactive?: boolean
+  /**
+   * Class 5H — when true, Card renders as a glass surface (translucent
+   * fill + backdrop-blur + border-gradient). Default off. Perf guard at
+   * <768px drops the blur automatically.
+   */
+  glass?: boolean
 }
 
 function Card({
@@ -34,20 +46,30 @@ function Card({
   size = "default",
   elevation = 0,
   interactive = false,
+  glass = false,
   ...props
 }: React.ComponentProps<"div"> & CardExtraProps) {
   const elevationClass = CARD_ELEVATION_CLASS[elevation] ?? ""
   const interactiveClass = interactive
     ? "shadow-elevation-1 hover:shadow-elevation-2 hover:scale-[1.01] transition-all duration-150 ease-out will-change-transform"
     : ""
+  // Class 5H — toggle between opaque card surface and glass-surface utility.
+  // The opaque path keeps the legacy ring-1 ring-foreground/10 outline; the
+  // glass path relies on border-image from .glass-surface itself (ring would
+  // fight with the gradient border).
+  const surfaceClass = glass
+    ? "glass-surface"
+    : "bg-card ring-1 ring-foreground/10"
   return (
     <div
       data-slot="card"
       data-size={size}
       data-elevation={elevation}
       data-interactive={interactive ? "true" : undefined}
+      data-glass={glass ? "true" : undefined}
       className={cn(
-        "group/card flex flex-col gap-4 overflow-hidden rounded-xl bg-card py-4 text-sm text-card-foreground ring-1 ring-foreground/10 has-data-[slot=card-footer]:pb-0 has-[>img:first-child]:pt-0 data-[size=sm]:gap-3 data-[size=sm]:py-3 data-[size=sm]:has-data-[slot=card-footer]:pb-0 *:[img:first-child]:rounded-t-xl *:[img:last-child]:rounded-b-xl",
+        "group/card flex flex-col gap-4 overflow-hidden rounded-xl py-4 text-sm text-card-foreground has-data-[slot=card-footer]:pb-0 has-[>img:first-child]:pt-0 data-[size=sm]:gap-3 data-[size=sm]:py-3 data-[size=sm]:has-data-[slot=card-footer]:pb-0 *:[img:first-child]:rounded-t-xl *:[img:last-child]:rounded-b-xl",
+        surfaceClass,
         elevationClass,
         interactiveClass,
         className

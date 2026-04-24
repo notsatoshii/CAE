@@ -22,6 +22,13 @@
  *   - `interactive` bumps elevation-1 → elevation-2 on hover + 1%
  *     scale lift + 150ms ease. Only set it on Panels whose entire card
  *     is clickable.
+ *
+ * Class 5H (glassmorphic pass — Eric session 13 P2 directive):
+ *   - `glass` opts into translucent fill + backdrop-blur + top-edge-brighter
+ *     border gradient via the `.glass-surface` utility in globals.css. When
+ *     true, the opaque `bg-[color:var(--surface)]` and the solid border are
+ *     replaced by the glass tokens. Perf guard at <768px drops the blur
+ *     automatically at the utility layer — callers don't need to branch.
  */
 
 import type { ReactNode } from "react";
@@ -54,6 +61,12 @@ export interface PanelProps {
    * Pair with `role="button"` + `onClick` at the call site for a11y.
    */
   interactive?: boolean;
+  /**
+   * Class 5H — when true, replaces opaque surface + solid border with the
+   * `.glass-surface` utility (translucent fill + backdrop-blur + top-edge-
+   * brighter border gradient). Perf guard drops blur <768px. Default off.
+   */
+  glass?: boolean;
 }
 
 const ELEVATION_CLASS: Record<PanelElevation, string> = {
@@ -75,6 +88,7 @@ export function Panel({
   dataLiveness,
   elevation = 0,
   interactive = false,
+  glass = false,
 }: PanelProps) {
   // Derive a stable id from the title when not provided.
   const id =
@@ -88,6 +102,13 @@ export function Panel({
     ? "shadow-elevation-1 hover:shadow-elevation-2 hover:scale-[1.01] transition-all duration-150 ease-out will-change-transform"
     : "";
 
+  // Class 5H — when glass=true, swap the opaque surface + solid border for
+  // the .glass-surface utility. Keep rounded-lg + padding; those don't
+  // clash with the glass treatment.
+  const surfaceClass = glass
+    ? "glass-surface rounded-lg p-6"
+    : "rounded-lg border border-[color:var(--border)] bg-[color:var(--surface)] p-6";
+
   return (
     <Tag
       aria-labelledby={id}
@@ -95,8 +116,9 @@ export function Panel({
       data-liveness={dataLiveness}
       data-elevation={elevation}
       data-interactive={interactive ? "true" : undefined}
+      data-glass={glass ? "true" : undefined}
       className={
-        "rounded-lg border border-[color:var(--border)] bg-[color:var(--surface)] p-6 " +
+        surfaceClass + " " +
         (elevationClass ? elevationClass + " " : "") +
         (interactiveClass ? interactiveClass + " " : "") +
         className

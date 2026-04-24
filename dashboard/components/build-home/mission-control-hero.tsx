@@ -557,7 +557,13 @@ export function MissionControlHero({
       data-testid="mission-control-hero"
       aria-labelledby="mission-control-heading"
       aria-busy={isLoading}
-      className="rounded-lg border border-[color:var(--border-subtle)] bg-[color:var(--surface)] p-3 lg:p-4"
+      // Class 5H — build-home hero is glass-on. Replaces opaque surface +
+      // solid border with `.glass-surface` (translucent + backdrop-blur +
+      // top-edge-brighter gradient border). Elevation-1 gives the hero a
+      // drop-shadow against the page canvas so it reads as raised chrome.
+      // Perf guard at <768px drops the blur automatically at the utility.
+      data-glass="true"
+      className="glass-surface shadow-elevation-1 rounded-lg p-3 lg:p-4"
     >
       {/* Liveness markers — sr-only so visual layout unchanged. */}
       {isLoading ? (

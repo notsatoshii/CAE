@@ -78,6 +78,28 @@
   --elevation-3: 0 4px 10px rgba(0, 0, 0, 0.46), 0 14px 32px rgba(0, 0, 0, 0.34);
   --elevation-4: 0 8px 18px rgba(0, 0, 0, 0.54), 0 28px 56px rgba(0, 0, 0, 0.42);
 
+  /* ---------------------------------------------------------------------
+   * Class 5H — Glassmorphic tokens (Eric session 13 P2 theme directive).
+   *
+   * Translucent panel fills + backdrop-blur + subtle top-edge highlight
+   * gradient for chrome surfaces. Light-theme values (under :root) lean on
+   * a warm off-white alpha; dark overrides live in `.dark`.
+   *
+   * Usage: apply `--glass-panel-bg` as background, `--glass-border-gradient`
+   * as a border-image (top brighter), `backdrop-blur-md` Tailwind utility
+   * for the blur. Perf guard at <768px drops the blur (see media query
+   * further down in this file).
+   * ------------------------------------------------------------------- */
+  --glass-panel-bg: color-mix(in oklch, var(--surface) 72%, transparent);
+  --glass-panel-bg-strong: color-mix(in oklch, var(--surface) 84%, transparent);
+  --glass-border-gradient: linear-gradient(
+    to bottom,
+    color-mix(in oklch, var(--text) 18%, transparent) 0%,
+    color-mix(in oklch, var(--border-subtle) 80%, transparent) 45%,
+    var(--border-subtle) 100%
+  );
+  --glass-blur: 12px;
+
   /* Density tokens — keep spacing decisions consistent across components. */
   --density-tight:        0.5rem;   /*  8px */
   --density-comfortable:  0.75rem;  /* 12px */
@@ -182,6 +204,20 @@
   --elevation-2: 0 2px 4px rgba(0, 0, 0, 0.38), 0 6px 14px rgba(0, 0, 0, 0.26);
   --elevation-3: 0 4px 10px rgba(0, 0, 0, 0.46), 0 14px 32px rgba(0, 0, 0, 0.34);
   --elevation-4: 0 8px 18px rgba(0, 0, 0, 0.54), 0 28px 56px rgba(0, 0, 0, 0.42);
+
+  /* Class 5H — dark-theme glass. Dark surfaces need a slightly heavier
+     translucent fill (62-76%) because near-black on near-black without
+     alpha reads flat. Border gradient uses a brighter top edge (8% text)
+     to imply a light source above. */
+  --glass-panel-bg: color-mix(in oklch, var(--surface) 62%, transparent);
+  --glass-panel-bg-strong: color-mix(in oklch, var(--surface) 76%, transparent);
+  --glass-border-gradient: linear-gradient(
+    to bottom,
+    color-mix(in oklch, var(--text) 12%, transparent) 0%,
+    color-mix(in oklch, var(--border-subtle) 85%, transparent) 45%,
+    var(--border-subtle) 100%
+  );
+  --glass-blur: 12px;
 
   --background: var(--bg);
   --foreground: var(--text);
@@ -390,6 +426,76 @@ body {
 @utility shadow-elevation-2 { box-shadow: var(--elevation-2); }
 @utility shadow-elevation-3 { box-shadow: var(--elevation-3); }
 @utility shadow-elevation-4 { box-shadow: var(--elevation-4); }
+
+/* ---------------------------------------------------------------------------
+ * Class 5H — Glassmorphic surface utilities (Eric session 13 P2 directive).
+ *
+ * Applies translucent-panel fill + backdrop-blur + top-edge-brighter border
+ * gradient. The border-image technique paints a gradient along the border
+ * (brightest at top, fading down) to imply a light source above — the
+ * hallmark of Apple/Arc/Vercel glass surfaces.
+ *
+ * Perf guard: under 768px we drop the blur but KEEP the translucent fill so
+ * hierarchy still reads on mobile without the GPU cost of `backdrop-filter`.
+ * `prefers-reduced-transparency` (macOS / iOS accessibility) falls back to
+ * fully opaque --surface.
+ *
+ * Variants:
+ *   .glass-surface         — default (62% alpha), for content panels
+ *                            like hero/cards that opt in via the `glass` prop.
+ *   .glass-surface-strong  — higher alpha (76%), for persistent chrome
+ *                            (top bar, rail) that must stay legible when
+ *                            page content scrolls beneath.
+ *
+ * Pair with `shadow-elevation-N` at the call site for depth. The `glass`
+ * prop on <Panel /> + <Card /> applies `.glass-surface` automatically.
+ * ------------------------------------------------------------------------- */
+@utility glass-surface {
+  background-color: var(--glass-panel-bg);
+  border: 1px solid transparent;
+  border-image: var(--glass-border-gradient) 1;
+  backdrop-filter: blur(var(--glass-blur)) saturate(140%);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(140%);
+}
+@utility glass-surface-strong {
+  background-color: var(--glass-panel-bg-strong);
+  border: 1px solid transparent;
+  border-image: var(--glass-border-gradient) 1;
+  backdrop-filter: blur(var(--glass-blur)) saturate(140%);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(140%);
+}
+
+/* Perf guard — disable the expensive `backdrop-filter` below md breakpoint
+   (<768px). Translucent fill stays so the hierarchy cue survives on mobile.
+   Using a plain media query at top level — Tailwind v4's @utility does not
+   accept nested breakpoints. */
+@media (max-width: 767.98px) {
+  .glass-surface,
+  .glass-surface-strong {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}
+
+/* Reduced-transparency honors the OS accessibility setting. Fallback is the
+   opaque --surface fill so content never swims behind translucency. */
+@media (prefers-reduced-transparency: reduce) {
+  .glass-surface,
+  .glass-surface-strong {
+    background-color: var(--surface);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}
+
+/* `@supports` fallback — browsers without backdrop-filter at all (older
+   Firefox pre-103) get the opaque surface so there's no unreadable chrome. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .glass-surface,
+  .glass-surface-strong {
+    background-color: var(--surface);
+  }
+}
 
 /* ---------------------------------------------------------------------------
  * Class 13D — Focus-dim: when a modal/sheet/dialog/alertdialog is open
