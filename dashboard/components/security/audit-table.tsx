@@ -133,7 +133,7 @@ export function AuditTable({ initial }: AuditTableProps) {
       </div>
 
       {/* Table */}
-      <div className="rounded border border-zinc-800 overflow-hidden">
+      <div className="rounded border border-zinc-800 overflow-x-auto">
         {entries.length === 0 ? (
           // Filter-applied empty — short copy because the user controls the filters.
           <div data-testid="audit-table-empty" className="py-6">

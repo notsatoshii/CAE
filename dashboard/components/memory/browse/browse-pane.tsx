@@ -139,13 +139,13 @@ export function BrowsePane({
     <div
       // Class 13D — browse-pane matches graph-pane (rounded + elevation-1)
       // so the memory tab's two surfaces read as peers at the same z-layer.
-      className="flex h-full min-h-0 flex-row overflow-hidden rounded-lg border border-[color:var(--border)] bg-[color:var(--bg)] shadow-elevation-1"
+      className="flex h-full min-h-0 flex-col sm:flex-row overflow-hidden rounded-lg border border-[color:var(--border)] bg-[color:var(--bg)] shadow-elevation-1"
       data-testid="browse-pane"
       data-liveness={browseLiveness}
     >
       <span className="sr-only" data-truth={`memory-browse.${browseLiveness}`}>yes</span>
       <aside
-        className="flex w-[300px] shrink-0 flex-col overflow-hidden border-r border-[color:var(--border)] bg-[color:var(--bg)]"
+        className="flex w-full shrink-0 flex-col overflow-hidden border-r border-[color:var(--border)] bg-[color:var(--bg)] sm:w-[300px]"
         aria-label="Memory browser"
       >
         <div className="border-b border-[color:var(--border)] px-3 py-2">

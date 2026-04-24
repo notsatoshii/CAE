@@ -39,7 +39,7 @@ export function BuildRail() {
     <nav
       aria-label="Build navigation"
       data-testid="build-rail"
-      className="flex h-full w-12 shrink-0 flex-col items-center gap-1 border-r border-[color:var(--border,#1f1f22)] bg-[color:var(--surface,#121214)] py-3"
+      className="hidden md:flex h-full w-12 shrink-0 flex-col items-center gap-1 border-r border-[color:var(--border,#1f1f22)] bg-[color:var(--surface,#121214)] py-3"
     >
       {TABS.map((tab) => {
         const Icon = tab.icon

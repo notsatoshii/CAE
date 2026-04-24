@@ -527,8 +527,13 @@ export function Sidebar({ initialCollapsed = false }: SidebarProps) {
         transition={widthTransition}
         style={{ width: collapsed ? SIDEBAR_COLLAPSED_WIDTH : SIDEBAR_EXPANDED_WIDTH }}
         className={cn(
-          "flex h-[calc(100vh-40px)] shrink-0 flex-col overflow-hidden",
-          "border-r border-[color:var(--border-subtle)] bg-[color:var(--surface)]",
+          "hidden md:flex h-[calc(100vh-40px)] shrink-0 flex-col overflow-hidden",
+          // Class 5H — always glass: `.glass-surface-strong` gives the rail
+          // the translucent fill + border-image gradient + backdrop-blur.
+          // Replaces the legacy opaque `bg-[color:var(--surface)]` + solid
+          // `border-r`. The utility's border-image paints the right edge
+          // as part of the gradient border so no explicit border-r needed.
+          "glass-surface-strong",
           // Class 13B — rail reads as an elevated layer above page content
           // so the left edge has a clear drop-shadow against the canvas.
           "shadow-elevation-1",
