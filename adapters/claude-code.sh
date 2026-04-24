@@ -135,7 +135,7 @@ tmux kill-session -t "$TMUX_SESSION" 2>/dev/null || true
 # the credentials cron-mirrored to /home/cae/.claude can be used.  Gated
 # so non-root invocations stay unchanged.
 if [[ "$(id -u)" -eq 0 ]]; then
-  CLAUDE_WRAPPER="sudo -u cae -E env HOME=/home/cae claude"
+  CLAUDE_WRAPPER="/usr/bin/sudo -u cae -E env HOME=/home/cae /usr/bin/claude"
 else
   CLAUDE_WRAPPER="claude"
 fi
