@@ -7,8 +7,16 @@ import { CatalogGrid } from "@/components/skills/catalog-grid"
 import { SkillDetailDrawer } from "@/components/skills/skill-detail-drawer"
 import { InstallButton } from "@/components/skills/install-button"
 
+/**
+ * Accept the catalog as the structural superset: plain CatalogSkill objects
+ * keep working, but server callers can attach `lastUpdatedISO` to drive the
+ * per-card freshness chip. Kept loose on purpose — the presence of an extra
+ * prop doesn't change tab / filter / install semantics.
+ */
+type CatalogInput = CatalogSkill & { lastUpdatedISO?: string | null }
+
 type Props = {
-  catalog: CatalogSkill[]
+  catalog: CatalogInput[]
   /** Role from server-component parent. Forwarded to InstallButton for gating. */
   currentRole?: Role
 }
@@ -30,7 +38,7 @@ export function SkillsClient({ catalog, currentRole }: Props) {
   const tab = searchParams.get("tab") === "installed" ? "installed" : "catalog"
 
   const [drawerSkill, setDrawerSkill] = useState<CatalogSkill | null>(null)
-  const [localCatalog, setLocalCatalog] = useState<CatalogSkill[]>(catalog)
+  const [localCatalog, setLocalCatalog] = useState<CatalogInput[]>(catalog)
 
   const installed = localCatalog.filter((s) => s.installed)
 

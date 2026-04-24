@@ -4,9 +4,19 @@ import React from "react"
 import { cn } from "@/lib/utils"
 import type { CatalogSkill, Role } from "@/lib/cae-types"
 import { RoleGate } from "@/components/auth/role-gate"
+import { Timestamp } from "@/components/ui/timestamp"
+
+/**
+ * Accept CatalogSkill + the server-added freshness ISO. The /build/skills
+ * server component decorates each catalog entry with `lastUpdatedISO` sourced
+ * from git log (see lib/skills/last-updated.ts). When present the card
+ * renders a chip with the relative time and the absolute ISO on hover —
+ * Eric's rule: timestamps never fuzzy, always hover-absolute.
+ */
+type SkillWithFreshness = CatalogSkill & { lastUpdatedISO?: string | null }
 
 type Props = {
-  skill: CatalogSkill
+  skill: SkillWithFreshness
   onOpen: (skill: CatalogSkill) => void
   onInstall: (skill: CatalogSkill) => void
   /** Role from server-component parent. Gates the Install button. */
@@ -31,16 +41,17 @@ function SourceBadge({ source }: { source: CatalogSkill["source"] }) {
  * SkillCard — displays a single skill in the catalog grid.
  *
  * Props:
- *   skill       — CatalogSkill data
+ *   skill       — CatalogSkill data (+ optional server-added lastUpdatedISO)
  *   onOpen      — fired when the card body is clicked (opens detail drawer)
  *   onInstall   — fired when the Install button is clicked
  *   currentRole — gates the Install button (operator+ required)
  *
  * Phase 14 Plan 04: viewers see a disabled "Read-only" button.
  * Phase 15 Wave 2.1: surface uses `.card-base card-base--interactive`.
+ * Skills/class19c: renders last-updated chip when lastUpdatedISO is provided.
  */
 export function SkillCard({ skill, onOpen, onInstall, currentRole }: Props) {
-  const { name, owner, description, source, installs, stars, installed } = skill
+  const { name, owner, description, source, installs, stars, installed, lastUpdatedISO } = skill
 
   const countLabel = installs != null ? `${installs.toLocaleString()} installs` : stars != null ? `${stars.toLocaleString()} stars` : null
 
@@ -85,9 +96,22 @@ export function SkillCard({ skill, onOpen, onInstall, currentRole }: Props) {
           <p className="mt-1 line-clamp-2 text-xs text-zinc-400">{description}</p>
         )}
 
-        {countLabel && (
-          <span className="text-[10px] text-zinc-500">{countLabel}</span>
-        )}
+        <div className="mt-1 flex items-center justify-between gap-2">
+          {countLabel ? (
+            <span className="text-[10px] text-zinc-500">{countLabel}</span>
+          ) : (
+            <span />
+          )}
+          {lastUpdatedISO && (
+            <span
+              data-testid="skill-last-updated"
+              className="text-[10px] text-zinc-500"
+            >
+              <span className="mr-1">updated</span>
+              <Timestamp iso={lastUpdatedISO} className="text-[10px]" />
+            </span>
+          )}
+        </div>
       </div>
 
       {/* Actions row — gated by RoleGate */}
