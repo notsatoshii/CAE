@@ -14,17 +14,40 @@
  *
  * ChatRail is hidden on /chat — the rail provider checks usePathname() === "/chat"
  * (already enforced in Wave 2, 09-05). This plan audits that fact via verify greps.
+ *
+ * Hydration (Class 9 fix): dev-mode is hydrated client-only (localStorage) by the
+ * DevModeProvider, so `useDevMode()` returns `false` on SSR and may flip to `true`
+ * post-mount. The page shell (`app/chat/page.tsx`) reads the `devMode` cookie via
+ * next/headers `cookies()` and passes it as `initialDev`. SSR and the first
+ * client render both use `initialDev`; once mounted we switch to the live context
+ * value so in-session ⌘Shift+D toggles still flip copy without a reload.
  */
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ChatPanel } from "@/components/chat/chat-panel";
 import { ChatMirror, type MirrorSurface } from "@/components/chat/chat-mirror";
 import { useDevMode } from "@/lib/providers/dev-mode";
 import { labelFor } from "@/lib/copy/labels";
 
-export function ChatLayout() {
+type ChatLayoutProps = {
+  /**
+   * Server-read dev-mode, from the `devMode` cookie via `cookies()`. Defaults
+   * to `false` (founder-speak) when the cookie is absent. Used for SSR + the
+   * first client render so aria-labels match and React does not warn about a
+   * hydration mismatch. Post-mount, the component switches to the live
+   * `useDevMode()` value to respect in-session toggles.
+   */
+  initialDev?: boolean;
+};
+
+export function ChatLayout({ initialDev = false }: ChatLayoutProps = {}) {
   const { dev } = useDevMode();
-  const t = labelFor(dev);
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+  const effectiveDev = mounted ? dev : initialDev;
+  const t = labelFor(effectiveDev);
   const [surface, setSurface] = useState<MirrorSurface>("home");
 
   return (

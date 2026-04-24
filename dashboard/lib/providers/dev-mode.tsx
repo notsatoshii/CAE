@@ -11,6 +11,18 @@ type DevModeContextValue = {
 
 const DevModeContext = createContext<DevModeContextValue | null>(null);
 const STORAGE_KEY = "devMode";
+const COOKIE_KEY = "devMode";
+// 1 year — matches typical preference-cookie lifetime. Surfaced to the server
+// via next/headers `cookies()` so SSR can render the correct copy/aria-labels
+// and avoid hydration mismatches (Class 9 fix for /chat aria-label flip).
+const COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 365;
+
+function writeDevModeCookie(dev: boolean): void {
+  if (typeof document === "undefined") return;
+  document.cookie =
+    `${COOKIE_KEY}=${dev ? "true" : "false"}; ` +
+    `path=/; max-age=${COOKIE_MAX_AGE_SECONDS}; SameSite=Lax`;
+}
 
 function isEditableTarget(target: EventTarget | null): boolean {
   if (!(target instanceof HTMLElement)) return false;
@@ -29,9 +41,12 @@ export function DevModeProvider({ children }: { children: React.ReactNode }) {
     if (stored === "true") setDevState(true);
   }, []);
 
-  // Persist on change.
+  // Persist on change — both localStorage (for this provider on next load)
+  // and a cookie (for server-rendered pages like /chat that need the value
+  // during SSR to avoid hydration mismatches).
   useEffect(() => {
     window.localStorage.setItem(STORAGE_KEY, String(dev));
+    writeDevModeCookie(dev);
   }, [dev]);
 
   const setDev = useCallback((v: boolean) => setDevState(v), []);
