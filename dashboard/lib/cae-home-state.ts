@@ -451,7 +451,13 @@ async function buildPhases(projects: Project[]): Promise<PhaseSummary[]> {
     if (!p.hasPlanning) continue
     const phases = await listPhases(p.path)
     for (const ph of phases) {
-      if (ph.status !== "active") continue
+      // Session-14 fix: the old filter required status === "active", which
+      // dropped every phase in this repo (all were "idle" despite real work
+      // happening inside them) → /build "home_phases" always came back
+      // empty. Include any phase that isn't explicitly archived, so the
+      // home feed reflects the full slate of live + recently-worked phases.
+      // Failed phases are kept so Eric can see the red state immediately.
+      if (ph.status === "archived") continue
       const phaseDirName = `${String(ph.number).padStart(2, "0")}-${ph.name}`
       const detail = await getPhaseDetail(p.path, ph.number)
 
