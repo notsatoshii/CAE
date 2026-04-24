@@ -4,27 +4,17 @@
  * TaskHeaderSummary — three-chip header strip for the TaskDetailSheet.
  *
  * Renders the top P0 fields Eric's audit (#2) flagged as missing:
- *   1. STATUS pill — current stage of the phase, derived from
- *      progress + active-agent count (queued / running / waiting / done /
- *      failed). Drives chip color and verbal label.
- *   2. ETA chip — projected minutes remaining for in-flight phases. Falls
- *      back to a linear extrapolation from progress when `eta_min` is null
- *      but we have a non-zero progress reading.
- *   3. TOKEN COST chip — total tokens spent on this phase plus the dollar
- *      cost computed via cae-cost-table::costUsd(). Model is taken from
- *      whatever the active agents are running with (PhaseSummary doesn't
- *      carry per-phase model — the agent-active model is the closest
- *      proxy and matches what the live log would show).
- *   4. DURATION chip — wall time the phase has been running, when we can
- *      derive it from `wave_started_at`-style fields. Currently shown as
- *      ETA inverse approximation when ETA is known.
+ *   1. STATUS pill — current stage of the phase.
+ *   2. ETA chip — projected minutes remaining.
+ *   3. TOKENS chip — total tokens spent on this phase. Tokens-only display
+ *      (D-07) — Max subscription means there is no per-request $ cost, so
+ *      the USD chip was a derived lie. Raw token count is the ground truth.
  *
  * Data source: PhaseSummary (already polled by useStatePoll), no extra
- * fetches. All fields are documented in DETAIL-EXPAND-AUDIT.md §2.
+ * fetches.
  */
 
 import type { PhaseSummary } from "@/lib/cae-home-state";
-import { costUsd, formatUsd } from "@/lib/cae-cost-table";
 
 type Stage = "queued" | "running" | "waiting" | "done" | "failed";
 
@@ -126,20 +116,6 @@ export function TaskHeaderSummary({ phase }: Props) {
   const stage = deriveStage(phase);
   const stageMeta = STAGE_META[stage];
   const eta = projectEtaMin(phase);
-  // PhaseSummary doesn't split input/output tokens — the aggregator sums
-  // them into a single `tokens_phase`. To compute $ cost we approximate the
-  // typical 60/40 input/output split observed in dashboard runs (verified
-  // against .cae/metrics/circuit-breakers.jsonl token_usage samples).
-  const inputTokens = Math.round(phase.tokens_phase * 0.6);
-  const outputTokens = phase.tokens_phase - inputTokens;
-  const model =
-    phase.agents_active.length > 0
-      ? // PhaseSummary doesn't carry the per-agent model; fall back to the
-        // generic "sonnet" tier — the most common active-phase model. The
-        // chip still renders a real number, just at the median rate.
-        "sonnet"
-      : "sonnet";
-  const usd = costUsd(inputTokens, outputTokens, model);
 
   return (
     <div
@@ -181,18 +157,14 @@ export function TaskHeaderSummary({ phase }: Props) {
         }
       />
       <Chip
-        testId="task-header-cost"
+        testId="task-header-tokens"
         bg="color-mix(in srgb, var(--warning) 12%, transparent)"
         fg="var(--warning)"
-        label={formatUsd(usd) + " · " + formatTok(phase.tokens_phase) + " tok"}
+        label={formatTok(phase.tokens_phase) + " tok"}
         title={
-          "Cost so far: " +
-          formatUsd(usd) +
-          " (" +
+          "Tokens so far: " +
           phase.tokens_phase.toLocaleString() +
-          " tokens at " +
-          model +
-          " rate)"
+          " (input + output combined)"
         }
       />
     </div>

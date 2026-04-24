@@ -94,18 +94,17 @@ describe("TaskHeaderSummary", () => {
     expect(screen.getByTestId("task-header-eta")).toHaveTextContent("ETA —");
   });
 
-  it("renders token + USD cost chip with formatted amount", () => {
-    // 1.2M tokens at sonnet rate (60% input @ $3/M, 40% output @ $15/M)
-    // = 720k * 3/1M + 480k * 15/1M = 2.16 + 7.20 = $9.36
+  it("renders tokens chip with formatted amount (tokens-only, no USD)", () => {
     render(<TaskHeaderSummary phase={makePhase({ tokens_phase: 1_200_000 })} />);
-    const chip = screen.getByTestId("task-header-cost");
-    expect(chip.textContent).toMatch(/\$\d/);
+    const chip = screen.getByTestId("task-header-tokens");
     expect(chip.textContent).toMatch(/1\.20M tok/);
+    expect(chip.textContent).not.toMatch(/\$/);
   });
 
-  it("shows $0.00 cost when tokens_phase is zero", () => {
+  it("shows 0 tok when tokens_phase is zero", () => {
     render(<TaskHeaderSummary phase={makePhase({ tokens_phase: 0 })} />);
-    expect(screen.getByTestId("task-header-cost")).toHaveTextContent("$0.00");
+    const chip = screen.getByTestId("task-header-tokens");
+    expect(chip.textContent).toBe("0 tok");
   });
 
   it("renders wave/progress chip in 'Wave x/y · z%' format", () => {
