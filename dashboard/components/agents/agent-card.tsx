@@ -7,6 +7,12 @@
  *   - Avatar circle (40px, first-letter-of-name initial) + name + model chip
  *     on the left cluster.
  *   - Right-aligned status pill: green dot + "Active" or gray dot + "Offline".
+ *   - Session 14 (this change): when the agent has live forge_begin events
+ *     in the last 5 min, a pulsing colored "ACTIVE · Nx" chip renders in
+ *     the header alongside the availability pill. Chip hue is derived from
+ *     the agent's name via the same 8-color palette the avatar uses, so
+ *     scanning the roster for "who is actually working" is a color read,
+ *     not a text read.
  *   - Last-active time in muted mono below the header row.
  *   - Always-visible compact action row at bottom (Phase 15 Wave 2.2).
  *
@@ -42,27 +48,94 @@ interface AgentCardProps {
   agent: AgentRosterEntry
 }
 
+/**
+ * Deterministic agent palette — 8 hex hues keyed by a stable name-hash.
+ *
+ * Shared between the avatar (background tile) and the "ACTIVE · Nx" activity
+ * chip (session 14, Eric: "different color tags for each agent"). Keeping the
+ * palette + hash colocated here is the single source of truth; any new
+ * surface that wants the hue should call agentHue(name) rather than roll
+ * its own copy of the hash.
+ */
+export const AGENT_HUE_PALETTE = [
+  "#3b5bdb", "#ae3ec9", "#0ca678", "#e67700",
+  "#d63939", "#1971c2", "#2f9e44", "#c92a2a",
+] as const
+
+export function agentHue(name: string): string {
+  const sum = name.split("").reduce((acc, c) => acc + c.charCodeAt(0), 0)
+  return AGENT_HUE_PALETTE[sum % AGENT_HUE_PALETTE.length]
+}
+
 /** Avatar: colored circle with name initials, 40px. */
 function AgentAvatar({ name, size = 40 }: { name: string; size?: number }) {
   const initial = name.charAt(0).toUpperCase()
-  // Deterministic color per agent name — cycles through a small palette.
-  const COLORS = [
-    "bg-[#3b5bdb]", "bg-[#ae3ec9]", "bg-[#0ca678]", "bg-[#e67700]",
-    "bg-[#d63939]", "bg-[#1971c2]", "bg-[#2f9e44]", "bg-[#c92a2a]",
-  ]
-  const colorIndex = name.split("").reduce((acc, c) => acc + c.charCodeAt(0), 0) % COLORS.length
-  const bgColor = COLORS[colorIndex]
+  const bgColor = agentHue(name)
   return (
     <div
       aria-hidden="true"
-      className={cn(
-        "flex shrink-0 items-center justify-center rounded-full text-white font-semibold",
-        bgColor,
-      )}
-      style={{ width: size, height: size, fontSize: Math.round(size * 0.4) }}
+      className="flex shrink-0 items-center justify-center rounded-full text-white font-semibold"
+      style={{
+        width: size,
+        height: size,
+        fontSize: Math.round(size * 0.4),
+        backgroundColor: bgColor,
+      }}
     >
       {initial}
     </div>
+  )
+}
+
+/**
+ * ACTIVE chip — pulsing tag rendered in the card header when the agent has
+ * live forge_begin events in the last 5 min. Color is the agent's
+ * deterministic hue (hash-derived) so multi-concurrent scanning reads as
+ * color coded. Label format: "ACTIVE · Nx" (N = active_concurrent).
+ *
+ * Accessibility:
+ *   - `title` attribute spells out the count + agent for sighted hover + AT.
+ *   - Pulse animation is gated on `prefers-reduced-motion` — under reduced
+ *     motion the chip stays static at full opacity (still colored, still
+ *     readable; just no animation). The gating lives in the keyframes block
+ *     inline below so we don't have to bounce through globals.css.
+ *   - Real <span> with tabIndex=0 so keyboard users can focus it.
+ */
+function AgentActiveChip({
+  agentName,
+  agentLabel,
+  count,
+}: {
+  agentName: string
+  agentLabel: string
+  count: number
+}) {
+  const hue = agentHue(agentName)
+  // 20% opacity background so the hue tints without washing out the label.
+  // color-mix is supported in every Chromium / Firefox / Safari version
+  // shipping since 2023; the agents page already requires a modern browser.
+  const bg = `color-mix(in srgb, ${hue} 20%, transparent)`
+  return (
+    <span
+      role="status"
+      tabIndex={0}
+      data-testid={"agent-card-" + agentName + "-active-chip"}
+      title={count + " concurrent tasks running as " + agentLabel}
+      className="agent-active-chip flex shrink-0 items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-offset-[color:var(--bg,#0a0a0a)]"
+      style={{
+        backgroundColor: bg,
+        borderColor: hue,
+        color: hue,
+      }}
+    >
+      <Circle
+        size={6}
+        aria-hidden
+        className="fill-current"
+        style={{ color: hue }}
+      />
+      ACTIVE · {count}x
+    </span>
   )
 }
 
@@ -104,6 +177,7 @@ export function AgentCard({ agent }: AgentCardProps) {
   }, [])
 
   const isActive = agent.group === "active"
+  const activeConcurrent = agent.active_concurrent ?? 0
 
   function open() {
     const p = new URLSearchParams(searchParams?.toString() ?? "")
@@ -151,7 +225,7 @@ export function AgentCard({ agent }: AgentCardProps) {
       className="card-base card-base--interactive group relative block focus:outline-none"
     >
 
-      {/* Header: avatar + name/model on left; status pill on right */}
+      {/* Header: avatar + name/model on left; ACTIVE chip (if any) + status pill on right */}
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-start gap-3 min-w-0">
           <AgentAvatar name={agent.name} size={40} />
@@ -170,7 +244,16 @@ export function AgentCard({ agent }: AgentCardProps) {
             </div>
           </div>
         </div>
-        <StatusPill active={isActive} />
+        <div className="flex shrink-0 items-center gap-2">
+          {activeConcurrent > 0 && (
+            <AgentActiveChip
+              agentName={agent.name}
+              agentLabel={agent.label}
+              count={activeConcurrent}
+            />
+          )}
+          <StatusPill active={isActive} />
+        </div>
       </div>
 
       {/* Last-active + success rate row */}

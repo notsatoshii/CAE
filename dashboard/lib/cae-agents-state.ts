@@ -51,6 +51,28 @@ export interface AgentRosterEntry {
     last_24h_count: number
   }
   drift_warning: boolean
+
+  /**
+   * Session 14: number of forge_begin events in the last 5 minutes (across
+   * all projects) that do NOT yet have a matching forge_end for the same
+   * (task_id, attempt). Mirrors the 5-minute window used by Mission
+   * Control's `countActiveAgents` so the agents-tab "ACTIVE" chip count
+   * agrees with the /build hero banner's active-count total.
+   *
+   * Distinct from `current.concurrent`, which uses a 30-second window +
+   * phase-prefix key to drive the inline "Xa" footer. Keeping both lets
+   * the card surface short-lived bursts (footer) AND sustained work (chip).
+   *
+   * 0 when no live tasks.
+   */
+  active_concurrent: number
+
+  /**
+   * Unix-ms timestamp of the oldest still-open forge_begin for this agent,
+   * or null when active_concurrent is 0. Consumers can derive "running for
+   * Xs" durations from this without re-tailing the JSONL.
+   */
+  active_since_ms: number | null
 }
 
 export interface AgentInvocation {
@@ -92,6 +114,10 @@ const WINDOW_7D_MS = 7 * DAY_MS
 const WINDOW_30D_MS = 30 * DAY_MS
 const WINDOW_24H_MS = DAY_MS
 const WINDOW_CONCURRENT_MS = 30_000
+// Session 14: the "ACTIVE · Nx" chip uses the same 5-min window as
+// cae-mission-control-state.ts::countActiveAgents so the numbers reconcile
+// across /build (hero banner) and /build/agents (per-card chip).
+const WINDOW_ACTIVE_CHIP_MS = 5 * 60_000
 const BUCKET_MS = WINDOW_7D_MS / BUCKET_COUNT
 const HOUR_MS = 3_600_000
 const DRIFT_THRESHOLD = 0.85
@@ -370,6 +396,33 @@ function buildRosterEntryForAgent(
   let concurrent = 0
   for (const c of openStarts.values()) concurrent += c
 
+  // Session 14: ACTIVE chip count — 5-minute window, keyed by
+  // (task_id, attempt). Mirrors cae-mission-control-state.ts contract so
+  // per-card chips reconcile with the hero banner's total.
+  //
+  // Track begin timestamps per key so we can report `active_since_ms`
+  // (oldest still-open task). Walking events in chronological order means
+  // the map records the latest begin per key; matching forge_end deletes
+  // it. Any key remaining at the end is "still running".
+  const openBeginTsMs = new Map<string, number>()
+  for (const p of parsedAsc) {
+    if (now - p.tsMs > WINDOW_ACTIVE_CHIP_MS) continue
+    const ev = p.ce.event as unknown as CbEvent
+    const kind = typeof ev.event === "string" ? ev.event : ""
+    const taskId = eventTaskId(ev) || "unknown"
+    const key = `${taskId}::${eventAttempt(ev)}`
+    if (kind === "forge_begin") {
+      openBeginTsMs.set(key, p.tsMs)
+    } else if (kind === "forge_end") {
+      openBeginTsMs.delete(key)
+    }
+  }
+  const active_concurrent = openBeginTsMs.size
+  let active_since_ms: number | null = null
+  for (const tsMs of openBeginTsMs.values()) {
+    if (active_since_ms === null || tsMs < active_since_ms) active_since_ms = tsMs
+  }
+
   // Model resolution — newest event carrying a model wins
   let model = DEFAULT_MODEL
   const sortedDesc = parsed.slice().sort((a, b) => b.tsMs - a.tsMs)
@@ -381,9 +434,11 @@ function buildRosterEntryForAgent(
     }
   }
 
-  // Group classification
+  // Group classification — `active` if the 30s footer count OR the 5-min
+  // chip count is positive (long-running work should keep the agent in the
+  // active bucket even after its 30s footer tick expires).
   let group: AgentRosterEntry["group"]
-  if (concurrent > 0) group = "active"
+  if (concurrent > 0 || active_concurrent > 0) group = "active"
   else if (last_run_days_ago !== null && last_run_days_ago <= 7)
     group = "recently_used"
   else group = "dormant"
@@ -411,6 +466,8 @@ function buildRosterEntryForAgent(
       last_24h_count: last24hCount,
     },
     drift_warning,
+    active_concurrent,
+    active_since_ms,
   }
 }
 
@@ -423,6 +480,11 @@ interface RosterBuild {
 }
 
 let cached: RosterBuild | null = null
+
+/** Test-only hook: clear the process-level roster cache between cases. */
+export function __resetAgentsRosterCacheForTest(): void {
+  cached = null
+}
 
 async function buildRoster(): Promise<RosterBuild> {
   const projects = await listProjects()

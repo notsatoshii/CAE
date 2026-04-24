@@ -872,3 +872,21 @@ body:has([data-slot="sheet-content"][data-open]) #main-content {
     animation: none;
   }
 }
+
+/* Session 14: AgentCard ACTIVE chip pulse — gentle 1.5s ease-in-out opacity
+ * pulse so the "this agent is working right now" signal is pre-attentive
+ * without being a distraction. Drops to static full-opacity under
+ * prefers-reduced-motion (chip stays colored + readable, just no animation). */
+@keyframes cae-agent-active-pulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.7; }
+}
+.agent-active-chip {
+  animation: cae-agent-active-pulse 1.5s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .agent-active-chip {
+    animation: none;
+    opacity: 1;
+  }
+}

@@ -5,8 +5,14 @@
  *
  * Groups agents into three sections in locked order:
  *   Active → Recently used → Dormant
- * Empty groups are hidden entirely. Preserves aggregator order within a group
- * (the roster aggregator emits AGENT_META order — deterministic).
+ * Empty groups are hidden entirely.
+ *
+ * Session 14: within each section, agents with a live ACTIVE chip
+ * (`active_concurrent > 0`) sort first, then ties break on name asc.
+ * Rationale: on a busy day you want to scan the grid and see the
+ * working agents at the top of each bucket regardless of their AGENT_META
+ * insertion order. Tie-break on name keeps the ordering deterministic
+ * (and stable across re-renders when chips toggle on/off).
  *
  * Responsive grid: 1 col mobile, 2 cols md (~768px+), 3 cols xl (~1280px+).
  * Matches UI-SPEC §6 card-grid expectation (2–3 cols at common Build widths).
@@ -31,6 +37,13 @@ interface AgentGridProps {
 type Group = "active" | "recently_used" | "dormant"
 const GROUP_ORDER: Group[] = ["active", "recently_used", "dormant"]
 
+/** Session 14 sort: active_concurrent desc, then name asc. */
+function sortByActivity(a: AgentRosterEntry, b: AgentRosterEntry): number {
+  const delta = (b.active_concurrent ?? 0) - (a.active_concurrent ?? 0)
+  if (delta !== 0) return delta
+  return a.name.localeCompare(b.name)
+}
+
 export function AgentGrid({ agents, loadError }: AgentGridProps) {
   const { dev } = useDevMode()
   const t = labelFor(dev)
@@ -53,6 +66,7 @@ export function AgentGrid({ agents, loadError }: AgentGridProps) {
     dormant: [],
   }
   for (const a of agents) grouped[a.group].push(a)
+  for (const g of GROUP_ORDER) grouped[g].sort(sortByActivity)
 
   return (
     <div data-testid="agent-grid" className="flex flex-col gap-8">

@@ -5,11 +5,14 @@
  * Phase 15 Wave 2.2 — verb container is now ALWAYS visible at rest. The
  * old "verb container starts with opacity-0" assertion was inverted to
  * assert visibility + keyboard reachability.
+ * Session 14 — colored "ACTIVE · Nx" chip renders when the agent has
+ * live forge_begin events in the last 5 min. Chip color is the agent's
+ * deterministic hue (hash-derived from the name).
  */
 
 import { describe, it, expect, afterEach, vi, beforeEach } from "vitest"
 import { cleanup, render, screen } from "@testing-library/react"
-import { AgentCard } from "./agent-card"
+import { AgentCard, agentHue, AGENT_HUE_PALETTE } from "./agent-card"
 import { DevModeProvider } from "@/lib/providers/dev-mode"
 import { ExplainModeProvider } from "@/lib/providers/explain-mode"
 import type { AgentRosterEntry } from "@/lib/cae-agents-state"
@@ -49,6 +52,8 @@ function makeAgent(over: Partial<AgentRosterEntry> = {}): AgentRosterEntry {
       last_24h_count: 8,
     },
     drift_warning: false,
+    active_concurrent: 0,
+    active_since_ms: null,
     ...over,
   }
 }
@@ -134,5 +139,71 @@ describe("AgentCard (MC-style redesign)", () => {
   it("shows drift warning badge when drift_warning is true", () => {
     renderCard(makeAgent({ drift_warning: true }))
     expect(screen.getByTestId("agent-card-forge-drift-indicator")).toBeInTheDocument()
+  })
+})
+
+describe("AgentCard — Session 14 ACTIVE chip", () => {
+  it("does NOT render the chip when active_concurrent = 0", () => {
+    renderCard(makeAgent({ active_concurrent: 0 }))
+    expect(screen.queryByTestId("agent-card-forge-active-chip")).toBeNull()
+  })
+
+  it("renders the chip when active_concurrent > 0", () => {
+    renderCard(makeAgent({ active_concurrent: 3 }))
+    const chip = screen.getByTestId("agent-card-forge-active-chip")
+    expect(chip).toBeInTheDocument()
+    // Label format: "ACTIVE · 3x"
+    expect(chip.textContent).toMatch(/ACTIVE\s*·\s*3x/)
+  })
+
+  it("chip count reflects the active_concurrent value", () => {
+    renderCard(makeAgent({ name: "nexus", active_concurrent: 7 }))
+    const chip = screen.getByTestId("agent-card-nexus-active-chip")
+    expect(chip.textContent).toMatch(/ACTIVE\s*·\s*7x/)
+  })
+
+  it("chip carries the agent's deterministic hue in its inline style", () => {
+    // Confirm that chip background/border use the same hue agentHue() returns.
+    renderCard(makeAgent({ name: "forge", active_concurrent: 1 }))
+    const chip = screen.getByTestId("agent-card-forge-active-chip")
+    const hue = agentHue("forge")
+    expect(AGENT_HUE_PALETTE).toContain(hue as typeof AGENT_HUE_PALETTE[number])
+    // JSDOM normalizes "#rrggbb" → "rgb(r, g, b)" on the style attribute,
+    // so compare numerically.
+    const style = chip.getAttribute("style") ?? ""
+    const r = parseInt(hue.slice(1, 3), 16)
+    const g = parseInt(hue.slice(3, 5), 16)
+    const b = parseInt(hue.slice(5, 7), 16)
+    const rgb = "rgb(" + r + ", " + g + ", " + b + ")"
+    expect(style).toContain("border-color: " + rgb)
+    expect(style).toContain("color: " + rgb)
+    // And the chip background must be the color-mix wrapper over the same hue.
+    expect(style).toContain("color-mix(in srgb, " + rgb + " 20%, transparent)")
+  })
+
+  it("chip is keyboard-focusable and carries a descriptive title attribute", () => {
+    renderCard(makeAgent({ name: "forge", label: "Forge", active_concurrent: 2 }))
+    const chip = screen.getByTestId("agent-card-forge-active-chip")
+    expect(chip.getAttribute("tabindex")).toBe("0")
+    expect(chip).toHaveAttribute("title", "2 concurrent tasks running as Forge")
+  })
+
+  it("chip carries the pulse animation class (globals.css handles reduced-motion)", () => {
+    renderCard(makeAgent({ active_concurrent: 1 }))
+    const chip = screen.getByTestId("agent-card-forge-active-chip")
+    expect(chip.className).toContain("agent-active-chip")
+  })
+
+  it("different agents get different hues (palette covers all 9 AGENT_META names)", () => {
+    // Not every pair needs to differ (the palette has 8 entries for 9 names
+    // so collision is expected), but the function must be deterministic + stable.
+    expect(agentHue("forge")).toBe(agentHue("forge"))
+    expect(agentHue("nexus")).toBe(agentHue("nexus"))
+    // Sanity: at least two different names land on different hues.
+    const hues = new Set(
+      ["forge", "nexus", "sentinel", "scout", "scribe", "phantom", "aegis", "arch", "herald"]
+        .map(agentHue),
+    )
+    expect(hues.size).toBeGreaterThanOrEqual(2)
   })
 })
