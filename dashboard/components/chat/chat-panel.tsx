@@ -25,6 +25,7 @@ import { usePathname } from "next/navigation";
 import { useChatRail } from "@/lib/providers/chat-rail";
 import { useDevMode } from "@/lib/providers/dev-mode";
 import { labelFor } from "@/lib/copy/labels";
+import { safeUUID } from "@/lib/safe-uuid";
 import { Message } from "./message";
 import { Suggestions } from "./suggestions";
 import { LastUpdated } from "@/components/ui/last-updated";
@@ -138,13 +139,13 @@ export function ChatPanel({ standalone = false }: { standalone?: boolean } = {})
       setDraft("");
 
       const userMsg: ChatMessageUI = {
-        id: crypto.randomUUID(),
+        id: safeUUID(),
         role: "user",
         content: trimmed,
         ts: new Date().toISOString(),
       };
       const assistantDraft: ChatMessageUI = {
-        id: crypto.randomUUID(),
+        id: safeUUID(),
         role: "assistant",
         content: "",
         agent: currentAgent,
