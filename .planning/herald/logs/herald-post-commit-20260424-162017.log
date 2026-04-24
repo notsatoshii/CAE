@@ -1,0 +1,4 @@
+=== herald post-commit 2026-04-24T07:20:17Z ===
+=== commit: 2c4b361 fix(dashboard): buildPhases includes non-archived phases + live smoke ===
+=== changed: dashboard/audit/score/playwright-session14.config.ts dashboard/audit/score/session14-live-smoke.spec.ts dashboard/lib/cae-home-state.ts  ===
+Herald --fast spawning (changelog) → CHANGELOG.md

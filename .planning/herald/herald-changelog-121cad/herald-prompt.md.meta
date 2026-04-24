@@ -1,0 +1,13 @@
+{
+  "session_id": "herald-changelog-121cad",
+  "tmux_session": "cae-herald-changelog-121cad",
+  "exit_code": 0,
+  "duration_seconds": 228,
+  "model": "claude-sonnet-4-6",
+  "invocation": "wrap:gsd-doc-writer",
+  "effort": "max",
+  "permission_mode": "default",
+  "output_bytes": 2320,
+  "error_bytes": 0,
+  "timestamp": "2026-04-24T04:45:29Z"
+}

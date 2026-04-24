@@ -1,0 +1,4 @@
+=== herald post-commit 2026-04-24T03:14:01Z ===
+=== commit: e402fd0 feat(loading/session13): 'Loading...' + CTRL + ALT + ELITE brand subtitle ===
+=== changed: dashboard/app/loading.test.tsx dashboard/app/loading.tsx  ===
+Herald --fast spawning (changelog) → CHANGELOG.md

@@ -1,0 +1,4 @@
+=== herald post-commit 2026-04-24T10:59:31Z ===
+=== commit: 0b793ba cae(parallelism): serialize forge to 1 until worktree isolation lands ===
+=== changed: config/circuit-breakers.yaml  ===
+Herald --fast spawning (changelog) → CHANGELOG.md

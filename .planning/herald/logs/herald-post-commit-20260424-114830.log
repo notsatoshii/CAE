@@ -1,0 +1,4 @@
+=== herald post-commit 2026-04-24T02:48:30Z ===
+=== commit: 1a2335d fix(herald/class12): sudo -u cae for claude CLI spawns ===
+=== changed: adapters/claude-code.sh  ===
+Herald --fast spawning (changelog) → CHANGELOG.md

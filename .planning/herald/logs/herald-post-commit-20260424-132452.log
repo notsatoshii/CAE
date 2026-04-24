@@ -1,0 +1,4 @@
+=== herald post-commit 2026-04-24T04:24:52Z ===
+=== commit: 3b3446d feat(craft/class5F): 4-tier typography hierarchy across major surfaces ===
+=== changed: dashboard/audit/score/mobile-responsive-smoke.spec.ts dashboard/audit/score/playwright-mobile-responsive.config.ts dashboard/components/memory/browse/browse-pane.tsx dashboard/components/security/audit-table.tsx dashboard/components/shell/build-rail.tsx dashboard/components/shell/sidebar.tsx  ===
+Herald --fast spawning (changelog) → CHANGELOG.md

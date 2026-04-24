@@ -1,0 +1,4 @@
+=== herald post-commit 2026-04-24T07:01:48Z ===
+=== commit: e1118a0 fix(tools/audit-hook): read tool_name from stdin JSON — new Claude API ===
+=== changed: dashboard/tools/audit-hook.sh  ===
+Herald --fast spawning (changelog) → CHANGELOG.md

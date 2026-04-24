@@ -1,0 +1,4 @@
+=== herald post-commit 2026-04-24T04:41:41Z ===
+=== commit: d722aad feat(craft/class5H): glassmorphic top-bar + rail + modal + hero ===
+=== changed: dashboard/app/globals.css dashboard/components/build-home/mission-control-hero.tsx dashboard/components/ui/card.tsx dashboard/components/ui/panel.test.tsx dashboard/components/ui/panel.tsx  ===
+Herald --fast spawning (changelog) → CHANGELOG.md

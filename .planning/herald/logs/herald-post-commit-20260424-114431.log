@@ -1,0 +1,4 @@
+=== herald post-commit 2026-04-24T02:44:31Z ===
+=== commit: 14e841b fix(truth/class14b): route-scope expected truth keys ===
+=== changed: dashboard/audit/score/pillars.ts  ===
+Herald --fast spawning (changelog) → CHANGELOG.md

@@ -1,0 +1,4 @@
+=== herald post-commit 2026-04-24T03:34:01Z ===
+=== commit: 26f9db1 feat(workflows/class19d): live workflow instances ===
+=== changed: dashboard/app/api/workflows/live/route.ts dashboard/app/build/workflows/page.tsx dashboard/components/workflows/live-workflows.test.tsx dashboard/lib/workflows/live-instances.test.ts dashboard/lib/workflows/live-instances.ts dashboard/tests/integration/workflows-live.test.tsx  ===
+Herald --fast spawning (changelog) → CHANGELOG.md

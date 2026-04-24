@@ -1,0 +1,4 @@
+=== herald post-commit 2026-04-24T03:57:19Z ===
+=== commit: fb7db57 docs(audit/class20): C5 data-feed diagnosis — all 8 broken /build cards ===
+=== changed: dashboard/app/build/changes/changes-client.tsx dashboard/audit/reports/C5-DATA-FEED-DIAGNOSIS.md dashboard/components/build-home/activity-feed.tsx dashboard/components/build-home/recent-commits.tsx dashboard/components/changes/change-row.test.tsx dashboard/components/changes/change-row.tsx  ===
+Herald --fast spawning (changelog) → CHANGELOG.md

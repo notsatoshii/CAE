@@ -1,0 +1,4 @@
+=== herald post-commit 2026-04-24T06:38:02Z ===
+=== commit: 018c1f6 fix(dashboard): kill USD in task-header chip — tokens only ===
+=== changed: dashboard/components/build-home/task-header-summary.test.tsx dashboard/components/build-home/task-header-summary.tsx  ===
+Herald --fast spawning (changelog) → CHANGELOG.md

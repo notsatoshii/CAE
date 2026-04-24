@@ -1,0 +1,4 @@
+=== herald post-commit 2026-04-24T03:49:15Z ===
+=== commit: 79c0dbe feat(craft/class5E): kanban visual separation ===
+=== changed: dashboard/app/build/queue/queue-kanban-client.tsx  ===
+Herald --fast spawning (changelog) → CHANGELOG.md
