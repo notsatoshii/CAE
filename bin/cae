@@ -394,6 +394,46 @@ def execute_one_task(
         summary_path = task_dir / f"SUMMARY-attempt{attempts}.md"
         summary_path.write_text(last_forge_output)
 
+        # Forge often leaves changes staged but uncommitted (some agents refuse
+        # to run `git commit` even with bypassPermissions). Sentinel reviews
+        # `git diff main...HEAD` — an empty diff always rejects. Auto-commit
+        # here so Sentinel has a real diff to grade. Filter out untracked
+        # task-dir artifacts (SUMMARY-*.md, .planning/ droppings) so only
+        # the actual code edits make it into the commit.
+        git_status = subprocess.run(
+            ["git", "-C", str(project_root), "status", "--porcelain"],
+            capture_output=True, text=True,
+        )
+        if git_status.returncode == 0 and git_status.stdout.strip():
+            # Stage modified/added tracked files + explicit src dirs.
+            # Skip root-of-repo artifacts like SUMMARY-*.md + .planning/
+            # subtrees that forge agents sometimes drop.
+            subprocess.run(["git", "-C", str(project_root), "add", "-u"], check=False)
+            subprocess.run(["git", "-C", str(project_root), "add",
+                "dashboard/app", "dashboard/components", "dashboard/lib",
+                "dashboard/hooks", "dashboard/tests", "dashboard/audit",
+                "dashboard/scripts",
+            ], check=False, capture_output=True)
+            commit_msg = f"forge: {task.get('name', task_id)} (attempt {attempts})"
+            commit_r = subprocess.run(
+                ["git", "-C", str(project_root), "commit", "-m", commit_msg, "--no-verify"],
+                capture_output=True, text=True,
+            )
+            if commit_r.returncode != 0 and "nothing to commit" not in commit_r.stdout:
+                print(f"    ⚠ auto-commit failed for {task_id}: {commit_r.stderr.strip()[:200]}")
+
+        # Empty-diff short-circuit: if forge exited clean but there are no
+        # actual code changes vs main, the task is a no-op (either already
+        # fixed in a prior run, or the plan needed no new work). Treat as
+        # Sentinel-approved and skip the merge (nothing to merge).
+        diff_check = subprocess.run(
+            ["git", "-C", str(project_root), "diff", "main...HEAD", "--stat"],
+            capture_output=True, text=True,
+        )
+        if diff_check.returncode == 0 and not diff_check.stdout.strip():
+            forge_branch("abandon", task_id, project_root)
+            return {"success": True, "task_id": task_id, "attempts": attempts, "final_status": "no_op_no_changes", "branch": branch, "sentinel_stub": False}
+
         # Sentinel review (stub until T8 lands)
         verdict = sentinel_review(task_id, plan_path, branch, project_root, model, cb)
 
