@@ -96,9 +96,50 @@ Produce the JSON verdict now. Nothing else.
     def _extract_json(raw: str) -> Optional[dict]:
         """Try hard to find a JSON object in the output."""
         raw = raw.strip()
-        # Happy path — straight JSON
+
+        def _unwrap(obj):
+            """
+            Claude --print --output-format json produces an envelope like
+            {"type":"result","subtype":"success","result":"<string>",...}.
+            The real verdict is a JSON object encoded in `result` (often
+            wrapped in ```json fences). Unwrap it here so callers always
+            see the verdict dict, not the envelope.
+            """
+            if (isinstance(obj, dict)
+                and obj.get("type") == "result"
+                and isinstance(obj.get("result"), str)):
+                inner = obj["result"].strip()
+                # Try fenced JSON first
+                m = re.search(r"```(?:json)?\s*\n?(.*?)\n?```", inner, re.DOTALL)
+                if m:
+                    try:
+                        return json.loads(m.group(1))
+                    except json.JSONDecodeError:
+                        pass
+                # Try raw JSON
+                try:
+                    return json.loads(inner)
+                except json.JSONDecodeError:
+                    pass
+                # Try first {...} block
+                s = inner.find("{")
+                if s >= 0:
+                    depth = 0
+                    for i in range(s, len(inner)):
+                        if inner[i] == "{":
+                            depth += 1
+                        elif inner[i] == "}":
+                            depth -= 1
+                            if depth == 0:
+                                try:
+                                    return json.loads(inner[s:i+1])
+                                except json.JSONDecodeError:
+                                    break
+            return obj
+
+        # Happy path — straight JSON (may be envelope; unwrap)
         try:
-            return json.loads(raw)
+            return _unwrap(json.loads(raw))
         except json.JSONDecodeError:
             pass
         # Try to find the first {...} block
@@ -114,14 +155,14 @@ Produce the JSON verdict now. Nothing else.
                     if depth == 0:
                         candidate = raw[start:i+1]
                         try:
-                            return json.loads(candidate)
+                            return _unwrap(json.loads(candidate))
                         except json.JSONDecodeError:
                             break
         # Try extracting from ```json fences
         m = re.search(r"```(?:json)?\s*\n?(.*?)\n?```", raw, re.DOTALL)
         if m:
             try:
-                return json.loads(m.group(1))
+                return _unwrap(json.loads(m.group(1)))
             except json.JSONDecodeError:
                 pass
         return None
