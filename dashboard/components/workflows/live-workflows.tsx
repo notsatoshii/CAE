@@ -143,11 +143,14 @@ export function LiveWorkflows({
 }
 
 function InstanceRow({ instance }: { instance: WorkflowInstance }) {
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => setMounted(true), [])
+
   const totalDuration = (() => {
     const start = Date.parse(instance.started_at)
     if (!Number.isFinite(start)) return null
-    const end = instance.ended_at ? Date.parse(instance.ended_at) : Date.now()
-    if (!Number.isFinite(end)) return null
+    const end = instance.ended_at ? Date.parse(instance.ended_at) : (mounted ? Date.now() : null)
+    if (end === null || !Number.isFinite(end)) return null
     return end - start
   })()
 

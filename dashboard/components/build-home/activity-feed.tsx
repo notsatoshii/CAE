@@ -80,7 +80,7 @@ function formatDay(day: string, now = Date.now()): string {
   if (day === today) return "Today"
   if (day === yesterday) return "Yesterday"
   try {
-    return new Date(day + "T00:00:00Z").toLocaleDateString(undefined, {
+    return new Date(day + "T00:00:00Z").toLocaleDateString("en-US", {
       month: "short",
       day: "numeric",
     })
@@ -91,7 +91,7 @@ function formatDay(day: string, now = Date.now()): string {
 
 function formatTime(iso: string): string {
   try {
-    return new Date(iso).toLocaleTimeString([], {
+    return new Date(iso).toLocaleTimeString("en-US", {
       hour: "2-digit",
       minute: "2-digit",
       hour12: false,

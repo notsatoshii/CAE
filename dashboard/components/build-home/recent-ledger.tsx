@@ -20,7 +20,7 @@ function formatTok(n: number): string {
 
 function formatTime(iso: string): string {
   try {
-    return new Date(iso).toLocaleTimeString([], {
+    return new Date(iso).toLocaleTimeString("en-US", {
       hour: "2-digit",
       minute: "2-digit",
       hour12: false,

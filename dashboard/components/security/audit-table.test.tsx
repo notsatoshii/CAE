@@ -3,10 +3,13 @@
  *
  * Test 5: renders AuditEntry[] with filter inputs and pagination.
  */
-import { describe, it, expect } from "vitest"
-import { render, screen } from "@testing-library/react"
+import { describe, it, expect, vi, afterEach } from "vitest"
+import { render, screen, cleanup } from "@testing-library/react"
+import { renderToStaticMarkup } from "react-dom/server"
 import { AuditTable } from "./audit-table"
 import type { AuditEntry } from "@/lib/cae-types"
+
+afterEach(() => { cleanup(); vi.restoreAllMocks() })
 
 const ENTRIES: AuditEntry[] = [
   { ts: "2026-04-23T10:00:00Z", task: "t1", tool: "Bash", cwd: "/home/cae" },
@@ -51,5 +54,19 @@ describe("AuditTable", () => {
       <AuditTable initial={{ entries: [], total: 0 }} />
     )
     expect(screen.getByTestId("audit-empty")).toBeDefined()
+  })
+
+  it("hydration regression: initial render is deterministic regardless of current time", () => {
+    // Simulate SSR at one time, CSR hydration at a very different time.
+    // With the mounted-guard fix, Date.now() must not be called during initial render.
+    vi.spyOn(Date, "now").mockReturnValue(0)
+    const html1 = renderToStaticMarkup(
+      <AuditTable initial={{ entries: ENTRIES, total: ENTRIES.length }} />
+    )
+    vi.spyOn(Date, "now").mockReturnValue(Number.MAX_SAFE_INTEGER)
+    const html2 = renderToStaticMarkup(
+      <AuditTable initial={{ entries: ENTRIES, total: ENTRIES.length }} />
+    )
+    expect(html1).toBe(html2)
   })
 })

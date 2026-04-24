@@ -4,10 +4,13 @@
  * React Testing Library + vitest. Poll loop disabled via `disablePoll`
  * so tests assert purely against the SSR-rendered initial props.
  */
-import { render, screen } from "@testing-library/react"
-import { describe, expect, it } from "vitest"
+import { render, screen, cleanup } from "@testing-library/react"
+import { describe, expect, it, vi, afterEach } from "vitest"
+import { renderToStaticMarkup } from "react-dom/server"
 import { LiveWorkflows } from "./live-workflows"
 import type { WorkflowInstance } from "@/lib/workflows/live-instances"
+
+afterEach(() => { cleanup(); vi.restoreAllMocks() })
 
 function buildInstance(over: Partial<WorkflowInstance> = {}): WorkflowInstance {
   return {
@@ -78,5 +81,19 @@ describe("LiveWorkflows", () => {
     const html = document.body.innerHTML.toLowerCase()
     expect(html).not.toContain("stub")
     expect(html).not.toContain("coming soon")
+  })
+
+  it("hydration regression: initial render is deterministic regardless of current time", () => {
+    // Running instance (no ended_at) previously used Date.now() during render.
+    // With the mounted-guard fix, duration falls back to "—" until mount.
+    vi.spyOn(Date, "now").mockReturnValue(0)
+    const html1 = renderToStaticMarkup(
+      <LiveWorkflows initialInstances={[buildInstance()]} disablePoll />
+    )
+    vi.spyOn(Date, "now").mockReturnValue(Number.MAX_SAFE_INTEGER)
+    const html2 = renderToStaticMarkup(
+      <LiveWorkflows initialInstances={[buildInstance()]} disablePoll />
+    )
+    expect(html1).toBe(html2)
   })
 })

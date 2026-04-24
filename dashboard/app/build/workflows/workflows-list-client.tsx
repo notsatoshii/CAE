@@ -18,7 +18,7 @@
  * Viewer-role users see a disabled "Read-only" button instead.
  */
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { BookMarked } from "lucide-react"
@@ -53,6 +53,8 @@ export function WorkflowsListClient({
   const t = labelFor(dev)
   const router = useRouter()
   const [workflows] = useState(initialWorkflows)
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => setMounted(true), [])
   const [runningSlug, setRunningSlug] = useState<string | null>(null)
   const [pendingRun, setPendingRun] = useState<{ slug: string; name: string } | null>(null)
 
@@ -144,7 +146,7 @@ export function WorkflowsListClient({
                     {t.workflowsListRowStepCount(w.spec.steps.length)}
                   </span>
                   <span>·</span>
-                  <span>{t.workflowsListRowLastRun(relativeTime(w.mtime))}</span>
+                  <span>{t.workflowsListRowLastRun(mounted ? relativeTime(w.mtime) : new Date(w.mtime).toISOString().slice(0, 10))}</span>
                   {dev && (
                     <>
                       <span>·</span>

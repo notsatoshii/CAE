@@ -331,9 +331,12 @@ function SinceYouLeftBody({
   syl: MissionControlState["since_you_left"];
   expanded: boolean;
 }) {
-  if (!syl.show) return null;
+  const [ago, setAgo] = useState<number>(0);
+  useEffect(() => {
+    setAgo(syl.last_seen_at ? Date.now() - syl.last_seen_at : 0);
+  }, [syl.last_seen_at]);
 
-  const ago = syl.last_seen_at ? Date.now() - syl.last_seen_at : 0;
+  if (!syl.show) return null;
   return (
     <div className="flex flex-col gap-1" data-testid="mc-syl-body">
       <div className="font-mono text-xl font-semibold tabular-nums text-[color:var(--text)]">
@@ -374,17 +377,17 @@ export function MissionControlHero({
 }: MissionControlHeroProps = {}) {
   const reduced = useReducedMotion() ?? false;
   const [data, setData] = useState<MissionControlState | null>(initialData ?? null);
-  const [lastUpdated, setLastUpdated] = useState<number | null>(
-    initialData ? Date.now() : null,
-  );
+  const [lastUpdated, setLastUpdated] = useState<number | null>(null);
   const [sylExpanded, setSylExpanded] = useState(false);
   const mountedRef = useRef(true);
 
   useEffect(() => {
     mountedRef.current = true;
+    if (initialData !== undefined) setLastUpdated(Date.now());
     return () => {
       mountedRef.current = false;
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {

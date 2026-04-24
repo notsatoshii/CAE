@@ -11,7 +11,7 @@
  * + EMPTY_COPY.audit so the rest-state speaks in CAE's voice and matches
  * every other surface visually. testIds preserved (audit-empty / audit-table-empty).
  */
-import { useState, useCallback, Fragment } from "react"
+import { useState, useCallback, useEffect, Fragment } from "react"
 import { ShieldCheck } from "lucide-react"
 import type { AuditEntry } from "@/lib/cae-types"
 import { EmptyState } from "@/components/ui/empty-state"
@@ -31,12 +31,14 @@ function relativeTime(ts: string): string {
   if (mins < 60) return `${mins}m ago`
   const hours = Math.floor(mins / 60)
   if (hours < 24) return `${hours}h ago`
-  return new Date(ts).toLocaleDateString()
+  return new Date(ts).toLocaleDateString("en-US")
 }
 
 export function AuditTable({ initial }: AuditTableProps) {
   const [entries, setEntries] = useState(initial.entries)
   const [total, setTotal] = useState(initial.total)
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => setMounted(true), [])
   const [tool, setTool] = useState("")
   const [from, setFrom] = useState("")
   const [to, setTo] = useState("")
@@ -166,7 +168,7 @@ export function AuditTable({ initial }: AuditTableProps) {
                       className="cursor-pointer border-b border-zinc-800/50 hover:bg-zinc-800/30"
                     >
                       <td className="py-2 px-3 text-zinc-400" title={e.ts}>
-                        {relativeTime(e.ts)}
+                        {mounted ? relativeTime(e.ts) : e.ts.slice(0, 16).replace("T", " ")}
                       </td>
                       <td className="py-2 px-3">
                         <span className="rounded bg-zinc-800 px-1.5 py-0.5 font-mono text-zinc-300">

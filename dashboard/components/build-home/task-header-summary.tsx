@@ -163,7 +163,7 @@ export function TaskHeaderSummary({ phase }: Props) {
         label={formatTok(phase.tokens_phase) + " tok"}
         title={
           "Tokens so far: " +
-          phase.tokens_phase.toLocaleString() +
+          phase.tokens_phase.toLocaleString("en-US") +
           " (input + output combined)"
         }
       />
