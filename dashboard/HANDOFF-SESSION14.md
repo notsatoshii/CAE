@@ -96,33 +96,27 @@ Eric's direction: "there's a LOT more issues than just those 2 bugs." The full l
 
 ---
 
-## Handoff to session 15 — use CAE, not direct Claude Code
+## Handoff to session 15 — CAE auto-audit (UAT killed)
 
-**Per Eric's instruction**, session 15 dogfoods CAE-proper:
+**Eric's directive (2026-04-24, mid-session-15):** "I built CAE so that it doesn't need UAT" + "change it so that UAT won't be necessary as a step moving forward, especially for FE." See `dashboard/AUDIT-GATE.md` for the binding protocol.
 
-1. **Cold start**: read this file + `dashboard/HANDOFF-SESSION13.md` for prior context.
-2. **UAT walkthrough first**: Eric clicks through `/build`, `/floor`, `/build/agents`, `/metrics`, `/memory`. Every tile he flags becomes a CAE inbox task.
-3. **Queue work via CAE**:
-   ```bash
-   cd /home/cae/ctrl-alt-elite
-   cae inbox add "fix rollup-strip stuck at 0 despite API returning real data" \
-     --project dashboard --priority p0
-   cae inbox add "pixel agents empty scene — seed events or wire real producer" \
-     --project dashboard --priority p0
-   # ... one inbox row per Eric-flagged bug
-   ```
-4. **Forge loop**: `cae forge start` spawns parallel worker agents; each picks one task, works in an isolated worktree, commits to the outbox with a DONE.md. Herald posts to Discord (if wired).
-5. **Merge gate**: Eric reviews outbox, approves merges.
-6. **Live smoke gate**: `pnpm vitest && AUDIT_BASE_URL=http://localhost:3002 npx playwright test -c audit/score/playwright-session14.config.ts` must pass before any outbox row merges.
-7. **Per-phase UI audit** (per `feedback_fe_phases_need_ui_audit_per_phase` memory): every FE phase gets code-review + ui-audit + user-perspective walkthrough gate. This session only ran code-review.
+Session 15 procedure (encoded in `dashboard/AUDIT-GATE.md`):
 
-**Session 14's shortcut** (parallel Claude Code agents with no CAE plumbing) worked for the timezone fix / USD kill but didn't catch the rollup-UI or pixel-agent bugs because there was no UAT gate. Session 15 must not skip the walkthrough.
+1. **Cold start**: read this file + `dashboard/AUDIT-GATE.md`.
+2. **Capture**: `AUDIT_BASE_URL=http://localhost:3002 FIXTURE=healthy AUTH_SECRET=$(grep ^AUTH_SECRET .env.local | cut -d= -f2) npx playwright test -c audit/playwright.config.ts`.
+3. **Score**: `npx tsx audit/score-run.ts C<N> --fixture healthy --prior C<N-1>`.
+4. **Cluster** findings into `.planning/phases/<N>-…/W<wave>-<slug>-PLAN.md` files.
+5. **Execute**: `cd dashboard && cae execute-phase <N>` — wave-parallel forge agents.
+6. **Re-audit** as C<N+1>. Merge-gate: see AUDIT-GATE.md for the three conditions.
+
+**No Eric walkthrough.** No "wait for Eric to click around." Harness is the gate.
+
+Session 15 first run (this very session): phase 17-fe-auto-audit-fixes, plans under `.planning/phases/17-fe-auto-audit-fixes/`. C5-session15 baseline at `audit/reports/C5-session15-*`. Re-audit will be C6.
 
 ---
 
 ## Resume at
 
-- **File**: `dashboard/HANDOFF-SESSION14.md` (this file).
-- **HEAD**: `2c4b361`.
-- **Live smoke**: `dashboard/audit/score/session14-live-smoke.spec.ts` (baseline; extend it as new bugs surface).
-- **First action**: UAT walkthrough with Eric. Do not touch code until every bug he sees is in the CAE inbox.
+- **Files**: `dashboard/HANDOFF-SESSION14.md` (this file), `dashboard/AUDIT-GATE.md` (binding protocol), `dashboard/.planning/phases/17-fe-auto-audit-fixes/FINDINGS.md` (current cycle).
+- **HEAD**: `0c5e1fd` (handoff doc on top of `2c4b361`; phase 17 plans + AUDIT-GATE not yet committed at handoff write time — check `git status`).
+- **First action**: `cd /home/cae/ctrl-alt-elite/dashboard && cae execute-phase 17` IF plans are committed, otherwise commit them first.
