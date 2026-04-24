@@ -340,7 +340,7 @@ def execute_one_task(
         # Spawn Forge
         try:
             with cb.acquire_forge_slot():
-                kwargs = {"model": model, "timeout": 1800}
+                kwargs = {"model": model, "timeout": 3600}
                 if inv.get("type") == "wrap-gsd-agent":
                     kwargs["agent_wrap"] = inv["name"]
                 else:
