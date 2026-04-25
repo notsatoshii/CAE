@@ -29,20 +29,25 @@ TASK_ID="${2:-}"
 
 case "$CMD" in
   create)
-    BASE="${3:-HEAD}"
+    BASE="${3:-main}"
     BRANCH="forge/${TASK_ID}"
 
-    # Guard: refuse only on MODIFIED tracked files (not untracked).
-    # git checkout handles untracked files fine unless they'd be overwritten.
-    if ! git diff --quiet HEAD 2>/dev/null; then
-      echo "error: tracked files have uncommitted modifications; commit or stash first" >&2
-      exit 1
+    # Ensure we're on main before creating — previous task may have left
+    # us on a forge branch after merge failure or abandon.
+    CURRENT=$(git branch --show-current 2>/dev/null || echo "")
+    if [[ "$CURRENT" != "main" ]]; then
+      git checkout main >/dev/null 2>&1 || true
     fi
 
-    # Check if branch already exists
+    # Stash tracked modifications (previous task leftovers) so checkout
+    # doesn't fail. Stash is NOT popped — each forge task starts clean.
+    if ! git diff --quiet HEAD 2>/dev/null; then
+      git stash push -m "forge-branch-create: auto-stash for $TASK_ID" >/dev/null 2>&1 || true
+    fi
+
+    # Delete stale branch if it exists
     if git rev-parse --verify "$BRANCH" >/dev/null 2>&1; then
-      echo "error: branch $BRANCH already exists" >&2
-      exit 1
+      git branch -D "$BRANCH" >/dev/null 2>&1 || true
     fi
 
     git checkout -b "$BRANCH" "$BASE" >/dev/null 2>&1
