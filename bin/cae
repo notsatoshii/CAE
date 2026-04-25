@@ -542,6 +542,21 @@ def cmd_execute_phase(phase_num: str, dry_run: bool = False):
         plans = waves[wave_num]
         wave_results = execute_wave(wave_num, plans, phase_dir, project_root, agent_models, sc_mode, cb, phantom)
         all_results.extend(wave_results)
+
+        # Auto-push to remote after each wave (if any task succeeded)
+        if any(r["success"] for r in wave_results):
+            try:
+                push_r = subprocess.run(
+                    ["git", "-C", str(project_root), "push", "origin", "main"],
+                    capture_output=True, text=True, timeout=60,
+                )
+                if push_r.returncode == 0:
+                    print(f"  ↑ Pushed wave {wave_num} to origin/main")
+                else:
+                    print(f"  ⚠ Push failed (non-fatal): {push_r.stderr.strip()[:200]}")
+            except Exception as e:
+                print(f"  ⚠ Push error (non-fatal): {e}")
+
         if any(not r["success"] for r in wave_results):
             print(f"  ⚠ Wave {wave_num} had failures; not proceeding to next wave without manual review")
             break
