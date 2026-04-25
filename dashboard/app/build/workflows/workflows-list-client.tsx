@@ -32,15 +32,10 @@ import { ConfirmActionDialog } from "@/components/chat/confirm-action-dialog"
 import { EmptyState, EmptyStateActions } from "@/components/ui/empty-state"
 import { RoleGate } from "@/components/auth/role-gate"
 import type { WorkflowRecord } from "@/lib/cae-workflows"
+import { formatRelativeTime } from "@/lib/date"
 import type { Role } from "@/lib/cae-types"
 
-function relativeTime(ms: number): string {
-  const diff = Date.now() - ms
-  if (diff < 60_000) return "just now"
-  if (diff < 3_600_000) return Math.floor(diff / 60_000) + "m ago"
-  if (diff < 86_400_000) return Math.floor(diff / 3_600_000) + "h ago"
-  return Math.floor(diff / 86_400_000) + "d ago"
-}
+
 
 export function WorkflowsListClient({
   initialWorkflows,
@@ -146,7 +141,7 @@ export function WorkflowsListClient({
                     {t.workflowsListRowStepCount(w.spec.steps.length)}
                   </span>
                   <span>·</span>
-                  <span>{t.workflowsListRowLastRun(mounted ? relativeTime(w.mtime) : new Date(w.mtime).toISOString().slice(0, 10))}</span>
+                  <span>{t.workflowsListRowLastRun(mounted ? formatRelativeTime(w.mtime) : new Date(w.mtime).toISOString().slice(0, 10))}</span>
                   {dev && (
                     <>
                       <span>·</span>

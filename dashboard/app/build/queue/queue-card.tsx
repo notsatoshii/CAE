@@ -21,14 +21,9 @@ import { agentMetaFor } from "@/lib/copy/agent-meta"
 import { labelFor } from "@/lib/copy/labels"
 import { useDevMode } from "@/lib/providers/dev-mode"
 import type { QueueCard as QueueCardData } from "@/lib/cae-queue-state"
+import { formatRelativeTime } from "@/lib/date"
 
-function relativeTime(ms: number): string {
-  const diff = Date.now() - ms
-  if (diff < 60_000) return "just now"
-  if (diff < 3_600_000) return Math.floor(diff / 60_000) + "m ago"
-  if (diff < 86_400_000) return Math.floor(diff / 3_600_000) + "h ago"
-  return Math.floor(diff / 86_400_000) + "d ago"
-}
+
 
 export function QueueCard({ card }: { card: QueueCardData }) {
   const router = useRouter()
@@ -87,7 +82,7 @@ export function QueueCard({ card }: { card: QueueCardData }) {
         </h3>
       </header>
       <div className="text-[color:var(--text-muted,#8a8a8c)]">
-        {t.queueCardAgentProjectLine(card.project, relativeTime(card.ts))}
+        {t.queueCardAgentProjectLine(card.project, formatRelativeTime(card.ts))}
       </div>
       {card.tags.length > 0 && (
         <div className="flex flex-wrap gap-1 mt-1">

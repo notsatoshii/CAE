@@ -2,7 +2,7 @@ export interface Phase {
   number: number
   name: string
   planFiles: string[]
-  status: "idle" | "active" | "done" | "failed"
+  status: "idle" | "active" | "done" | "failed" | "archived"
 }
 
 export interface Project {
