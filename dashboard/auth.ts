@@ -120,16 +120,28 @@ const nextAuth = NextAuth({
 
 const { handlers: _handlers, signIn: _signIn, signOut: _signOut, auth: _auth } = nextAuth
 
-// DEV BYPASS: Return a fake admin session when no OAuth is configured.
+// DEV BYPASS: Return a fake admin session when AUTH_BYPASS=1.
 // TODO: Remove when Google/GitHub OAuth is set up for prod.
-const DEV_BYPASS = !process.env.AUTH_SECRET || process.env.AUTH_BYPASS === "1"
+const DEV_BYPASS = process.env.AUTH_BYPASS === "1"
+
+const DEV_SESSION = {
+  user: { name: "Dev Admin", email: "admin@cae.dev", role: "admin" as const, image: null },
+  expires: new Date(Date.now() + 86400000).toISOString(),
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function devAuth(...args: any[]): any {
+  // Called as middleware wrapper: auth(handler) → return handler that injects fake session
+  if (args.length > 0 && typeof args[0] === "function") {
+    const { NextResponse } = require("next/server")
+    // Return a middleware function that always passes through
+    return () => NextResponse.next()
+  }
+  // Called as session getter: await auth() → return fake session
+  return Promise.resolve(DEV_SESSION)
+}
 
 export const handlers = _handlers
 export const signIn = _signIn
 export const signOut = _signOut
-export const auth = DEV_BYPASS
-  ? async () => ({
-      user: { name: "Dev Admin", email: "admin@cae.dev", role: "admin" as const, image: null },
-      expires: new Date(Date.now() + 86400000).toISOString(),
-    })
-  : _auth
+export const auth = DEV_BYPASS ? devAuth : _auth
