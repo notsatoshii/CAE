@@ -18,7 +18,16 @@ import { withLog } from "@/lib/with-log"
 
 const l = log("api.state")
 
+// Route-level response cache — getHomeState takes 30-50s on cold start.
+// Cache the full response so subsequent polls (3s interval) are instant.
+let _responseCache: { ts: number; body: unknown } | null = null
+const RESPONSE_CACHE_TTL = 5_000 // 5s
+
 async function getHandler(req: NextRequest) {
+  // Return cached response if fresh
+  if (_responseCache && Date.now() - _responseCache.ts < RESPONSE_CACHE_TTL) {
+    return Response.json(_responseCache.body)
+  }
   // `||` (not `??`) so an empty string from `?project=` falls back to CAE_ROOT.
   // useStatePoll always sends `?project=${encodeURIComponent("")}`, which made
   // the previous `??` operator pass through the empty string — and then
@@ -88,7 +97,7 @@ async function getHandler(req: NextRequest) {
     if (e.event === "forge_end" && e.success === false) retryCount++
   }
 
-  return Response.json({
+  const body = {
     // Existing Phase 2/3 fields (backward-compat)
     breakers: { ...breakers, inputTokensToday, outputTokensToday, retryCount },
     phases,
@@ -110,7 +119,9 @@ async function getHandler(req: NextRequest) {
     // Class 15A: canonical activity feed, last 20 rows for the build-home
     // ActivityFeed card. Consumers that need more call /api/tail/activity.
     recent_activity: activityFeed.slice(0, 20),
-  })
+  }
+  _responseCache = { ts: Date.now(), body }
+  return Response.json(body)
 }
 
 export const GET = withLog(getHandler, "/api/state")

@@ -84,7 +84,7 @@ const STATUS_FAILED: TaskStatus = "failed"
 
 // === 1-second result cache to survive 3s polling without FS thrash ===
 let CACHE: { ts: number; value: HomeState } | null = null
-const CACHE_TTL_MS = 5000
+const CACHE_TTL_MS = 30_000 // 30s — getHomeState takes 30-50s to compute, no point refreshing faster
 
 /**
  * Test-only: drop the in-memory cache so consecutive getHomeState() calls

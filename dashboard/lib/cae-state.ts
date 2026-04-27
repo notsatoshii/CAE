@@ -269,19 +269,24 @@ export async function listOutbox(): Promise<OutboxTask[]> {
 // Per-path cache for tailJsonl — avoids re-reading the same file multiple
 // times in a single /api/state request cycle. TTL = 3s.
 const _tailCache = new Map<string, { data: unknown[]; ts: number; limit: number }>()
-const TAIL_CACHE_TTL = 3000
+const TAIL_CACHE_TTL = 10_000 // 10s — avoids re-reading 4MB files on every 3s poll
 
 export async function tailJsonl(path: string, limit = 100): Promise<unknown[]> {
   const now = Date.now()
-  const cacheKey = `${path}:${limit}`
-  const cached = _tailCache.get(cacheKey)
-  if (cached && now - cached.ts < TAIL_CACHE_TTL) return cached.data
+  // Cache by path only — read the max chunk once, slice per-caller.
+  // This avoids re-reading the same 4MB file dozens of times with different limits.
+  const cached = _tailCache.get(path)
+  if (cached && now - cached.ts < TAIL_CACHE_TTL) {
+    return cached.limit >= limit ? cached.data.slice(-limit) : cached.data
+  }
 
+  // Read more than requested so future calls with higher limits hit cache too
+  const effectiveLimit = Math.max(limit, 2000)
   try {
     const s = await stat(path)
     if (s.size === 0) return []
-    // Read last 256KB max (enough for ~500 lines of JSON)
-    const bytesToRead = Math.min(s.size, 262144)
+    // Read last 512KB max (enough for ~2000 lines of JSON)
+    const bytesToRead = Math.min(s.size, 524288)
     const buf = Buffer.alloc(bytesToRead)
     const fh = await open(path, 'r')
     try {
@@ -293,10 +298,10 @@ export async function tailJsonl(path: string, limit = 100): Promise<unknown[]> {
     const lines = text.split('\n').filter(l => l.trim())
     // First line might be partial, skip it if we didn't read from start
     if (bytesToRead < s.size && lines.length > 0) lines.shift()
-    const tail = lines.slice(-limit)
+    const tail = lines.slice(-effectiveLimit)
     const data = tail.flatMap(line => { try { return [JSON.parse(line)] } catch { return [] } })
-    _tailCache.set(cacheKey, { data, ts: now, limit })
-    return data
+    _tailCache.set(path, { data, ts: now, limit: effectiveLimit })
+    return data.slice(-limit)
   } catch { return [] }
 }
 

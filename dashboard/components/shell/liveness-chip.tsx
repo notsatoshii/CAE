@@ -6,9 +6,10 @@
  * Combines useStatePoll lastUpdated (state-poll 3s cadence) and useSseHealth
  * for a representative SSE stream to produce a single user-visible label:
  *
- *   "Live"    — all sources fresh (green dot)
- *   "Stale"   — at least one source is stale but none dead (amber dot)
- *   "Offline" — at least one source is dead / never received data (red dot)
+ *   "Live"       — all sources fresh (green dot)
+ *   "Stale"      — at least one source is stale but none dead (amber dot)
+ *   "Connecting" — no data received yet; initial load (gray pulsing dot)
+ *   "Offline"    — at least one source is dead / >18s since last data (red dot)
  *
  * Replaces the old HeartbeatDot "live" lie — HeartbeatDot still renders
  * system-halted state (separate semantic); this chip reflects data freshness.
@@ -19,10 +20,10 @@
 import { useStatePoll } from "@/lib/hooks/use-state-poll";
 import { useSseHealth } from "@/lib/hooks/use-sse-health";
 
-type FreshnessState = "fresh" | "stale" | "dead";
+type FreshnessState = "fresh" | "stale" | "connecting" | "dead";
 
 function classify(at: number | null, threshold: number): FreshnessState {
-  if (!at) return "dead";
+  if (at === null) return "connecting";
   const delta = Date.now() - at;
   if (delta <= threshold) return "fresh";
   if (delta <= threshold * 3) return "stale";
@@ -31,6 +32,7 @@ function classify(at: number | null, threshold: number): FreshnessState {
 
 function worst(a: FreshnessState, b: FreshnessState): FreshnessState {
   if (a === "dead" || b === "dead") return "dead";
+  if (a === "connecting" || b === "connecting") return "connecting";
   if (a === "stale" || b === "stale") return "stale";
   return "fresh";
 }
@@ -52,10 +54,18 @@ export function LivenessChip() {
       ? "var(--success)"
       : worstState === "stale"
         ? "var(--warning)"
-        : "var(--danger)";
+        : worstState === "connecting"
+          ? "var(--text-muted)"
+          : "var(--danger)";
 
   const label =
-    worstState === "fresh" ? "Live" : worstState === "stale" ? "Stale" : "Offline";
+    worstState === "fresh"
+      ? "Live"
+      : worstState === "stale"
+        ? "Stale"
+        : worstState === "connecting"
+          ? "Connecting"
+          : "Offline";
 
   // Show time since last state-poll update as a latency hint
   const rtt =
@@ -77,7 +87,7 @@ export function LivenessChip() {
       title={tooltipText}
     >
       <span
-        className="inline-block size-1.5 rounded-full"
+        className={`inline-block size-1.5 rounded-full${worstState === "connecting" ? " animate-pulse" : ""}`}
         style={{ backgroundColor: color }}
         aria-hidden
       />
