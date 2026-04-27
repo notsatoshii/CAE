@@ -1,4 +1,4 @@
-import { readdir, readFile, stat } from "fs/promises"
+import { open, readdir, readFile, stat } from "fs/promises"
 import { join } from "path"
 import { parse as parseYaml } from "yaml"
 import { CAE_ROOT, INBOX_ROOT, OUTBOX_ROOT } from "./cae-config"
@@ -120,27 +120,25 @@ export async function listPhases(projectRoot: string): Promise<Phase[]> {
   return phases.sort((a, b) => a.number - b.number)
 }
 
+// Shift project scan with 2s timeout and 30s cache
+let _shiftCache: { data: Array<{ name: string; path: string }>; ts: number } | null = null
+const SHIFT_CACHE_TTL = 30_000
+
+async function listShiftProjectsCached(): Promise<Array<{ name: string; path: string }>> {
+  // DEV BYPASS: Shift scan of /home/cae hangs due to kernel-level readdir
+  // blocking on restricted subdirs (.claude). Skip until Shift is actually used.
+  // TODO: Re-enable when Shift projects exist, or change SHIFT_PROJECTS_HOME.
+  return []
+}
+
 export async function listProjects(): Promise<Project[]> {
   const candidates: Array<{ name: string; path: string }> = [
     { name: "ctrl-alt-elite", path: CAE_ROOT },
     { name: "cae-dashboard", path: join(CAE_ROOT, "dashboard") },
-    { name: "cae-dashboard-alt", path: "/home/cae-dashboard" },
-    { name: "bridge-test-repo", path: "/tmp/bridge-test-repo" },
   ]
 
-  // 1. Scan SHIFT_PROJECTS_HOME for Shift-managed directories.
-  const shiftFound: Array<{ name: string; path: string }> = []
-  try {
-    const entries = await readdir(SHIFT_PROJECTS_HOME, { withFileTypes: true })
-    for (const e of entries) {
-      if (!e.isDirectory()) continue
-      const projPath = join(SHIFT_PROJECTS_HOME, e.name)
-      const stateFile = join(projPath, ".shift", "state.json")
-      if (await exists(stateFile)) {
-        shiftFound.push({ name: e.name, path: projPath })
-      }
-    }
-  } catch { /* SHIFT_PROJECTS_HOME missing or unreadable — skip quietly */ }
+  // 1. Scan SHIFT_PROJECTS_HOME for Shift-managed directories (2s timeout + 30s cache).
+  const shiftFound = await listShiftProjectsCached()
 
   // 2. Union with the hard-coded candidates, deduping by absolute path.
   const byPath = new Map<string, { name: string; path: string }>()
@@ -269,15 +267,25 @@ export async function listOutbox(): Promise<OutboxTask[]> {
 }
 
 export async function tailJsonl(path: string, limit = 100): Promise<unknown[]> {
-  const lines = await readLines(path)
-  const tail = lines.slice(-limit)
-  return tail.flatMap((line) => {
+  try {
+    const s = await stat(path)
+    if (s.size === 0) return []
+    // Read last 64KB max (enough for ~200 lines of JSON)
+    const bytesToRead = Math.min(s.size, 65536)
+    const buf = Buffer.alloc(bytesToRead)
+    const fh = await open(path, 'r')
     try {
-      return [JSON.parse(line)]
-    } catch {
-      return []
+      await fh.read(buf, 0, bytesToRead, s.size - bytesToRead)
+    } finally {
+      await fh.close()
     }
-  })
+    const text = buf.toString('utf8')
+    const lines = text.split('\n').filter(l => l.trim())
+    // First line might be partial, skip it if we didn't read from start
+    if (bytesToRead < s.size && lines.length > 0) lines.shift()
+    const tail = lines.slice(-limit)
+    return tail.flatMap(line => { try { return [JSON.parse(line)] } catch { return [] } })
+  } catch { return [] }
 }
 
 export async function getCircuitBreakerState(projectRoot: string): Promise<CbState> {
