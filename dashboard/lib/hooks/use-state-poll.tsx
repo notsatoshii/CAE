@@ -55,16 +55,14 @@ export function StatePollProvider({
     mounted.current = true;
     const url = `/api/state?project=${encodeURIComponent(projectPath)}`;
 
-    // Class 2B: skip polling entirely on unauthed surfaces (/signin, /403).
-    // Hitting /api/state without a session cookie triggers a browser-level
-    // "Failed to load resource: 401" console error that tanks the reliability
-    // pillar score across every unauthed cell. Checking for the session cookie
-    // up-front prevents the fetch rather than absorbing it.
+    // Class 2B: skip polling on unauthed surfaces (/signin, /403).
+    // When AUTH_BYPASS is active, middleware passes through and /api/state
+    // returns data without a session cookie.
     const hasSession =
       typeof document !== "undefined" &&
-      /(?:^|;\s*)(?:authjs\.session-token|__Secure-authjs\.session-token)=/.test(
+      (/(?:^|;\s*)(?:authjs\.session-token|__Secure-authjs\.session-token)=/.test(
         document.cookie,
-      );
+      ) || !window.location.pathname.startsWith("/signin") && !window.location.pathname.startsWith("/403"));
     if (!hasSession) {
       // Still allow providers to mount; consumers render empty/error branch.
       setError(new Error("no session — poll suppressed"));
