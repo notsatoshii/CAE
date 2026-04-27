@@ -819,7 +819,7 @@ const FOUNDER: Labels = {
   chatSendButtonPending: "Sending…",
   chatSuggestionsHeading: "Try:",
   chatNewConversationButton: "New conversation",
-  chatEmptyThread: "Hey. What's broken.",
+  chatEmptyThread: "What are you working on?",
   chatThinking: "CAE is thinking…",
   chatRateLimited: (s) => "CAE is rate-limited for " + s + "s — standby.",
   chatUnreadAria: (n) => n + " unread message" + (n === 1 ? "" : "s"),

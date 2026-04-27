@@ -41,8 +41,9 @@ export function LivenessChip() {
 
   // State-poll: 3s interval → threshold 6000ms (2 missed polls = stale)
   const stateFreshness = classify(lastUpdated, 6_000);
-  // SSE tail: server-push → threshold 30000ms (no heartbeat for 30s = stale)
-  const sseFreshness = classify(tail.lastMessageAt, 30_000);
+  // SSE tail is optional — don't let a missing /api/incidents SSE drag
+  // the whole chip to "Offline" when state-poll is working fine.
+  const sseFreshness = tail.lastMessageAt ? classify(tail.lastMessageAt, 30_000) : stateFreshness;
 
   const worstState = worst(stateFreshness, sseFreshness);
 

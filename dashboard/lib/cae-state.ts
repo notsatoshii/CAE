@@ -266,12 +266,22 @@ export async function listOutbox(): Promise<OutboxTask[]> {
   return tasks
 }
 
+// Per-path cache for tailJsonl — avoids re-reading the same file multiple
+// times in a single /api/state request cycle. TTL = 3s.
+const _tailCache = new Map<string, { data: unknown[]; ts: number; limit: number }>()
+const TAIL_CACHE_TTL = 3000
+
 export async function tailJsonl(path: string, limit = 100): Promise<unknown[]> {
+  const now = Date.now()
+  const cacheKey = `${path}:${limit}`
+  const cached = _tailCache.get(cacheKey)
+  if (cached && now - cached.ts < TAIL_CACHE_TTL) return cached.data
+
   try {
     const s = await stat(path)
     if (s.size === 0) return []
-    // Read last 64KB max (enough for ~200 lines of JSON)
-    const bytesToRead = Math.min(s.size, 65536)
+    // Read last 256KB max (enough for ~500 lines of JSON)
+    const bytesToRead = Math.min(s.size, 262144)
     const buf = Buffer.alloc(bytesToRead)
     const fh = await open(path, 'r')
     try {
@@ -284,7 +294,9 @@ export async function tailJsonl(path: string, limit = 100): Promise<unknown[]> {
     // First line might be partial, skip it if we didn't read from start
     if (bytesToRead < s.size && lines.length > 0) lines.shift()
     const tail = lines.slice(-limit)
-    return tail.flatMap(line => { try { return [JSON.parse(line)] } catch { return [] } })
+    const data = tail.flatMap(line => { try { return [JSON.parse(line)] } catch { return [] } })
+    _tailCache.set(cacheKey, { data, ts: now, limit })
+    return data
   } catch { return [] }
 }
 

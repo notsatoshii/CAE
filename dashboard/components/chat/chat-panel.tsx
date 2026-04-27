@@ -287,13 +287,11 @@ export function ChatPanel({ standalone = false }: { standalone?: boolean } = {})
   const chatLiveness: "loading" | "error" | "empty" | "stale" | "healthy" =
     initError
       ? "error"
-      : !rail.currentSessionId
-        ? "loading"
-        : messages.length === 0
-          ? "empty"
-          : lastMsgAt !== null && Date.now() - lastMsgAt > 60_000
-            ? "stale"
-            : "healthy";
+      : messages.length === 0
+        ? "empty"
+        : lastMsgAt !== null && Date.now() - lastMsgAt > 60_000
+          ? "stale"
+          : "healthy";
 
   return (
     <div

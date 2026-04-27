@@ -25,9 +25,8 @@ export function CostTicker() {
         className="inline-flex min-w-0 items-center gap-1.5 font-mono text-xs text-[color:var(--text-muted)]"
         title={TOOLTIP}
       >
-        <span className="truncate">—</span>
+        <span className="truncate">0</span>
         <span className="hidden sm:inline">tok today</span>
-        <span className="hidden uppercase text-[10px] tracking-wider opacity-70 sm:inline">est.</span>
         <LastUpdated at={lastUpdated} threshold_ms={6000} />
       </span>
     );
@@ -47,7 +46,6 @@ export function CostTicker() {
     >
       <span className="truncate">{formatTokens(totalTokens)}</span>
       <span className="hidden sm:inline">tok today</span>
-      <span className="hidden uppercase text-[10px] tracking-wider text-[color:var(--text-muted)] sm:inline">est.</span>
       <LastUpdated at={lastUpdated} threshold_ms={6000} />
     </span>
   );
