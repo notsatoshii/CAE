@@ -161,6 +161,12 @@ export default function FloorCanvas({ cbPath, paused = false, onMetrics }: Floor
     const observer = new ResizeObserver((entries) => {
       for (const entry of entries) {
         const { width, height } = entry.contentRect;
+        // Set canvas pixel dimensions to match CSS size (fixes blank render)
+        const dpr = typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1;
+        canvas.width = width * dpr;
+        canvas.height = height * dpr;
+        const ctx = canvas.getContext("2d");
+        if (ctx) ctx.scale(dpr, dpr);
         setViewport((prev) => ({
           ...prev,
           width,
