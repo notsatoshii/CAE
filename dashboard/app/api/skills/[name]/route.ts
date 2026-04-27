@@ -43,12 +43,39 @@ export async function GET(
   }
 
   const skillsDir = getSkillsDir()
-  const skillDir = path.join(skillsDir, name)
-  const skillMdPath = path.join(skillDir, "SKILL.md")
+  
+  // Try direct path first (e.g., ~/.hermes/skills/claude-code/SKILL.md)
+  let skillDir = path.join(skillsDir, name)
+  let skillMdPath = path.join(skillDir, "SKILL.md")
 
   // Verify the resolved path is within skillsDir (defense in depth — T-14-02-02)
   if (!skillDir.startsWith(skillsDir + path.sep) && skillDir !== skillsDir) {
     return NextResponse.json({ error: "invalid skill name" }, { status: 400 })
+  }
+
+  // If not found at top level, search one level of category subdirs
+  try {
+    await fs.access(skillMdPath)
+  } catch {
+    // Search category directories (e.g., autonomous-ai-agents/claude-code/)
+    let found = false
+    try {
+      const categories = await fs.readdir(skillsDir, { withFileTypes: true })
+      for (const cat of categories) {
+        if (!cat.isDirectory()) continue
+        const nested = path.join(skillsDir, cat.name, name, "SKILL.md")
+        try {
+          await fs.access(nested)
+          skillDir = path.join(skillsDir, cat.name, name)
+          skillMdPath = nested
+          found = true
+          break
+        } catch { continue }
+      }
+    } catch { /* ignore */ }
+    if (!found) {
+      return NextResponse.json({ error: "not found" }, { status: 404 })
+    }
   }
 
   try {
