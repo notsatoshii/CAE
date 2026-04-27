@@ -9,7 +9,7 @@ import { parseSkillMd } from "./cae-skills-parse"
  * Reads from CAE_SKILLS_DIR env (for tests) or defaults to ~/.claude/skills/.
  */
 export function getSkillsDir(): string {
-  return process.env.CAE_SKILLS_DIR ?? path.join(os.homedir(), ".claude", "skills")
+  return process.env.CAE_SKILLS_DIR ?? path.join(os.homedir(), ".hermes", "skills")
 }
 
 /**
@@ -40,6 +40,7 @@ export async function readLocalSkillsDir(
     const skillDir = path.join(dir, entry.name)
     const skillMdPath = path.join(skillDir, "SKILL.md")
 
+    // Check if this directory has a SKILL.md directly
     try {
       const content = fs.readFileSync(skillMdPath, "utf8")
       const { frontmatter } = parseSkillMd(content)
@@ -54,8 +55,32 @@ export async function readLocalSkillsDir(
         installed: true,
       })
     } catch {
-      // No SKILL.md or unreadable — skip silently
-      continue
+      // No SKILL.md at top level — check subdirectories (category folders)
+      try {
+        const subEntries = fs.readdirSync(skillDir, { withFileTypes: true })
+        for (const sub of subEntries) {
+          if (!sub.isDirectory()) continue
+          const subSkillDir = path.join(skillDir, sub.name)
+          const subSkillMd = path.join(subSkillDir, "SKILL.md")
+          try {
+            const content = fs.readFileSync(subSkillMd, "utf8")
+            const { frontmatter } = parseSkillMd(content)
+            skills.push({
+              name: sub.name,
+              owner: "local",
+              source: "local",
+              description: frontmatter.description ?? "",
+              installCmd: "already installed",
+              detailUrl: `file://${subSkillDir}`,
+              installed: true,
+            })
+          } catch {
+            continue
+          }
+        }
+      } catch {
+        continue
+      }
     }
   }
 
