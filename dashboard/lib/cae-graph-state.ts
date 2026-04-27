@@ -45,8 +45,8 @@ export interface GraphNode {
 export interface GraphLink {
   source: string; // node id (absolute path)
   target: string; // node id (absolute path)
-  relation: "markdown_link" | "at_ref" | "heading_ref";
-  confidence: "EXTRACTED"; // v1 — all edges are textually extracted
+  relation: "markdown_link" | "at_ref" | "heading_ref" | "inferred_phase_group" | "inferred_agent_phase" | "inferred_note_phase";
+  confidence: "EXTRACTED" | "INFERRED";
 }
 
 /**
@@ -172,17 +172,21 @@ export async function loadGraph(): Promise<GraphPayload | null> {
       confidence?: unknown;
     };
     if (typeof ll.source !== "string" || typeof ll.target !== "string") continue;
+    const validRelations = new Set([
+      "markdown_link", "at_ref", "heading_ref",
+      "inferred_phase_group", "inferred_agent_phase", "inferred_note_phase",
+    ]);
     const relation: GraphLink["relation"] =
-      ll.relation === "at_ref"
-        ? "at_ref"
-        : ll.relation === "heading_ref"
-          ? "heading_ref"
-          : "markdown_link";
+      typeof ll.relation === "string" && validRelations.has(ll.relation)
+        ? (ll.relation as GraphLink["relation"])
+        : "markdown_link";
+    const confidence: GraphLink["confidence"] =
+      ll.confidence === "INFERRED" ? "INFERRED" : "EXTRACTED";
     links.push({
       source: ll.source,
       target: ll.target,
       relation,
-      confidence: "EXTRACTED",
+      confidence,
     });
   }
 
@@ -290,7 +294,10 @@ async function walkMemorySources(): Promise<WalkResult> {
     const key = source + "|" + target + "|" + relation;
     if (edgeKeys.has(key)) return;
     edgeKeys.add(key);
-    links.push({ source, target, relation, confidence: "EXTRACTED" });
+    const confidence: GraphLink["confidence"] = relation.startsWith("inferred_")
+      ? "INFERRED"
+      : "EXTRACTED";
+    links.push({ source, target, relation, confidence });
   }
 
   for (const [source, contents] of rawContents) {
@@ -307,6 +314,84 @@ async function walkMemorySources(): Promise<WalkResult> {
       const target = resolveTarget(source, ref);
       if (!target) continue;
       pushEdge(source, target, "at_ref");
+    }
+  }
+
+  // ── Inferred links ──────────────────────────────────────────────────
+  // Phase group links: phases sharing the same major number (e.g. 13-xx)
+  // are linked to each other.
+  const phaseNodes = nodes.filter((n) => n.kind === "phases");
+  const phasesByGroup = new Map<string, GraphNode[]>();
+  for (const pn of phaseNodes) {
+    // Extract phase number like "13" from paths like .planning/phases/13-foo/PLAN.md
+    const m = pn.id.match(/\/\.planning\/phases\/(\d+)-/);
+    if (!m) continue;
+    const group = m[1];
+    let arr = phasesByGroup.get(group);
+    if (!arr) {
+      arr = [];
+      phasesByGroup.set(group, arr);
+    }
+    arr.push(pn);
+  }
+  for (const [, group] of phasesByGroup) {
+    // Link each phase file to every other in the same phase group
+    for (let i = 0; i < group.length; i++) {
+      for (let j = i + 1; j < group.length; j++) {
+        pushEdge(group[i].id, group[j].id, "inferred_phase_group");
+      }
+    }
+  }
+
+  // Agent → Phase links: if agent basename appears in any phase file content
+  const agentNodes = nodes.filter((n) => n.kind === "agents");
+  for (const agent of agentNodes) {
+    // Extract agent name like "cae-forge" from path
+    const baseName = agent.id.replace(/^.*\//, "").replace(/\.md$/, "").toLowerCase();
+    // Also try short name without cae- prefix
+    const shortName = baseName.replace(/^cae-/, "");
+    for (const [phaseFile, contents] of rawContents) {
+      if (classifyNode({ id: phaseFile }) !== "phases") continue;
+      const lc = contents.toLowerCase();
+      if (lc.includes(baseName) || (shortName.length > 2 && lc.includes(shortName))) {
+        pushEdge(agent.id, phaseFile, "inferred_agent_phase");
+      }
+    }
+  }
+
+  // Note → Phase links: notes that share a directory path component with phases
+  const noteNodes = nodes.filter((n) => n.kind === "notes");
+  for (const note of noteNodes) {
+    // Extract meaningful path segments from note
+    const _noteParts = note.id.split("/");
+    for (const phase of phaseNodes) {
+      // Check if note path contains a phase directory name
+      const phaseMatch = phase.id.match(/\/\.planning\/phases\/([\w-]+)\//);
+      if (!phaseMatch) continue;
+      const phaseDirName = phaseMatch[1]; // e.g. "13-dashboard-memory"
+      if (note.id.includes(phaseDirName)) {
+        pushEdge(note.id, phase.id, "inferred_note_phase");
+      }
+      // Also link if note mentions the phase number in content
+      const phaseNum = phaseDirName.match(/^(\d+)/)?.[1];
+      if (phaseNum) {
+        const noteContent = rawContents.get(note.id);
+        if (noteContent && noteContent.includes(`phase ${phaseNum}`)) {
+          pushEdge(note.id, phase.id, "inferred_note_phase");
+        }
+      }
+    }
+  }
+
+  // Link PRDs to phases that reference them
+  const prdNodes = nodes.filter((n) => n.kind === "PRDs");
+  for (const prd of prdNodes) {
+    const prdBase = prd.id.replace(/^.*\//, "").replace(/\.md$/, "").toLowerCase();
+    for (const [phaseFile, contents] of rawContents) {
+      if (classifyNode({ id: phaseFile }) !== "phases") continue;
+      if (contents.toLowerCase().includes(prdBase)) {
+        pushEdge(prd.id, phaseFile, "inferred_note_phase");
+      }
     }
   }
 

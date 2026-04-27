@@ -114,12 +114,10 @@ export function buildDeskPlacements(): Record<StationName, DeskPlacement> {
       // of the desk from the viewer — avoids character-diamond overlap).
       seatTx: def.tx,
       seatTy: def.ty - 0.4,
-      // Entrance — use hub (8,8) as the implicit spawn point so characters
-      // walk *toward* their assigned desk from the center of the floor.
-      // Stations AT the hub use loadingBay as entrance so there's still
-      // visible travel.
-      entranceTx: name === "hub" ? STATIONS.loadingBay.tx : STATIONS.hub.tx,
-      entranceTy: name === "hub" ? STATIONS.loadingBay.ty : STATIONS.hub.ty,
+      // Entrance — all stations share one open workspace room, so every
+      // agent walks in from loadingBay (the room entrance).
+      entranceTx: STATIONS.loadingBay.tx,
+      entranceTy: STATIONS.loadingBay.ty,
       // All characters face "up" when seated at a desk in the upstream
       // layout — matches the top-of-desk-facing-viewer idiom.
       facing: "up",

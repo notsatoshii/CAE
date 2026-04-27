@@ -46,15 +46,15 @@ export interface StationDef {
 export const STATIONS: Readonly<Record<StationName, StationDef>> =
   Object.freeze({
     hub: Object.freeze({ tx: 8, ty: 8, persona: "nexus" as const }),
-    forge: Object.freeze({ tx: 12, ty: 6, persona: "forge" as const }),
-    watchtower: Object.freeze({ tx: 13, ty: 2, persona: "sentinel" as const }),
-    overlook: Object.freeze({ tx: 2, ty: 2, persona: "scout" as const }),
-    library: Object.freeze({ tx: 4, ty: 12, persona: "scribe" as const }),
-    shadow: Object.freeze({ tx: 10, ty: 14, persona: "phantom" as const }),
-    armory: Object.freeze({ tx: 14, ty: 10, persona: "aegis" as const }),
-    drafting: Object.freeze({ tx: 6, ty: 4, persona: "arch" as const }),
-    pulpit: Object.freeze({ tx: 8, ty: 13, persona: "herald" as const }),
-    loadingBay: Object.freeze({ tx: 1, ty: 8, persona: null }),
+    forge: Object.freeze({ tx: 7, ty: 7, persona: "forge" as const }),
+    watchtower: Object.freeze({ tx: 9, ty: 7, persona: "sentinel" as const }),
+    overlook: Object.freeze({ tx: 10, ty: 8, persona: "scout" as const }),
+    library: Object.freeze({ tx: 10, ty: 9, persona: "scribe" as const }),
+    shadow: Object.freeze({ tx: 9, ty: 10, persona: "phantom" as const }),
+    armory: Object.freeze({ tx: 7, ty: 10, persona: "aegis" as const }),
+    drafting: Object.freeze({ tx: 7, ty: 9, persona: "arch" as const }),
+    pulpit: Object.freeze({ tx: 9, ty: 9, persona: "herald" as const }),
+    loadingBay: Object.freeze({ tx: 5, ty: 8, persona: null }),
   });
 
 /** Entity moving through the floor (e.g. phantom walk animation). */
