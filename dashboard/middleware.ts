@@ -28,6 +28,10 @@ import type { Role } from "@/lib/cae-types"
 export function middlewareHandler(
   req: NextRequest & { auth: { user?: { role?: Role } } | null },
 ): NextResponse {
+  // ── DEV BYPASS: Auth disabled until OAuth is configured ──────────────
+  // TODO: Remove this bypass when Google/GitHub OAuth is set up for prod.
+  return NextResponse.next()
+
   // ── Unauthenticated → redirect page routes to /signin; return 401 JSON for API ─
   // API routes must return structured 401. Cross-origin redirects to the
   // signin HTML page trigger CORS failures in fetch() (see audit C2

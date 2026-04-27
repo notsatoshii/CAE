@@ -85,7 +85,7 @@ export function googleSignInCheck(
   return true
 }
 
-export const { handlers, signIn, signOut, auth } = NextAuth({
+const nextAuth = NextAuth({
   providers: [
     GitHub,
     Google({
@@ -117,3 +117,19 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     },
   },
 })
+
+const { handlers: _handlers, signIn: _signIn, signOut: _signOut, auth: _auth } = nextAuth
+
+// DEV BYPASS: Return a fake admin session when no OAuth is configured.
+// TODO: Remove when Google/GitHub OAuth is set up for prod.
+const DEV_BYPASS = !process.env.AUTH_SECRET || process.env.AUTH_BYPASS === "1"
+
+export const handlers = _handlers
+export const signIn = _signIn
+export const signOut = _signOut
+export const auth = DEV_BYPASS
+  ? async () => ({
+      user: { name: "Dev Admin", email: "admin@cae.dev", role: "admin" as const, image: null },
+      expires: new Date(Date.now() + 86400000).toISOString(),
+    })
+  : _auth
