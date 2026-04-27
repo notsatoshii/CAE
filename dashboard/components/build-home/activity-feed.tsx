@@ -110,7 +110,7 @@ export function ActivityFeed() {
   const dataWithActivity = data as
     | (typeof data & { recent_activity?: ActivityFeedRow[] })
     | null
-  const rows = dataWithActivity?.recent_activity ?? null
+  const rows = data ? (dataWithActivity?.recent_activity ?? []) : null
 
   const loading = data === null && error === null
   const empty = rows !== null && rows.length === 0

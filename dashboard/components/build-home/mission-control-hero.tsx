@@ -36,6 +36,7 @@ import {
 import { Activity, Coins, Flame, History, LineChart } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { LastUpdated } from "@/components/ui/last-updated";
+import { useDevMode } from "@/lib/providers/dev-mode";
 import type { MissionControlState } from "@/lib/cae-mission-control-state";
 
 const POLL_INTERVAL_MS = 5_000;
@@ -271,6 +272,7 @@ function Tile({
   emptyTip,
   onClick,
 }: TileProps) {
+  const { dev } = useDevMode();
   return (
     <Link
       href={href}
@@ -302,15 +304,14 @@ function Tile({
         {empty ? (
           <div
             data-testid={testId + "-empty"}
-            className="flex flex-col items-start gap-1.5 opacity-60"
+            className="flex flex-col items-start gap-1 opacity-50"
           >
-            <div
-              aria-hidden="true"
-              className="h-2 w-3/5 rounded-full bg-[color:var(--surface-hover)]"
-            />
-            <span className="text-[11px] text-[color:var(--text-dim)]">
-              {emptyTip}
-            </span>
+            {children}
+            {dev && emptyTip ? (
+              <span className="text-[10px] text-[color:var(--text-dim)] mt-0.5">
+                {emptyTip}
+              </span>
+            ) : null}
           </div>
         ) : (
           children

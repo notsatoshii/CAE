@@ -8,7 +8,8 @@
  *
  *   "Live"       — all sources fresh (green dot)
  *   "Stale"      — at least one source is stale but none dead (amber dot)
- *   "Connecting" — no data received yet; initial load (gray pulsing dot)
+ *   "Connecting" — no data received yet; initial load (gray dot)
+ *   "Connecting..." — still connecting after 3s (gray pulsing dot)
  *   "Offline"    — at least one source is dead / >18s since last data (red dot)
  *
  * Replaces the old HeartbeatDot "live" lie — HeartbeatDot still renders
@@ -17,6 +18,7 @@
  * Phase 13 Plan 06 — V2 §2 recipe.
  */
 
+import { useEffect, useState } from "react";
 import { useStatePoll } from "@/lib/hooks/use-state-poll";
 import { useSseHealth } from "@/lib/hooks/use-sse-health";
 
@@ -49,6 +51,17 @@ export function LivenessChip() {
 
   const worstState = worst(stateFreshness, sseFreshness);
 
+  // After 3s of "connecting", show "..." and start pulsing dot.
+  const [slowConnecting, setSlowConnecting] = useState(false);
+  useEffect(() => {
+    if (worstState !== "connecting") {
+      setSlowConnecting(false);
+      return;
+    }
+    const timer = setTimeout(() => setSlowConnecting(true), 3_000);
+    return () => clearTimeout(timer);
+  }, [worstState]);
+
   const color =
     worstState === "fresh"
       ? "var(--success)"
@@ -64,7 +77,7 @@ export function LivenessChip() {
       : worstState === "stale"
         ? "Stale"
         : worstState === "connecting"
-          ? "Connecting"
+          ? slowConnecting ? "Connecting..." : "Connecting"
           : "Offline";
 
   // Show time since last state-poll update as a latency hint
@@ -87,7 +100,7 @@ export function LivenessChip() {
       title={tooltipText}
     >
       <span
-        className={`inline-block size-1.5 rounded-full${worstState === "connecting" ? " animate-pulse" : ""}`}
+        className={`inline-block size-1.5 rounded-full${slowConnecting ? " animate-pulse" : ""}`}
         style={{ backgroundColor: color }}
         aria-hidden
       />
