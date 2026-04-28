@@ -42,6 +42,12 @@ export function SkillDetailDrawer({ skill, onClose, onInstalled, currentRole }: 
   const [loading, setLoading] = useState(false)
   const [trustData, setTrustData] = useState<TrustData>(null)
   const [trustLoading, setTrustLoading] = useState(false)
+  const [editing, setEditing] = useState(false)
+  const [editContent, setEditContent] = useState("")
+  const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState<string | null>(null)
+  /** Stores the raw SKILL.md (frontmatter + body) for editing */
+  const [rawMd, setRawMd] = useState("")
 
   useEffect(() => {
     if (!skill) {
@@ -56,7 +62,11 @@ export function SkillDetailDrawer({ skill, onClose, onInstalled, currentRole }: 
       fetch(`/api/skills/${encodeURIComponent(skill.name)}`)
         .then((r) => (r.ok ? r.json() : null))
         .then((data) => {
-          if (data) setDetail({ md: data.md, frontmatter: data.frontmatter })
+          if (data) {
+            setDetail({ md: data.md, frontmatter: data.frontmatter })
+            // Use the raw SKILL.md content (frontmatter + body) for editing
+            setRawMd(data.raw ?? data.md)
+          }
         })
         .catch(() => setDetail(null))
         .finally(() => setLoading(false))
@@ -117,6 +127,62 @@ export function SkillDetailDrawer({ skill, onClose, onInstalled, currentRole }: 
             ✕
           </button>
         </div>
+        {/* Edit toggle — only for local skills */}
+        {skill.source === "local" && detail && !editing && (
+          <button
+            type="button"
+            onClick={() => { setEditing(true); setEditContent(rawMd); setSaveError(null) }}
+            className="mt-2 rounded border border-zinc-700 px-2.5 py-1 text-xs text-zinc-400 hover:border-zinc-500 hover:text-zinc-200 transition-colors"
+          >
+            ✎ Edit SKILL.md
+          </button>
+        )}
+        {editing && (
+          <div className="mt-2 flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setEditing(false)}
+              className="rounded border border-zinc-700 px-2.5 py-1 text-xs text-zinc-400 hover:border-zinc-500 hover:text-zinc-200"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              disabled={saving}
+              onClick={async () => {
+                if (!skill) return
+                setSaving(true)
+                setSaveError(null)
+                try {
+                  const res = await fetch(`/api/skills/${encodeURIComponent(skill.name)}`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ content: editContent }),
+                  })
+                  if (res.ok) {
+                    const data = await res.json()
+                    setDetail({ md: data.md, frontmatter: data.frontmatter })
+                    setRawMd(editContent)
+                    setEditing(false)
+                  } else {
+                    const err = await res.json().catch(() => ({ error: "save failed" }))
+                    setSaveError(err.error || "save failed")
+                  }
+                } catch {
+                  setSaveError("network error")
+                } finally {
+                  setSaving(false)
+                }
+              }}
+              className="rounded border border-emerald-700 bg-emerald-900/50 px-2.5 py-1 text-xs text-emerald-300 hover:bg-emerald-800/50 hover:text-emerald-200 disabled:opacity-50"
+            >
+              {saving ? "Saving…" : "💾 Save"}
+            </button>
+            {saveError && (
+              <span className="text-xs text-red-400">{saveError}</span>
+            )}
+          </div>
+        )}
 
         {/* Body */}
         <div className="flex-1 overflow-y-auto px-6 py-4">
@@ -138,11 +204,20 @@ export function SkillDetailDrawer({ skill, onClose, onInstalled, currentRole }: 
           )}
 
           {skill.source === "local" && detail ? (
-            <div className="prose prose-invert prose-sm max-w-none">
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                {detail.md}
-              </ReactMarkdown>
-            </div>
+            editing ? (
+              <textarea
+                value={editContent}
+                onChange={(e) => setEditContent(e.target.value)}
+                className="w-full min-h-[500px] bg-zinc-900 text-zinc-100 font-mono text-xs leading-relaxed p-3 rounded border border-zinc-700 resize-y focus:border-zinc-500 focus:outline-none"
+                spellCheck={false}
+              />
+            ) : (
+              <div className="prose prose-invert prose-sm max-w-none">
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                  {detail.md}
+                </ReactMarkdown>
+              </div>
+            )
           ) : skill.source !== "local" ? (
             <div className="flex flex-col gap-3">
               <p className="text-sm text-zinc-300">{skill.description}</p>

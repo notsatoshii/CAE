@@ -92,8 +92,91 @@ export async function GET(
       installed: true,
     }
 
-    return NextResponse.json({ skill, md: body, frontmatter })
+    return NextResponse.json({ skill, md: body, frontmatter, raw: md })
   } catch {
     return NextResponse.json({ error: "not found" }, { status: 404 })
+  }
+}
+
+/**
+ * Shared helper: resolve a skill name to its SKILL.md path on disk.
+ * Searches top-level first, then one level of category subdirs.
+ * Returns null if not found.
+ */
+async function resolveSkillMdPath(name: string): Promise<string | null> {
+  const skillsDir = getSkillsDir()
+
+  // Try direct path first
+  const directPath = path.join(skillsDir, name, "SKILL.md")
+  if (
+    path.join(skillsDir, name).startsWith(skillsDir + path.sep) ||
+    path.join(skillsDir, name) === skillsDir
+  ) {
+    try {
+      await fs.access(directPath)
+      return directPath
+    } catch { /* fall through */ }
+  }
+
+  // Search category subdirs
+  try {
+    const categories = await fs.readdir(skillsDir, { withFileTypes: true })
+    for (const cat of categories) {
+      if (!cat.isDirectory()) continue
+      const nested = path.join(skillsDir, cat.name, name, "SKILL.md")
+      try {
+        await fs.access(nested)
+        return nested
+      } catch { continue }
+    }
+  } catch { /* ignore */ }
+
+  return null
+}
+
+/**
+ * PUT /api/skills/[name]
+ * Accepts { content: string } — the full SKILL.md file content (frontmatter + body).
+ * Writes it back to disk. Returns updated { md, frontmatter }.
+ */
+export async function PUT(
+  req: NextRequest,
+  { params }: { params: Promise<{ name: string }> }
+) {
+  const { name: rawName } = await params
+  const name = sanitizeName(rawName)
+
+  if (!name) {
+    return NextResponse.json({ error: "invalid skill name" }, { status: 400 })
+  }
+
+  let body: { content?: string }
+  try {
+    body = await req.json()
+  } catch {
+    return NextResponse.json({ error: "invalid JSON body" }, { status: 400 })
+  }
+
+  if (typeof body.content !== "string") {
+    return NextResponse.json(
+      { error: "content field required (string)" },
+      { status: 400 }
+    )
+  }
+
+  const skillMdPath = await resolveSkillMdPath(name)
+  if (!skillMdPath) {
+    return NextResponse.json({ error: "not found" }, { status: 404 })
+  }
+
+  try {
+    await fs.writeFile(skillMdPath, body.content, "utf8")
+    const { frontmatter, body: mdBody } = parseSkillMd(body.content)
+    return NextResponse.json({ ok: true, md: mdBody, frontmatter })
+  } catch (err) {
+    return NextResponse.json(
+      { error: "write failed: " + (err instanceof Error ? err.message : String(err)) },
+      { status: 500 }
+    )
   }
 }
