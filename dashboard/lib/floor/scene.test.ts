@@ -7,44 +7,44 @@ import { describe, it, expect } from "vitest";
 import { STATIONS, createScene } from "./scene";
 
 describe("STATIONS — static coordinate map (D-07)", () => {
-  it("hub = {tx: 8, ty: 8, persona: 'nexus'}", () => {
-    expect(STATIONS.hub).toEqual({ tx: 8, ty: 8, persona: "nexus" });
+  it("hub = {tx: 8, ty: 4, persona: 'nexus'}", () => {
+    expect(STATIONS.hub).toEqual({ tx: 8, ty: 4, persona: "nexus" });
   });
 
-  it("forge = {tx: 12, ty: 6, persona: 'forge'}", () => {
-    expect(STATIONS.forge).toEqual({ tx: 12, ty: 6, persona: "forge" });
+  it("forge = {tx: 4, ty: 3, persona: 'forge'}", () => {
+    expect(STATIONS.forge).toEqual({ tx: 4, ty: 3, persona: "forge" });
   });
 
-  it("watchtower = {tx: 13, ty: 2, persona: 'sentinel'}", () => {
-    expect(STATIONS.watchtower).toEqual({ tx: 13, ty: 2, persona: "sentinel" });
+  it("watchtower = {tx: 12, ty: 3, persona: 'sentinel'}", () => {
+    expect(STATIONS.watchtower).toEqual({ tx: 12, ty: 3, persona: "sentinel" });
   });
 
-  it("overlook = {tx: 2, ty: 2, persona: 'scout'}", () => {
-    expect(STATIONS.overlook).toEqual({ tx: 2, ty: 2, persona: "scout" });
+  it("overlook = {tx: 14, ty: 7, persona: 'scout'}", () => {
+    expect(STATIONS.overlook).toEqual({ tx: 14, ty: 7, persona: "scout" });
   });
 
-  it("library = {tx: 4, ty: 12, persona: 'scribe'}", () => {
-    expect(STATIONS.library).toEqual({ tx: 4, ty: 12, persona: "scribe" });
+  it("library = {tx: 13, ty: 11, persona: 'scribe'}", () => {
+    expect(STATIONS.library).toEqual({ tx: 13, ty: 11, persona: "scribe" });
   });
 
-  it("shadow = {tx: 10, ty: 14, persona: 'phantom'}", () => {
-    expect(STATIONS.shadow).toEqual({ tx: 10, ty: 14, persona: "phantom" });
+  it("shadow = {tx: 8, ty: 13, persona: 'phantom'}", () => {
+    expect(STATIONS.shadow).toEqual({ tx: 8, ty: 13, persona: "phantom" });
   });
 
-  it("armory = {tx: 14, ty: 10, persona: 'aegis'}", () => {
-    expect(STATIONS.armory).toEqual({ tx: 14, ty: 10, persona: "aegis" });
+  it("armory = {tx: 3, ty: 11, persona: 'aegis'}", () => {
+    expect(STATIONS.armory).toEqual({ tx: 3, ty: 11, persona: "aegis" });
   });
 
-  it("drafting = {tx: 6, ty: 4, persona: 'arch'}", () => {
-    expect(STATIONS.drafting).toEqual({ tx: 6, ty: 4, persona: "arch" });
+  it("drafting = {tx: 2, ty: 7, persona: 'arch'}", () => {
+    expect(STATIONS.drafting).toEqual({ tx: 2, ty: 7, persona: "arch" });
   });
 
-  it("pulpit = {tx: 8, ty: 13, persona: 'herald'}", () => {
-    expect(STATIONS.pulpit).toEqual({ tx: 8, ty: 13, persona: "herald" });
+  it("pulpit = {tx: 10, ty: 8, persona: 'herald'}", () => {
+    expect(STATIONS.pulpit).toEqual({ tx: 10, ty: 8, persona: "herald" });
   });
 
-  it("loadingBay = {tx: 1, ty: 8, persona: null}", () => {
-    expect(STATIONS.loadingBay).toEqual({ tx: 1, ty: 8, persona: null });
+  it("loadingBay = {tx: 6, ty: 8, persona: null}", () => {
+    expect(STATIONS.loadingBay).toEqual({ tx: 6, ty: 8, persona: null });
   });
 
   it("has exactly 10 keys — no extras, no missing", () => {

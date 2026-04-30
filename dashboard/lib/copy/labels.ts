@@ -621,7 +621,7 @@ const FOUNDER: Labels = {
   agentsListFailedToLoad: "Couldn't load the team. Try refreshing.",
 
   // === Phase 6: Workflows + Queue ===
-  workflowsPageHeading: "Recipes",
+  workflowsPageHeading: "Workflows",
   workflowsListEmpty: "No recipes yet. Describe what you want to automate and CAE will draft it.",
   workflowsCreateButton: "New recipe",
   workflowsListRowLastRun: (t) => "ran " + t,
@@ -668,7 +668,7 @@ const FOUNDER: Labels = {
   metricsSpendingTopTasksHeading: "Most expensive jobs",
   metricsSpendingTopTaskRow: (title, tokens, agent) => title + " — " + tokens + " tok · " + agent,
   metricsWellHeading: "How well it's going",
-  metricsWellLede: (r) => "CAE is getting things right " + Math.round(r * 100) + "% of the time this week.",
+  metricsWellLede: (r) => r === 0 ? "No completed jobs yet this week." : "CAE is getting things right " + Math.round(r * 100) + "% of the time this week.",
   metricsWellAgentGaugeLabel: (label, pct) => label + " — " + Math.round(pct * 100) + "%",
   metricsWellAgentInsufficientSamples: "not enough jobs yet",
   metricsWellRetryHeatmapHeading: "When retries happen",

@@ -33,7 +33,7 @@ const SURFACES: Array<{ id: MirrorSurface; endpoint: string; title: string }> =
   [
     { id: "home", endpoint: "/api/state", title: "Home" },
     { id: "agents", endpoint: "/api/agents", title: "Agents" },
-    { id: "workflows", endpoint: "/api/workflows", title: "Recipes" },
+    { id: "workflows", endpoint: "/api/workflows", title: "Workflows" },
     { id: "queue", endpoint: "/api/queue", title: "Queue" },
     { id: "changes", endpoint: "/api/changes", title: "Changes" },
     { id: "metrics", endpoint: "/api/metrics", title: "Metrics" },
