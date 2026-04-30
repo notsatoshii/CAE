@@ -18,22 +18,39 @@ import { withLog } from "@/lib/with-log"
 
 const l = log("api.state")
 
-// Route-level response cache — getHomeState takes 30-50s on cold start.
-// Cache the full response so subsequent polls (3s interval) are instant.
+// Route-level response cache — getHomeState takes 12-60s on cold start.
+// Serve stale data while revalidating in background.
 let _responseCache: { ts: number; body: unknown } | null = null
-const RESPONSE_CACHE_TTL = 5_000 // 5s
+const RESPONSE_CACHE_TTL = 30_000 // 30s — serve cached response
+const STALE_MAX = 120_000 // 2min — serve stale while refresh happens
+let _refreshing: Promise<void> | null = null // dedup concurrent refreshes
 
 async function getHandler(req: NextRequest) {
-  // Return cached response if fresh
-  if (_responseCache && Date.now() - _responseCache.ts < RESPONSE_CACHE_TTL) {
+  const now = Date.now()
+  const project = req.nextUrl.searchParams.get("project") || CAE_ROOT
+
+  // Return cached response if fresh (< 30s)
+  if (_responseCache && now - _responseCache.ts < RESPONSE_CACHE_TTL) {
     return Response.json(_responseCache.body)
   }
-  // `||` (not `??`) so an empty string from `?project=` falls back to CAE_ROOT.
-  // useStatePoll always sends `?project=${encodeURIComponent("")}`, which made
-  // the previous `??` operator pass through the empty string — and then
-  // `join("", ".cae/metrics/...")` resolves to `/.cae/metrics/...`, a
-  // nonexistent root-filesystem path. Every breaker reading got zeroed out.
-  const project = req.nextUrl.searchParams.get("project") || CAE_ROOT
+
+  // If stale but within 2min, serve stale and refresh in background
+  if (_responseCache && now - _responseCache.ts < STALE_MAX) {
+    if (!_refreshing) {
+      _refreshing = refreshState(project).finally(() => { _refreshing = null })
+    }
+    return Response.json(_responseCache.body)
+  }
+
+  // No cache at all — must wait for first load
+  if (!_refreshing) {
+    _refreshing = refreshState(project).finally(() => { _refreshing = null })
+  }
+  await _refreshing
+  return Response.json(_responseCache?.body ?? { error: "state unavailable" })
+}
+
+async function refreshState(project: string) {
   const metricsDir = join(project, ".cae", "metrics")
   const today = new Date().toISOString().slice(0, 10)
 
@@ -121,7 +138,6 @@ async function getHandler(req: NextRequest) {
     recent_activity: activityFeed.slice(0, 20),
   }
   _responseCache = { ts: Date.now(), body }
-  return Response.json(body)
 }
 
 export const GET = withLog(getHandler, "/api/state")
