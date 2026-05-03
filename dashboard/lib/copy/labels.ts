@@ -653,7 +653,12 @@ const FOUNDER: Labels = {
   queueKanbanEmptyColumn: "—",
   queueKanbanNewJobButton: "New job",
   queueKanbanNewJobModalTitle: "Send a job to CAE",
-  queueCardAgentProjectLine: (project, t) => project + " · " + t,
+  queueCardAgentProjectLine: (project, t) => {
+    const p = project && project !== "—" ? project : ""
+    const time = t && t !== "—" && t !== "just now" ? t : ""
+    if (p && time) return p + " · " + time
+    return p || time || ""
+  },
   queueCardLivePulseLabel: "running now",
 
   // === Phase 7: Metrics ===
@@ -1107,7 +1112,12 @@ const DEV: Labels = {
   queueKanbanEmptyColumn: "empty",
   queueKanbanNewJobButton: "Delegate",
   queueKanbanNewJobModalTitle: "Delegate to CAE",
-  queueCardAgentProjectLine: (project, t) => project + " · " + t,
+  queueCardAgentProjectLine: (project, t) => {
+    const p = project && project !== "—" ? project : ""
+    const time = t && t !== "—" && t !== "just now" ? t : ""
+    if (p && time) return p + " · " + time
+    return p || time || ""
+  },
   queueCardLivePulseLabel: "in-progress",
 
   // === Phase 7: Metrics ===

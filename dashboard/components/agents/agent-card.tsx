@@ -284,8 +284,10 @@ export function AgentCard({ agent }: AgentCardProps) {
         <button
           type="button"
           aria-label={verbs.primary + " " + agent.label}
+          title="Coming soon"
           onClick={(e) => { e.stopPropagation() }}
-          className={cn(verbBase, "hover:border-[color:var(--accent,#00d4ff)] hover:text-[color:var(--accent,#00d4ff)]")}
+          disabled
+          className={cn(verbBase, "opacity-40 cursor-not-allowed")}
           data-testid={"agent-card-" + agent.name + "-verb-primary"}
         >
           {verbs.primary}
@@ -293,8 +295,10 @@ export function AgentCard({ agent }: AgentCardProps) {
         <button
           type="button"
           aria-label={verbs.stop + " " + agent.label}
+          title="Coming soon"
           onClick={(e) => { e.stopPropagation() }}
-          className={cn(verbBase, "hover:border-[color:var(--warning,#f59e0b)] hover:text-[color:var(--warning,#f59e0b)]")}
+          disabled
+          className={cn(verbBase, "opacity-40 cursor-not-allowed")}
           data-testid={"agent-card-" + agent.name + "-verb-stop"}
         >
           {verbs.stop}
@@ -302,8 +306,10 @@ export function AgentCard({ agent }: AgentCardProps) {
         <button
           type="button"
           aria-label={verbs.archive + " " + agent.label}
+          title="Coming soon"
           onClick={(e) => { e.stopPropagation() }}
-          className={cn(verbBase, "hover:border-[color:var(--danger,#ef4444)] hover:text-[color:var(--danger,#ef4444)]")}
+          disabled
+          className={cn(verbBase, "opacity-40 cursor-not-allowed")}
           data-testid={"agent-card-" + agent.name + "-verb-archive"}
         >
           {verbs.archive}

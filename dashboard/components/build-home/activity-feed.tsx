@@ -57,6 +57,43 @@ function iconFor(row: ActivityFeedRow): LucideIcon {
 }
 
 /**
+ * Collapse consecutive heartbeat rows into a single summary row.
+ * e.g., 20 heartbeats at 10:54 → "20 heartbeats"
+ */
+function aggregateHeartbeats(rows: ActivityFeedRow[]): ActivityFeedRow[] {
+  const result: ActivityFeedRow[] = []
+  let hbCount = 0
+  let hbFirst: ActivityFeedRow | null = null
+
+  function flush() {
+    if (hbCount > 0 && hbFirst) {
+      if (hbCount === 1) {
+        result.push(hbFirst)
+      } else {
+        result.push({
+          ...hbFirst,
+          summary: `${hbCount} heartbeats`,
+        })
+      }
+      hbCount = 0
+      hbFirst = null
+    }
+  }
+
+  for (const r of rows) {
+    if (r.type === "heartbeat") {
+      if (hbCount === 0) hbFirst = r
+      hbCount++
+    } else {
+      flush()
+      result.push(r)
+    }
+  }
+  flush()
+  return result
+}
+
+/**
  * Group rows by day boundary (YYYY-MM-DD). Keeps input order within a day
  * — the source is ts-DESC so that's what the feed shows.
  */
@@ -122,7 +159,7 @@ export function ActivityFeed() {
   else if (empty) liveness = "empty"
   else liveness = "healthy"
 
-  const groups = healthy && rows ? groupByDay(rows) : []
+  const groups = healthy && rows ? groupByDay(aggregateHeartbeats(rows)) : []
 
   return (
     <Panel

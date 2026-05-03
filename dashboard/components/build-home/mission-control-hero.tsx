@@ -144,7 +144,7 @@ function TokenBurnBar({
           aria-hidden="true"
         />
       </div>
-      <div className="mt-1.5 flex items-center justify-between text-[10px] text-[color:var(--text-dim)]">
+      <div className="mt-1.5 flex items-center justify-between text-[10px] text-[color:var(--text-muted,#8a8a8c)]">
         <span>
           <span className="sr-only" data-truth="mission-control.tokens-burn-7d">
             {burn7d}
@@ -176,7 +176,7 @@ function TokensTodayBody({ tokensToday }: { tokensToday: number }) {
       >
         {formatTokens(tokensToday)} tok
       </span>
-      <span className="text-[10px] text-[color:var(--text-dim)]">today</span>
+      <span className="text-[10px] text-[color:var(--text-muted,#8a8a8c)]">today</span>
     </div>
   );
 }
@@ -221,7 +221,7 @@ function Sparkline60s({
           x2={w}
           y1={h - 1}
           y2={h - 1}
-          stroke="var(--text-dim)"
+          stroke="var(--text-muted, #8a8a8c)"
           strokeWidth={1}
           strokeDasharray="4 4"
         />
@@ -294,7 +294,7 @@ function Tile({
           </span>
         </div>
         {subLabel ? (
-          <span className="text-[10px] text-[color:var(--text-dim)]">
+          <span className="text-[10px] text-[color:var(--text-muted,#8a8a8c)]">
             {subLabel}
           </span>
         ) : null}
@@ -308,7 +308,7 @@ function Tile({
           >
             {children}
             {dev && emptyTip ? (
-              <span className="text-[10px] text-[color:var(--text-dim)] mt-0.5">
+              <span className="text-[10px] text-[color:var(--text-muted,#8a8a8c)] mt-0.5">
                 {emptyTip}
               </span>
             ) : null}
