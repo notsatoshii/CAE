@@ -5,6 +5,72 @@ import type { CatalogSkill } from "./cae-types"
 import { parseSkillMd } from "./cae-skills-parse"
 
 /**
+ * Returns a map of skill-name → ISO mtime string for each SKILL.md file found
+ * under `dir`. Uses fs.promises.stat (not git) so it works for skills installed
+ * in ~/.hermes/skills/ that are not tracked by the CAE repo.
+ */
+export async function getLocalSkillsMtimeMap(
+  dir: string = getSkillsDir()
+): Promise<Record<string, string | null>> {
+  const out: Record<string, string | null> = {}
+
+  let entries: fs.Dirent[]
+  try {
+    entries = await fs.promises.readdir(dir, { withFileTypes: true })
+  } catch {
+    return out
+  }
+
+  const statFile = async (p: string): Promise<string | null> => {
+    try {
+      const stat = await fs.promises.stat(p)
+      return stat.mtime.toISOString()
+    } catch {
+      return null
+    }
+  }
+
+  const fileExists = async (p: string): Promise<boolean> => {
+    try {
+      await fs.promises.access(p)
+      return true
+    } catch {
+      return false
+    }
+  }
+
+  await Promise.all(
+    entries.map(async (entry) => {
+      if (!entry.isDirectory()) return
+      const skillDir = path.join(dir, entry.name)
+      const skillMd = path.join(skillDir, "SKILL.md")
+
+      if (await fileExists(skillMd)) {
+        out[entry.name] = await statFile(skillMd)
+      } else {
+        // Category folder — check one level deeper
+        try {
+          const subs = await fs.promises.readdir(skillDir, { withFileTypes: true })
+          await Promise.all(
+            subs.map(async (sub) => {
+              if (!sub.isDirectory()) return
+              const subSkillMd = path.join(skillDir, sub.name, "SKILL.md")
+              if (await fileExists(subSkillMd)) {
+                out[sub.name] = await statFile(subSkillMd)
+              }
+            })
+          )
+        } catch {
+          // skip unreadable category dirs
+        }
+      }
+    })
+  )
+
+  return out
+}
+
+/**
  * Returns the skills directory.
  * Reads from CAE_SKILLS_DIR env (for tests) or defaults to ~/.claude/skills/.
  */

@@ -124,4 +124,27 @@ describe("SkillCard", () => {
     // Should show some representation of 1234 installs
     expect(screen.getByText(/1[,.]?234/)).toBeInTheDocument()
   })
+
+  it("Test 1j: renders last-updated chip when lastUpdatedISO is provided", () => {
+    render(
+      <SkillCard
+        skill={{ ...BASE_SKILL, lastUpdatedISO: "2026-04-17T02:40:37+09:00" }}
+        onOpen={vi.fn()}
+        onInstall={vi.fn()}
+      />
+    )
+    expect(screen.getByTestId("skill-last-updated")).toBeInTheDocument()
+    expect(screen.getByText(/updated/i)).toBeInTheDocument()
+  })
+
+  it("Test 1k: does not render last-updated chip when lastUpdatedISO is null", () => {
+    render(
+      <SkillCard
+        skill={{ ...BASE_SKILL, lastUpdatedISO: null }}
+        onOpen={vi.fn()}
+        onInstall={vi.fn()}
+      />
+    )
+    expect(screen.queryByTestId("skill-last-updated")).not.toBeInTheDocument()
+  })
 })
