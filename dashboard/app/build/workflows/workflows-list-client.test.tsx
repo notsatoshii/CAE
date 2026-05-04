@@ -54,8 +54,8 @@ const WORKFLOW: WorkflowRecord = {
     description: "Ships the latest build",
     trigger: { type: "manual" },
     steps: [
-      { name: "build", agent: "forge", prompt: "build" },
-      { name: "test", agent: "sentinel", prompt: "test" },
+      { agent: "forge", task: "build" },
+      { agent: "sentinel", task: "test" },
     ],
   },
   yaml: "",
