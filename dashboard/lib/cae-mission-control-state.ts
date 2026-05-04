@@ -328,18 +328,20 @@ function countActiveAgents(events: ParsedCbEvent[], now: number): number {
 }
 
 /**
- * tokensFromTokenUsage — sum raw input+output tokens across token_usage
- * events in [start, now]. Returns 0 when no events. No USD conversion —
+ * tokensFromTokenUsage — sum raw input+output tokens across events
+ * that carry token data in [start, now]. Reads from token_usage events
+ * AND any other event type that has input_tokens/output_tokens fields
+ * (e.g. forge_end). Returns 0 when no events. No USD conversion —
  * Max subscription means derived USD is a lie; tokens are the real unit.
  */
 function tokensFromTokenUsage(events: ParsedCbEvent[], start: number, now: number): number {
   let tokens = 0
   for (const ev of events) {
-    if (ev.event !== "token_usage") continue
     if (ev.ts_ms < start || ev.ts_ms > now) continue
-    const input = Math.max(0, ev.input_tokens ?? 0)
-    const output = Math.max(0, ev.output_tokens ?? 0)
-    tokens += input + output
+    const input = ev.input_tokens ?? 0
+    const output = ev.output_tokens ?? 0
+    if (input === 0 && output === 0) continue
+    tokens += Math.max(0, input) + Math.max(0, output)
   }
   return tokens
 }
