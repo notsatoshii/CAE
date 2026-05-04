@@ -122,7 +122,7 @@ const { handlers: _handlers, signIn: _signIn, signOut: _signOut, auth: _auth } =
 
 // DEV BYPASS: Return a fake admin session when AUTH_BYPASS=1.
 // TODO: Remove when Google/GitHub OAuth is set up for prod.
-const DEV_BYPASS = process.env.AUTH_BYPASS === "1"
+const DEV_BYPASS = !!process.env.AUTH_BYPASS
 
 const DEV_SESSION = {
   user: { name: "Dev Admin", email: "admin@cae.dev", role: "admin" as const, image: null },

@@ -95,12 +95,17 @@ export async function getActivityFeed(
     if (row) rows.push(row)
   }
 
-  // heartbeat.jsonl — translate (mostly one-per-30s, will be down-sampled
-  // at render time; we still include all so dashboards can show gaps).
+  // heartbeat.jsonl — Down-sample aggressively: only keep the latest heartbeat
+  // to prove the system is alive, not flood the feed with 175K+ identical entries.
+  // The raw heartbeat stream is available via /api/tail for diagnostics.
+  let latestHeartbeat: ActivityFeedRow | null = null
   for (const raw of hb) {
     const row = projectHeartbeatRow(raw)
-    if (row) rows.push(row)
+    if (row && (!latestHeartbeat || row.ts > latestHeartbeat.ts)) {
+      latestHeartbeat = row
+    }
   }
+  if (latestHeartbeat) rows.push(latestHeartbeat)
 
   // scheduler.jsonl
   for (const raw of sch) {
@@ -144,6 +149,11 @@ function projectCircuitBreakerRow(raw: unknown): ActivityFeedRow | null {
   if (typeof r.ts !== "string") return null
   const event = typeof r.event === "string" ? r.event : ""
   if (!event) return null
+
+  // Skip heartbeat events — they're noise in the activity feed and already
+  // handled by projectHeartbeatRow from heartbeat.jsonl. Circuit-breakers.jsonl
+  // has 175K+ heartbeats that flood out the 90 real events.
+  if (event === "heartbeat") return null
 
   const agent = typeof r.agent === "string" ? r.agent : undefined
   const taskId = typeof r.task_id === "string" ? r.task_id : undefined

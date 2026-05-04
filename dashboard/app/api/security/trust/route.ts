@@ -31,7 +31,7 @@ export async function GET(_req: NextRequest) {
     return NextResponse.json({ error: "forbidden" }, { status: 403 })
   }
 
-  const skillsDir = process.env.CAE_SKILLS_DIR ?? path.join(os.homedir(), ".claude", "skills")
+  const skillsDir = process.env.CAE_SKILLS_DIR ?? path.join(os.homedir(), ".hermes", "skills")
   const overrides = await readOverrides()
   const localSkills = await readLocalSkillsDir(skillsDir)
 
