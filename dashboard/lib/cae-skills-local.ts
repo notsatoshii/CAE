@@ -6,8 +6,8 @@ import { parseSkillMd } from "./cae-skills-parse"
 
 /**
  * Returns a map of skill-name → ISO mtime string for each SKILL.md file found
- * under `dir`. Uses fs.stat (not git) so it works for skills installed in
- * ~/.hermes/skills/ that are not tracked by the CAE repo.
+ * under `dir`. Uses fs.promises.stat (not git) so it works for skills installed
+ * in ~/.hermes/skills/ that are not tracked by the CAE repo.
  */
 export async function getLocalSkillsMtimeMap(
   dir: string = getSkillsDir()
@@ -16,43 +16,56 @@ export async function getLocalSkillsMtimeMap(
 
   let entries: fs.Dirent[]
   try {
-    entries = fs.readdirSync(dir, { withFileTypes: true })
+    entries = await fs.promises.readdir(dir, { withFileTypes: true })
   } catch {
     return out
   }
 
-  const statFile = (p: string): string | null => {
+  const statFile = async (p: string): Promise<string | null> => {
     try {
-      const stat = fs.statSync(p)
+      const stat = await fs.promises.stat(p)
       return stat.mtime.toISOString()
     } catch {
       return null
     }
   }
 
-  for (const entry of entries) {
-    if (!entry.isDirectory()) continue
-    const skillDir = path.join(dir, entry.name)
-    const skillMd = path.join(skillDir, "SKILL.md")
-
-    if (fs.existsSync(skillMd)) {
-      out[entry.name] = statFile(skillMd)
-    } else {
-      // Category folder — check one level deeper
-      try {
-        const subs = fs.readdirSync(skillDir, { withFileTypes: true })
-        for (const sub of subs) {
-          if (!sub.isDirectory()) continue
-          const subSkillMd = path.join(skillDir, sub.name, "SKILL.md")
-          if (fs.existsSync(subSkillMd)) {
-            out[sub.name] = statFile(subSkillMd)
-          }
-        }
-      } catch {
-        continue
-      }
+  const fileExists = async (p: string): Promise<boolean> => {
+    try {
+      await fs.promises.access(p)
+      return true
+    } catch {
+      return false
     }
   }
+
+  await Promise.all(
+    entries.map(async (entry) => {
+      if (!entry.isDirectory()) return
+      const skillDir = path.join(dir, entry.name)
+      const skillMd = path.join(skillDir, "SKILL.md")
+
+      if (await fileExists(skillMd)) {
+        out[entry.name] = await statFile(skillMd)
+      } else {
+        // Category folder — check one level deeper
+        try {
+          const subs = await fs.promises.readdir(skillDir, { withFileTypes: true })
+          await Promise.all(
+            subs.map(async (sub) => {
+              if (!sub.isDirectory()) return
+              const subSkillMd = path.join(skillDir, sub.name, "SKILL.md")
+              if (await fileExists(subSkillMd)) {
+                out[sub.name] = await statFile(subSkillMd)
+              }
+            })
+          )
+        } catch {
+          // skip unreadable category dirs
+        }
+      }
+    })
+  )
 
   return out
 }
