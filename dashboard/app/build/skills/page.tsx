@@ -8,6 +8,7 @@ import {
   getRecentSkillsCommits,
 } from "@/lib/skills/last-updated"
 import { enrichSkillsWithLastUpdated } from "@/lib/skills/enrich"
+import { getLocalSkillsMtimeMap } from "@/lib/cae-skills-local"
 import { RecentEditsTimeline } from "@/components/skills/recent-edits-timeline"
 import { Skeleton } from "@/components/ui/skeleton"
 
@@ -40,13 +41,16 @@ export default function SkillsPage() {
 }
 
 async function SkillsContent() {
-  const [catalog, session, lastUpdatedMap, recentCommits] = await Promise.all([
+  const [catalog, session, gitMap, mtimeMap, recentCommits] = await Promise.all([
     getCatalog().catch(() => []),
     auth(),
     getSkillsLastUpdatedMap().catch(() => ({})),
+    getLocalSkillsMtimeMap().catch(() => ({})),
     getRecentSkillsCommits(20).catch(() => []),
   ])
   const currentRole: Role = (session?.user?.role as Role | undefined) ?? "viewer"
+  // Git-log timestamps win; fall back to fs.stat mtime for local skills not in repo.
+  const lastUpdatedMap = { ...mtimeMap, ...gitMap }
   const enriched = enrichSkillsWithLastUpdated(catalog, lastUpdatedMap)
 
   return (
