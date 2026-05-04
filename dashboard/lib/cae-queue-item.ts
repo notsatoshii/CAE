@@ -44,6 +44,8 @@ export interface QueueItemDetail {
   logPath: string;
   /** Absolute path to the BUILDPLAN.md the agent is executing. */
   buildplanPath: string;
+  /** Raw BUILDPLAN.md text for the read-only sheet viewer (≤8 KB, null if missing). */
+  buildplanContent: string | null;
   /** ms-since-epoch; createdAt of the inbox dir, or mtime of outbox DONE.md. */
   ts: number;
   /** Tags scraped from META.yaml (`tags: [a, b]`) — empty array if none. */
@@ -188,6 +190,12 @@ export async function getQueueItem(taskId: string): Promise<QueueItemDetail | nu
   const ts = donePathStat?.mtimeMs ?? inboxStat?.birthtimeMs ?? inboxStat?.mtimeMs ?? Date.now();
   const title = buildplanText ? firstHeading(buildplanText, taskId) : taskId;
   const tags = metaText ? extractTags(metaText) : [];
+  const MAX_BUILDPLAN = 8 * 1024;
+  const buildplanContent = buildplanText
+    ? buildplanText.length > MAX_BUILDPLAN
+      ? buildplanText.slice(0, MAX_BUILDPLAN) + "\n… (truncated)"
+      : buildplanText
+    : null;
 
   const sessionName = "buildplan-" + shortIdForTmux(taskId);
   const running = tmuxSessions.has(sessionName);
@@ -221,6 +229,7 @@ export async function getQueueItem(taskId: string): Promise<QueueItemDetail | nu
     summary,
     logPath: await resolveLogPath(taskId),
     buildplanPath,
+    buildplanContent,
     ts,
     tags,
     status,

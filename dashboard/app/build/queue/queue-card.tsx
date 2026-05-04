@@ -6,11 +6,8 @@
  * Renders agent emoji + task title + project · relative-time + up to 3 tags.
  * Shows a pulsing cyan dot on `in_progress` cards (the "running now" indicator).
  *
- * Click (or Enter/Space) opens the Phase 4 TaskDetailSheet via URL state:
+ * Click (or Enter/Space) opens QueueItemSheet via URL state:
  *   ?sheet=open&task={taskId}&project={project}
- * Phase 6 queue cards don't map to a specific phase number — the sheet
- * gracefully handles missing/NaN phase (per task-detail-sheet.tsx §line 93,
- * `Number.isNaN(phaseNumber)` guard).
  *
  * Phase 15 Wave 2.1 — Surface uses `.card-base card-base--interactive`
  * (globals.css). Status accent stays as a 2px left ribbon.

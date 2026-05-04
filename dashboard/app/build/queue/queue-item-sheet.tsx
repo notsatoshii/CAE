@@ -43,6 +43,7 @@ interface QueueItemDetail {
   summary: string;
   logPath: string;
   buildplanPath: string;
+  buildplanContent: string | null;
   ts: number;
   tags: string[];
   status: "waiting" | "in_progress" | "double_checking" | "stuck" | "shipped";
@@ -74,12 +75,14 @@ export function QueueItemSheet() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pendingAction, setPendingAction] = useState<string | null>(null);
+  const [buildplanOpen, setBuildplanOpen] = useState(false);
 
   // Fetch on open.
   useEffect(() => {
     if (!open || !taskId) {
       setItem(null);
       setError(null);
+      setBuildplanOpen(false);
       return;
     }
     let cancelled = false;
@@ -323,13 +326,13 @@ export function QueueItemSheet() {
             </div>
           </section>
 
-          {/* BUILDPLAN link */}
+          {/* Task details + buildplan viewer */}
           {item && (
             <section data-testid="queue-item-sheet-meta">
               <h3 className="text-xs font-semibold uppercase tracking-wide text-[color:var(--text-muted)] mb-2">
                 Task details
               </h3>
-              <dl className="text-xs grid grid-cols-[max-content_1fr] gap-x-3 gap-y-1">
+              <dl className="text-xs grid grid-cols-[max-content_1fr] gap-x-3 gap-y-1 mb-3">
                 <dt className="text-[color:var(--text-muted)]">Task id</dt>
                 <dd
                   data-testid="queue-item-sheet-taskid"
@@ -348,6 +351,34 @@ export function QueueItemSheet() {
                   </>
                 )}
               </dl>
+              {item.buildplanContent ? (
+                <div data-testid="queue-item-sheet-buildplan">
+                  <button
+                    type="button"
+                    data-testid="queue-item-buildplan-toggle"
+                    onClick={() => setBuildplanOpen((o) => !o)}
+                    className="text-xs text-[color:var(--accent,#00d4ff)] hover:underline mb-2"
+                    aria-expanded={buildplanOpen}
+                  >
+                    {buildplanOpen ? "Hide buildplan ▲" : "View buildplan ▼"}
+                  </button>
+                  {buildplanOpen && (
+                    <pre
+                      data-testid="queue-item-buildplan-content"
+                      className="text-[11px] font-mono whitespace-pre-wrap break-words rounded border border-[color:var(--border-subtle)] bg-[color:var(--bg,#0a0a0b)] p-3 max-h-96 overflow-y-auto text-[color:var(--text-muted)]"
+                    >
+                      {item.buildplanContent}
+                    </pre>
+                  )}
+                </div>
+              ) : (
+                <p
+                  data-testid="queue-item-sheet-buildplan-missing"
+                  className="text-xs text-[color:var(--text-muted)]"
+                >
+                  No buildplan found.
+                </p>
+              )}
             </section>
           )}
         </div>

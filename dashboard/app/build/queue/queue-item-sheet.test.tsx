@@ -60,6 +60,7 @@ type QueueItemFixture = {
   summary: string;
   logPath: string;
   buildplanPath: string;
+  buildplanContent: string | null;
   ts: number;
   tags: string[];
   status:
@@ -81,6 +82,7 @@ const DEFAULT_ITEM: QueueItemFixture = {
   summary: "Wire 4 backend controls + hide 4 gapped ones",
   logPath: "/home/cae/inbox/web-abc12345/agent.log",
   buildplanPath: "/home/cae/inbox/web-abc12345/BUILDPLAN.md",
+  buildplanContent: "# Fix queue sheet\n\nWire the 8 stubs.",
   ts: Date.now(),
   tags: ["queue", "class19b"],
   status: "waiting",
@@ -209,5 +211,24 @@ describe("QueueItemSheet", () => {
     render(<QueueItemSheet />);
     await screen.findByTestId("queue-item-actions-empty");
     expect(screen.queryByTestId("queue-item-action-abort")).toBeNull();
+  });
+
+  it("shows 'View buildplan' toggle and expands content on click", async () => {
+    mockFetch();
+    render(<QueueItemSheet />);
+    const toggle = await screen.findByTestId("queue-item-buildplan-toggle");
+    expect(toggle).toHaveTextContent("View buildplan");
+    expect(screen.queryByTestId("queue-item-buildplan-content")).toBeNull();
+    fireEvent.click(toggle);
+    const pre = await screen.findByTestId("queue-item-buildplan-content");
+    expect(pre).toHaveTextContent("Fix queue sheet");
+    expect(toggle).toHaveTextContent("Hide buildplan");
+  });
+
+  it("shows 'No buildplan found' when buildplanContent is null", async () => {
+    mockFetch({ buildplanContent: null });
+    render(<QueueItemSheet />);
+    await screen.findByTestId("queue-item-sheet-buildplan-missing");
+    expect(screen.queryByTestId("queue-item-buildplan-toggle")).toBeNull();
   });
 });
