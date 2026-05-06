@@ -78,7 +78,7 @@ export function TopNav({ session }: TopNavProps) {
         {/* Desktop/tablet inline icons. Hidden on < sm where the overflow
             menu covers the same targets. */}
         <div
-          className="hidden items-center gap-2 sm:flex"
+          className="hidden items-center gap-2 md:flex"
           data-testid="top-nav-inline-chrome"
         >
           <FloorIcon />

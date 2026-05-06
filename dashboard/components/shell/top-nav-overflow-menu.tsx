@@ -24,11 +24,19 @@ import {
   HelpCircle,
   MessageSquare,
   MoreHorizontal,
+  Users,
+  ListTodo,
+  Workflow,
+  Calendar,
+  BookOpen,
+  Shield,
+  GitMerge,
 } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useShortcutOverlay } from "@/lib/hooks/use-shortcut-overlay";
@@ -46,15 +54,67 @@ export function TopNavOverflowMenu() {
       <DropdownMenuTrigger
         aria-label="More controls"
         data-testid="top-nav-overflow-trigger"
-        className="inline-flex size-7 items-center justify-center rounded-md text-[color:var(--text-muted)] transition-colors hover:bg-[color:var(--surface-hover)] hover:text-[color:var(--text)] sm:hidden"
+        className="inline-flex size-7 items-center justify-center rounded-md text-[color:var(--text-muted)] transition-colors hover:bg-[color:var(--surface-hover)] hover:text-[color:var(--text)] md:hidden"
       >
         <MoreHorizontal className="size-4" aria-hidden="true" />
       </DropdownMenuTrigger>
       <DropdownMenuContent
         align="end"
         data-testid="top-nav-overflow-menu"
-        className="min-w-[12rem]"
+        className="min-w-[12rem] max-h-[70vh] overflow-y-auto"
       >
+        {/* Build navigation — hidden sidebar on mobile (md:flex) */}
+        <DropdownMenuItem
+          data-testid="top-nav-overflow-agents"
+          onClick={() => router.push("/build/agents")}
+        >
+          <Users className="size-4" aria-hidden="true" />
+          <span>Agents</span>
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          data-testid="top-nav-overflow-queue"
+          onClick={() => router.push("/build/queue")}
+        >
+          <ListTodo className="size-4" aria-hidden="true" />
+          <span>Queue</span>
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          data-testid="top-nav-overflow-workflows"
+          onClick={() => router.push("/build/workflows")}
+        >
+          <Workflow className="size-4" aria-hidden="true" />
+          <span>Workflows</span>
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          data-testid="top-nav-overflow-schedule"
+          onClick={() => router.push("/build/schedule")}
+        >
+          <Calendar className="size-4" aria-hidden="true" />
+          <span>Schedule</span>
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          data-testid="top-nav-overflow-skills"
+          onClick={() => router.push("/build/skills")}
+        >
+          <BookOpen className="size-4" aria-hidden="true" />
+          <span>Skills</span>
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          data-testid="top-nav-overflow-security"
+          onClick={() => router.push("/build/security")}
+        >
+          <Shield className="size-4" aria-hidden="true" />
+          <span>Security</span>
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          data-testid="top-nav-overflow-changes"
+          onClick={() => router.push("/build/changes")}
+        >
+          <GitMerge className="size-4" aria-hidden="true" />
+          <span>Changes</span>
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        {/* Insights + tools — original overflow items */}
         <DropdownMenuItem
           data-testid="top-nav-overflow-floor"
           onClick={() => router.push("/floor")}
