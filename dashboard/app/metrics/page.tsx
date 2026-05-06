@@ -25,7 +25,7 @@ export default async function MetricsPage() {
   const L = labelFor(false);
 
   return (
-    <main className="mx-auto flex max-w-6xl flex-col gap-6 p-6">
+    <main className="mx-auto flex max-w-6xl flex-col gap-4 md:gap-6 p-3 md:p-6">
       <h1
         data-testid="metrics-page-heading"
         className="text-2xl font-semibold tracking-tight text-[color:var(--text)]"

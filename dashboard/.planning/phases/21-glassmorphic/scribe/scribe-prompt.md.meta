@@ -1,0 +1,13 @@
+{
+  "session_id": "scribe-1778058872-fb",
+  "tmux_session": "cae-scribe-1778058872-fb",
+  "exit_code": 0,
+  "duration_seconds": 27,
+  "model": "claude-haiku-4-5",
+  "invocation": "direct:cae-scribe-gemini.md",
+  "effort": "low",
+  "permission_mode": "default",
+  "output_bytes": 1863,
+  "error_bytes": 0,
+  "timestamp": "2026-05-06T09:15:01Z"
+}

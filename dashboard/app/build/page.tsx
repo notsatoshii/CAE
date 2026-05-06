@@ -32,7 +32,7 @@ export default async function BuildPage({ searchParams }: BuildPageProps) {
   const cbPath = resolveCbPath(selected?.path ?? null)
 
   return (
-    <main data-testid="build-home" className="p-6 max-w-7xl">
+    <main data-testid="build-home" className="p-3 md:p-6 max-w-7xl">
       <div className="flex items-center gap-3 mb-4">
         <BuildHomeHeading projectName={projectName} />
         {allProjects.length > 0 && selected && (
