@@ -14,7 +14,7 @@ export default function PlanPage() {
   const labels = labelFor(false);
   return (
     <main
-      className="mx-auto flex max-w-3xl flex-col gap-6 p-8"
+      className="mx-auto flex max-w-3xl flex-col gap-4 md:gap-6 p-3 md:p-8"
       data-testid="plan-page"
       data-liveness="empty"
     >

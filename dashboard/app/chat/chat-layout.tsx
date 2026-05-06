@@ -59,10 +59,10 @@ export function ChatLayout({ initialDev = false }: ChatLayoutProps = {}) {
       <span className="sr-only" data-truth="chat.surface">{surface}</span>
       <span className="sr-only" data-truth="chat.layout">split</span>
       <span className="sr-only" data-truth="chat.standalone">true</span>
-      {/* Left pane: read-only mirror of the selected Build surface */}
+      {/* Left pane: read-only mirror of the selected Build surface — hidden on mobile */}
       <section
         aria-label="Mirror of the Build surface"
-        className="flex-1 min-w-0 overflow-auto border-r border-[color:var(--border,#1f1f22)]"
+        className="hidden md:flex flex-1 min-w-0 overflow-auto border-r border-[color:var(--border,#1f1f22)]"
       >
         <ChatMirror surface={surface} onSurfaceChange={setSurface} />
       </section>
@@ -70,7 +70,7 @@ export function ChatLayout({ initialDev = false }: ChatLayoutProps = {}) {
       {/* Right pane: full chat panel, centered at max-w-800px (D-16) */}
       <section
         aria-label={t.chatRailExpandedTitle}
-        className="w-1/2 min-w-0 overflow-hidden border-l border-[color:var(--border,#1f1f22)]"
+        className="w-full md:w-1/2 min-w-0 overflow-hidden md:border-l border-[color:var(--border,#1f1f22)]"
       >
         <ChatPanel standalone />
       </section>
