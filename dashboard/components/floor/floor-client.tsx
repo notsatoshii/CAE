@@ -200,7 +200,7 @@ export default function FloorClient({ cbPath, projectPath, popout }: FloorClient
         // FloorLivenessBadge (z-10) when they share a corner, and
         // overflow-y-auto keeps long legend lists scrollable instead of
         // bleeding out.
-        <aside className="absolute bottom-4 right-4 z-20 w-60 max-w-[calc(100%-2rem)] max-h-[calc(100%-2rem)] overflow-y-auto rounded-md border border-[color:var(--border-subtle)] bg-[color:var(--surface)]/90 p-3 backdrop-blur">
+        <aside className="absolute bottom-4 right-4 z-20 w-60 max-w-[calc(100%-2rem)] max-h-[calc(100%-2rem)] overflow-y-auto rounded-md glass-surface shadow-elevation-2 p-3">
           <FloorLegend />
         </aside>
       )}

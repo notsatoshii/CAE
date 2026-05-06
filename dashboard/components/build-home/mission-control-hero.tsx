@@ -281,7 +281,8 @@ function Tile({
       data-testid={testId}
       className={
         "group flex min-h-[110px] flex-col justify-between gap-2 rounded-lg " +
-        "border border-[color:var(--border-subtle)] bg-[color:var(--surface)] " +
+        "border border-[color:var(--border-subtle)] bg-[color:var(--glass-panel-bg)] " +
+        "backdrop-blur-md " +
         "p-3 transition-colors hover:border-[color:var(--accent)] " +
         "focus-visible:outline-2 focus-visible:outline-[color:var(--accent)]"
       }

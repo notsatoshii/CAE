@@ -99,6 +99,9 @@
     var(--border-subtle) 100%
   );
   --glass-blur: 12px;
+  /* Phase 21 — shorthand aliases for the .glass utility class. */
+  --glass-bg: var(--glass-panel-bg);
+  --glass-border: var(--glass-border-gradient);
 
   /* Density tokens — keep spacing decisions consistent across components. */
   --density-tight:        0.5rem;   /*  8px */
@@ -218,6 +221,8 @@
     var(--border-subtle) 100%
   );
   --glass-blur: 12px;
+  --glass-bg: var(--glass-panel-bg);
+  --glass-border: var(--glass-border-gradient);
 
   --background: var(--bg);
   --foreground: var(--text);
@@ -464,6 +469,15 @@ body {
   backdrop-filter: blur(var(--glass-blur)) saturate(140%);
   -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(140%);
 }
+/* Phase 21 — .glass shorthand: same as .glass-surface but references the
+   --glass-bg / --glass-border aliases so call sites can use either name. */
+@utility glass {
+  background-color: var(--glass-bg);
+  border: 1px solid transparent;
+  border-image: var(--glass-border) 1;
+  backdrop-filter: blur(var(--glass-blur)) saturate(140%);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(140%);
+}
 
 /* Perf guard — disable the expensive `backdrop-filter` below md breakpoint
    (<768px). Translucent fill stays so the hierarchy cue survives on mobile.
@@ -471,7 +485,8 @@ body {
    accept nested breakpoints. */
 @media (max-width: 767.98px) {
   .glass-surface,
-  .glass-surface-strong {
+  .glass-surface-strong,
+  .glass {
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
   }
@@ -481,7 +496,8 @@ body {
    opaque --surface fill so content never swims behind translucency. */
 @media (prefers-reduced-transparency: reduce) {
   .glass-surface,
-  .glass-surface-strong {
+  .glass-surface-strong,
+  .glass {
     background-color: var(--surface);
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
@@ -492,7 +508,8 @@ body {
    Firefox pre-103) get the opaque surface so there's no unreadable chrome. */
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
   .glass-surface,
-  .glass-surface-strong {
+  .glass-surface-strong,
+  .glass {
     background-color: var(--surface);
   }
 }
