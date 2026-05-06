@@ -25,7 +25,7 @@ import { Skeleton } from "@/components/ui/skeleton"
  */
 export default function SkillsPage() {
   return (
-    <div className="flex flex-col gap-6 p-6">
+    <div className="flex flex-col gap-4 md:gap-6 p-3 md:p-6">
       <div>
         <h1 className="type-hero" data-testid="skills-page-heading">Skills</h1>
         <p className="type-body mt-1 text-[color:var(--text-muted)]">

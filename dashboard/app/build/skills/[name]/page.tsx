@@ -44,7 +44,7 @@ export default async function SkillDetailPage({ params }: Props) {
 
   return (
     <div
-      className="mx-auto max-w-3xl p-6"
+      className="mx-auto max-w-3xl p-3 md:p-6"
       data-testid="build-skills-detail-root"
       data-liveness="healthy"
     >

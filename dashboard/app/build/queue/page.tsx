@@ -65,7 +65,7 @@ function QueueLoadingSkeleton() {
       data-testid="queue-loading-skeleton"
     >
       <span className="sr-only" data-truth="build-queue.loading">yes</span>
-      <div className="grid grid-cols-5 gap-4">
+      <div className="flex gap-4 overflow-x-auto lg:grid lg:grid-cols-5 lg:gap-6">
         {Array.from({ length: 5 }).map((_, i) => (
           <div key={i} className="flex flex-col gap-2">
             <Skeleton className="h-6 w-full rounded" />

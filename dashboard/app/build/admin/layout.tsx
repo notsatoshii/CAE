@@ -22,7 +22,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </h1>
         </div>
       </header>
-      <div className="p-6">{children}</div>
+      <div className="p-3 md:p-6">{children}</div>
     </div>
   )
 }

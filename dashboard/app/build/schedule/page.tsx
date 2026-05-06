@@ -18,7 +18,7 @@ export default async function SchedulePage() {
   const currentRole: Role = (session?.user?.role as Role | undefined) ?? "viewer"
 
   return (
-    <div className="flex flex-col gap-6 p-6">
+    <div className="flex flex-col gap-4 md:gap-6 p-3 md:p-6">
       <div>
         <h1 className="type-hero">
           Schedules
