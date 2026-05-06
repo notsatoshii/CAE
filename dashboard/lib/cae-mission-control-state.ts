@@ -46,6 +46,8 @@ import type { CbEvent } from "./cae-types"
 // ---------------------------------------------------------------------------
 
 const DEFAULT_CB_PATH = join(CAE_ROOT, ".cae", "metrics", "circuit-breakers.jsonl")
+// Dashboard subproject writes its own CB file when CAE runs inside /dashboard.
+const DEFAULT_DASHBOARD_CB_PATH = join(CAE_ROOT, "dashboard", ".cae", "metrics", "circuit-breakers.jsonl")
 const DEFAULT_TOOLS_PATH = join(CAE_ROOT, ".cae", "metrics", "tool-calls.jsonl")
 const DEFAULT_LAST_SEEN_PATH = join(CAE_ROOT, ".cae", "sessions", "last-seen.json")
 
@@ -206,8 +208,15 @@ export async function getMissionControlState(
   }
 
   // Read both logs in parallel — JSONL reads are independent.
+  // Union parent project + dashboard subproject CB files so token events
+  // from either location are counted.
   const [cbRows, toolRows] = await Promise.all([
-    tailJsonl(cbPath, TAIL_LIMIT_CB),
+    Promise.all([
+      tailJsonl(cbPath, TAIL_LIMIT_CB),
+      cbPath === DEFAULT_CB_PATH
+        ? tailJsonl(DEFAULT_DASHBOARD_CB_PATH, TAIL_LIMIT_CB).catch(() => [] as unknown[])
+        : Promise.resolve([] as unknown[]),
+    ]).then(([a, b]) => [...a, ...b]),
     tailJsonl(toolsPath, TAIL_LIMIT_TOOLS),
   ])
 

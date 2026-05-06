@@ -70,7 +70,14 @@ async function refreshState(project: string) {
     listPhases(project),
     listInbox(),
     listOutbox(),
-    tailJsonl(join(metricsDir, "circuit-breakers.jsonl"), 200),
+    // Read CB entries from both project root AND dashboard subproject to catch
+    // token events regardless of which project CAE was executing in.
+    // Use a larger tail (5000) because heartbeats flood the file — 200 lines
+    // may be all heartbeats with zero token events from today.
+    Promise.all([
+      tailJsonl(join(metricsDir, "circuit-breakers.jsonl"), 5000),
+      tailJsonl(join(project, "dashboard", ".cae", "metrics", "circuit-breakers.jsonl"), 5000).catch(() => [] as unknown[]),
+    ]).then(([a, b]) => [...a, ...b]),
     tailJsonl(join(metricsDir, "sentinel.jsonl"), 50),
     tailJsonl(join(metricsDir, "compaction.jsonl"), 50),
     tailJsonl(join(metricsDir, "approvals.jsonl"), 50),
