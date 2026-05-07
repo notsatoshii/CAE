@@ -1,0 +1,21 @@
+{
+  "project": "ctrl-alt-elite",
+  "description": "Multi-agent coding team (CAE)",
+  "repo": "/home/cae/ctrl-alt-elite",
+  "agents": {
+    "forge_model": "claude-sonnet-4-6",
+    "sentinel_model": "claude-opus-4-6",
+    "scout_model": "gemini-2.5-pro",
+    "architect_model": "claude-opus-4-6"
+  },
+  "circuit_breakers": {
+    "max_concurrent_forge": 3,
+    "max_retries": 3,
+    "max_phantom_escalations": 2
+  },
+  "paths": {
+    "cae_root": "/home/cae/ctrl-alt-elite",
+    "metrics": ".cae/metrics",
+    "logs": ".cae/logs"
+  }
+}

@@ -74,7 +74,6 @@ export default function RootLoading() {
       <span className="mt-1 text-xs text-[color:var(--text-muted)] opacity-60">
         ← → to move
       </span>
-
     </div>
   );
 }

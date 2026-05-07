@@ -41,6 +41,7 @@ const SAMPLE = {
   summary: "Summary",
   logPath: "",
   buildplanPath: "/tmp/web-abc123/BUILDPLAN.md",
+  buildplanContent: null,
   ts: 0,
   tags: [],
   status: "waiting" as const,

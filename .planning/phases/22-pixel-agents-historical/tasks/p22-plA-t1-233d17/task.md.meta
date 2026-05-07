@@ -1,0 +1,13 @@
+{
+  "session_id": "p22-plA-t1-233d17",
+  "tmux_session": "cae-p22-plA-t1-233d17",
+  "exit_code": 0,
+  "duration_seconds": 80,
+  "model": "claude-sonnet-4-6",
+  "invocation": "direct:cae-forge.md",
+  "effort": "max",
+  "permission_mode": "bypassPermissions",
+  "output_bytes": 2250,
+  "error_bytes": 0,
+  "timestamp": "2026-05-07T11:13:50Z"
+}

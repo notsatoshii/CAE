@@ -132,7 +132,7 @@ export function QueueKanbanClient({ initialState }: Props) {
       {error && <span className="sr-only" data-truth="build-queue.error">yes</span>}
       <div
         data-testid="queue-kanban"
-        className="flex gap-4 min-w-max lg:grid lg:grid-cols-5 lg:gap-6 lg:min-w-0"
+        className="flex gap-3 min-w-max lg:grid lg:grid-cols-5 lg:gap-4 lg:min-w-0"
       >
         {COLUMNS.map((col) => {
           const cards = state.columns[col.key]
@@ -140,7 +140,7 @@ export function QueueKanbanClient({ initialState }: Props) {
           const colLiveness: "empty" | "healthy" =
             cards.length === 0 ? "empty" : "healthy"
           return (
-            // Each column: min-w-64 (256px) so mobile scroll works cleanly.
+            // Each column: min-w-[300px] mobile, flex-1 on lg (equal dist).
             //
             // Class 5E — kanban visual separation (vision scorer C2).
             // Cards didn't pop because the column used --surface (same as
@@ -162,7 +162,7 @@ export function QueueKanbanClient({ initialState }: Props) {
               // visibly rise out of it. Kept inline because the token
               // set ships drop shadows only (--elevation-*), no inset.
               style={{ boxShadow: "inset 0 1px 2px rgba(0,0,0,0.35)" }}
-              className="flex min-w-64 flex-col gap-3 rounded-lg border border-[color:var(--border-subtle,#1f1f22)] bg-[color:var(--bg,#0a0a0b)] p-3 min-h-[200px]"
+              className="flex min-w-[300px] lg:flex-1 flex-col gap-3 rounded-lg border border-[color:var(--border-subtle,#1f1f22)] bg-[color:var(--bg,#0a0a0b)] p-3 min-h-[200px]"
             >
               <span className="sr-only" data-truth={"build-queue-" + col.key + "." + colLiveness}>yes</span>
               {/* Header band — distinct surface tier so columns don't

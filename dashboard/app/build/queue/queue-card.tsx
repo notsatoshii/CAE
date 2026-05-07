@@ -74,7 +74,7 @@ export function QueueCard({ card }: { card: QueueCardData }) {
         <span aria-hidden className="text-sm shrink-0">
           {meta.emoji}
         </span>
-        <h3 className="text-sm font-medium text-[color:var(--text,#e5e5e5)] line-clamp-2 min-w-0 flex-1">
+        <h3 className="text-sm font-medium text-[color:var(--text,#e5e5e5)] line-clamp-3 min-w-0 flex-1 pr-6">
           {card.title}
         </h3>
       </header>

@@ -18,7 +18,10 @@
  * generic fallback.
  */
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { Skeleton } from "@/components/ui/skeleton";
+
+const FETCH_TIMEOUT_MS = 8_000;
 
 export type MirrorSurface =
   | "home"
@@ -49,31 +52,58 @@ export function ChatMirror({
 }) {
   const [payload, setPayload] = useState<unknown>(null);
   const [err, setErr] = useState<string | null>(null);
+  const [timedOut, setTimedOut] = useState(false);
+  const retryRef = useRef(0);
 
   const def = SURFACES.find((s) => s.id === surface)!;
 
-  useEffect(() => {
+  function load(endpoint: string) {
     let cancelled = false;
     setPayload(null);
     setErr(null);
+    setTimedOut(false);
+
+    const timeoutId = setTimeout(() => {
+      if (!cancelled) {
+        cancelled = true;
+        setTimedOut(true);
+      }
+    }, FETCH_TIMEOUT_MS);
+
     (async () => {
       try {
-        const res = await fetch(def.endpoint);
+        const res = await fetch(endpoint);
+        clearTimeout(timeoutId);
+        if (cancelled) return;
         if (!res.ok) throw new Error("status " + res.status);
         const j = await res.json();
         if (!cancelled) setPayload(j);
       } catch (e) {
+        clearTimeout(timeoutId);
         if (!cancelled)
           setErr(e instanceof Error ? e.message : "fetch failed");
       }
     })();
+
     return () => {
       cancelled = true;
+      clearTimeout(timeoutId);
     };
+  }
+
+  useEffect(() => {
+    retryRef.current = 0;
+    return load(def.endpoint);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [def.endpoint]);
 
+  function retry() {
+    retryRef.current += 1;
+    load(def.endpoint);
+  }
+
   // C2-wave/Class 3: mirror liveness state.
-  const mirrorLiveness: "loading" | "error" | "healthy" = err
+  const mirrorLiveness: "loading" | "error" | "healthy" = (err || timedOut)
     ? "error"
     : !payload
       ? "loading"
@@ -107,14 +137,27 @@ export function ChatMirror({
 
       <h2 className="text-xl font-medium mb-3">{def.title}</h2>
 
-      {err ? (
-        <p className="text-sm text-destructive">
-          Couldn&apos;t load this view: {err}
-        </p>
+      {(err || timedOut) ? (
+        <div className="flex flex-col gap-2">
+          <p className="text-sm text-[color:var(--danger,#ef4444)]">
+            {timedOut ? "Timed out loading this view." : `Couldn't load this view: ${err}`}
+          </p>
+          <button
+            type="button"
+            onClick={retry}
+            className="self-start rounded border border-[color:var(--border,#1f1f22)] px-3 py-1 text-xs text-[color:var(--text-muted)] hover:text-[color:var(--text)] transition-colors"
+          >
+            Retry
+          </button>
+        </div>
       ) : !payload ? (
-        <p className="text-sm text-[color:var(--text-muted,#8a8a8c)]">
-          Loading…
-        </p>
+        <div className="flex flex-col gap-3" aria-busy="true" aria-label="Loading surface data">
+          <Skeleton className="h-4 w-3/4 rounded" />
+          <Skeleton className="h-4 w-full rounded" />
+          <Skeleton className="h-4 w-5/6 rounded" />
+          <Skeleton className="h-4 w-2/3 rounded" />
+          <Skeleton className="h-4 w-full rounded" />
+        </div>
       ) : (
         <MirrorRender surface={surface} payload={payload} />
       )}

@@ -49,13 +49,13 @@ export function middlewareHandler(
     return NextResponse.redirect(signinUrl)
   }
 
-  const role = req.auth.user?.role as Role | undefined
+  const role = req.auth?.user?.role as Role | undefined
   const path = req.nextUrl.pathname
   const method = req.method
 
   // ── Admin-only pages and API routes ────────────────────────────────────────
   if (path.startsWith("/build/admin") || path.startsWith("/api/admin")) {
-    if (!role || !isAtLeast(role, "admin")) {
+    if (!role || !isAtLeast(role ?? "viewer", "admin")) {
       if (path.startsWith("/api/")) {
         return NextResponse.json(
           { error: "forbidden", required: "admin" },
@@ -81,14 +81,14 @@ export function middlewareHandler(
 
   // ── Security sub-page: /build/security/audit requires operator ──────────────
   if (path.startsWith("/build/security/audit")) {
-    if (!role || !isAtLeast(role, "operator")) {
+    if (!role || !isAtLeast(role ?? "viewer", "operator")) {
       return NextResponse.redirect(new URL("/403", req.nextUrl.origin))
     }
   }
 
   for (const [re, methods] of operatorMutations) {
     if (re.test(path) && methods.includes(method)) {
-      if (!role || !isAtLeast(role, "operator")) {
+      if (!role || !isAtLeast(role ?? "viewer", "operator")) {
         return NextResponse.json(
           { error: "forbidden", required: "operator" },
           { status: 403 },

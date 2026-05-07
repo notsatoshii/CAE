@@ -81,7 +81,7 @@ function aggregateHeartbeats(rows: ActivityFeedRow[]): ActivityFeedRow[] {
   }
 
   for (const r of rows) {
-    if (r.type === "heartbeat" || r.summary === "heartbeat" || (r as any).meta?.event === "heartbeat") {
+    if ((r.type as string) === "heartbeat" || r.summary === "heartbeat" || (r as any).meta?.event === "heartbeat") {
       if (hbCount === 0) hbFirst = r
       hbCount++
     } else {
