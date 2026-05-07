@@ -55,7 +55,7 @@ export function WorkflowsListClient({
 
   const gate = useGatedAction({
     spec: { type: "workflow_run", slug: pendingRun?.slug ?? "", priorRuns: [] },
-    summary: pendingRun ? `Run the "${pendingRun.name}" recipe now` : "",
+    summary: pendingRun ? `Run the "${pendingRun.name}" workflow now` : "",
     onRun: async () => {
       if (!pendingRun) return
       const slug = pendingRun.slug

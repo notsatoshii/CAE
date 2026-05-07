@@ -198,12 +198,41 @@ export default function FloorClient({ cbPath, projectPath, popout }: FloorClient
       )}
 
       {/* Main canvas — pass historical agents via context or direct scene mutation */}
-      <FloorCanvas 
-        cbPath={cbPath} 
-        paused={paused} 
+      <FloorCanvas
+        cbPath={cbPath}
+        paused={paused}
         onMetrics={setMetrics}
         historicalAgents={historicalAgents}
       />
+
+      {/* Connecting / stale / error overlay — shown when no live signal yet.
+          Layered above canvas so the dark background is contextual, not void. */}
+      {(floorLiveness === "loading" || floorLiveness === "error") && (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+          <div className="flex flex-col items-center gap-3 rounded-lg border border-[color:var(--border-subtle)] bg-[color:var(--surface)]/90 px-8 py-6 text-center backdrop-blur-sm pointer-events-auto max-w-xs">
+            {floorLiveness === "error" ? (
+              <>
+                <div className="h-3 w-3 rounded-full bg-[color:var(--danger)]" />
+                <p className="text-sm font-medium text-[color:var(--text)]">Session expired</p>
+                <p className="text-xs text-[color:var(--text-muted)]">Your auth session drifted. Refresh to reconnect to the live floor.</p>
+                <button
+                  type="button"
+                  onClick={() => window.location.reload()}
+                  className="mt-1 rounded border border-[color:var(--accent)] px-4 py-1.5 text-xs font-medium text-[color:var(--accent)] hover:bg-[color:var(--accent)] hover:text-[color:var(--accent-foreground)] transition-colors"
+                >
+                  Refresh
+                </button>
+              </>
+            ) : (
+              <>
+                <div className="h-3 w-3 rounded-full bg-[color:var(--text-dim)] animate-pulse" aria-hidden="true" />
+                <p className="text-sm font-medium text-[color:var(--text)]">Connecting to live floor…</p>
+                <p className="text-xs text-[color:var(--text-muted)]">Waiting for agent activity. Start a build to see agents appear here.</p>
+              </>
+            )}
+          </div>
+        </div>
+      )}
 
       {!(popout && minimized) && (
         <FloorToolbar

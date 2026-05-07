@@ -2,6 +2,7 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   allowedDevOrigins: ["165.245.186.254"],
+  devIndicators: false,
   // WR-05: prevent clickjacking across all routes, especially /floor/popout which carries
   // live session-authenticated telemetry in its own window. Both headers are set for
   // broad browser compatibility: X-Frame-Options for older browsers, CSP frame-ancestors

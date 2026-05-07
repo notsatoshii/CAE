@@ -26,6 +26,7 @@
 
 import { useEffect, useState } from "react";
 import { GitMerge } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Accordion } from "@base-ui/react/accordion";
 import { useDevMode } from "@/lib/providers/dev-mode";
 import { labelFor } from "@/lib/copy/labels";
@@ -94,14 +95,22 @@ export function ChangesClient() {
 
   if (!data) {
     return (
-      <p
+      <div
         data-testid="changes-loading"
         data-liveness="loading"
-        className="text-sm text-[color:var(--text-muted,#8a8a8c)]"
+        className="flex flex-col gap-4"
+        aria-busy="true"
+        aria-label="Loading changes"
       >
         <span className="sr-only" data-truth="build-changes.loading">yes</span>
-        {L.changesEmpty}
-      </p>
+        <Skeleton className="h-8 w-48 rounded" />
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="flex flex-col gap-2">
+            <Skeleton className="h-5 w-32 rounded" />
+            <Skeleton className="h-16 w-full rounded-lg" />
+          </div>
+        ))}
+      </div>
     );
   }
 

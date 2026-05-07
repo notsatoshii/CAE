@@ -134,7 +134,7 @@ function AgentActiveChip({
         className="fill-current"
         style={{ color: hue }}
       />
-      ACTIVE · {count}x
+      {count === 1 ? "ACTIVE" : `ACTIVE · ${count}`}
     </span>
   )
 }
@@ -316,9 +316,11 @@ export function AgentCard({ agent }: AgentCardProps) {
         </button>
       </div>
 
-      {/* Footer: active · queued · /day */}
+      {/* Footer: active · queued · /day.
+          Use the higher of current.concurrent (30s window) vs active_concurrent
+          (5-min window) so the footer never contradicts the ACTIVE chip above. */}
       <div className="mt-3 flex items-center gap-3 text-xs text-[color:var(--text-muted,#8a8a8c)] font-mono">
-        <span>{t.agentsLiveActiveLabel(agent.current.concurrent)}</span>
+        <span>{t.agentsLiveActiveLabel(Math.max(agent.current.concurrent, activeConcurrent))}</span>
         <span aria-hidden>·</span>
         <span>{t.agentsLiveQueuedLabel(agent.current.queued)}</span>
         <span aria-hidden>·</span>

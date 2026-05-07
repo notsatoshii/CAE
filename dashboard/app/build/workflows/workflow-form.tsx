@@ -59,7 +59,7 @@ export interface WorkflowFormProps {
 }
 
 const STARTER_YAML = [
-  "name: new-recipe",
+  "name: new-workflow",
   "description: \"\"",
   "trigger:",
   "  type: manual",
@@ -85,13 +85,13 @@ export function WorkflowForm({ mode, initial }: WorkflowFormProps) {
     parsed.errors.length > 0 ? parsed.errors : errors
 
   function handleDraft(draftedSpec: WorkflowSpec) {
-    // In edit mode, if the draft emits the default "new-recipe" name,
+    // In edit mode, if the draft emits the default "new-workflow" name,
     // preserve the existing record's name so renaming requires explicit
     // intent. In create mode, the draft wins.
     const preserveName =
       mode === "edit" &&
       initial?.spec?.name &&
-      draftedSpec.name === "new-recipe"
+      draftedSpec.name === "new-workflow"
     const merged: WorkflowSpec = preserveName
       ? { ...draftedSpec, name: initial!.spec.name }
       : draftedSpec
@@ -131,7 +131,7 @@ export function WorkflowForm({ mode, initial }: WorkflowFormProps) {
       toast.error(t.workflowsValidationErrorHeading)
       return
     }
-    toast.success(mode === "create" ? "Recipe saved" : "Changes saved")
+    toast.success(mode === "create" ? "Workflow saved" : "Changes saved")
     router.push("/build/workflows")
     router.refresh()
   }
@@ -151,7 +151,7 @@ export function WorkflowForm({ mode, initial }: WorkflowFormProps) {
       toast.error("Delete failed")
       return
     }
-    toast.success("Recipe deleted")
+    toast.success("Workflow deleted")
     router.push("/build/workflows")
     router.refresh()
   }

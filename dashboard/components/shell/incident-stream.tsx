@@ -123,6 +123,15 @@ export function IncidentStream() {
         try {
           const line = JSON.parse(ev.data) as IncidentEntry;
           setEntries((prev) => {
+            // Collapse consecutive duplicate messages (same level + msg) into
+            // a count on the most-recent entry to prevent spam like
+            // "50 × client.error.reported" flooding the panel.
+            const top = prev[0];
+            if (top && top.level === line.level && top.msg === line.msg) {
+              const updated = { ...top, _count: ((top._count as number | undefined) ?? 1) + 1 };
+              const rest = prev.slice(1);
+              return [updated, ...rest];
+            }
             const next = [line, ...prev];
             return next.length > MAX_ENTRIES ? next.slice(0, MAX_ENTRIES) : next;
           });
@@ -281,6 +290,11 @@ export function IncidentStream() {
                   <span className="flex-1 truncate text-xs text-[color:var(--text)]">
                     {entry.msg ?? "(no message)"}
                   </span>
+                  {(entry._count as number | undefined) && (entry._count as number) > 1 && (
+                    <span className="shrink-0 rounded-full bg-[color:var(--surface-hover)] px-1.5 py-0.5 text-[10px] font-mono text-[color:var(--text-muted)]">
+                      ×{entry._count as number}
+                    </span>
+                  )}
                 </div>
 
                 {isSelected && (
