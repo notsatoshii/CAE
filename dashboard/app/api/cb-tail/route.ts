@@ -31,7 +31,6 @@ async function getHandler(req: NextRequest) {
     const cbPath = join(
       process.cwd(),
       "..",
-      "..",
       ".cae",
       "metrics",
       "circuit-breakers.jsonl"

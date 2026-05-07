@@ -1,9 +1,41 @@
+"use client";
+
 /**
- * Root Suspense fallback — skeleton loading shell.
- * Replaces the Pikachu loader (dev artifact, keyboard instructions on mobile).
+ * Suspense fallback — arrow-key-driven Running Pikachu port.
+ *
+ * Original CodePen source pasted by Eric:
+ *
+ *   import React from "react";
+ *   import ReactDOM from "react-dom";
+ *   ...
+ *   function move({ keyCode }) {
+ *     switch (keyCode) {
+ *       case 39: setPosition(p => p + 25); break;
+ *       case 37: setPosition(p => p - 25); break;
+ *     }
+ *   }
+ *   <div id="pikachu" style={{ transform: `translateX(${position}px)` }}>
+ *     <img src={pikachu} />
+ *   </div>
+ *
+ * Scoped to the content area — preserves top-nav + sidebar chrome.
  */
 
+import Image from "next/image";
+import { useEffect, useState } from "react";
+
 export default function RootLoading() {
+  const [position, setPosition] = useState(0);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.keyCode === 39) setPosition((p) => p + 25);
+      else if (e.keyCode === 37) setPosition((p) => p - 25);
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, []);
+
   return (
     <div
       data-testid="root-loading"
@@ -11,24 +43,37 @@ export default function RootLoading() {
       aria-busy="true"
       aria-live="polite"
       aria-label="Loading"
-      className="w-full min-h-[calc(100vh-40px)] flex flex-col items-center justify-center gap-4 bg-[color:var(--bg)]"
+      className="cae-pikachu-loader relative w-full min-h-[calc(100vh-40px)] flex flex-col items-center justify-center gap-3 bg-[color:var(--bg)] overflow-hidden"
     >
-      <div className="flex flex-col items-center gap-3">
-        {/* Brand wordmark */}
-        <p className="text-xs tracking-[0.25em] font-medium text-[color:var(--text-muted)] uppercase">
-          Ctrl + Alt + Elite
-        </p>
-        {/* Three-dot pulse loader */}
-        <div className="flex items-center gap-2" aria-hidden="true">
-          {[0, 1, 2].map((i) => (
-            <div
-              key={i}
-              className="h-2 w-2 rounded-full bg-[color:var(--text-dim)] cae-loader-pulse-dot"
-              style={{ ["--i" as string]: i }}
-            />
-          ))}
-        </div>
+      <h1 className="text-2xl font-semibold text-[color:var(--text)]">
+        Loading...
+      </h1>
+      <p className="text-sm tracking-[0.2em] font-medium text-[color:var(--text-muted)]">
+        CTRL + ALT + ELITE
+      </p>
+
+      <div
+        id="pikachu"
+        className="mt-2 transition-transform duration-150 ease-out will-change-transform"
+        style={{ transform: `translateX(${position}px)` }}
+      >
+        <Image
+          src="/pikachu-loading.gif"
+          alt="loading"
+          width={200}
+          height={209}
+          priority
+          unoptimized
+          className="block"
+        />
       </div>
+
+      <span id="loadingText" className="sr-only">
+        Loading
+      </span>
+      <span className="mt-1 text-xs text-[color:var(--text-muted)] opacity-60">
+        ← → to move
+      </span>
     </div>
   );
 }
