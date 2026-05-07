@@ -3,18 +3,15 @@ export const dynamic = "force-dynamic";
 import { NextRequest } from "next/server";
 import { readFile } from "fs/promises";
 import { join } from "path";
-import { log } from "@/lib/log";
-
-const l = log("api.outbox.done");
 
 // Infinite cache for DONE.md (immutable after task completion)
 const responseCache = new Map<string, { ts: number; body: string }>();
 
 async function getHandler(
   req: NextRequest,
-  { params }: { params: { taskId: string } }
+  { params }: { params: Promise<{ taskId: string }> }
 ) {
-  const taskId = params.taskId;
+  const { taskId } = await params;
 
   if (!taskId) {
     return new Response(JSON.stringify({ error: "taskId required" }), {
@@ -50,7 +47,7 @@ async function getHandler(
       headers: { "content-type": "text/plain; charset=utf-8" },
     });
   } catch (err) {
-    l.error({ err, taskId }, "Failed to read DONE.md");
+    console.error("Failed to read DONE.md:", { err, taskId });
     return new Response(JSON.stringify({ error: "Task not found" }), {
       status: 404,
       headers: { "content-type": "application/json" },

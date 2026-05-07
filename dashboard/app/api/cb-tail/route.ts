@@ -3,9 +3,6 @@ export const dynamic = "force-dynamic";
 import { NextRequest } from "next/server";
 import { readFile } from "fs/promises";
 import { join } from "path";
-import { log } from "@/lib/log";
-
-const l = log("api.cb-tail");
 
 // 30-second cache for CB file (write-heavy)
 let _responseCache: { ts: number; body: string } | null = null;
@@ -54,7 +51,7 @@ async function getHandler(req: NextRequest) {
       headers: { "content-type": "text/plain; charset=utf-8" },
     });
   } catch (err) {
-    l.error({ err }, "Failed to read circuit-breaker file");
+    console.error("Failed to read circuit-breaker file:", err);
     return new Response(
       JSON.stringify({ error: "Circuit-breaker file not found" }),
       { status: 404, headers: { "content-type": "application/json" } }
