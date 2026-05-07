@@ -74,13 +74,22 @@ export interface FloorCanvasProps {
    * Called each React render with the latest hook values.
    */
   onMetrics?: (m: FloorCanvasMetrics) => void;
+  /**
+   * Historical agents from circuit-breaker.jsonl (Phase 22).
+   * Rendered faded at final positions on the canvas.
+   */
+  historicalAgents?: Array<{
+    taskId: string;
+    station: string;
+    status: string;
+  }>;
 }
 
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
 
-export default function FloorCanvas({ cbPath, paused = false, onMetrics }: FloorCanvasProps): React.JSX.Element {
+export default function FloorCanvas({ cbPath, paused = false, onMetrics, historicalAgents = [] }: FloorCanvasProps): React.JSX.Element {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const sceneRef = useRef<Scene>(createScene());
   const rafRef = useRef<number | null>(null);
@@ -100,6 +109,11 @@ export default function FloorCanvas({ cbPath, paused = false, onMetrics }: Floor
   useEffect(() => {
     setViewport((prev) => ({ ...prev, devLabels: dev }));
   }, [dev]);
+
+  // Phase 22: Update scene with historical agents
+  useEffect(() => {
+    sceneRef.current.historicalAgents = historicalAgents as any;
+  }, [historicalAgents]);
 
   // Delegate SSE + event handling to the hook
   const { effectsCount, queueSize, authDrifted, lastHeartbeatMs } = useFloorEvents({

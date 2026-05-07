@@ -13,18 +13,27 @@
  *   - FloorLivenessBadge — F3 (Wave 1.5), surfaces synthetic heartbeat as
  *     "system online — last heartbeat Ns ago" so the canvas never looks dead
  *   - "Return to main window" button when popout=true AND window.opener != null (Plan 11-05)
+ *   - Historical agent hydration from circuit-breaker.jsonl (Phase 22)
  *
  * No dollar signs in this file (lint-no-dollar.sh guard).
  */
 
 import dynamic from "next/dynamic";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { FloorToolbar } from "./floor-toolbar";
 import { FloorLegend } from "./floor-legend";
 import { FloorLivenessBadge } from "./floor-liveness-badge";
+import { FloorTimeline } from "./floor-timeline";
+import { AgentDetailPanel } from "./agent-detail-panel";
 import { useExplainMode } from "@/lib/providers/explain-mode";
 import { useDevMode } from "@/lib/providers/dev-mode";
 import { labelFor } from "@/lib/copy/labels";
+import type { AgentLifecycle } from "@/lib/floor/parse-circuit-breaker";
+import type { PixelAgent } from "@/lib/floor/scene";
+import {
+  parseCircuitBreakerEvents,
+  reconstructAgentLifecycles,
+} from "@/lib/floor/parse-circuit-breaker";
 
 // ---------------------------------------------------------------------------
 // Dynamic import — ssr: false (D-18, canvas APIs unavailable on server)
@@ -62,12 +71,44 @@ export default function FloorClient({ cbPath, projectPath, popout }: FloorClient
     lastHeartbeatMs: null,
   });
 
+  // Phase 22: Historical agents from circuit-breaker.jsonl
+  const [historicalAgents, setHistoricalAgents] = useState<AgentLifecycle[]>([]);
+  const [liveAgents, setLiveAgents] = useState<PixelAgent[]>([]);
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+
   // SSR-safe opener detection — set in useEffect so server render is unaffected
   const [hasOpener, setHasOpener] = useState(false);
   useEffect(() => {
     if (typeof window !== "undefined") {
       setHasOpener(window.opener != null);
     }
+  }, []);
+
+  // Phase 22: Load historical agents on mount
+  useEffect(() => {
+    const loadHistoricalAgents = async () => {
+      try {
+        const resp = await fetch("/api/cb-tail?limit=5000");
+        if (!resp.ok) return;
+
+        const content = await resp.text();
+        const lines = content.split("\n").filter((line) => line.trim());
+
+        // Parse CB events and reconstruct lifecycles
+        const events = parseCircuitBreakerEvents(lines);
+        const lifecycles = reconstructAgentLifecycles(events);
+
+        // Filter to last 4 hours
+        const fourHoursAgo = Date.now() - 4 * 60 * 60 * 1000;
+        const filtered = lifecycles.filter((ag) => ag.spawnedAt > fourHoursAgo);
+
+        setHistoricalAgents(filtered);
+      } catch (err) {
+        console.error("Failed to load historical agents:", err);
+      }
+    };
+
+    loadHistoricalAgents();
   }, []);
 
   const { explain, toggle: toggleExplain } = useExplainMode();
@@ -155,7 +196,14 @@ export default function FloorClient({ cbPath, projectPath, popout }: FloorClient
       {metrics.authDrifted && (
         <span className="sr-only" data-truth="floor.error">auth-drift</span>
       )}
-      <FloorCanvas cbPath={cbPath} paused={paused} onMetrics={setMetrics} />
+
+      {/* Main canvas — pass historical agents via context or direct scene mutation */}
+      <FloorCanvas 
+        cbPath={cbPath} 
+        paused={paused} 
+        onMetrics={setMetrics}
+        historicalAgents={historicalAgents}
+      />
 
       {!(popout && minimized) && (
         <FloorToolbar
@@ -204,6 +252,21 @@ export default function FloorClient({ cbPath, projectPath, popout }: FloorClient
           <FloorLegend />
         </aside>
       )}
+
+      {/* Phase 22: Timeline sidebar showing all agents */}
+      <FloorTimeline
+        historicalAgents={historicalAgents}
+        liveAgents={liveAgents}
+        selectedTaskId={selectedTaskId}
+        onSelectAgent={setSelectedTaskId}
+      />
+
+      {/* Phase 22: Detail panel for selected agent */}
+      <AgentDetailPanel
+        taskId={selectedTaskId || ""}
+        open={selectedTaskId != null}
+        onClose={() => setSelectedTaskId(null)}
+      />
     </div>
   );
 }

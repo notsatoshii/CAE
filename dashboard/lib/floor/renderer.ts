@@ -287,6 +287,33 @@ const spriteRegistry: SpriteRegistry = createSpriteRegistry();
 let spriteLoadKicked = false;
 let lastTickMs: number | null = null;
 
+/** Compute hue (0-360) from a task_id for consistent coloring. */
+function computeHueForTaskId(taskId: string): number {
+  let hash = 0;
+  for (let i = 0; i < taskId.length; i++) {
+    hash = ((hash << 5) - hash) + taskId.charCodeAt(i);
+    hash = hash & hash; // Convert to 32-bit integer
+  }
+  return Math.abs(hash) % 360;
+}
+
+/** Format elapsed time since a given epoch-ms timestamp. */
+function formatTimeSince(thenMs: number): string {
+  const nowMs = Date.now();
+  const elapsedMs = nowMs - thenMs;
+  const elapsedS = Math.floor(elapsedMs / 1000);
+  const elapsedM = Math.floor(elapsedS / 60);
+  const elapsedH = Math.floor(elapsedM / 60);
+
+  if (elapsedH > 0) {
+    return `${elapsedH}h ago`;
+  } else if (elapsedM > 0) {
+    return `${elapsedM}m ago`;
+  } else {
+    return `${elapsedS}s ago`;
+  }
+}
+
 /** Reset the registry. Testing only. */
 export function __resetRenderer(): void {
   spriteRegistry.clear();
@@ -338,7 +365,7 @@ export function tickPixelAgents(scene: Scene, dt: number, nowMs: number): void {
   }
 
   // Garbage-collect sprites whose agent has been removed from the scene.
-  for (const taskId of spriteRegistry.keys()) {
+  for (const taskId of Array.from(spriteRegistry.keys())) {
     if (!seen.has(taskId)) removeSprite(spriteRegistry, taskId);
   }
 }
@@ -490,6 +517,51 @@ export function render(
         drawColoredSquareFallback(ctx, ag, tx, ty, cx, cy, i);
       }
     }
+  }
+
+  // ------------------------------------------------------------------
+  // 6. Historical/ghost agents — faded agents from circuit-breaker.jsonl
+  //    rendered at their final stations.
+  // ------------------------------------------------------------------
+  const historicalAgents = scene.historicalAgents ?? [];
+  if (historicalAgents.length > 0) {
+    // Save current alpha and set translucent
+    const prevAlpha = ctx.globalAlpha;
+    ctx.globalAlpha = 0.3;
+
+    for (const histAgent of historicalAgents) {
+      const station = scene.stations[histAgent.station];
+      if (!station) continue;
+
+      // Get hue from task_id hash
+      const hue = computeHueForTaskId(histAgent.taskId);
+      
+      // Map to screen coordinates
+      const { x, y } = mapToScreen(station.tx, station.ty, cx, cy);
+
+      // Draw colored square at final position
+      const fill = `hsl(${hue} 80% 58%)`;
+      const glow = `hsla(${hue} 80% 58% / 0.35)`;
+      ctx.fillStyle = glow;
+      ctx.fillRect(x - 6, y - 6, 12, 12);
+      ctx.fillStyle = fill;
+      ctx.fillRect(x - 3, y - 3, 6, 6);
+
+      // Label: status indicator + completion time
+      const completionLabel = histAgent.finishedAt
+        ? formatTimeSince(histAgent.finishedAt)
+        : "working";
+      const statusEmoji = histAgent.status === "completed" ? "✓" : 
+                         histAgent.status === "failed" ? "✗" : "⏳";
+
+      ctx.fillStyle = TEXT;
+      ctx.font = "10px sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText(`${statusEmoji} ${completionLabel}`, x, y + HALF_H + 10);
+    }
+
+    // Restore alpha
+    ctx.globalAlpha = prevAlpha;
   }
 }
 

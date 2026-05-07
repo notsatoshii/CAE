@@ -8,6 +8,7 @@
  */
 
 import type { StationStatus, Effect } from "./state";
+import type { AgentLifecycle } from "./parse-circuit-breaker";
 
 /** The 10 named stations in the CAE HQ floor plan. */
 export type StationName =
@@ -94,6 +95,8 @@ export interface Scene {
   entities: FloorEntity[];
   /** Pixel agents — forge tasks rendered as colored squares traveling between stations. */
   agents: PixelAgent[];
+  /** Historical agents — completed tasks from circuit-breaker.jsonl, rendered faded. */
+  historicalAgents: AgentLifecycle[];
   queueDepth: number;
   paused: boolean;
   /** ms epoch; used for loadingBay pulse-on-recent-change (D-12). */
@@ -121,6 +124,7 @@ export function createScene(): Scene {
     effects: [],
     entities: [],
     agents: [],
+    historicalAgents: [],
     queueDepth: 0,
     paused: false,
     lastDelegationTs: 0,
