@@ -286,7 +286,7 @@ export default function FloorClient({ cbPath, projectPath, popout }: FloorClient
       <FloorTimeline
         historicalAgents={historicalAgents}
         liveAgents={liveAgents}
-        selectedTaskId={selectedTaskId}
+        selectedTaskId={selectedTaskId ?? undefined}
         onSelectAgent={setSelectedTaskId}
       />
 
