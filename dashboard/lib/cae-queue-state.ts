@@ -103,7 +103,7 @@ function inboxCard(task: InboxTask, status: QueueCardStatus, title: string): Que
 function outboxCard(task: OutboxTask, status: QueueCardStatus, ts: number): QueueCard {
   const title =
     (typeof task.summary === "string" && task.summary.trim().length > 0
-      ? task.summary.trim().slice(0, 80)
+      ? task.summary.trim().slice(0, 160)
       : null) ?? task.taskId;
   return {
     taskId: task.taskId,
@@ -210,7 +210,7 @@ async function firstLine(path: string, fallback: string): Promise<string> {
       if (!line) continue;
       const stripped = line.replace(/^#+\s*/, "").trim();
       if (!stripped) continue;
-      return stripped.length > 80 ? stripped.slice(0, 77) + "…" : stripped;
+      return stripped.length > 160 ? stripped.slice(0, 157) + "…" : stripped;
     }
     return fallback;
   } catch {
