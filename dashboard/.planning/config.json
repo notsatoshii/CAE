@@ -35,5 +35,11 @@
   "context_window": 1000000,
   "workflow": {
     "_auto_chain_active": true
-  }
+  },
+  "post_phase_hook": ".planning/hooks/post-phase-complete.sh",
+  "post_phase_hook_timing": "after SUMMARY.md written (post-Scribe)",
+  "post_phase_hook_docs": [
+    "README.md",
+    "ARCHITECTURE.md"
+  ]
 }

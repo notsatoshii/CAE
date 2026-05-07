@@ -16,3 +16,25 @@
 ## Library/API Notes
 - NextAuth v5 route.ts must re-export: `import { handlers } from "@/auth"; export const { GET, POST } = handlers`. GET/POST are handler object properties, not direct auth.ts exports. (phase 1, p1-plA-t1-c0416e)
 - DONE.md is YAML frontmatter only (strip `---` prefix, parse with yaml). No markdown body. (phase 2, p2-plA-t1-b12bb5) (phase 2, p2-plA-t1-b12bb5)
+
+
+## Herald Auto-Docs Pattern (Phase 17)
+
+**When:** Post-phase hook runs after SUMMARY.md written (Scribe complete)
+**Location:** `.planning/hooks/post-phase-complete.sh`
+**What it does:**
+  1. Run `cae herald README` (updates project overview + phase status)
+  2. Run `cae herald ARCHITECTURE` (updates design docs + recent changes)
+  3. `git push origin main` (sends updated docs to remote)
+
+**Failure modes:**
+  - Herald fails (bad syntax in ROADMAP/AGENTS) → exit 1, push blocked
+  - Git push fails (auth/network) → exit 2, manual retry available
+  - SSH auth broken → exit 3, check ~/.ssh/cae_deploy_key + SSH config
+
+**Recovery:** Script provides exact commands for each failure mode. User runs:
+  ```
+  ./.planning/hooks/post-phase-complete.sh   # retry the hook
+  ```
+
+**How to test:** Phase 16 closure used this; verify origin/main has fresh README/ARCHITECTURE timestamps.
